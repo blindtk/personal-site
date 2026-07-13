@@ -1,0 +1,98 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.subnets;
+
+// Strings que o JS precisa em runtime (tipos de endereço + mensagens)
+const jsStrings = {
+  invalid: s.invalid,
+  private: s.private,
+  public: s.public,
+  loopback: s.loopback,
+  linkLocal: s.linkLocal,
+  cgnat: s.cgnat,
+  multicast: s.multicast,
+  p2p: s.p2p,
+  single: s.single,
+};
+---
+
+<div class="tool-panel" id="subnet-tool" data-strings={JSON.stringify(jsStrings)}>
+  <form id="subnet-form">
+    <div class="field">
+      <label for="subnet-input">{s.input}</label>
+      <input
+        type="text"
+        id="subnet-input"
+        placeholder="192.168.1.10/24"
+        autocomplete="off"
+        spellcheck="false"
+        value="192.168.1.10/24"
+      />
+    </div>
+    <div class="btn-row">
+      <button type="submit" class="btn">{s.calc}</button>
+    </div>
+  </form>
+  <p class="error-msg" id="subnet-error" hidden></p>
+
+  <div class="table-scroll">
+    <table class="result-table" id="subnet-result" hidden>
+      <tbody>
+        <tr><th>{s.network}</th><td id="r-network"></td></tr>
+        <tr><th>{s.broadcast}</th><td id="r-broadcast"></td></tr>
+        <tr><th>{s.mask}</th><td id="r-mask"></td></tr>
+        <tr><th>{s.wildcard}</th><td id="r-wildcard"></td></tr>
+        <tr><th>{s.firstHost}</th><td id="r-first"></td></tr>
+        <tr><th>{s.lastHost}</th><td id="r-last"></td></tr>
+        <tr><th>{s.hosts}</th><td id="r-hosts"></td></tr>
+        <tr><th>{s.type}</th><td id="r-type"></td></tr>
+        <tr><th>{s.binary}</th><td id="r-binary"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  import { calcSubnet, intToIp } from '../../scripts/subnet.js';
+
+  const root = document.getElementById('subnet-tool')!;
+  const strings = JSON.parse(root.dataset.strings!);
+  const form = document.getElementById('subnet-form')!;
+  const input = document.getElementById('subnet-input') as HTMLInputElement;
+  const errorEl = document.getElementById('subnet-error')!;
+  const table = document.getElementById('subnet-result')!;
+  const cell = (id: string) => document.getElementById(id)!;
+
+  function run() {
+    const result = calcSubnet(input.value);
+    if (!result) {
+      errorEl.textContent = strings.invalid;
+      errorEl.hidden = false;
+      table.hidden = true;
+      return;
+    }
+    errorEl.hidden = true;
+    cell('r-network').textContent = `${intToIp(result.network)}/${result.prefix}`;
+    cell('r-broadcast').textContent = intToIp(result.broadcast);
+    cell('r-mask').textContent = intToIp(result.mask);
+    cell('r-wildcard').textContent = intToIp(result.wildcard);
+    cell('r-first').textContent = intToIp(result.firstHost);
+    cell('r-last').textContent = intToIp(result.lastHost);
+    cell('r-hosts').textContent = result.hosts.toLocaleString();
+    cell('r-type').textContent =
+      strings[result.kind] + (result.special ? ` · ${strings[result.special]}` : '');
+    cell('r-binary').innerHTML =
+      `<span class="hl">${result.binary.network}</span>${result.binary.hosts}`;
+    table.hidden = false;
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    run();
+  });
+  run();
+</script>

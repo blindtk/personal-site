@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+---
+
+<BaseLayout lang={lang} title={dict.lab.title} altUrl={routes.lab[other]} active="lab">
+  <div class="page-head">
+    <h1>{dict.lab.title}</h1>
+  </div>
+
+  <div class="construction">
+    <strong>[ {dict.lab.status} ]</strong>
+    <span class="cursor" aria-hidden="true" style="display:inline-block;width:0.5em;height:1em;background:currentColor;animation:blink 1.1s steps(1) infinite;vertical-align:text-bottom;"></span>
+  </div>
+
+  <p class="intro" style="max-width: 46rem; color: var(--muted);">{dict.lab.intro}</p>
+
+  <div class="section-title">
+    <h2>{dict.lab.planned}</h2>
+  </div>
+  <ul class="prose" style="font-family: var(--mono); font-size: 0.9rem;">
+    {dict.lab.plannedItems.map((item) => <li>{item}</li>)}
+  </ul>
+
+  <p style="margin-top: 2rem;">
+    {dict.lab.soon}
+  </p>
+  <a class="btn" href={routes.tools[lang]}>{dict.lab.cta} →</a>
+</BaseLayout>

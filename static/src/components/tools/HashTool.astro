@@ -1,0 +1,98 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.hashes;
+
+const jsStrings = { copy: s.copy, copied: s.copied, noMatch: s.noMatch };
+const ALGS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
+---
+
+<div class="tool-panel" id="hash-tool" data-strings={JSON.stringify(jsStrings)}>
+  <div class="field">
+    <label for="hash-input">{s.inputLabel}</label>
+    <textarea id="hash-input" spellcheck="false" placeholder="hello world"></textarea>
+  </div>
+  <div class="field">
+    <label for="hash-file">{s.fileLabel}</label>
+    <input type="file" id="hash-file" />
+  </div>
+  <div class="field">
+    <label for="hash-verify">{s.verifyLabel}</label>
+    <input type="text" id="hash-verify" placeholder={s.verifyPlaceholder} spellcheck="false" autocomplete="off" />
+  </div>
+  <div class="btn-row">
+    <button type="button" class="btn" id="hash-generate">{s.generate}</button>
+  </div>
+
+  <div id="hash-results" hidden>
+    {ALGS.map((alg) => (
+      <div class="hash-row" data-alg={alg}>
+        <span class="alg">{alg}</span>
+        <span class="val mono"></span>
+        <button type="button" class="btn ghost small copy-btn">{s.copy}</button>
+      </div>
+    ))}
+    <p class="error-msg" id="hash-nomatch" hidden>{s.noMatch}</p>
+  </div>
+
+  <p class="note warn">⚠ {s.mdWarning}</p>
+</div>
+
+<script>
+  import { md5 } from '../../scripts/md5.js';
+
+  const root = document.getElementById('hash-tool')!;
+  const strings = JSON.parse(root.dataset.strings!);
+  const input = document.getElementById('hash-input') as HTMLTextAreaElement;
+  const fileInput = document.getElementById('hash-file') as HTMLInputElement;
+  const verifyInput = document.getElementById('hash-verify') as HTMLInputElement;
+  const results = document.getElementById('hash-results')!;
+  const noMatchEl = document.getElementById('hash-nomatch')!;
+
+  async function digest(alg: string, bytes: Uint8Array): Promise<string> {
+    if (alg === 'MD5') return md5(bytes);
+    const buf = await crypto.subtle.digest(alg, bytes as BufferSource);
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function getInputBytes(): Promise<Uint8Array> {
+    const file = fileInput.files?.[0];
+    if (file) return new Uint8Array(await file.arrayBuffer());
+    return new TextEncoder().encode(input.value);
+  }
+
+  async function run() {
+    const bytes = await getInputBytes();
+    const expected = verifyInput.value.trim().toLowerCase();
+    let anyMatch = false;
+
+    for (const row of results.querySelectorAll<HTMLElement>('.hash-row')) {
+      const alg = row.dataset.alg!;
+      const hash = await digest(alg, bytes);
+      row.querySelector('.val')!.textContent = hash;
+      const match = expected !== '' && hash === expected;
+      row.classList.toggle('match', match);
+      if (match) anyMatch = true;
+    }
+
+    noMatchEl.hidden = !(expected !== '' && !anyMatch);
+    results.hidden = false;
+  }
+
+  document.getElementById('hash-generate')!.addEventListener('click', run);
+  // limpar o outro input quando um é usado, para ficar claro qual é a fonte
+  fileInput.addEventListener('change', () => { if (fileInput.files?.length) input.value = ''; });
+  input.addEventListener('input', () => { if (input.value) fileInput.value = ''; });
+
+  results.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest('.copy-btn') as HTMLButtonElement | null;
+    if (!btn) return;
+    const val = btn.parentElement!.querySelector('.val')!.textContent ?? '';
+    await navigator.clipboard.writeText(val);
+    btn.textContent = strings.copied;
+    setTimeout(() => (btn.textContent = strings.copy), 1500);
+  });
+</script>

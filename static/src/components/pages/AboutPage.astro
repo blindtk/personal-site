@@ -1,0 +1,25 @@
+---
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const entry = await getEntry('pages', lang === 'pt' ? 'sobre' : 'about');
+if (!entry) throw new Error(`Missing about page content for lang "${lang}" in content/pages/`);
+const { Content } = await render(entry);
+---
+
+<BaseLayout lang={lang} title={dict.nav.about} altUrl={routes.about[other]} active="about">
+  <div class="page-head">
+    <h1>{entry.data.title}</h1>
+  </div>
+  <article class="prose">
+    <Content />
+  </article>
+</BaseLayout>

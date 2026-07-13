@@ -1,0 +1,128 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes, blogPostUrl, toolUrl } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) && !e.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+
+const tools = [
+  { slug: 'subnets', ...dict.tools.subnets },
+  { slug: 'hashes', ...dict.tools.hashes },
+  { slug: 'encoder', ...dict.tools.encoder },
+  { slug: 'passwords', ...dict.tools.passwords },
+];
+
+const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
+
+const heroLines = lang === 'pt'
+  ? {
+      whoamiOut: `${SITE.name} — ${SITE.role.pt}`,
+      catCmd: 'cat interesses.txt',
+      catOut: 'redes · sistemas · segurança · automação · homelab',
+      lsOut: ['sobre/', 'blog/', 'projetos/', 'ferramentas/', 'lab/'],
+    }
+  : {
+      whoamiOut: `${SITE.name} — ${SITE.role.en}`,
+      catCmd: 'cat interests.txt',
+      catOut: 'networking · systems · security · automation · homelab',
+      lsOut: ['about/', 'blog/', 'projects/', 'tools/', 'lab/'],
+    };
+---
+
+<BaseLayout
+  lang={lang}
+  title={dict.home.metaTitle}
+  altUrl={routes.home[other]}
+>
+  <section class="terminal" aria-label="whoami" style="margin-top: 1.2rem;">
+    <div class="terminal-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="title">daniel@lab:~</span>
+    </div>
+    <div class="terminal-body">
+      <div class="line"><span class="ps1">~$ </span><span class="in">whoami</span></div>
+      <div class="line out"><span class="hl">{heroLines.whoamiOut}</span></div>
+      <div class="line"><span class="ps1">~$ </span><span class="in">{heroLines.catCmd}</span></div>
+      <div class="line out">{heroLines.catOut}</div>
+      <div class="line"><span class="ps1">~$ </span><span class="in">ls site/</span></div>
+      <div class="line out">
+        {heroLines.lsOut.map((dir, i) => (
+          <>
+            <a
+              href={[routes.about, routes.blog, routes.projects, routes.tools, routes.lab][i][lang]}
+              class={i === 4 ? 'hl2' : 'hl'}
+            >{dir}</a>{'  '}
+          </>
+        ))}
+      </div>
+      <div class="line"><span class="ps1">~$ </span><span class="cursor" aria-hidden="true"></span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-posts">
+    <div class="section-title">
+      <h2 id="h-posts">{dict.home.latestPosts}</h2>
+      <a class="more" href={routes.blog[lang]}>{dict.home.allPosts} →</a>
+    </div>
+    <div class="grid grid-3">
+      {posts.map((post) => (
+        <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
+          <h3>{post.data.title}</h3>
+          <p>{post.data.description}</p>
+          <div class="meta">
+            <span>{dateFmt.format(post.data.pubDate)}</span>
+            {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section aria-labelledby="h-tools">
+    <div class="section-title">
+      <h2 id="h-tools">{dict.home.featuredTools}</h2>
+      <a class="more" href={routes.tools[lang]}>{dict.home.allTools} →</a>
+    </div>
+    <div class="grid grid-2">
+      {tools.map((tool) => (
+        <a class="card" href={toolUrl(lang, tool.slug)}>
+          <h3>{tool.name}</h3>
+          <p>{tool.desc}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  {projects.length > 0 && (
+    <section aria-labelledby="h-projects">
+      <div class="section-title">
+        <h2 id="h-projects">{dict.home.projects}</h2>
+        <a class="more" href={routes.projects[lang]}>{dict.home.allProjects} →</a>
+      </div>
+      <div class="grid grid-3">
+        {projects.map((project) => (
+          <a class="card" href={routes.projects[lang]}>
+            <h3>{project.data.title}</h3>
+            <p>{project.data.description}</p>
+            <div class="meta">
+              {project.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+</BaseLayout>

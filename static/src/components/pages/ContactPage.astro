@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// Ofusca o email no HTML gerado (dificulta scrapers de spam mais básicos).
+const emailEntities = [...SITE.email]
+  .map((c) => `&#${c.charCodeAt(0)};`)
+  .join('');
+---
+
+<BaseLayout lang={lang} title={dict.contact.title} altUrl={routes.contact[other]} active="contact">
+  <div class="page-head">
+    <h1>{dict.contact.title}</h1>
+    <p class="intro">{dict.contact.intro}</p>
+  </div>
+
+  <div class="table-scroll">
+    <table class="result-table">
+      <tbody>
+        <tr>
+          <th>{dict.contact.emailLabel}</th>
+          <td><a href={`mailto:${SITE.email}`} set:html={emailEntities} /></td>
+        </tr>
+        {SITE.github && (
+          <tr>
+            <th>{dict.contact.githubLabel}</th>
+            <td><a href={SITE.github} rel="noopener">{SITE.github.replace('https://', '')}</a></td>
+          </tr>
+        )}
+        {SITE.linkedin && (
+          <tr>
+            <th>{dict.contact.linkedinLabel}</th>
+            <td><a href={SITE.linkedin} rel="noopener">{SITE.linkedin.replace('https://', '')}</a></td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</BaseLayout>

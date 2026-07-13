@@ -1,0 +1,60 @@
+# CLAUDE.md — convenções do projeto
+
+Monorepo do site pessoal. Três áreas com papéis rígidos:
+
+- `content/` — markdown/JSON de conteúdo. **Nunca** pôr código aqui.
+- `static/` — site estático Astro. Lê `content/` via loaders (`glob`, import JSON).
+- `dynamic/` — ainda não existe código; só `PLAN.md`. Não criar código aqui
+  sem decisão explícita do dono do repo.
+
+## Comandos
+
+```bash
+cd static
+npm run dev       # desenvolvimento
+npm run build     # build de produção (tem de passar sem erros antes de qualquer PR)
+npm run preview   # servir o build localmente
+```
+
+## Regras de arquitetura
+
+1. **Bilingue por construção.** Cada página existe em PT (`/`) e EN (`/en/`).
+   As rotas em `static/src/pages/` são *finas* (3 linhas): importam uma
+   componente de `src/components/pages/` e passam `lang`. Toda a lógica vive
+   na componente partilhada — nunca duplicar lógica entre PT e EN.
+2. **Strings de UI** vão todas para `static/src/i18n/ui.ts` (PT e EN juntos,
+   mesma estrutura). Zero strings hardcoded em componentes.
+3. **Rotas novas** registam-se em `static/src/i18n/routes.ts` (par PT/EN) —
+   é isto que alimenta a nav e o seletor de idioma.
+4. **Conteúdo por idioma** segue o padrão `content/<coleção>/pt/…` +
+   `content/<coleção>/en/…` com o **mesmo nome de ficheiro** nos dois lados
+   (é assim que o seletor PT/EN liga as versões).
+5. **Dados pessoais/configuráveis** (nome, handle, email, domínio, redes)
+   só em `static/src/config.ts`.
+
+## Ferramentas client-side
+
+- A lógica pura (sem DOM) vive em `static/src/scripts/*.js` para poder ser
+  testada em Node; as componentes em `src/components/tools/*.astro` só fazem
+  a ligação ao DOM.
+- **Tudo client-side**: nenhuma ferramenta em `static/` pode fazer chamadas de
+  rede ou depender de backend. Ferramentas que precisem de servidor pertencem
+  ao futuro `dynamic/` (ver `dynamic/PLAN.md`).
+- Ao alterar lógica, validar com vetores conhecidos (ex.: MD5 de RFC 1321,
+  redes /24 e /31) — correr com
+  `node --input-type=module -e "import(...)"` ou similar.
+
+## Estilo
+
+- CSS global único em `static/src/styles/global.css` com custom properties
+  (`--bg`, `--accent`, …). Usar as variáveis, não cores literais.
+- Estética: escuro, técnico, sóbrio, acento verde-terminal (`--accent`) e
+  âmbar (`--accent-2`) para o Lab/avisos. Mobile-first.
+- Português europeu (não brasileiro) em todo o conteúdo PT.
+
+## Antes de terminar qualquer alteração
+
+1. `cd static && npm run build` — tem de completar sem erros nem warnings novos.
+2. Se mexeste nas ferramentas, testa a lógica com vetores conhecidos.
+3. Se adicionaste página nova, cria as **duas** versões (PT + EN) e o par em
+   `routes.ts`.

@@ -1,0 +1,75 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.encoder;
+
+const jsStrings = { error: s.error, copy: s.copy, copied: s.copied };
+---
+
+<div class="tool-panel" id="encoder-tool" data-strings={JSON.stringify(jsStrings)}>
+  <div class="field">
+    <label for="enc-mode">{s.mode}</label>
+    <select id="enc-mode">
+      <option value="base64" selected>Base64</option>
+      <option value="url">URL (percent-encoding)</option>
+      <option value="hex">Hex</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="enc-input">{s.inputLabel}</label>
+    <textarea id="enc-input" spellcheck="false" placeholder="olá, mundo"></textarea>
+  </div>
+  <div class="btn-row">
+    <button type="button" class="btn" id="enc-encode">{s.encode}</button>
+    <button type="button" class="btn" id="enc-decode">{s.decode}</button>
+    <button type="button" class="btn ghost" id="enc-swap">{s.swap}</button>
+  </div>
+  <p class="error-msg" id="enc-error" hidden></p>
+  <div class="field" style="margin-top: 1rem;">
+    <label for="enc-output">{s.outputLabel}</label>
+    <textarea id="enc-output" spellcheck="false" readonly></textarea>
+  </div>
+  <div class="btn-row">
+    <button type="button" class="btn ghost small" id="enc-copy">{s.copy}</button>
+  </div>
+</div>
+
+<script>
+  import { codecs } from '../../scripts/encoding.js';
+
+  const root = document.getElementById('encoder-tool')!;
+  const strings = JSON.parse(root.dataset.strings!);
+  const mode = document.getElementById('enc-mode') as HTMLSelectElement;
+  const input = document.getElementById('enc-input') as HTMLTextAreaElement;
+  const output = document.getElementById('enc-output') as HTMLTextAreaElement;
+  const errorEl = document.getElementById('enc-error')!;
+  const copyBtn = document.getElementById('enc-copy') as HTMLButtonElement;
+
+  function run(direction: 'encode' | 'decode') {
+    const codec = codecs[mode.value as keyof typeof codecs];
+    try {
+      output.value = codec[direction](input.value);
+      errorEl.hidden = true;
+    } catch {
+      output.value = '';
+      errorEl.textContent = strings.error;
+      errorEl.hidden = false;
+    }
+  }
+
+  document.getElementById('enc-encode')!.addEventListener('click', () => run('encode'));
+  document.getElementById('enc-decode')!.addEventListener('click', () => run('decode'));
+  document.getElementById('enc-swap')!.addEventListener('click', () => {
+    input.value = output.value;
+    output.value = '';
+    errorEl.hidden = true;
+  });
+  copyBtn.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(output.value);
+    copyBtn.textContent = strings.copied;
+    setTimeout(() => (copyBtn.textContent = strings.copy), 1500);
+  });
+</script>

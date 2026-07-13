@@ -1,0 +1,81 @@
+[
+  {
+    "category": { "pt": "Segurança", "en": "Security" },
+    "items": [
+      {
+        "name": "Have I Been Pwned",
+        "url": "https://haveibeenpwned.com",
+        "desc": {
+          "pt": "Verifica se um email apareceu em fugas de dados.",
+          "en": "Check if an email appeared in data breaches."
+        }
+      },
+      {
+        "name": "CVE Details",
+        "url": "https://www.cvedetails.com",
+        "desc": {
+          "pt": "Base de dados de vulnerabilidades pesquisável.",
+          "en": "Searchable vulnerability database."
+        }
+      },
+      {
+        "name": "Shodan",
+        "url": "https://www.shodan.io",
+        "desc": {
+          "pt": "Motor de busca de dispositivos expostos na internet.",
+          "en": "Search engine for internet-exposed devices."
+        }
+      }
+    ]
+  },
+  {
+    "category": { "pt": "Redes & Utilidades", "en": "Networking & Utilities" },
+    "items": [
+      {
+        "name": "Cloudflare Radar",
+        "url": "https://radar.cloudflare.com",
+        "desc": {
+          "pt": "Tendências e estado da internet em tempo real.",
+          "en": "Internet trends and status in real time."
+        }
+      },
+      {
+        "name": "DNSChecker",
+        "url": "https://dnschecker.org",
+        "desc": {
+          "pt": "Propagação de DNS a partir de vários pontos do mundo.",
+          "en": "DNS propagation from multiple points worldwide."
+        }
+      },
+      {
+        "name": "explainshell",
+        "url": "https://explainshell.com",
+        "desc": {
+          "pt": "Explica comandos de shell argumento a argumento.",
+          "en": "Explains shell commands argument by argument."
+        }
+      }
+    ]
+  },
+  {
+    "category": { "pt": "Aprender", "en": "Learning" },
+    "items": [
+      {
+        "name": "TryHackMe",
+        "url": "https://tryhackme.com",
+        "desc": {
+          "pt": "Laboratórios práticos de segurança, do básico ao avançado.",
+          "en": "Hands-on security labs, from basics to advanced."
+        }
+      },
+      {
+        "name": "OverTheWire",
+        "url": "https://overthewire.org",
+        "desc": {
+          "pt": "Wargames clássicos para praticar Linux e segurança.",
+          "en": "Classic wargames to practice Linux and security."
+        }
+      }
+    ]
+  }
+]
