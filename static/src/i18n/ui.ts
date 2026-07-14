@@ -24,18 +24,21 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
       statsLabel: 'stats',
-      live: 'live',
       location: 'Porto, PT',
       bio: 'Planeamento e operação de infraestruturas de rede e cibersegurança. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
       chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
+      // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
+      // exclui Portugal/Ascendi que é a base atual, não um destacamento
+      // internacional). O nº de ferramentas é calculado em HomePage.astro
+      // a partir do array `tools` (não hardcoded, para não desatualizar).
       statsStatic: [
         { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
         { n: '9', d: 'certificações NSE/SANS', tone: 'amber' },
+        { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
       ],
-      statsRepos: 'repos curados no GitHub',
-      statsCategories: 'categorias no catálogo',
-      statsUpdated: 'atualizado',
+      statsTools: 'ferramentas construídas',
       journey: {
         title: 'Percurso · redes & segurança em 4 países',
         items: [
@@ -233,18 +236,21 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
       statsLabel: 'stats',
-      live: 'live',
       location: 'Porto, PT',
       bio: 'Planning and operating network and cybersecurity infrastructures. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
       chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      // Competence signals (not consumption). Country count matches the "4"
+      // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
+      // excludes Portugal/Ascendi, which is the current home base, not an
+      // international posting). Tool count is computed in HomePage.astro
+      // from the `tools` array (not hardcoded, to avoid going stale).
       statsStatic: [
         { n: '6+', d: 'years in security & networking', tone: 'green' },
         { n: '9', d: 'NSE/SANS certifications', tone: 'amber' },
+        { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
       ],
-      statsRepos: 'curated repos on GitHub',
-      statsCategories: 'catalog categories',
-      statsUpdated: 'updated',
+      statsTools: 'tools built',
       journey: {
         title: 'Journey · networking & security across 4 countries',
         items: [
