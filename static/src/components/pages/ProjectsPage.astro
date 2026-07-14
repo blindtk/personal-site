@@ -1,0 +1,43 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
+  .sort((a, b) => a.data.order - b.data.order);
+
+const projects = await Promise.all(
+  entries.map(async (entry) => ({ entry, Content: (await render(entry)).Content }))
+);
+---
+
+<BaseLayout lang={lang} title={dict.projects.title} altUrl={routes.projects[other]} active="projects">
+  <div class="page-head">
+    <h1>{dict.projects.title}</h1>
+    <p class="intro">{dict.projects.intro}</p>
+  </div>
+
+  <div class="grid grid-2">
+    {projects.map(({ entry, Content }) => (
+      <div class="card">
+        <h3>{entry.data.title}</h3>
+        <p>{entry.data.description}</p>
+        <div class="prose" style="font-size: 0.92rem;">
+          <Content />
+        </div>
+        <div class="meta">
+          {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+          {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
+          {entry.data.demo && <a href={entry.data.demo} rel="noopener">[{dict.projects.demo}]</a>}
+        </div>
+      </div>
+    ))}
+  </div>
+</BaseLayout>

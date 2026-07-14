@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurora Glass</title>
+<style>
+  :root{
+    --bg:#07090d;--text:#eef1f6;--muted:#a3adbd;--faint:#66707f;
+    --teal:#2dd4bf;--blue:#60a5fa;--purple:#a78bfa;
+    --glass:rgba(255,255,255,.045);--gborder:rgba(255,255,255,.09);
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;overflow-x:hidden}
+  .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;filter:blur(70px);opacity:.55}
+  .aurora .b1{position:absolute;top:-15%;left:8%;width:44vw;height:36vh;background:radial-gradient(ellipse,rgba(45,212,191,.5),transparent 65%)}
+  .aurora .b2{position:absolute;top:-8%;right:5%;width:38vw;height:34vh;background:radial-gradient(ellipse,rgba(96,165,250,.42),transparent 65%)}
+  .aurora .b3{position:absolute;top:26%;left:38%;width:32vw;height:26vh;background:radial-gradient(ellipse,rgba(167,139,250,.3),transparent 65%)}
+  .container{max-width:64rem;margin:0 auto;padding:0 1.3rem;position:relative;z-index:1}
+  a{color:var(--text);text-decoration:none}
+  h1,h2,h3{letter-spacing:-.02em}
+  nav{position:sticky;top:0;z-index:10;border-bottom:1px solid var(--gborder);background:rgba(7,9,13,.6);backdrop-filter:blur(16px)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;min-height:3.6rem}
+  .brand{font-family:var(--mono);font-size:.95rem;font-weight:600}
+  .brand::before{content:'⌁ ';color:var(--teal)}
+  .links{display:flex;gap:.2rem;list-style:none;margin:0;padding:0}
+  .links a{font-size:.87rem;color:var(--muted);padding:.4rem .7rem;border-radius:999px}
+  .links a:hover{color:var(--text);background:var(--glass)}
+  .links a.lab{color:var(--teal)}
+  .lang{font-size:.8rem;color:var(--muted);border:1px solid var(--gborder);border-radius:999px;padding:.32rem .65rem}
+
+  .hero{padding:4.5rem 0 2.5rem;text-align:center}
+  .avatarring{width:92px;height:92px;margin:0 auto 1.4rem;border-radius:50%;padding:3px;
+    background:conic-gradient(from 20deg,var(--teal),var(--blue),var(--purple),var(--teal));}
+  .avatarring .inner{width:100%;height:100%;border-radius:50%;background:#0d1117;display:flex;align-items:center;justify-content:center;font-family:var(--mono);color:var(--teal);font-size:1.05rem;font-weight:700}
+  h1.name{font-size:clamp(2.3rem,6vw,3.4rem);margin:0;line-height:1.06}
+  .grad{background:linear-gradient(100deg,var(--teal),var(--blue) 55%,var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .role{color:var(--muted);font-size:1.15rem;margin:.9rem 0 0}
+  .sum{color:var(--muted);max-width:36rem;margin:1.1rem auto 0;font-size:.98rem}
+  .badges{display:flex;justify-content:center;flex-wrap:wrap;gap:.5rem;margin-top:1.6rem}
+  .badge{font-family:var(--mono);font-size:.74rem;padding:.3rem .75rem;border-radius:999px;background:var(--glass);border:1px solid var(--gborder);backdrop-filter:blur(8px);color:var(--muted)}
+  .badge.t{color:var(--teal)}
+
+  .st{font-size:1.35rem;margin:3.5rem 0 1.2rem;font-weight:650}
+  .st::before{content:'§ ';color:var(--teal);font-family:var(--mono)}
+  .grid{display:grid;gap:1rem;grid-template-columns:1fr 1fr}
+  .card{background:var(--glass);border:1px solid var(--gborder);border-radius:16px;padding:1.35rem;backdrop-filter:blur(14px);transition:.18s}
+  .card:hover{border-color:rgba(45,212,191,.5);transform:translateY(-3px)}
+  .card h3{margin:0 0 .35rem;font-size:1.05rem}
+  .card p{margin:0;color:var(--muted);font-size:.9rem}
+  .card .k{font-family:var(--mono);font-size:.7rem;color:var(--teal);display:block;margin-bottom:.55rem;text-transform:uppercase;letter-spacing:.08em}
+  footer{border-top:1px solid var(--gborder);margin-top:4rem;padding:2rem 0;color:var(--faint);font-size:.84rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="aurora"><div class="b1"></div><div class="b2"></div><div class="b3"></div></div>
+
+<nav><div class="container in">
+  <span class="brand">whoami</span>
+  <ul class="links">
+    <li><a href="#">Sobre</a></li><li><a href="#">Blog</a></li><li><a href="#">Projetos</a></li>
+    <li><a href="#">Ferramentas</a></li><li><a href="#">Links</a></li><li><a href="#">Contactos</a></li>
+    <li><a class="lab" href="#">Lab</a></li><li><a class="lang" href="#">EN</a></li>
+  </ul>
+</div></nav>
+
+<div class="container">
+  <section class="hero">
+    <div class="avatarring"><div class="inner">&gt;_</div></div>
+    <h1 class="name">Daniel <span class="grad">Assis Malaco</span></h1>
+    <p class="role">Information Security Engineer</p>
+    <p class="sum">Infraestruturas de rede e cibersegurança: NGFW, EDR, SIEM, forense digital e resposta a incidentes. Porto, Portugal.</p>
+    <div class="badges">
+      <span class="badge t">Fortinet NSE 4–7</span><span class="badge t">SANS SEC504</span>
+      <span class="badge">CTF Winner 2022</span><span class="badge">MSc · FEUP</span><span class="badge">@ Ascendi</span>
+    </div>
+  </section>
+
+  <h2 class="st">Últimos posts</h2>
+  <div class="grid">
+    <div class="card"><span class="k">meta · 13 jul 2026</span><h3>Hello, world</h3><p>Porquê um site pessoal e como está construído.</p></div>
+    <div class="card"><span class="k">fortinet</span><h3>Hardening de NGFW na prática</h3><p>Notas de campo sobre políticas, inspeção e logging.</p></div>
+  </div>
+
+  <h2 class="st">Ferramentas</h2>
+  <div class="grid">
+    <div class="card"><span class="k">rede</span><h3>Calculadora de subnets</h3><p>CIDR, máscaras, broadcast, hosts e binário.</p></div>
+    <div class="card"><span class="k">cripto</span><h3>Hashes</h3><p>MD5, SHA-1/256/512 de texto ou ficheiros.</p></div>
+  </div>
+</div>
+<footer>© 2026 Daniel Assis Malaco — Information Security Engineer</footer>
+</body>
+</html>

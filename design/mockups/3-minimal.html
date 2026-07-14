@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minimal Moderno</title>
+<style>
+  :root{
+    --bg:#0b0c0f;--raise:#141519;--raise2:#1b1d22;--border:#24262d;--text:#e6e7ea;
+    --muted:#9a9ca6;--faint:#6b6d77;--accent:#7c93ff;--accent2:#5ee3a1;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(ellipse 60% 50% at 50% -20%,rgba(124,147,255,.12),transparent);}
+  .container{max-width:60rem;margin:0 auto;padding:0 1.3rem}
+  a{color:var(--text);text-decoration:none}
+  h1,h2,h3{letter-spacing:-.02em;font-weight:650}
+  nav{position:sticky;top:0;z-index:5;background:rgba(11,12,15,.7);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;min-height:3.6rem}
+  .brand{font-weight:700;font-size:1rem;display:flex;align-items:center;gap:.5rem}
+  .brand .dotb{width:9px;height:9px;border-radius:50%;background:var(--accent2);box-shadow:0 0 10px var(--accent2)}
+  .links{display:flex;gap:.3rem;list-style:none;margin:0;padding:0}
+  .links a{font-size:.88rem;color:var(--muted);padding:.4rem .7rem;border-radius:8px;transition:.15s}
+  .links a:hover{color:var(--text);background:var(--raise2)}
+  .links a.lab{color:var(--accent2)}
+  .lang{font-size:.82rem;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:.32rem .6rem}
+  .hero{padding:5rem 0 3rem}
+  .eyebrow{font-family:var(--mono);font-size:.8rem;color:var(--accent);letter-spacing:.04em;margin:0 0 1rem;
+    display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .7rem;border:1px solid var(--border);border-radius:999px;background:var(--raise)}
+  .eyebrow .g{width:7px;height:7px;border-radius:50%;background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
+  h1.name{font-size:clamp(2.4rem,6vw,3.6rem);line-height:1.05;margin:0}
+  .grad{background:linear-gradient(120deg,#fff 20%,var(--accent) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .role{font-size:1.25rem;color:var(--muted);margin:.8rem 0 0;font-weight:500}
+  .sum{color:var(--muted);max-width:38rem;margin:1.3rem 0 0;font-size:1.02rem}
+  .cta{display:flex;gap:.7rem;margin-top:2rem;flex-wrap:wrap}
+  .btn{font-size:.9rem;font-weight:600;padding:.6rem 1.2rem;border-radius:10px;border:1px solid var(--border)}
+  .btn.p{background:var(--accent);color:#0b0c0f;border-color:var(--accent)}
+  .btn.g{background:var(--raise);color:var(--text)}
+  .st{font-size:1.5rem;margin:4rem 0 1.4rem}
+  .st span{color:var(--faint);font-family:var(--mono);font-size:1rem;font-weight:400;margin-left:.5rem}
+  .grid{display:grid;gap:1rem;grid-template-columns:1fr 1fr}
+  .card{background:var(--raise);border:1px solid var(--border);border-radius:14px;padding:1.4rem;transition:.18s}
+  .card:hover{border-color:var(--accent);background:var(--raise2);transform:translateY(-3px)}
+  .card h3{margin:0 0 .4rem;font-size:1.1rem}
+  .card p{margin:0;color:var(--muted);font-size:.92rem}
+  .card .k{font-family:var(--mono);font-size:.72rem;color:var(--accent2);margin-bottom:.6rem;display:block}
+  footer{border-top:1px solid var(--border);margin-top:4rem;padding:2rem 0;color:var(--faint);font-size:.85rem}
+</style>
+</head>
+<body>
+<nav><div class="container in">
+  <span class="brand"><span class="dotb"></span> Daniel Malaco</span>
+  <ul class="links">
+    <li><a href="#">Sobre</a></li><li><a href="#">Blog</a></li><li><a href="#">Projetos</a></li>
+    <li><a href="#">Ferramentas</a></li><li><a href="#">Links</a></li><li><a href="#">Contactos</a></li>
+    <li><a class="lab" href="#">Lab</a></li><li><a class="lang" href="#">EN</a></li>
+  </ul>
+</div></nav>
+
+<div class="container">
+  <section class="hero">
+    <span class="eyebrow"><span class="g"></span> Disponível para desafios em segurança</span>
+    <h1 class="name">Daniel <span class="grad">Assis Malaco</span></h1>
+    <p class="role">Information Security Engineer · Porto, Portugal</p>
+    <p class="sum">Planeio e opero infraestruturas de rede e cibersegurança. Foco em threat intelligence, forense digital e resposta a incidentes — Fortinet NSE 4–7, SANS SEC504, MSc pela FEUP.</p>
+    <div class="cta"><a class="btn p" href="#">Ver projetos</a><a class="btn g" href="#">Contactar →</a></div>
+  </section>
+
+  <h2 class="st">Últimos posts <span>/ blog</span></h2>
+  <div class="grid">
+    <div class="card"><span class="k">meta · 13 jul 2026</span><h3>Hello, world</h3><p>Porquê um site pessoal e como está construído.</p></div>
+    <div class="card"><span class="k">fortinet</span><h3>Hardening de NGFW na prática</h3><p>Notas de campo sobre políticas, inspeção e logging.</p></div>
+  </div>
+
+  <h2 class="st">Ferramentas <span>/ client-side</span></h2>
+  <div class="grid">
+    <div class="card"><span class="k">rede</span><h3>Calculadora de subnets</h3><p>CIDR, máscaras, broadcast, hosts e binário.</p></div>
+    <div class="card"><span class="k">cripto</span><h3>Hashes</h3><p>MD5, SHA-1/256/512 de texto ou ficheiros.</p></div>
+  </div>
+</div>
+<footer><div class="container">© 2026 Daniel Assis Malaco — Information Security Engineer</div></footer>
+</body>
+</html>

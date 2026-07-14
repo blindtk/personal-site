@@ -1,0 +1,114 @@
+---
+import { SITE, SITE_URL, type Lang } from '../config';
+import { t } from '../i18n/ui';
+import { routes, type RouteKey } from '../i18n/routes';
+import '../styles/global.css';
+
+interface Props {
+  lang: Lang;
+  title: string;
+  description?: string;
+  /** URL da mesma página no outro idioma (para o seletor PT/EN e hreflang). */
+  altUrl?: string;
+  /** Chave da rota ativa, para destacar na nav. */
+  active?: RouteKey;
+}
+
+const { lang, title, description, altUrl, active } = Astro.props;
+const dict = t(lang);
+const otherLang: Lang = lang === 'pt' ? 'en' : 'pt';
+const desc = description ?? SITE.description[lang];
+const pageTitle = `${title} · ${SITE.handle}`;
+
+const navItems: { key: RouteKey; label: string }[] = [
+  { key: 'about', label: dict.nav.about },
+  { key: 'blog', label: dict.nav.blog },
+  { key: 'projects', label: dict.nav.projects },
+  { key: 'tools', label: dict.nav.tools },
+  { key: 'links', label: dict.nav.links },
+  { key: 'contact', label: dict.nav.contact },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={desc} />
+    <meta name="author" content={SITE.name} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={new URL(currentPath, SITE_URL)} />
+    {altUrl && <link rel="alternate" hreflang={otherLang} href={new URL(altUrl, SITE_URL)} />}
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={new URL(currentPath, SITE_URL)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{dict.a11y.skipToContent}</a>
+
+    <nav class="site-nav">
+      <div class="container inner">
+        <a class="brand" href={routes.home[lang]}>
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="cmd">{SITE.handle}</span>
+        </a>
+        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links">
+          {dict.nav.menu} ≡
+        </button>
+        <ul class="nav-links" id="nav-links">
+          {navItems.map((item) => (
+            <li>
+              <a
+                href={routes[item.key][lang]}
+                aria-current={active === item.key ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a
+              class="lab-link"
+              href={routes.lab[lang]}
+              aria-current={active === 'lab' ? 'page' : undefined}
+            >
+              {dict.nav.lab} ⚡
+            </a>
+          </li>
+          <li>
+            <a class="lang-switch" href={altUrl ?? routes.home[otherLang]} aria-label={dict.a11y.switchLang}>
+              {otherLang.toUpperCase()}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main id="main" class="container">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container inner">
+        <span>© {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]}</span>
+        <span>
+          {dict.footer.built}
+          <a href={SITE.github} rel="noopener">GitHub</a>. {dict.footer.rights}
+        </span>
+      </div>
+    </footer>
+
+    <script>
+      const toggle = document.querySelector('.nav-toggle');
+      const links = document.getElementById('nav-links');
+      toggle?.addEventListener('click', () => {
+        const open = links?.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(Boolean(open)));
+      });
+    </script>
+  </body>
+</html>

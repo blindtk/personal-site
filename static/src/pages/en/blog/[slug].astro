@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+import BlogPostPage from '../../../components/pages/BlogPostPage.astro';
+import { blogPostUrl } from '../../../i18n/routes';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', (e) => e.id.startsWith('en/') && !e.data.draft);
+  const ptPosts = await getCollection('blog', (e) => e.id.startsWith('pt/') && !e.data.draft);
+  const ptSlugs = new Set(ptPosts.map((e) => e.id.slice(3)));
+  return posts.map((post) => {
+    const slug = post.id.slice(3);
+    return {
+      params: { slug },
+      props: { post, altUrl: ptSlugs.has(slug) ? blogPostUrl('pt', slug) : undefined },
+    };
+  });
+}
+
+const { post, altUrl } = Astro.props;
+---
+
+<BlogPostPage lang="en" post={post} altUrl={altUrl} />

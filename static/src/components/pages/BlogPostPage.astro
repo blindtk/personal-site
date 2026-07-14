@@ -1,0 +1,41 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props {
+  lang: Lang;
+  post: CollectionEntry<'blog'>;
+  /** URL do mesmo post no outro idioma, se existir. */
+  altUrl?: string;
+}
+const { lang, post, altUrl } = Astro.props;
+const dict = t(lang);
+const { Content } = await render(post);
+
+const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'long' });
+---
+
+<BaseLayout
+  lang={lang}
+  title={post.data.title}
+  description={post.data.description}
+  altUrl={altUrl}
+  active="blog"
+>
+  <div class="page-head">
+    <h1>{post.data.title}</h1>
+  </div>
+  <p class="post-meta">
+    {dict.blog.published} {dateFmt.format(post.data.pubDate)}
+    {post.data.tags.length > 0 && ' · '}
+    {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+  </p>
+  <article class="prose">
+    <Content />
+  </article>
+  <hr />
+  <a href={routes.blog[lang]} class="mono">{dict.blog.back}</a>
+</BaseLayout>

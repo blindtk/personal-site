@@ -1,0 +1,568 @@
+---
+import { getEntry, render } from 'astro:content';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+import { getCatalog } from '../../lib/catalog';
+import SubnetCalc from '../tools/SubnetCalc.astro';
+import HashTool from '../tools/HashTool.astro';
+import EncoderTool from '../tools/EncoderTool.astro';
+import PasswordGen from '../tools/PasswordGen.astro';
+import { SITE } from '../../config';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const lab = dict.lab;
+
+const aboutEntry = await getEntry('pages', lang === 'pt' ? 'sobre' : 'about');
+if (!aboutEntry) throw new Error('Missing about content for lab');
+const { Content: AboutContent } = await render(aboutEntry);
+
+// Catálogo (slim) para o comando `stars` do terminal.
+const catalog = await getCatalog();
+const slimCatalog = catalog
+  ? {
+      totalRepos: catalog.totalRepos,
+      categories: catalog.categories.map((c) => ({
+        name: c.name,
+        count: c.count,
+        repos: c.repos.map((r) => ({ name: r.name, url: r.url, stars: r.stars })),
+      })),
+    }
+  : null;
+
+const termCtx = {
+  lang,
+  bio: [
+    `${SITE.name} — ${SITE.role[lang]}`,
+    dict.home.bio,
+    `${dict.home.location} · ${SITE.github}`,
+  ],
+  aboutMd: aboutEntry.body ?? '',
+  roadmap: lab.roadmapBody,
+  welcome: lab.termWelcome,
+};
+
+const windows = [
+  { id: 'terminal', title: 'terminal', icon: '>_' },
+  { id: 'subnets', title: dict.tools.subnets.name, icon: '⌗' },
+  { id: 'hashes', title: dict.tools.hashes.name, icon: '#' },
+  { id: 'encoder', title: dict.tools.encoder.name, icon: '⇄' },
+  { id: 'passwords', title: dict.tools.passwords.name, icon: '⚿' },
+  { id: 'sobre', title: lab.windowAbout, icon: '☰' },
+  { id: 'roadmap', title: lab.windowRoadmap, icon: '⚑' },
+];
+---
+
+<div class="lab-mobile">
+  <div class="construction">
+    <strong>[ {lab.mobileTitle} ]</strong>
+  </div>
+  <p class="intro" style="color: var(--muted); max-width: 42rem;">{lab.mobileBody}</p>
+  <a class="btn" href={routes.tools[lang]}>{lab.mobileCta} →</a>
+</div>
+
+<div
+  class="lab-desktop"
+  id="lab-desktop"
+  data-ctx={JSON.stringify(termCtx)}
+  data-catalog={JSON.stringify(slimCatalog)}
+>
+  <p class="lab-hint mono">{lab.desktopHint}</p>
+
+  <div class="desk" id="desk">
+    <div class="icons">
+      {windows.map((win) => (
+        <button class="dicon" data-open={win.id}>
+          <span class="glyph">{win.icon}</span>
+          <span class="ilabel">{win.title}</span>
+        </button>
+      ))}
+    </div>
+
+    {/* ---- janelas ---- */}
+    <div class="win closed" data-win="terminal" style="width:660px;height:420px;left:220px;top:24px;">
+      <div class="win-bar"><span class="wt">>_ terminal</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body term">
+        <div class="term-out" data-term-out></div>
+        <div class="term-in">
+          <span class="ps mono">~$</span>
+          <input data-term-input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="terminal" />
+        </div>
+      </div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="subnets" style="width:560px;height:520px;left:120px;top:48px;">
+      <div class="win-bar"><span class="wt">⌗ {dict.tools.subnets.name}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body"><SubnetCalc lang={lang} /></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="hashes" style="width:600px;height:560px;left:160px;top:72px;">
+      <div class="win-bar"><span class="wt"># {dict.tools.hashes.name}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body"><HashTool lang={lang} /></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="encoder" style="width:560px;height:560px;left:200px;top:96px;">
+      <div class="win-bar"><span class="wt">⇄ {dict.tools.encoder.name}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body"><EncoderTool lang={lang} /></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="passwords" style="width:520px;height:560px;left:240px;top:120px;">
+      <div class="win-bar"><span class="wt">⚿ {dict.tools.passwords.name}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body"><PasswordGen lang={lang} /></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="sobre" style="width:640px;height:540px;left:280px;top:40px;">
+      <div class="win-bar"><span class="wt">☰ {lab.windowAbout}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body prose-scroll"><div class="prose"><AboutContent /></div></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="roadmap" style="width:520px;height:320px;left:320px;top:140px;">
+      <div class="win-bar"><span class="wt">⚑ {lab.windowRoadmap}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body">
+        <pre class="roadmap-pre">{lab.roadmapBody.join('\n')}</pre>
+      </div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <div class="taskbar">
+    <span class="tb-brand mono">⚡ lab</span>
+    <div class="tb-items" id="tb-items"></div>
+    <span class="tb-clock mono" id="tb-clock"></span>
+  </div>
+</div>
+
+<style>
+  /* ---- fallback mobile ---- */
+  .lab-mobile { display: none; }
+  @media (max-width: 900px) {
+    .lab-mobile { display: block; }
+    .lab-desktop { display: none; }
+  }
+
+  .lab-hint {
+    font-size: 0.75rem;
+    color: var(--faint);
+    margin: 0.8rem 0 0.5rem;
+  }
+
+  .desk {
+    position: relative;
+    height: calc(100vh - 14rem);
+    min-height: 540px;
+    background: var(--bg-raise);
+    background-image: radial-gradient(rgba(219, 228, 239, 0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+    border: 1px solid var(--border);
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+  }
+
+  .icons {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 1;
+  }
+  .dicon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    width: 84px;
+    padding: 0.55rem 0.3rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--mono);
+  }
+  .dicon:hover {
+    background: rgba(61, 220, 132, 0.08);
+    border-color: var(--border-strong);
+  }
+  .dicon .glyph {
+    font-size: 1.5rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .dicon .ilabel {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-align: center;
+    word-break: break-word;
+  }
+
+  /* ---- janelas ---- */
+  .win {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    min-width: 320px;
+    min-height: 200px;
+    max-width: 96%;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    z-index: 5;
+  }
+  .win.closed { display: none; }
+  .win.focused { border-color: var(--accent); }
+
+  .win-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-raise-2);
+    border-bottom: 1px solid var(--border);
+    padding: 0.35rem 0.6rem;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+  }
+  .win-bar:active { cursor: grabbing; }
+  .win-bar .wt {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .win.focused .win-bar .wt { color: var(--accent); }
+  .win-bar .wa { display: flex; gap: 0.3rem; }
+  .win-bar button {
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: var(--bg-raise);
+    color: var(--muted);
+    font-family: var(--mono);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .win-bar button:hover { color: var(--text); border-color: var(--border-strong); }
+
+  .win-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0.4rem 0.6rem;
+  }
+  .win-body :global(.tool-panel) {
+    margin-top: 0.4rem;
+    border: none;
+    background: transparent;
+    padding: 0.6rem 0.4rem;
+  }
+  .prose-scroll { padding: 0.8rem 1.1rem; }
+  .roadmap-pre {
+    border: none;
+    background: transparent;
+    padding: 0.6rem 0.4rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .win-resize {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--border-strong) 50%);
+    border-bottom-right-radius: 8px;
+    touch-action: none;
+  }
+
+  /* ---- terminal ---- */
+  .term {
+    display: flex;
+    flex-direction: column;
+    background: #070a0e;
+    padding: 0.6rem 0.7rem;
+  }
+  .term-out {
+    flex: 1;
+    overflow-y: auto;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+  }
+  .term-out :global(.t-cmd) { color: var(--accent); }
+  .term-out :global(.t-dim) { color: var(--muted); }
+  .term-in {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.45rem;
+    margin-top: 0.45rem;
+  }
+  .term-in .ps { color: var(--faint); font-size: 0.8rem; }
+  .term-in input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0;
+  }
+
+  /* ---- taskbar ---- */
+  .taskbar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 0.4rem 0.8rem;
+  }
+  .tb-brand {
+    font-size: 0.78rem;
+    color: var(--accent-2);
+    white-space: nowrap;
+  }
+  .tb-items {
+    display: flex;
+    gap: 0.4rem;
+    flex: 1;
+    overflow-x: auto;
+  }
+  .tb-items :global(button) {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tb-items :global(button.active) {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .tb-clock {
+    font-size: 0.72rem;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { createTerminal } from '../../scripts/lab-terminal.js';
+
+  const root = document.getElementById('lab-desktop');
+  const isDesktop = root && getComputedStyle(root).display !== 'none';
+
+  if (root && isDesktop) {
+    const desk = document.getElementById('desk')!;
+    const tbItems = document.getElementById('tb-items')!;
+    const wins = new Map<string, HTMLElement>();
+    for (const el of desk.querySelectorAll<HTMLElement>('.win')) {
+      wins.set(el.dataset.win!, el);
+    }
+    let zTop = 10;
+
+    // ---------- gestor de janelas ----------
+    function focusWin(win: HTMLElement) {
+      zTop += 1;
+      win.style.zIndex = String(zTop);
+      for (const other of wins.values()) other.classList.toggle('focused', other === win);
+    }
+
+    function taskButton(id: string): HTMLButtonElement | null {
+      return tbItems.querySelector(`button[data-task="${id}"]`);
+    }
+
+    function openWin(id: string) {
+      const win = wins.get(id);
+      if (!win) return;
+      win.classList.remove('closed');
+      focusWin(win);
+      if (!taskButton(id)) {
+        const btn = document.createElement('button');
+        btn.dataset.task = id;
+        btn.textContent = win.querySelector('.wt')!.textContent!.trim();
+        btn.addEventListener('click', () => {
+          if (win.classList.contains('closed')) {
+            win.classList.remove('closed');
+            focusWin(win);
+          } else if (win.classList.contains('focused')) {
+            win.classList.add('closed'); // minimizar
+            btn.classList.remove('active');
+            return;
+          } else {
+            focusWin(win);
+          }
+          syncTaskbar();
+        });
+        tbItems.appendChild(btn);
+      }
+      syncTaskbar();
+      if (id === 'terminal') termInput.focus();
+    }
+
+    function syncTaskbar() {
+      for (const btn of tbItems.querySelectorAll<HTMLButtonElement>('button')) {
+        const win = wins.get(btn.dataset.task!)!;
+        btn.classList.toggle('active', !win.classList.contains('closed') && win.classList.contains('focused'));
+      }
+    }
+
+    for (const win of wins.values()) {
+      const id = win.dataset.win!;
+      win.addEventListener('pointerdown', () => { focusWin(win); syncTaskbar(); });
+
+      win.querySelector('[data-act="close"]')!.addEventListener('click', () => {
+        win.classList.add('closed');
+        taskButton(id)?.remove();
+      });
+      win.querySelector('[data-act="min"]')!.addEventListener('click', () => {
+        win.classList.add('closed');
+        syncTaskbar();
+      });
+
+      // arrastar pela barra de título
+      const bar = win.querySelector<HTMLElement>('.win-bar')!;
+      bar.addEventListener('pointerdown', (e) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        const startX = e.clientX, startY = e.clientY;
+        const startL = win.offsetLeft, startT = win.offsetTop;
+        bar.setPointerCapture(e.pointerId);
+        function move(ev: PointerEvent) {
+          const maxL = desk.clientWidth - 60;
+          const maxT = desk.clientHeight - 40;
+          win.style.left = Math.min(Math.max(startL + ev.clientX - startX, -win.offsetWidth + 80), maxL) + 'px';
+          win.style.top = Math.min(Math.max(startT + ev.clientY - startY, 0), maxT) + 'px';
+        }
+        function up() {
+          bar.removeEventListener('pointermove', move);
+          bar.removeEventListener('pointerup', up);
+        }
+        bar.addEventListener('pointermove', move);
+        bar.addEventListener('pointerup', up);
+      });
+
+      // redimensionar pelo canto
+      const grip = win.querySelector<HTMLElement>('.win-resize')!;
+      grip.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        const startX = e.clientX, startY = e.clientY;
+        const startW = win.offsetWidth, startH = win.offsetHeight;
+        grip.setPointerCapture(e.pointerId);
+        function move(ev: PointerEvent) {
+          win.style.width = Math.max(320, startW + ev.clientX - startX) + 'px';
+          win.style.height = Math.max(200, startH + ev.clientY - startY) + 'px';
+        }
+        function up() {
+          grip.removeEventListener('pointermove', move);
+          grip.removeEventListener('pointerup', up);
+        }
+        grip.addEventListener('pointermove', move);
+        grip.addEventListener('pointerup', up);
+      });
+    }
+
+    for (const icon of root.querySelectorAll<HTMLElement>('.dicon')) {
+      icon.addEventListener('click', () => openWin(icon.dataset.open!));
+    }
+
+    // ---------- relógio ----------
+    const clock = document.getElementById('tb-clock')!;
+    function tick() {
+      clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    tick();
+    setInterval(tick, 30_000);
+
+    // ---------- terminal ----------
+    const ctx = JSON.parse(root.dataset.ctx!);
+    const catalog = JSON.parse(root.dataset.catalog!);
+    const term = createTerminal({ ...ctx, catalog });
+    const termOut = root.querySelector<HTMLElement>('[data-term-out]')!;
+    const termInput = root.querySelector<HTMLInputElement>('[data-term-input]')!;
+    const history: string[] = [];
+    let histIdx = 0;
+
+    function print(text: string, cls = '') {
+      const div = document.createElement('div');
+      if (cls) div.className = cls;
+      div.textContent = text;
+      termOut.appendChild(div);
+      termOut.scrollTop = termOut.scrollHeight;
+    }
+
+    for (const line of ctx.welcome) print(line, 't-dim');
+
+    termInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (histIdx > 0) termInput.value = history[--histIdx] ?? '';
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        termInput.value = histIdx < history.length - 1 ? history[++histIdx] : ((histIdx = history.length), '');
+        return;
+      }
+      if (e.key !== 'Enter') return;
+      const raw = termInput.value;
+      termInput.value = '';
+      if (raw.trim()) {
+        history.push(raw);
+        histIdx = history.length;
+      }
+      print(`~$ ${raw}`, 't-cmd');
+      const result = await term.exec(raw);
+      if (result.clear) termOut.innerHTML = '';
+      for (const line of result.lines ?? []) print(line);
+      if (result.open) openWin(result.open);
+    });
+
+    desk.addEventListener('dblclick', (e) => {
+      if (e.target === desk) openWin('terminal');
+    });
+
+    // arranque: terminal aberto
+    openWin('terminal');
+  }
+</script>

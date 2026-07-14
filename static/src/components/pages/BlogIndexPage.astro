@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes, blogPostUrl } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) && !e.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
+---
+
+<BaseLayout lang={lang} title={dict.blog.title} altUrl={routes.blog[other]} active="blog">
+  <div class="page-head">
+    <h1>{dict.blog.title}</h1>
+    <p class="intro">{dict.blog.intro}</p>
+  </div>
+
+  {posts.length === 0 && <p>{dict.blog.empty}</p>}
+
+  <div class="grid">
+    {posts.map((post) => (
+      <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
+        <h3>{post.data.title}</h3>
+        <p>{post.data.description}</p>
+        <div class="meta">
+          <span>{dateFmt.format(post.data.pubDate)}</span>
+          {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+        </div>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

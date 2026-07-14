@@ -1,0 +1,157 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes, blogPostUrl, toolUrl } from '../../i18n/routes';
+import { getCatalog } from '../../lib/catalog';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) && !e.data.draft))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+
+const tools = [
+  { slug: 'subnets', ...dict.tools.subnets },
+  { slug: 'hashes', ...dict.tools.hashes },
+  { slug: 'encoder', ...dict.tools.encoder },
+  { slug: 'passwords', ...dict.tools.passwords },
+];
+
+const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
+
+// Stats: os dois primeiros são estáticos (CV); os restantes vêm do catálogo
+// de estrelas do GitHub quando existe — só aí o badge "live" é mostrado.
+const catalog = await getCatalog();
+type Stat = { n: string; d: string; tone: string };
+const stats: Stat[] = [...dict.home.statsStatic];
+if (catalog) {
+  stats.push(
+    { n: String(catalog.totalRepos), d: dict.home.statsRepos, tone: 'blue' },
+    { n: String(catalog.categories.length), d: dict.home.statsCategories, tone: 'green' },
+  );
+} else {
+  stats.push(dict.home.statsFallback);
+}
+const catalogDate = catalog ? dateFmt.format(new Date(catalog.generatedAt)) : null;
+
+const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
+---
+
+<BaseLayout
+  lang={lang}
+  title={dict.home.metaTitle}
+  altUrl={routes.home[other]}
+>
+  <div class="top-grid">
+    <section class="panel identity" aria-label={dict.home.identity}>
+      <div class="phead">
+        <span>&#47;&#47; {dict.home.identity}</span>
+        <span>{dict.home.location}</span>
+      </div>
+      <h1>{SITE.name}</h1>
+      <p class="role">{SITE.role[lang]}</p>
+      <p class="sum">{dict.home.bio}</p>
+      <div class="meta-row">
+        {dict.home.meta.map((item) => <span>{item}</span>)}
+      </div>
+      <div class="chip-row">
+        {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
+      </div>
+    </section>
+
+    <section class="panel" aria-label={dict.home.statsLabel}>
+      <div class="phead">
+        <span>&#47;&#47; {dict.home.statsLabel}</span>
+        {catalog && <span class="live">● {dict.home.live} · {dict.home.statsUpdated} {catalogDate}</span>}
+      </div>
+      <div class="stats-grid">
+        {stats.map((stat) => (
+          <div class={`stat ${toneClass[stat.tone] ?? ''}`}>
+            <div class="n">{stat.n}</div>
+            <div class="l">{stat.d}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <section aria-labelledby="h-journey">
+    <div class="section-title">
+      <h2 id="h-journey">{dict.home.journey.title}</h2>
+    </div>
+    <ol class="journey">
+      {dict.home.journey.items.map((stop) => (
+        <li class="stop">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="years">{stop.years}</span>
+          <span class="name">{stop.flag} {stop.name}</span>
+          <span class="place">{stop.place}</span>
+          <span class="note">{stop.note}</span>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section aria-labelledby="h-posts">
+    <div class="section-title">
+      <h2 id="h-posts">{dict.home.latestPosts}</h2>
+      {posts.length >= 3 && <a class="more" href={routes.blog[lang]}>{dict.home.allPosts} →</a>}
+    </div>
+    <div class="grid grid-3">
+      {posts.map((post) => (
+        <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
+          <h3>{post.data.title}</h3>
+          <p>{post.data.description}</p>
+          <div class="meta">
+            <span>{dateFmt.format(post.data.pubDate)}</span>
+            {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section aria-labelledby="h-tools">
+    <div class="section-title">
+      <h2 id="h-tools">{dict.home.featuredTools}</h2>
+      <a class="more" href={routes.tools[lang]}>{dict.home.allTools} →</a>
+    </div>
+    <div class="grid grid-2">
+      {tools.map((tool) => (
+        <a class="card" href={toolUrl(lang, tool.slug)}>
+          <h3>{tool.name}</h3>
+          <p>{tool.desc}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  {projects.length > 0 && (
+    <section aria-labelledby="h-projects">
+      <div class="section-title">
+        <h2 id="h-projects">{dict.home.projects}</h2>
+        {projects.length >= 3 && <a class="more" href={routes.projects[lang]}>{dict.home.allProjects} →</a>}
+      </div>
+      <div class="grid grid-3">
+        {projects.map((project) => (
+          <a class="card" href={routes.projects[lang]}>
+            <h3>{project.data.title}</h3>
+            <p>{project.data.description}</p>
+            <div class="meta">
+              {project.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+</BaseLayout>

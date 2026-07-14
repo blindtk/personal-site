@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LabDesktop from '../lab/LabDesktop.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+---
+
+<BaseLayout lang={lang} title={dict.lab.title} altUrl={routes.lab[other]} active="lab">
+  <LabDesktop lang={lang} />
+</BaseLayout>
