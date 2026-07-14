@@ -74,4 +74,6 @@ atualizado face às últimas ameaças.
 
 ## Fora do terminal
 
-Homelab, CTFs ocasionais e café em quantidades pouco recomendáveis.
+Mantenho um homelab com um cluster **k3s em Raspberry Pi** (DNS interno,
+monitorização e cobaias para tudo o que quero testar antes de tocar em
+produção), e apareço em CTFs e wargames quando o calendário deixa.

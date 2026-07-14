@@ -75,4 +75,6 @@ latest threats.
 
 ## Away from the terminal
 
-Homelab, occasional CTFs, and coffee in quantities no doctor would endorse.
+I run a homelab with a **k3s cluster on Raspberry Pis** (internal DNS,
+monitoring, and guinea pigs for everything I want to try before touching
+production), and I show up at CTFs and wargames whenever the calendar allows.

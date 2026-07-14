@@ -340,6 +340,10 @@ main {
   .grid-3 { grid-template-columns: repeat(3, 1fr); }
 }
 
+.card[hidden] {
+  /* o atributo hidden tem de vencer o display:block do cartão */
+  display: none;
+}
 .card {
   display: block;
   background: var(--bg-raise);
@@ -696,6 +700,115 @@ input[type='checkbox'] {
   padding: 0.7rem 0.8rem;
   word-break: break-all;
   min-height: 2.9rem;
+}
+
+/* ---------- Percurso (timeline horizontal) ---------- */
+
+.journey {
+  list-style: none;
+  margin: 0;
+  padding: 1.4rem 0.2rem 0.6rem;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(13rem, 1fr);
+  gap: 0;
+  overflow-x: auto;
+  position: relative;
+}
+.journey .stop {
+  position: relative;
+  padding: 1.1rem 1.2rem 0.4rem 0;
+  border-top: 2px solid var(--border-strong);
+}
+.journey .stop .dot {
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+}
+.journey .stop:last-child .dot {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.journey .stop span {
+  display: block;
+}
+.journey .years {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--faint);
+}
+.journey .name {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+.journey .place {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.journey .note {
+  font-size: 0.75rem;
+  color: var(--faint);
+  margin-top: 0.35rem;
+  max-width: 15rem;
+}
+
+/* ---------- Catálogo de estrelas (Links) ---------- */
+
+.catalog-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.catalog-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  padding-bottom: 0.6rem;
+  white-space: nowrap;
+}
+.catalog-meta #catalog-count {
+  color: var(--accent);
+  font-weight: 700;
+}
+.catalog-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+}
+.filter-chip {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+.filter-chip:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.filter-chip.active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.filter-chip .count {
+  color: var(--faint);
+  margin-left: 0.25rem;
+}
+.repo-card .stars {
+  color: var(--accent-2);
 }
 
 /* ---------- Prosa (markdown) ---------- */
