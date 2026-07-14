@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hacker Neon</title>
+<style>
+  :root{
+    --bg:#05070a;--raise:#0a0f14;--border:#14311f;--text:#c8f7d8;--muted:#5f8f74;
+    --neon:#00ff9c;--cyan:#22d3ee;--magenta:#ff2e97;
+    --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.6;
+    background-image:repeating-linear-gradient(0deg,rgba(0,255,156,.03) 0 1px,transparent 1px 3px);
+  }
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:99;
+    background:radial-gradient(ellipse at 50% 0%,transparent 60%,rgba(0,0,0,.6));}
+  .container{max-width:70rem;margin:0 auto;padding:0 1.1rem}
+  a{color:var(--neon);text-decoration:none}
+  nav{border-bottom:1px solid var(--border);background:rgba(5,7,10,.9)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;min-height:3.4rem}
+  .brand{font-weight:700;font-size:1rem;color:var(--neon);text-shadow:0 0 8px rgba(0,255,156,.6)}
+  .brand::before{content:'root@malaco:~# '}
+  .links{display:flex;gap:.1rem;list-style:none;margin:0;padding:0}
+  .links a{font-size:.82rem;color:var(--muted);padding:.35rem .55rem;text-transform:lowercase}
+  .links a:hover{color:var(--neon);text-shadow:0 0 6px rgba(0,255,156,.6)}
+  .links a.lab{color:var(--magenta)}
+  .lang{border:1px solid var(--border);color:var(--cyan);padding:.3rem .5rem}
+  .hero{padding:3.5rem 0 2rem;text-align:left;position:relative}
+  .glitch{font-size:clamp(2rem,7vw,4rem);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:0;
+    color:var(--neon);text-shadow:0 0 14px rgba(0,255,156,.5),3px 0 var(--magenta),-3px 0 var(--cyan);}
+  .role{color:var(--cyan);font-size:1.1rem;margin:.6rem 0 0;text-shadow:0 0 8px rgba(34,211,238,.4)}
+  .sum{color:var(--muted);max-width:46rem;margin:1rem 0 0;font-size:.9rem}
+  .tagrow{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.4rem}
+  .tag{border:1px solid var(--neon);color:var(--neon);font-size:.72rem;padding:.2rem .6rem;text-shadow:0 0 6px rgba(0,255,156,.4)}
+  .tag.c{border-color:var(--cyan);color:var(--cyan)}
+  .tag.m{border-color:var(--magenta);color:var(--magenta)}
+  .st{margin:3rem 0 1rem;font-size:1.3rem;color:var(--neon);text-transform:uppercase;letter-spacing:.08em}
+  .st::before{content:'> '}
+  .grid{display:grid;gap:1rem;grid-template-columns:1fr 1fr}
+  .card{background:var(--raise);border:1px solid var(--border);padding:1.1rem;position:relative;transition:.15s}
+  .card:hover{border-color:var(--neon);box-shadow:0 0 20px rgba(0,255,156,.15)}
+  .card h3{margin:0 0 .3rem;color:var(--neon);font-size:1rem}
+  .card p{margin:0;color:var(--muted);font-size:.85rem}
+  .card .cn{position:absolute;top:.6rem;right:.8rem;color:var(--border);font-size:.7rem}
+  footer{border-top:1px solid var(--border);margin-top:3rem;padding:1.4rem 0;color:var(--muted);font-size:.75rem}
+  footer .blink{color:var(--neon);animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+</style>
+</head>
+<body>
+<nav><div class="container in">
+  <span class="brand">whoami</span>
+  <ul class="links">
+    <li><a href="#">sobre</a></li><li><a href="#">blog</a></li><li><a href="#">projetos</a></li>
+    <li><a href="#">ferramentas</a></li><li><a href="#">links</a></li><li><a href="#">contactos</a></li>
+    <li><a class="lab" href="#">[lab]</a></li><li><a class="lang" href="#">EN</a></li>
+  </ul>
+</div></nav>
+
+<div class="container">
+  <section class="hero">
+    <h1 class="glitch">DANIEL MALACO</h1>
+    <p class="role">// Information Security Engineer</p>
+    <p class="sum">Planeamento e operação de infraestruturas de rede e cibersegurança. Interesse forte em threat intelligence, blockchain, forense digital e resposta a incidentes.</p>
+    <div class="tagrow">
+      <span class="tag">Fortinet NSE 4–7</span><span class="tag c">SANS SEC504</span>
+      <span class="tag m">CTF Winner</span><span class="tag">NGFW</span><span class="tag c">EDR/SIEM</span>
+      <span class="tag">pentest</span><span class="tag c">DFIR</span>
+    </div>
+  </section>
+
+  <h2 class="st">latest_posts</h2>
+  <div class="grid">
+    <div class="card"><span class="cn">01</span><h3>Hello, world</h3><p>Porquê um site pessoal e como está construído.</p></div>
+    <div class="card"><span class="cn">02</span><h3>Hardening de NGFW</h3><p>Notas de campo sobre políticas e inspeção.</p></div>
+  </div>
+
+  <h2 class="st">tools</h2>
+  <div class="grid">
+    <div class="card"><span class="cn">./subnet</span><h3>subnet calc</h3><p>CIDR, máscaras, broadcast, hosts, binário.</p></div>
+    <div class="card"><span class="cn">./hash</span><h3>hashes</h3><p>MD5 / SHA-1 / SHA-256 / SHA-512.</p></div>
+  </div>
+</div>
+<footer><div class="container">[ © 2026 daniel malaco // information security engineer <span class="blink">█</span> ]</div></footer>
+</body>
+</html>

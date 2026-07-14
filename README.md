@@ -7,6 +7,7 @@ Site pessoal de Daniel Malaco — monorepo com três partes:
 | `content/` | Todo o conteúdo em markdown (posts, sobre, projetos, links) — **a fonte única de verdade** | ✅ ativo |
 | `static/` | O site estático (Astro): blog, ferramentas client-side, páginas | ✅ ativo |
 | `dynamic/` | Futura app com backend (DNS lookup, whois, …) | 📝 só planeamento — ver [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `design/` | Mockups das 7 direções de design exploradas (a nº 4 foi a escolhida) | 🎨 referência |
 
 O site é bilingue: PT em `/` e EN em `/en/`.
 

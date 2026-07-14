@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Dashboard</title>
+<style>
+  :root{
+    --bg:#0a0d11;--raise:#111620;--raise2:#161c28;--border:#1e2734;--bstrong:#2b3646;
+    --text:#dbe4ef;--muted:#8593a5;--faint:#586475;--accent:#3ddc84;--amber:#f5b544;--blue:#4aa8ff;
+    --mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6}
+  .container{max-width:72rem;margin:0 auto;padding:0 1.1rem}
+  a{color:var(--accent);text-decoration:none}
+  h1,h2,h3{font-family:var(--mono);letter-spacing:-.01em}
+  nav{border-bottom:1px solid var(--border);background:var(--raise)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;min-height:3.3rem}
+  .brand{font-family:var(--mono);font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:.5rem}
+  .brand .live{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  .links{display:flex;gap:.1rem;list-style:none;margin:0;padding:0}
+  .links a{font-family:var(--mono);font-size:.82rem;color:var(--muted);padding:.35rem .55rem;border-radius:5px}
+  .links a:hover{color:var(--text);background:var(--raise2)}
+  .links a.lab{color:var(--amber)}
+  .lang{font-family:var(--mono);font-size:.78rem;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:.28rem .5rem}
+  .top{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem;margin-top:1.3rem}
+  @media(max-width:800px){.top{grid-template-columns:1fr}}
+  .panel{background:var(--raise);border:1px solid var(--border);border-radius:10px;padding:1.3rem 1.4rem}
+  .phead{font-family:var(--mono);font-size:.72rem;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem;display:flex;justify-content:space-between}
+  .name{font-size:1.7rem;margin:0}
+  .role{color:var(--accent);font-family:var(--mono);font-size:.95rem;margin:.3rem 0 0}
+  .sum{color:var(--muted);font-size:.9rem;margin:.9rem 0 0}
+  .meta{display:flex;gap:1.3rem;margin-top:1.1rem;flex-wrap:wrap;font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+  .meta b{color:var(--text);font-weight:600}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+  .stat{background:var(--raise2);border:1px solid var(--border);border-radius:8px;padding:.8rem .9rem}
+  .stat .n{font-family:var(--mono);font-size:1.5rem;color:var(--accent);font-weight:700}
+  .stat .n.a{color:var(--amber)}.stat .n.b{color:var(--blue)}
+  .stat .l{font-size:.72rem;color:var(--muted);margin-top:.15rem}
+  .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:1rem}
+  @media(max-width:800px){.row{grid-template-columns:1fr}}
+  .st{font-family:var(--mono);font-size:.72rem;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin:2rem 0 .8rem}
+  .card{background:var(--raise);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;transition:.15s}
+  .card:hover{border-color:var(--accent)}
+  .card h3{margin:0 0 .3rem;font-size:.98rem}
+  .card p{margin:0;color:var(--muted);font-size:.85rem}
+  .card .tg{font-family:var(--mono);font-size:.68rem;color:var(--accent);margin-top:.6rem;display:inline-block;border:1px solid var(--border);padding:.1rem .45rem;border-radius:4px}
+  .certs{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.3rem}
+  .chip{font-family:var(--mono);font-size:.72rem;color:var(--text);background:var(--raise2);border:1px solid var(--bstrong);border-radius:5px;padding:.2rem .55rem}
+  footer{border-top:1px solid var(--border);margin-top:2.5rem;padding:1.4rem 0;color:var(--faint);font-family:var(--mono);font-size:.76rem}
+</style>
+</head>
+<body>
+<nav><div class="container in">
+  <span class="brand"><span class="live"></span> daniel_malaco</span>
+  <ul class="links">
+    <li><a href="#">Sobre</a></li><li><a href="#">Blog</a></li><li><a href="#">Projetos</a></li>
+    <li><a href="#">Ferramentas</a></li><li><a href="#">Links</a></li><li><a href="#">Contactos</a></li>
+    <li><a class="lab" href="#">Lab ⚡</a></li><li><a class="lang" href="#">EN</a></li>
+  </ul>
+</div></nav>
+
+<div class="container">
+  <div class="top">
+    <div class="panel">
+      <div class="phead"><span>// identidade</span><span>PORTO, PT</span></div>
+      <h1 class="name">Daniel Assis Malaco</h1>
+      <p class="role">Information Security Engineer</p>
+      <p class="sum">Planeamento e operação de infraestruturas de rede e cibersegurança. Foco em threat intelligence, blockchain, forense digital e resposta a incidentes.</p>
+      <div class="meta"><span><b>@ Ascendi</b> desde 2020</span><span><b>MSc</b> FEUP</span><span><b>6+</b> anos em segurança</span></div>
+      <div class="certs" style="margin-top:1rem">
+        <span class="chip">Fortinet NSE 4</span><span class="chip">NSE 5–7</span><span class="chip">SANS SEC504</span>
+        <span class="chip">CTF Winner '22</span><span class="chip">ISO 27001</span><span class="chip">MITRE ATT&CK</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="phead"><span>// stats</span><span>●&nbsp;live</span></div>
+      <div class="stats">
+        <div class="stat"><div class="n">6+</div><div class="l">anos em segurança</div></div>
+        <div class="stat"><div class="n a">9</div><div class="l">certificações NSE/SANS</div></div>
+        <div class="stat"><div class="n b">4</div><div class="l">ferramentas client-side</div></div>
+        <div class="stat"><div class="n">2</div><div class="l">idiomas · PT/EN</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="st">// últimos posts</div>
+  <div class="row">
+    <div class="card"><h3>Hello, world</h3><p>Porquê um site pessoal e como está construído.</p><span class="tg">meta</span></div>
+    <div class="card"><h3>Hardening de NGFW</h3><p>Notas de campo sobre políticas e inspeção.</p><span class="tg">fortinet</span></div>
+    <div class="card"><h3>DFIR: primeiros 60 min</h3><p>Checklist de resposta a incidentes.</p><span class="tg">dfir</span></div>
+  </div>
+
+  <div class="st">// ferramentas · client-side</div>
+  <div class="row">
+    <div class="card"><h3>Subnet calc</h3><p>CIDR, máscaras, broadcast, hosts, binário.</p><span class="tg">rede</span></div>
+    <div class="card"><h3>Hashes</h3><p>MD5, SHA-1/256/512, ficheiros.</p><span class="tg">cripto</span></div>
+    <div class="card"><h3>Passwords</h3><p>CSPRNG + medidor de entropia.</p><span class="tg">cripto</span></div>
+  </div>
+</div>
+<footer><div class="container">© 2026 Daniel Assis Malaco · Information Security Engineer · Porto, PT</div></footer>
+</body>
+</html>

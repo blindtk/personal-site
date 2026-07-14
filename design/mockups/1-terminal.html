@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminal Elegante</title>
+<style>
+  :root{
+    --bg:#0a0e13;--raise:#10161e;--raise2:#151d27;--border:#1d2836;--bstrong:#2a3a4e;
+    --text:#d7e0ea;--muted:#8b9bad;--faint:#5c6b7d;--accent:#46e07e;--accent2:#f0b45c;
+    --mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);
+    background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(70,224,126,.07),transparent),radial-gradient(rgba(215,224,234,.035) 1px,transparent 1px);
+    background-size:100% 100%,26px 26px;color:var(--text);font-family:var(--sans);line-height:1.65}
+  .container{max-width:68rem;margin:0 auto;padding:0 1.1rem}
+  h1,h2,h3{font-family:var(--mono);letter-spacing:-.01em}
+  a{color:var(--accent);text-decoration:none}
+  nav{position:sticky;top:0;z-index:5;background:rgba(10,14,19,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;min-height:3.4rem}
+  .brand{font-family:var(--mono);font-size:.95rem}
+  .brand .p{color:var(--faint)}.brand .c{color:var(--accent);font-weight:600}
+  .cursor{display:inline-block;width:.55em;height:1.05em;background:var(--accent);vertical-align:text-bottom;margin-left:2px;animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .links{display:flex;gap:.2rem;list-style:none;margin:0;padding:0}
+  .links a{font-family:var(--mono);font-size:.85rem;color:var(--muted);padding:.35rem .6rem;border-radius:6px}
+  .links a.lab{color:var(--accent2);border:1px dashed var(--bstrong)}
+  .lang{font-family:var(--mono);font-size:.8rem;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:.3rem .55rem}
+  .term{margin-top:1.4rem;background:#0c1117;border:1px solid var(--bstrong);border-radius:10px;
+    box-shadow:0 18px 50px rgba(0,0,0,.45),0 0 60px rgba(70,224,126,.05);overflow:hidden;font-family:var(--mono);font-size:.9rem}
+  .bar{display:flex;align-items:center;gap:.45rem;background:var(--raise2);border-bottom:1px solid var(--border);padding:.55rem .9rem}
+  .dot{width:11px;height:11px;border-radius:50%}
+  .dot:nth-child(1){background:#f26d6d}.dot:nth-child(2){background:#f0b45c}.dot:nth-child(3){background:#46e07e}
+  .bar .t{margin-left:auto;color:var(--faint);font-size:.75rem}
+  .tbody{padding:1.2rem;line-height:2}
+  .ps1{color:var(--faint)}.in2{color:var(--text);font-weight:600}.out{color:var(--muted)}.hl{color:var(--accent)}.hl2{color:var(--accent2)}
+  .stitle{display:flex;align-items:baseline;gap:.6rem;margin:2.6rem 0 1.1rem}
+  .stitle::before{content:'##';color:var(--faint);font-family:var(--mono)}
+  .stitle h2{margin:0;font-size:1.4rem}
+  .grid{display:grid;gap:1rem;grid-template-columns:1fr 1fr}
+  .card{background:var(--raise);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.2rem;transition:.15s}
+  .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .card h3{margin:0 0 .35rem;font-size:1.05rem}
+  .card p{margin:0;color:var(--muted);font-size:.92rem}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.72rem;color:var(--accent);background:rgba(70,224,126,.12);border:1px solid rgba(70,224,126,.25);border-radius:999px;padding:.05rem .55rem;margin-top:.7rem}
+  footer{border-top:1px solid var(--border);margin-top:3rem;padding:1.6rem 0;color:var(--faint);font-family:var(--mono);font-size:.78rem}
+</style>
+</head>
+<body>
+<nav><div class="container in">
+  <span class="brand"><span class="p">~$</span> <span class="c">whoami</span><span class="cursor"></span></span>
+  <ul class="links">
+    <li><a href="#">Sobre</a></li><li><a href="#">Blog</a></li><li><a href="#">Projetos</a></li>
+    <li><a href="#">Ferramentas</a></li><li><a href="#">Links</a></li><li><a href="#">Contactos</a></li>
+    <li><a class="lab" href="#">Lab ⚡</a></li><li><a class="lang" href="#">EN</a></li>
+  </ul>
+</div></nav>
+
+<div class="container">
+  <section class="term">
+    <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="t">daniel@lab:~</span></div>
+    <div class="tbody">
+      <div><span class="ps1">~$ </span><span class="in2">whoami</span></div>
+      <div class="out"><span class="hl">Daniel Assis Malaco</span> — Information Security Engineer @ Ascendi</div>
+      <div><span class="ps1">~$ </span><span class="in2">cat stack.txt</span></div>
+      <div class="out">NGFW · EDR · SIEM · IAM · WAF · pentest · threat intel · DFIR</div>
+      <div><span class="ps1">~$ </span><span class="in2">cat certs.txt</span></div>
+      <div class="out"><span class="hl2">Fortinet NSE 4–7</span> · <span class="hl2">SANS SEC504</span> (CTF Winner) · MSc FEUP</div>
+      <div><span class="ps1">~$ </span><span class="in2">ls site/</span></div>
+      <div class="out"><span class="hl">sobre/</span>  <span class="hl">blog/</span>  <span class="hl">projetos/</span>  <span class="hl">ferramentas/</span>  <span class="hl2">lab/</span></div>
+      <div><span class="ps1">~$ </span><span class="cursor"></span></div>
+    </div>
+  </section>
+
+  <div class="stitle"><h2>Últimos posts</h2></div>
+  <div class="grid">
+    <div class="card"><h3>Hello, world</h3><p>O primeiro post: porquê um site pessoal e como está construído.</p><br><span class="badge">meta</span></div>
+    <div class="card"><h3>Hardening de NGFW na prática</h3><p>Notas de campo sobre políticas, inspeção e logging.</p><br><span class="badge">fortinet</span></div>
+  </div>
+
+  <div class="stitle"><h2>Ferramentas</h2></div>
+  <div class="grid">
+    <div class="card"><h3>Calculadora de subnets</h3><p>CIDR, máscaras, broadcast, hosts e binário.</p></div>
+    <div class="card"><h3>Hashes</h3><p>MD5, SHA-1/256/512 de texto ou ficheiros.</p></div>
+  </div>
+</div>
+<footer><div class="container">© 2026 Daniel Assis Malaco · Information Security Engineer · Feito com café e terminais abertos.</div></footer>
+</body>
+</html>

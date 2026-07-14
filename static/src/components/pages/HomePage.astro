@@ -27,19 +27,7 @@ const tools = [
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
-const heroLines = lang === 'pt'
-  ? {
-      whoamiOut: `${SITE.name} — ${SITE.role.pt}`,
-      catCmd: 'cat interesses.txt',
-      catOut: 'redes · sistemas · segurança · automação · homelab',
-      lsOut: ['sobre/', 'blog/', 'projetos/', 'ferramentas/', 'lab/'],
-    }
-  : {
-      whoamiOut: `${SITE.name} — ${SITE.role.en}`,
-      catCmd: 'cat interests.txt',
-      catOut: 'networking · systems · security · automation · homelab',
-      lsOut: ['about/', 'blog/', 'projects/', 'tools/', 'lab/'],
-    };
+const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
 
 <BaseLayout
@@ -47,30 +35,38 @@ const heroLines = lang === 'pt'
   title={dict.home.metaTitle}
   altUrl={routes.home[other]}
 >
-  <section class="terminal" aria-label="whoami" style="margin-top: 1.2rem;">
-    <div class="terminal-bar">
-      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-      <span class="title">daniel@lab:~</span>
-    </div>
-    <div class="terminal-body">
-      <div class="line"><span class="ps1">~$ </span><span class="in">whoami</span></div>
-      <div class="line out"><span class="hl">{heroLines.whoamiOut}</span></div>
-      <div class="line"><span class="ps1">~$ </span><span class="in">{heroLines.catCmd}</span></div>
-      <div class="line out">{heroLines.catOut}</div>
-      <div class="line"><span class="ps1">~$ </span><span class="in">ls site/</span></div>
-      <div class="line out">
-        {heroLines.lsOut.map((dir, i) => (
-          <>
-            <a
-              href={[routes.about, routes.blog, routes.projects, routes.tools, routes.lab][i][lang]}
-              class={i === 4 ? 'hl2' : 'hl'}
-            >{dir}</a>{'  '}
-          </>
+  <div class="top-grid">
+    <section class="panel identity" aria-label={dict.home.identity}>
+      <div class="phead">
+        <span>&#47;&#47; {dict.home.identity}</span>
+        <span>{dict.home.location}</span>
+      </div>
+      <h1>{SITE.name}</h1>
+      <p class="role">{SITE.role[lang]}</p>
+      <p class="sum">{dict.home.bio}</p>
+      <div class="meta-row">
+        {dict.home.meta.map((item) => <span>{item}</span>)}
+      </div>
+      <div class="chip-row">
+        {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
+      </div>
+    </section>
+
+    <section class="panel" aria-label={dict.home.statsLabel}>
+      <div class="phead">
+        <span>&#47;&#47; {dict.home.statsLabel}</span>
+        <span class="live">● {dict.home.live}</span>
+      </div>
+      <div class="stats-grid">
+        {dict.home.stats.map((stat) => (
+          <div class={`stat ${toneClass[stat.tone]}`}>
+            <div class="n">{stat.n}</div>
+            <div class="l">{stat.d}</div>
+          </div>
         ))}
       </div>
-      <div class="line"><span class="ps1">~$ </span><span class="cursor" aria-hidden="true"></span></div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <section aria-labelledby="h-posts">
     <div class="section-title">

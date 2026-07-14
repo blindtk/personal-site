@@ -53,8 +53,8 @@ const currentPath = Astro.url.pathname;
     <nav class="site-nav">
       <div class="container inner">
         <a class="brand" href={routes.home[lang]}>
-          <span class="prompt">~$</span>
-          <span class="cmd">{SITE.handle}</span><span class="cursor" aria-hidden="true"></span>
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="cmd">{SITE.handle}</span>
         </a>
         <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links">
           {dict.nav.menu} ≡

@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circuit PCB — estilo do CV</title>
+<style>
+  :root{
+    --bg:#23282c;--raise:#2a3036;--raise2:#31383f;--border:#3a444c;
+    --text:#e8edf1;--muted:#9fb0bc;--faint:#6d7d89;
+    --cyan:#35dbe8;--cyan-dim:rgba(53,219,232,.14);--orange:#ff8a3d;
+    --mono:ui-monospace,'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
+    --sans:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;overflow-x:hidden}
+  .container{max-width:70rem;margin:0 auto;padding:0 1.2rem;position:relative}
+  a{color:var(--cyan);text-decoration:none}
+  h1,h2,h3{font-family:var(--mono);letter-spacing:.04em}
+
+  /* pistas de circuito (como no CV) */
+  .traces{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.9}
+  nav{position:sticky;top:0;z-index:10;background:rgba(35,40,44,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+  nav .in{display:flex;align-items:center;justify-content:space-between;min-height:3.5rem}
+  .brand{font-family:var(--mono);font-weight:700;color:var(--cyan);letter-spacing:.06em}
+  .brand::before{content:'▣ ';color:var(--faint)}
+  .links{display:flex;gap:.15rem;list-style:none;margin:0;padding:0}
+  .links a{font-family:var(--mono);font-size:.82rem;color:var(--muted);padding:.35rem .6rem;text-transform:uppercase;letter-spacing:.05em}
+  .links a:hover{color:var(--cyan)}
+  .links a.lab{color:var(--orange)}
+  .lang{border:1px solid var(--border);border-radius:4px;padding:.28rem .5rem;font-size:.78rem}
+
+  .hero{position:relative;z-index:1;display:grid;grid-template-columns:auto 1fr;gap:2.2rem;align-items:center;padding:3.2rem 0 2.4rem}
+  /* chip com pinos, como a foto do CV */
+  .chip{position:relative;width:150px;height:150px;background:var(--raise);border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(53,219,232,.25)}
+  .chip .core{font-family:var(--mono);color:var(--cyan);font-size:1.15rem;font-weight:700}
+  .pin{position:absolute;background:var(--cyan);opacity:.85}
+  .pin.h{width:14px;height:4px}.pin.v{width:4px;height:14px}
+  .hname{margin:0;font-size:clamp(1.7rem,4.5vw,2.6rem);color:var(--cyan);text-transform:uppercase;letter-spacing:.08em}
+  .hrole{margin:.3rem 0 0;font-family:var(--mono);font-size:1.02rem;color:var(--text);text-transform:uppercase;letter-spacing:.14em}
+  .hsum{margin:1rem 0 0;color:var(--muted);max-width:44rem;font-size:.95rem}
+  .hmeta{display:flex;gap:1.4rem;margin-top:1rem;font-family:var(--mono);font-size:.78rem;color:var(--faint);flex-wrap:wrap}
+  .hmeta b{color:var(--orange)}
+
+  .sec{position:relative;z-index:1;margin-top:2.6rem}
+  .stitle{display:flex;align-items:center;gap:.9rem;margin-bottom:1.1rem}
+  .stitle h2{margin:0;font-size:1.15rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.12em}
+  .stitle .trace{flex:1;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);position:relative}
+  .stitle .trace::before{content:'';position:absolute;left:-1px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--cyan)}
+  .grid{display:grid;gap:1rem;grid-template-columns:1fr 1fr}
+  .card{background:var(--raise);border:1px solid var(--border);border-left:3px solid var(--cyan);padding:1.1rem 1.2rem;transition:.15s;position:relative}
+  .card:hover{background:var(--raise2);box-shadow:0 0 18px rgba(53,219,232,.15)}
+  .card h3{margin:0 0 .3rem;font-size:1rem;color:var(--text)}
+  .card p{margin:0;color:var(--muted);font-size:.88rem}
+  .card .pad{position:absolute;right:.8rem;top:.9rem;width:8px;height:8px;border-radius:50%;border:2px solid var(--cyan);opacity:.6}
+  .chips{display:flex;flex-wrap:wrap;gap:.45rem}
+  .chipb{font-family:var(--mono);font-size:.74rem;color:var(--cyan);background:var(--cyan-dim);border:1px solid rgba(53,219,232,.4);padding:.22rem .6rem;border-radius:3px}
+  .chipb.o{color:var(--orange);background:rgba(255,138,61,.1);border-color:rgba(255,138,61,.4)}
+  footer{position:relative;z-index:1;border-top:1px solid var(--border);margin-top:3rem;padding:1.5rem 0;color:var(--faint);font-family:var(--mono);font-size:.76rem}
+</style>
+</head>
+<body>
+<svg class="traces" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="#35dbe8" stroke-width="1.6" fill="none" opacity=".5">
+    <path d="M -10 90 H 150 V 200 H 330"/>
+    <path d="M -10 130 H 110 V 260 H 240 V 330"/>
+    <circle cx="330" cy="200" r="5" fill="#23282c"/>
+    <circle cx="240" cy="330" r="5" fill="#23282c"/>
+  </g>
+  <g stroke="#35dbe8" stroke-width="1.6" fill="none" opacity=".35" transform="translate(1100,0)">
+    <path d="M 400 60 H 210 V 170 H 60"/>
+    <path d="M 400 110 H 260 V 300 H 140 V 380"/>
+    <circle cx="60" cy="170" r="5" fill="#23282c"/>
+    <circle cx="140" cy="380" r="5" fill="#23282c"/>
+  </g>
+  <g stroke="#35dbe8" stroke-width="1.4" fill="none" opacity=".28" transform="translate(0,720)">
+    <path d="M -10 120 H 190 V 40 H 420 V 130 H 620"/>
+    <circle cx="620" cy="130" r="5" fill="#23282c"/>
+  </g>
+</svg>
+
+<nav><div class="container in">
+  <span class="brand">whoami</span>
+  <ul class="links">
+    <li><a href="#">Sobre</a></li><li><a href="#">Blog</a></li><li><a href="#">Projetos</a></li>
+    <li><a href="#">Ferramentas</a></li><li><a href="#">Links</a></li><li><a href="#">Contactos</a></li>
+    <li><a class="lab" href="#">Lab</a></li><li><a class="lang" href="#">EN</a></li>
+  </ul>
+</div></nav>
+
+<div class="container">
+  <section class="hero">
+    <div class="chip">
+      <span class="core">&gt;_ whoami</span>
+      <span class="pin h" style="left:-16px;top:22px"></span><span class="pin h" style="left:-16px;top:52px"></span>
+      <span class="pin h" style="left:-16px;top:82px"></span><span class="pin h" style="left:-16px;top:112px"></span>
+      <span class="pin h" style="right:-16px;top:22px"></span><span class="pin h" style="right:-16px;top:52px"></span>
+      <span class="pin h" style="right:-16px;top:82px"></span><span class="pin h" style="right:-16px;top:112px"></span>
+      <span class="pin v" style="top:-16px;left:22px"></span><span class="pin v" style="top:-16px;left:52px"></span>
+      <span class="pin v" style="top:-16px;left:82px"></span><span class="pin v" style="top:-16px;left:112px"></span>
+      <span class="pin v" style="bottom:-16px;left:22px"></span><span class="pin v" style="bottom:-16px;left:52px"></span>
+      <span class="pin v" style="bottom:-16px;left:82px"></span><span class="pin v" style="bottom:-16px;left:112px"></span>
+    </div>
+    <div>
+      <h1 class="hname">Daniel Assis Malaco</h1>
+      <p class="hrole">Information Security Engineer</p>
+      <p class="hsum">Planeamento e operação de infraestruturas de rede e cibersegurança. Threat intelligence, forense digital e resposta a incidentes — a manter tudo atualizado com as últimas ameaças e tecnologias.</p>
+      <div class="hmeta">
+        <span>📍 Porto, Portugal</span><span><b>@ Ascendi</b> · desde 2020</span><span><b>MSc</b> FEUP · Redes</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="stitle"><h2>Certificações</h2><div class="trace"></div></div>
+    <div class="chips">
+      <span class="chipb">Fortinet NSE 4</span><span class="chipb">NSE 5 FortiSIEM/EMS</span><span class="chipb">NSE 6 FortiMail/Web/ADC</span>
+      <span class="chipb">NSE 7 Secure Access</span><span class="chipb o">SANS SEC504</span><span class="chipb o">CTF Winner · Lisboa 2022</span>
+      <span class="chipb">Cybrary Adv. Pentesting</span>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="stitle"><h2>Últimos posts</h2><div class="trace"></div></div>
+    <div class="grid">
+      <div class="card"><span class="pad"></span><h3>Hello, world</h3><p>Porquê um site pessoal e como está construído.</p></div>
+      <div class="card"><span class="pad"></span><h3>Hardening de NGFW na prática</h3><p>Notas de campo sobre políticas, inspeção e logging.</p></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="stitle"><h2>Ferramentas</h2><div class="trace"></div></div>
+    <div class="grid">
+      <div class="card"><span class="pad"></span><h3>Calculadora de subnets</h3><p>CIDR, máscaras, broadcast, hosts, binário.</p></div>
+      <div class="card"><span class="pad"></span><h3>Hashes</h3><p>MD5, SHA-1/256/512 de texto ou ficheiros.</p></div>
+    </div>
+  </section>
+</div>
+<footer><div class="container">© 2026 DANIEL ASSIS MALACO · INFORMATION SECURITY ENGINEER · PORTO, PT</div></footer>
+</body>
+</html>
