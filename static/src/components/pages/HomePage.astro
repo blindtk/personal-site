@@ -97,24 +97,26 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     </ol>
   </section>
 
-  <section aria-labelledby="h-posts">
-    <div class="section-title">
-      <h2 id="h-posts">{dict.home.latestPosts}</h2>
-      {posts.length >= 3 && <a class="more" href={routes.blog[lang]}>{dict.home.allPosts} →</a>}
-    </div>
-    <div class="grid grid-3">
-      {posts.map((post) => (
-        <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
-          <h3>{post.data.title}</h3>
-          <p>{post.data.description}</p>
-          <div class="meta">
-            <span>{dateFmt.format(post.data.pubDate)}</span>
-            {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-          </div>
-        </a>
-      ))}
-    </div>
-  </section>
+  {posts.length > 0 && (
+    <section aria-labelledby="h-posts">
+      <div class="section-title">
+        <h2 id="h-posts">{dict.home.latestPosts}</h2>
+        {posts.length >= 3 && <a class="more" href={routes.blog[lang]}>{dict.home.allPosts} →</a>}
+      </div>
+      <div class="grid grid-3">
+        {posts.map((post) => (
+          <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
+            <h3>{post.data.title}</h3>
+            <p>{post.data.description}</p>
+            <div class="meta">
+              <span>{dateFmt.format(post.data.pubDate)}</span>
+              {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 
   <section aria-labelledby="h-tools">
     <div class="section-title">

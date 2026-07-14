@@ -1,4 +1,5 @@
 ---
+import { getCollection } from 'astro:content';
 import { SITE, SITE_URL, type Lang } from '../config';
 import { t } from '../i18n/ui';
 import { routes, type RouteKey } from '../i18n/routes';
@@ -20,9 +21,15 @@ const otherLang: Lang = lang === 'pt' ? 'en' : 'pt';
 const desc = description ?? SITE.description[lang];
 const pageTitle = `${title} · ${SITE.handle}`;
 
+// "Blog" só aparece na nav se houver pelo menos um post publicado
+// (não-draft) em qualquer um dos dois idiomas — evita um link para uma
+// secção vazia enquanto não há conteúdo real.
+const publishedPosts = await getCollection('blog', (e) => !e.data.draft);
+const hasBlog = publishedPosts.length > 0;
+
 const navItems: { key: RouteKey; label: string }[] = [
   { key: 'about', label: dict.nav.about },
-  { key: 'blog', label: dict.nav.blog },
+  ...(hasBlog ? [{ key: 'blog' as const, label: dict.nav.blog }] : []),
   { key: 'projects', label: dict.nav.projects },
   { key: 'tools', label: dict.nav.tools },
   { key: 'links', label: dict.nav.links },
