@@ -32,9 +32,6 @@ export function createTerminal(ctx) {
     invalidCidr: pt ? 'CIDR inválido. Exemplo: subnet 192.168.1.10/24' : 'Invalid CIDR. Example: subnet 192.168.1.10/24',
     unknownAlg: pt ? 'algoritmo desconhecido. usa: md5 | sha1 | sha256 | sha512' : 'unknown algorithm. use: md5 | sha1 | sha256 | sha512',
     encodeErr: pt ? 'entrada inválida para este formato' : 'invalid input for this format',
-    catalogOffline: pt
-      ? 'catálogo offline — ainda não foi publicado no repo github-stars.'
-      : 'catalog offline — not yet published in the github-stars repo.',
     catNotFound: (c) => (pt ? `categoria não encontrada: ${c}` : `category not found: ${c}`),
     opening: (app) => (pt ? `a abrir ${app}…` : `opening ${app}…`),
     sudo: pt ? 'daniel is not in the sudoers file. This incident will be reported. 🙃' : 'daniel is not in the sudoers file. This incident will be reported. 🙃',
@@ -126,7 +123,6 @@ export function createTerminal(ctx) {
       }
 
       case 'stars': {
-        if (!ctx.catalog) return { lines: [t.catalogOffline] };
         if (!arg) {
           const lines = ctx.catalog.categories.map(
             (c) => `  ${c.name.padEnd(28)} ${String(c.count).padStart(3)} repos`,
@@ -156,6 +152,11 @@ export function createTerminal(ctx) {
 
       case 'sudo':
         return { lines: [t.sudo] };
+
+      // Não listado em `help` nem em APPS — descobre-se a jogar (ls -la /
+      // cat .flag já revelam o mesmo valor; isto é só outro caminho até lá).
+      case 'flag':
+        return { lines: [FLAG] };
 
       case 'exit':
         return { lines: [pt ? 'não há saída. só há Lab. 😌' : "there's no exit. only Lab. 😌"] };

@@ -1,14 +1,18 @@
 /**
  * Catálogo de estrelas do GitHub (repo blindtk/github-stars).
  *
- * É lido em BUILD TIME a partir do raw do GitHub. Se o ficheiro ainda não
- * existir (ou falhar a rede), devolve null e o site usa fallbacks estáticos —
- * o badge "live" só aparece quando os dados vêm mesmo do JSON.
+ * TEMPORÁRIO: github-stars é um repo privado, e raw.githubusercontent.com
+ * não serve ficheiros de repos privados sem autenticação — por isso, em vez
+ * de um fetch em build time, o catálogo vive vendorizado em
+ * content/catalog.json (copiado do output do star-organizer). Ver
+ * docs/catalog-contract.md. O próximo passo é ler via API do GitHub com um
+ * token, para voltar a atualizar automaticamente sem intervenção manual
+ * (ver roadmap.txt no Lab).
  *
- * Nota: como o fetch é em build time, o site só reflete um catálogo novo
- * quando é reconstruído (push, ou deploy hook do Cloudflare Pages disparado
- * pela Action do github-stars).
+ * Por ser um import estático, um content/catalog.json em falta ou malformado
+ * falha o build de imediato — nunca mostramos dados de exemplo como reais.
  */
+import rawCatalog from '../../../content/catalog.json';
 
 export interface CatalogRepo {
   name: string;
@@ -32,30 +36,23 @@ export interface Catalog {
   categories: CatalogCategory[];
 }
 
-// CATALOG_URL pode ser substituído por env var (útil em dev/testes).
-const CATALOG_URL =
-  process.env.CATALOG_URL ??
-  'https://raw.githubusercontent.com/blindtk/github-stars/main/catalog/catalog.json';
-
-let cached: Catalog | null | undefined;
-
-export async function getCatalog(): Promise<Catalog | null> {
-  if (cached !== undefined) return cached;
-  try {
-    const res = await fetch(CATALOG_URL, { signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as Catalog;
-    if (
-      typeof data.generatedAt !== 'string' ||
-      typeof data.totalRepos !== 'number' ||
-      !Array.isArray(data.categories)
-    ) {
-      throw new Error('schema inesperado');
-    }
-    cached = data;
-  } catch (err) {
-    console.warn(`[catalog] indisponível (${err}); a usar fallback estático.`);
-    cached = null;
+function assertCatalogShape(data: unknown): asserts data is Catalog {
+  const d = data as Partial<Catalog> | null | undefined;
+  if (
+    typeof d?.generatedAt !== 'string' ||
+    typeof d?.user !== 'string' ||
+    typeof d?.totalRepos !== 'number' ||
+    !Array.isArray(d?.categories)
+  ) {
+    throw new Error(
+      'content/catalog.json tem um schema inesperado — ver docs/catalog-contract.md.',
+    );
   }
-  return cached;
+}
+
+assertCatalogShape(rawCatalog);
+const catalog: Catalog = rawCatalog;
+
+export function getCatalog(): Catalog {
+  return catalog;
 }

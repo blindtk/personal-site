@@ -1,28 +1,32 @@
 # Contrato do `catalog.json` (integração github-stars ↔ personal-site)
 
-Este site consome, **em build time**, o ficheiro
-`catalog/catalog.json` publicado no repo **blindtk/github-stars** (via raw do
-GitHub). É o que torna honestas as stats "LIVE" da homepage e alimenta a
-biblioteca navegável em `/links/`.
+Este site consome o catálogo de estrelas do GitHub gerado pelo
+**blindtk/github-stars** (`star-organizer`) para as stats "LIVE" da homepage,
+a biblioteca navegável em `/links/`, e o comando `stars` do Lab.
 
-> **Estado:** o lado do site (consumo, fallback, biblioteca, comando `stars`
-> do Lab) está implementado e testado. Falta a metade que vive no repo
-> github-stars — o `star-organizer` emitir este ficheiro e uma GitHub Action
-> que o mantém atualizado. Isso **não foi feito** porque este ambiente não teve
-> acesso ao repo privado github-stars. Este documento é o contrato a cumprir lá.
+> **Estado:** `github-stars` já gera `catalog/catalog.json` no schema abaixo,
+> com uma GitHub Action semanal a mantê-lo atualizado — mas `github-stars` é
+> um **repo privado**, e `raw.githubusercontent.com` não serve ficheiros de
+> repos privados sem autenticação (devolve 404, indistinguível de "o ficheiro
+> não existe"). Por isso, o desenho original deste documento — um `fetch` em
+> build time ao raw do GitHub — **não funciona** e foi abandonado.
+>
+> **Solução atual (temporária):** o `catalog.json` real é vendorizado à mão em
+> `content/catalog.json` neste repo, e `static/src/lib/catalog.ts` importa-o
+> estaticamente (sem rede). Atualizar o catálogo é copiar o ficheiro gerado
+> por `github-stars` para cá e fazer commit — não há sincronização automática
+> ainda. O próximo passo (documentado no roadmap do Lab) é ler
+> `catalog.json` via **API do GitHub autenticada**
+> (`api.github.com/repos/blindtk/github-stars/contents/...` com um token),
+> o que permite manter `github-stars` privado e voltar a atualizar sem
+> intervenção manual.
 
 ## Onde o site lê
 
-`static/src/lib/catalog.ts`:
-
-```
-https://raw.githubusercontent.com/blindtk/github-stars/main/catalog/catalog.json
-```
-
-Se o URL devolver 404 ou JSON inválido, o site degrada com elegância: sem
-badge "LIVE", stat de fallback ("4 ferramentas client-side"), e `/links/`
-mostra um aviso "catálogo ainda não publicado". Ou seja: publicar o ficheiro é
-seguro e aditivo — nada parte enquanto ele não existe.
+`static/src/lib/catalog.ts` faz `import rawCatalog from '../../../content/catalog.json'`.
+Por ser um import estático, um `content/catalog.json` em falta ou com schema
+inválido **falha o build** com um erro claro — nunca há fallback para dados
+de exemplo.
 
 ## Schema exigido
 
@@ -53,15 +57,32 @@ seguro e aditivo — nada parte enquanto ele não existe.
 Campos e tipos são validados de forma defensiva no site; extras são ignorados,
 por isso podes acrescentar metadados sem partir nada. Só estes é que são usados.
 
-## O que falta implementar no repo github-stars
+## Estado no repo github-stars
 
-1. **Emitir `catalog/catalog.json`** a partir do star-organizer, no formato
-   acima (além do que já gera). O `generatedAt` deve ser o instante da geração.
-2. **GitHub Action** (ver `docs/github-stars-workflow.yml` neste repo como
-   ponto de partida): correr semanalmente (`cron`) e a pedido
-   (`workflow_dispatch`), re-correr a ferramenta para o utilizador `blindtk`, e
-   fazer commit do catálogo **apenas se houver mudanças**.
-3. **(Opcional) Deploy hook:** como o site lê em build time, um catálogo novo
-   só aparece quando o site é reconstruído. Se o site estiver em Cloudflare
-   Pages, a Action pode terminar com um `curl` ao *Deploy Hook* do projeto para
-   forçar rebuild. Caso contrário, o próximo push ao personal-site chega.
+Já feito: `star_organizer.py` emite `catalog/catalog.json` no formato acima em
+todo o run, e `.github/workflows/catalog.yml` corre semanalmente (cron) e a
+pedido (`workflow_dispatch`), re-correndo a ferramenta para `blindtk` e fazendo
+commit do catálogo em `main` só se houver mudanças.
+
+## Como atualizar o catálogo vendorizado (até haver sync automática)
+
+1. No repo `github-stars`, confirma que `catalog/catalog.json` está atualizado
+   em `main` (a Action trata disto semanalmente).
+2. Copia esse ficheiro para `content/catalog.json` neste repo e faz commit.
+3. `npm run build` falha se o schema estiver errado — é o sinal de que algo
+   mudou no lado do github-stars e este contrato precisa de revisão.
+
+## Próximo passo: sincronização automática
+
+Ler `catalog.json` via API do GitHub autenticada em vez de vendorizar à mão:
+
+- Endpoint: `GET api.github.com/repos/blindtk/github-stars/contents/catalog/catalog.json`
+  com `Authorization: Bearer <token>` (conteúdo vem em base64).
+- Requer um token com leitura do repo, guardado como secret no Cloudflare
+  Pages (build-time env var) — `github-stars` mantém-se privado.
+- Depois disto, um deploy hook no fim da Action do `github-stars` (POST ao
+  *Deploy Hook* do Cloudflare Pages) volta a fechar o ciclo sem intervenção
+  manual.
+
+Isto está no roadmap do Lab (`roadmap.txt` — abre `/lab/` e usa `cat
+roadmap.txt`, ou o comando `open roadmap`).

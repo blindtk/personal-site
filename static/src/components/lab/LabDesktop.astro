@@ -20,17 +20,15 @@ if (!aboutEntry) throw new Error('Missing about content for lab');
 const { Content: AboutContent } = await render(aboutEntry);
 
 // Catálogo (slim) para o comando `stars` do terminal.
-const catalog = await getCatalog();
-const slimCatalog = catalog
-  ? {
-      totalRepos: catalog.totalRepos,
-      categories: catalog.categories.map((c) => ({
-        name: c.name,
-        count: c.count,
-        repos: c.repos.map((r) => ({ name: r.name, url: r.url, stars: r.stars })),
-      })),
-    }
-  : null;
+const catalog = getCatalog();
+const slimCatalog = {
+  totalRepos: catalog.totalRepos,
+  categories: catalog.categories.map((c) => ({
+    name: c.name,
+    count: c.count,
+    repos: c.repos.map((r) => ({ name: r.name, url: r.url, stars: r.stars })),
+  })),
+};
 
 const termCtx = {
   lang,
@@ -84,7 +82,7 @@ const windows = [
     {/* ---- janelas ---- */}
     <div class="win closed" data-win="terminal" style="width:660px;height:420px;left:220px;top:24px;">
       <div class="win-bar"><span class="wt">>_ terminal</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body term">
         <div class="term-out" data-term-out></div>
@@ -98,7 +96,7 @@ const windows = [
 
     <div class="win closed" data-win="subnets" style="width:560px;height:520px;left:120px;top:48px;">
       <div class="win-bar"><span class="wt">⌗ {dict.tools.subnets.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body"><SubnetCalc lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -106,7 +104,7 @@ const windows = [
 
     <div class="win closed" data-win="hashes" style="width:600px;height:560px;left:160px;top:72px;">
       <div class="win-bar"><span class="wt"># {dict.tools.hashes.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body"><HashTool lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -114,7 +112,7 @@ const windows = [
 
     <div class="win closed" data-win="encoder" style="width:560px;height:560px;left:200px;top:96px;">
       <div class="win-bar"><span class="wt">⇄ {dict.tools.encoder.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body"><EncoderTool lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -122,7 +120,7 @@ const windows = [
 
     <div class="win closed" data-win="passwords" style="width:520px;height:560px;left:240px;top:120px;">
       <div class="win-bar"><span class="wt">⚿ {dict.tools.passwords.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body"><PasswordGen lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -130,7 +128,7 @@ const windows = [
 
     <div class="win closed" data-win="sobre" style="width:640px;height:540px;left:280px;top:40px;">
       <div class="win-bar"><span class="wt">☰ {lab.windowAbout}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body prose-scroll"><div class="prose"><AboutContent /></div></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -138,7 +136,7 @@ const windows = [
 
     <div class="win closed" data-win="roadmap" style="width:520px;height:320px;left:320px;top:140px;">
       <div class="win-bar"><span class="wt">⚑ {lab.windowRoadmap}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body">
         <pre class="roadmap-pre">{lab.roadmapBody.join('\n')}</pre>
@@ -236,6 +234,15 @@ const windows = [
   }
   .win.closed { display: none; }
   .win.focused { border-color: var(--accent); }
+  .win.maxed {
+    position: fixed;
+    inset: 0.6rem;
+    width: auto !important;
+    height: auto !important;
+    max-width: none;
+    z-index: 999;
+  }
+  .win.maxed .win-resize { display: none; }
 
   .win-bar {
     display: flex;
@@ -460,11 +467,18 @@ const windows = [
         win.classList.add('closed');
         syncTaskbar();
       });
+      const maxBtn = win.querySelector<HTMLButtonElement>('[data-act="max"]')!;
+      maxBtn.addEventListener('click', () => {
+        const isMaxed = win.classList.toggle('maxed');
+        maxBtn.textContent = isMaxed ? '❐' : '□';
+        focusWin(win);
+      });
 
       // arrastar pela barra de título
       const bar = win.querySelector<HTMLElement>('.win-bar')!;
       bar.addEventListener('pointerdown', (e) => {
         if ((e.target as HTMLElement).closest('button')) return;
+        if (win.classList.contains('maxed')) return;
         const startX = e.clientX, startY = e.clientY;
         const startL = win.offsetLeft, startT = win.offsetTop;
         bar.setPointerCapture(e.pointerId);

@@ -810,6 +810,35 @@ input[type='checkbox'] {
 .repo-card .stars {
   color: var(--accent-2);
 }
+.catalog-note {
+  margin: -0.3rem 0 1.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.6rem;
+}
+.sort-label {
+  font-size: 0.72rem;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.view-all {
+  display: block;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.view-all:hover { color: var(--accent); }
 
 /* ---------- Prosa (markdown) ---------- */
 

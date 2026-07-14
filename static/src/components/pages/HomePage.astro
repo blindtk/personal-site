@@ -29,19 +29,15 @@ const tools = [
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
 // Stats: os dois primeiros são estáticos (CV); os restantes vêm do catálogo
-// de estrelas do GitHub quando existe — só aí o badge "live" é mostrado.
-const catalog = await getCatalog();
+// de estrelas do GitHub.
+const catalog = getCatalog();
 type Stat = { n: string; d: string; tone: string };
-const stats: Stat[] = [...dict.home.statsStatic];
-if (catalog) {
-  stats.push(
-    { n: String(catalog.totalRepos), d: dict.home.statsRepos, tone: 'blue' },
-    { n: String(catalog.categories.length), d: dict.home.statsCategories, tone: 'green' },
-  );
-} else {
-  stats.push(dict.home.statsFallback);
-}
-const catalogDate = catalog ? dateFmt.format(new Date(catalog.generatedAt)) : null;
+const stats: Stat[] = [
+  ...dict.home.statsStatic,
+  { n: String(catalog.totalRepos), d: dict.home.statsRepos, tone: 'blue' },
+  { n: String(catalog.categories.length), d: dict.home.statsCategories, tone: 'green' },
+];
+const catalogDate = dateFmt.format(new Date(catalog.generatedAt));
 
 const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
@@ -71,7 +67,7 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     <section class="panel" aria-label={dict.home.statsLabel}>
       <div class="phead">
         <span>&#47;&#47; {dict.home.statsLabel}</span>
-        {catalog && <span class="live">● {dict.home.live} · {dict.home.statsUpdated} {catalogDate}</span>}
+        <span class="live">● {dict.home.live} · {dict.home.statsUpdated} {catalogDate}</span>
       </div>
       <div class="stats-grid">
         {stats.map((stat) => (
