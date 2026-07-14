@@ -1,0 +1,4898 @@
+{
+  "generatedAt": "2026-07-14T16:21:14Z",
+  "user": "blindtk",
+  "totalRepos": 550,
+  "categories": [
+    {
+      "name": "AI & LLM Tooling",
+      "count": 101,
+      "repos": [
+        {
+          "name": "ollama/ollama",
+          "url": "https://github.com/ollama/ollama",
+          "stars": 175996,
+          "language": "Go",
+          "description": "Get up and running with Kimi-K2.6, GLM-5.1, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models.",
+          "tags": []
+        },
+        {
+          "name": "f/prompts.chat",
+          "url": "https://github.com/f/prompts.chat",
+          "stars": 165563,
+          "language": "HTML",
+          "description": "f.k.a. Awesome ChatGPT Prompts. Share, discover, and collect prompts from the community. Free and open source — self-host for your organization with complete privacy.",
+          "tags": [
+            "Security · OSINT & Privacy",
+            "Homelab & Infrastructure",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "open-webui/open-webui",
+          "url": "https://github.com/open-webui/open-webui",
+          "stars": 145169,
+          "language": "Python",
+          "description": "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)",
+          "tags": []
+        },
+        {
+          "name": "anthropics/claude-code",
+          "url": "https://github.com/anthropics/claude-code",
+          "stars": 137569,
+          "language": "Python",
+          "description": "Agentic coding tool that lives in your terminal, understands your codebase",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "garrytan/gstack",
+          "url": "https://github.com/garrytan/gstack",
+          "stars": 121471,
+          "language": "TypeScript",
+          "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
+          "tags": []
+        },
+        {
+          "name": "microsoft/generative-ai-for-beginners",
+          "url": "https://github.com/microsoft/generative-ai-for-beginners",
+          "stars": 112916,
+          "language": "Jupyter Notebook",
+          "description": "21 Lessons, Get Started Building with Generative AI",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "TauricResearch/TradingAgents",
+          "url": "https://github.com/TauricResearch/TradingAgents",
+          "stars": 92593,
+          "language": "Python",
+          "description": "TradingAgents: Multi-Agents LLM Financial Trading Framework",
+          "tags": [
+            "Finance & Trading"
+          ]
+        },
+        {
+          "name": "OpenHands/OpenHands",
+          "url": "https://github.com/OpenHands/OpenHands",
+          "stars": 80571,
+          "language": "Python",
+          "description": "OpenHands: AI-Driven Development",
+          "tags": []
+        },
+        {
+          "name": "addyosmani/agent-skills",
+          "url": "https://github.com/addyosmani/agent-skills",
+          "stars": 77574,
+          "language": "JavaScript",
+          "description": "Production-grade engineering skills for AI coding agents.",
+          "tags": []
+        },
+        {
+          "name": "nomic-ai/gpt4all",
+          "url": "https://github.com/nomic-ai/gpt4all",
+          "stars": 77389,
+          "language": "C++",
+          "description": "GPT4All: Run Local LLMs on Any Device. Open-source and available for commercial use.",
+          "tags": []
+        },
+        {
+          "name": "bytedance/deer-flow",
+          "url": "https://github.com/bytedance/deer-flow",
+          "stars": 76849,
+          "language": "Python",
+          "description": "An open-source long-horizon SuperAgent harness that researches, codes, and creates",
+          "tags": []
+        },
+        {
+          "name": "openai/openai-cookbook",
+          "url": "https://github.com/openai/openai-cookbook",
+          "stars": 74658,
+          "language": "Jupyter Notebook",
+          "description": "Examples and guides for using the OpenAI API",
+          "tags": []
+        },
+        {
+          "name": "Egonex-AI/Understand-Anything",
+          "url": "https://github.com/Egonex-AI/Understand-Anything",
+          "stars": 73600,
+          "language": "TypeScript",
+          "description": "Turn any code into an interactive knowledge graph you can explore, search, and ask questions about. Works with Claude Code, Codex, Cursor, Copilot, Gemini CLI.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "zylon-ai/private-gpt",
+          "url": "https://github.com/zylon-ai/private-gpt",
+          "stars": 57330,
+          "language": "Python",
+          "description": "Complete API layer for private AI applications on local models: RAG, skills, tools, MCP, text-to-sql, and more. Works with any OpenAI-compatible inference server.",
+          "tags": []
+        },
+        {
+          "name": "crewAIInc/crewAI",
+          "url": "https://github.com/crewAIInc/crewAI",
+          "stars": 55390,
+          "language": "Python",
+          "description": "Framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks.",
+          "tags": []
+        },
+        {
+          "name": "aaif-goose/goose",
+          "url": "https://github.com/aaif-goose/goose",
+          "stars": 51118,
+          "language": "Rust",
+          "description": "an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM",
+          "tags": []
+        },
+        {
+          "name": "anthropics/claude-cookbooks",
+          "url": "https://github.com/anthropics/claude-cookbooks",
+          "stars": 48362,
+          "language": "Jupyter Notebook",
+          "description": "A collection of notebooks/recipes showcasing some fun and effective ways of using Claude",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "Aider-AI/aider",
+          "url": "https://github.com/Aider-AI/aider",
+          "stars": 47321,
+          "language": "Python",
+          "description": "aider is AI pair programming in your terminal",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "janhq/jan",
+          "url": "https://github.com/janhq/jan",
+          "stars": 43521,
+          "language": "TypeScript",
+          "description": "Jan is an open source alternative to ChatGPT that runs 100% offline on your computer.",
+          "tags": []
+        },
+        {
+          "name": "danielmiessler/Fabric",
+          "url": "https://github.com/danielmiessler/Fabric",
+          "stars": 43010,
+          "language": "Go",
+          "description": "Fabric is an open-source framework for augmenting humans using AI.",
+          "tags": []
+        },
+        {
+          "name": "danny-avila/LibreChat",
+          "url": "https://github.com/danny-avila/LibreChat",
+          "stars": 40633,
+          "language": "TypeScript",
+          "description": "Enhanced ChatGPT Clone: Features Agents, MCP, Skills, DeepSeek, Anthropic, AWS, OpenAI, Azure, Groq, Mistral, OpenRouter, Vertex AI, Gemini, Artifacts, AI model switching",
+          "tags": []
+        },
+        {
+          "name": "openclaw/openclaw",
+          "url": "https://github.com/openclaw/openclaw",
+          "stars": 38269,
+          "language": "TypeScript",
+          "description": "Your own personal AI assistant. Any OS. Any Platform. The lobster way.",
+          "tags": []
+        },
+        {
+          "name": "HKUDS/LightRAG",
+          "url": "https://github.com/HKUDS/LightRAG",
+          "stars": 37580,
+          "language": "Python",
+          "description": "[EMNLP2025] LightRAG: Simple and Fast Retrieval-Augmented Generation",
+          "tags": []
+        },
+        {
+          "name": "heygen-com/hyperframes",
+          "url": "https://github.com/heygen-com/hyperframes",
+          "stars": 34470,
+          "language": "TypeScript",
+          "description": "Write HTML. Render video. Built for agents.",
+          "tags": [
+            "Media & Content"
+          ]
+        },
+        {
+          "name": "ashishpatel26/500-AI-Agents-Projects",
+          "url": "https://github.com/ashishpatel26/500-AI-Agents-Projects",
+          "stars": 34209,
+          "language": "Python",
+          "description": "The 500 AI Agents Projects is a curated collection of AI agent use cases across various industries. It showcases practical applications and provides links to open-source projects for implementation.",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "OpenBMB/VoxCPM",
+          "url": "https://github.com/OpenBMB/VoxCPM",
+          "stars": 33205,
+          "language": "Python",
+          "description": "VoxCPM2: Tokenizer-Free TTS for Multilingual Speech Generation, Creative Voice Design, and True-to-Life Cloning",
+          "tags": []
+        },
+        {
+          "name": "blader/humanizer",
+          "url": "https://github.com/blader/humanizer",
+          "stars": 28872,
+          "language": null,
+          "description": "Claude Code skill that removes signs of AI-generated writing from text",
+          "tags": []
+        },
+        {
+          "name": "supermemoryai/supermemory",
+          "url": "https://github.com/supermemoryai/supermemory",
+          "stars": 28340,
+          "language": "TypeScript",
+          "description": "Memory and context engine + app that is extremely fast, scalable, and can be run fully locally. The Memory API for the AI era.",
+          "tags": []
+        },
+        {
+          "name": "JCodesMore/ai-website-cloner-template",
+          "url": "https://github.com/JCodesMore/ai-website-cloner-template",
+          "stars": 27919,
+          "language": "TypeScript",
+          "description": "Clone any website with one command using AI coding agents",
+          "tags": [
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "eyaltoledano/claude-task-master",
+          "url": "https://github.com/eyaltoledano/claude-task-master",
+          "stars": 27834,
+          "language": "JavaScript",
+          "description": "An AI-powered task-management system you can drop into Cursor, Lovable, Windsurf, Roo, and others.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "HKUDS/DeepTutor",
+          "url": "https://github.com/HKUDS/DeepTutor",
+          "stars": 25484,
+          "language": "Python",
+          "description": "DeepTutor: Lifelong Personalized Tutoring",
+          "tags": []
+        },
+        {
+          "name": "mukul975/Anthropic-Cybersecurity-Skills",
+          "url": "https://github.com/mukul975/Anthropic-Cybersecurity-Skills",
+          "stars": 25397,
+          "language": "Python",
+          "description": "817 structured cybersecurity skills for AI agents · Mapped to 6 frameworks: MITRE ATT&CK, NIST CSF 2.0, MITRE ATLAS, D3FEND, NIST AI RMF & MITRE F3 · agentskills.io standard",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "obra/superpowers",
+          "url": "https://github.com/obra/superpowers",
+          "stars": 25299,
+          "language": "Shell",
+          "description": "Agentic skills framework & software development methodology",
+          "tags": []
+        },
+        {
+          "name": "VoltAgent/awesome-claude-code-subagents",
+          "url": "https://github.com/VoltAgent/awesome-claude-code-subagents",
+          "stars": 23237,
+          "language": "Shell",
+          "description": "A collection of 100+ specialized Claude Code subagents covering a wide range of development use cases",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "affaan-m/ECC",
+          "url": "https://github.com/affaan-m/ECC",
+          "stars": 22893,
+          "language": "JavaScript",
+          "description": "The agent harness performance optimization system",
+          "tags": []
+        },
+        {
+          "name": "karpathy/llm-council",
+          "url": "https://github.com/karpathy/llm-council",
+          "stars": 22609,
+          "language": "Python",
+          "description": "LLM Council works together to answer your hardest questions",
+          "tags": []
+        },
+        {
+          "name": "czlonkowski/n8n-mcp",
+          "url": "https://github.com/czlonkowski/n8n-mcp",
+          "stars": 22260,
+          "language": "TypeScript",
+          "description": "A MCP for Claude Desktop / Claude Code / Windsurf / Cursor to build n8n workflows for you",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "NousResearch/hermes-agent",
+          "url": "https://github.com/NousResearch/hermes-agent",
+          "stars": 21371,
+          "language": "Python",
+          "description": "The agent that grows with you",
+          "tags": []
+        },
+        {
+          "name": "snarktank/ralph",
+          "url": "https://github.com/snarktank/ralph",
+          "stars": 21016,
+          "language": "TypeScript",
+          "description": "Autonomous AI agent loop that runs repeatedly until all PRD items are complete",
+          "tags": []
+        },
+        {
+          "name": "vxcontrol/pentagi",
+          "url": "https://github.com/vxcontrol/pentagi",
+          "stars": 20150,
+          "language": "Go",
+          "description": "Fully autonomous AI Agents system capable of performing complex penetration testing tasks",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "multica-ai/andrej-karpathy-skills",
+          "url": "https://github.com/multica-ai/andrej-karpathy-skills",
+          "stars": 19120,
+          "language": null,
+          "description": "A single CLAUDE.md file to improve Claude Code behavior, derived from Andrej Karpathy's observations on LLM coding pitfalls.",
+          "tags": []
+        },
+        {
+          "name": "RightNow-AI/openfang",
+          "url": "https://github.com/RightNow-AI/openfang",
+          "stars": 18001,
+          "language": "Rust",
+          "description": "Open-source Agent Operating System",
+          "tags": [
+            "Operating Systems & Desktop"
+          ]
+        },
+        {
+          "name": "danielmiessler/LifeOS",
+          "url": "https://github.com/danielmiessler/LifeOS",
+          "stars": 16635,
+          "language": "TypeScript",
+          "description": "General Purpose AI Harness for magnifying human capabilities",
+          "tags": []
+        },
+        {
+          "name": "anthropics/skills",
+          "url": "https://github.com/anthropics/skills",
+          "stars": 16056,
+          "language": "Python",
+          "description": "Public repository for Agent Skills",
+          "tags": []
+        },
+        {
+          "name": "hardikpandya/stop-slop",
+          "url": "https://github.com/hardikpandya/stop-slop",
+          "stars": 13711,
+          "language": null,
+          "description": "A skill file for removing AI tells from prose",
+          "tags": []
+        },
+        {
+          "name": "Arindam200/awesome-ai-apps",
+          "url": "https://github.com/Arindam200/awesome-ai-apps",
+          "stars": 13090,
+          "language": "Python",
+          "description": "A collection of projects showcasing RAG, agents, workflows, and other AI use cases",
+          "tags": [
+            "Reference, Awesome Lists & Learning",
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "msitarzewski/agency-agents",
+          "url": "https://github.com/msitarzewski/agency-agents",
+          "stars": 13077,
+          "language": "Shell",
+          "description": "A complete AI agency at your fingertips",
+          "tags": []
+        },
+        {
+          "name": "NVIDIA/SkillSpector",
+          "url": "https://github.com/NVIDIA/SkillSpector",
+          "stars": 13006,
+          "language": "Python",
+          "description": "Security scanner for AI agent skills. Detect vulnerabilities, malicious patterns, and security risks.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "contains-studio/agents",
+          "url": "https://github.com/contains-studio/agents",
+          "stars": 12399,
+          "language": null,
+          "description": "sharing current agents in use",
+          "tags": []
+        },
+        {
+          "name": "Piebald-AI/claude-code-system-prompts",
+          "url": "https://github.com/Piebald-AI/claude-code-system-prompts",
+          "stars": 11775,
+          "language": "JavaScript",
+          "description": "All parts of Claude Code's system prompt, 27 builtin tool descriptions, sub agent prompts (Plan/Explore/Task), utility prompts.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "NangoHQ/nango",
+          "url": "https://github.com/NangoHQ/nango",
+          "stars": 11057,
+          "language": "TypeScript",
+          "description": "Build product integrations with AI.",
+          "tags": []
+        },
+        {
+          "name": "nextlevelbuilder/ui-ux-pro-max-skill",
+          "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+          "stars": 10474,
+          "language": "Python",
+          "description": "An AI SKILL that provide design intelligence for building professional UI/UX multiple platforms",
+          "tags": [
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "aliasrobotics/cai",
+          "url": "https://github.com/aliasrobotics/cai",
+          "stars": 9430,
+          "language": "Python",
+          "description": "Cybersecurity AI (CAI), the framework for AI Security",
+          "tags": []
+        },
+        {
+          "name": "karpathy/autoresearch",
+          "url": "https://github.com/karpathy/autoresearch",
+          "stars": 9092,
+          "language": "Python",
+          "description": "AI agents running research on single-GPU nanochat training automatically",
+          "tags": []
+        },
+        {
+          "name": "thedotmack/claude-mem",
+          "url": "https://github.com/thedotmack/claude-mem",
+          "stars": 8696,
+          "language": "JavaScript",
+          "description": "Persistent Context Across Sessions for Every Agent – Captures everything your agent does during sessions, compresses it with AI, and injects relevant context back into future sessions.",
+          "tags": []
+        },
+        {
+          "name": "Graphify-Labs/graphify",
+          "url": "https://github.com/Graphify-Labs/graphify",
+          "stars": 8321,
+          "language": "Python",
+          "description": "AI coding assistant skill (Claude Code, Codex, OpenCode, Cursor, Gemini CLI, and more). Turn any folder of code, SQL schemas, R scripts, shell scripts, docs, papers, images, or videos into a queryable graph.",
+          "tags": [
+            "Developer Tools",
+            "Media & Content"
+          ]
+        },
+        {
+          "name": "HKUDS/ClawWork",
+          "url": "https://github.com/HKUDS/ClawWork",
+          "stars": 8227,
+          "language": "Python",
+          "description": "ClawWork: OpenClaw as Your AI Coworker",
+          "tags": []
+        },
+        {
+          "name": "gsd-build/gsd-2",
+          "url": "https://github.com/gsd-build/gsd-2",
+          "stars": 7743,
+          "language": "TypeScript",
+          "description": "A powerful meta-prompting, context engineering and spec-driven development system that enables agents to work for long periods of time autonomously without losing track of the big picture",
+          "tags": []
+        },
+        {
+          "name": "paperclipai/paperclip",
+          "url": "https://github.com/paperclipai/paperclip",
+          "stars": 7345,
+          "language": "TypeScript",
+          "description": "The open-source app everyone uses to manage agents at work",
+          "tags": []
+        },
+        {
+          "name": "shareAI-lab/learn-claude-code",
+          "url": "https://github.com/shareAI-lab/learn-claude-code",
+          "stars": 7075,
+          "language": "Python",
+          "description": "Bash is all you need - A nano claude code–like agent harness",
+          "tags": []
+        },
+        {
+          "name": "gsd-build/get-shit-done",
+          "url": "https://github.com/gsd-build/get-shit-done",
+          "stars": 6474,
+          "language": "JavaScript",
+          "description": "A light-weight and powerful meta-prompting, context engineering and spec-driven development system",
+          "tags": []
+        },
+        {
+          "name": "cloudflare/agentic-inbox",
+          "url": "https://github.com/cloudflare/agentic-inbox",
+          "stars": 6282,
+          "language": "TypeScript",
+          "description": "A self-hosted email client with an AI agent, running entirely on Cloudflare Workers",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "shanraisshan/claude-code-best-practice",
+          "url": "https://github.com/shanraisshan/claude-code-best-practice",
+          "stars": 6248,
+          "language": "HTML",
+          "description": "from vibe coding to agentic engineering - practice makes claude perfect",
+          "tags": []
+        },
+        {
+          "name": "koala73/worldmonitor",
+          "url": "https://github.com/koala73/worldmonitor",
+          "stars": 6176,
+          "language": "TypeScript",
+          "description": "Real-time global intelligence dashboard with AI-powered news aggregation and monitoring",
+          "tags": []
+        },
+        {
+          "name": "trailofbits/skills",
+          "url": "https://github.com/trailofbits/skills",
+          "stars": 6080,
+          "language": "Python",
+          "description": "Trail of Bits Claude Code skills for security research and vulnerability detection",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "wassupjay/n8n-free-templates",
+          "url": "https://github.com/wassupjay/n8n-free-templates",
+          "stars": 5933,
+          "language": null,
+          "description": "A curated set of 200+ plug-and-play n8n workflows that fuse classic automation with today's AI stack—vector DBs, embeddings, and LLMs.",
+          "tags": [
+            "Developer Tools",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "mvanhorn/last30days-skill",
+          "url": "https://github.com/mvanhorn/last30days-skill",
+          "stars": 5714,
+          "language": "Python",
+          "description": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
+          "tags": []
+        },
+        {
+          "name": "potpie-ai/potpie",
+          "url": "https://github.com/potpie-ai/potpie",
+          "stars": 5496,
+          "language": "Python",
+          "description": "Context Graph for AI Native SDLC",
+          "tags": []
+        },
+        {
+          "name": "jgraph/drawio-mcp",
+          "url": "https://github.com/jgraph/drawio-mcp",
+          "stars": 4781,
+          "language": "JavaScript",
+          "description": "drawio MCP server",
+          "tags": []
+        },
+        {
+          "name": "tradesdontlie/tradingview-mcp",
+          "url": "https://github.com/tradesdontlie/tradingview-mcp",
+          "stars": 4336,
+          "language": "JavaScript",
+          "description": "AI-assisted TradingView chart analysis — connect Claude Code to your TradingView Desktop for personal workflow automation",
+          "tags": [
+            "Developer Tools",
+            "Finance & Trading"
+          ]
+        },
+        {
+          "name": "kepano/obsidian-skills",
+          "url": "https://github.com/kepano/obsidian-skills",
+          "stars": 4136,
+          "language": null,
+          "description": "Agent skills for Obsidian. Teach your agent to use Obsidian CLI and open formats including Markdown, Bases, JSON Canvas.",
+          "tags": [
+            "Developer Tools",
+            "Documents & Data Processing"
+          ]
+        },
+        {
+          "name": "shuvonsec/claude-bug-bounty",
+          "url": "https://github.com/shuvonsec/claude-bug-bounty",
+          "stars": 3950,
+          "language": "Python",
+          "description": "AI-powered bug bounty hunting from your terminal - recon, 20 vuln classes, autonomous hunting, and report generation. All inside Claude Code.",
+          "tags": [
+            "Security · Offensive",
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "m1guelpf/chatgpt-telegram",
+          "url": "https://github.com/m1guelpf/chatgpt-telegram",
+          "stars": 3886,
+          "language": "Go",
+          "description": "Run your own GPTChat Telegram bot, with a single command!",
+          "tags": []
+        },
+        {
+          "name": "anthropics/financial-services",
+          "url": "https://github.com/anthropics/financial-services",
+          "stars": 3341,
+          "language": "Python",
+          "description": "Anthropic financial services cookbook",
+          "tags": []
+        },
+        {
+          "name": "breferrari/obsidian-mind",
+          "url": "https://github.com/breferrari/obsidian-mind",
+          "stars": 3326,
+          "language": "TypeScript",
+          "description": "An Obsidian vault that gives AI coding agents persistent memory. Claude Code, Codex CLI, Gemini CLI.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "gadievron/raptor",
+          "url": "https://github.com/gadievron/raptor",
+          "stars": 3320,
+          "language": "Python",
+          "description": "Raptor turns Claude Code into a general-purpose AI offensive/defensive security agent",
+          "tags": [
+            "Security · Offensive",
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "AmintaCCCP/GithubStarsManager",
+          "url": "https://github.com/AmintaCCCP/GithubStarsManager",
+          "stars": 3197,
+          "language": "TypeScript",
+          "description": "AI-powered GitHub stars manager with semantic search, auto-categorization, and release tracking",
+          "tags": [
+            "Security · OSINT & Privacy"
+          ]
+        },
+        {
+          "name": "awslabs/agentcore-samples",
+          "url": "https://github.com/awslabs/agentcore-samples",
+          "stars": 3179,
+          "language": "Python",
+          "description": "Amazon Bedrock Agentcore accelerates AI agents into production",
+          "tags": []
+        },
+        {
+          "name": "itsOwen/CyberScraper-2077",
+          "url": "https://github.com/itsOwen/CyberScraper-2077",
+          "stars": 3125,
+          "language": "Python",
+          "description": "Powerful web scraper powered by LLM with OpenAI, Gemini & Ollama support",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "nowork-studio/NotFair",
+          "url": "https://github.com/nowork-studio/NotFair",
+          "stars": 3115,
+          "language": "TypeScript",
+          "description": "Open-source Claude Code skills for SEO, GEO, Google Ads, Meta Ads",
+          "tags": []
+        },
+        {
+          "name": "anthropics/claude-agent-sdk-demos",
+          "url": "https://github.com/anthropics/claude-agent-sdk-demos",
+          "stars": 2634,
+          "language": "TypeScript",
+          "description": "Claude Code SDK Demos",
+          "tags": []
+        },
+        {
+          "name": "rohitg00/awesome-claude-code-toolkit",
+          "url": "https://github.com/rohitg00/awesome-claude-code-toolkit",
+          "stars": 2303,
+          "language": "JavaScript",
+          "description": "The most comprehensive toolkit for Claude Code -- 135 agents, 35 curated skills, 42 commands, 176+ plugins, 20 hooks, 15 rules, 7 templates, 14 MCP configs, 26 companion apps, 52 ecosystem entries",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "trailofbits/claude-code-config",
+          "url": "https://github.com/trailofbits/claude-code-config",
+          "stars": 2041,
+          "language": "Shell",
+          "description": "Opinionated defaults, documentation, and workflows for Claude Code at Trail of Bits",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "supermemoryai/supermemory-mcp",
+          "url": "https://github.com/supermemoryai/supermemory-mcp",
+          "stars": 1710,
+          "language": "TypeScript",
+          "description": "Your memories are in ChatGPT... But nowhere else. Universal Memory MCP makes your memories available to every single LLM.",
+          "tags": []
+        },
+        {
+          "name": "thalesgroup-cert/Watcher",
+          "url": "https://github.com/thalesgroup-cert/Watcher",
+          "stars": 1333,
+          "language": "JavaScript",
+          "description": "Open Source AI-powered Cyber Threat Intelligence & Hunting Platform",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "microsoft/azure-skills",
+          "url": "https://github.com/microsoft/azure-skills",
+          "stars": 1273,
+          "language": "Python",
+          "description": "Official agent plugin providing skills and MCP server configurations for Azure scenarios.",
+          "tags": []
+        },
+        {
+          "name": "mbrg/power-pwn",
+          "url": "https://github.com/mbrg/power-pwn",
+          "stars": 1165,
+          "language": "Python",
+          "description": "An offensive/defense security toolset for discovery, recon and ethical assessment of AI Agents",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "mattprusak/autoresearch-genealogy",
+          "url": "https://github.com/mattprusak/autoresearch-genealogy",
+          "stars": 1152,
+          "language": "Ruby",
+          "description": "Structured prompts, vault templates, and archive guides for AI-assisted genealogy research. Built for Claude Code.",
+          "tags": []
+        },
+        {
+          "name": "danielmiessler/Substrate",
+          "url": "https://github.com/danielmiessler/Substrate",
+          "stars": 868,
+          "language": "TypeScript",
+          "description": "An Open-source Framework for Human Understanding, Meaning, and Progress.",
+          "tags": []
+        },
+        {
+          "name": "avinash201199/free-ai-agents-resources",
+          "url": "https://github.com/avinash201199/free-ai-agents-resources",
+          "stars": 785,
+          "language": null,
+          "description": "Free AI Agents Resources – Your All-in-One 2026 Learning Hub",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "bennypowers/nvim-regexplainer",
+          "url": "https://github.com/bennypowers/nvim-regexplainer",
+          "stars": 759,
+          "language": "Lua",
+          "description": "Describe the regexp under the cursor",
+          "tags": []
+        },
+        {
+          "name": "shannhk/hermes-agent-control-room",
+          "url": "https://github.com/shannhk/hermes-agent-control-room",
+          "stars": 669,
+          "language": "Shell",
+          "description": "Control Room-first template for managing Hermes agents from one VPS agent to specialist teams and orchestrated workflows",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "automateyournetwork/netclaw",
+          "url": "https://github.com/automateyournetwork/netclaw",
+          "stars": 609,
+          "language": "Python",
+          "description": "An AI agent that claws through your network",
+          "tags": []
+        },
+        {
+          "name": "carlvellotti/claude-code-everyone-course",
+          "url": "https://github.com/carlvellotti/claude-code-everyone-course",
+          "stars": 549,
+          "language": "MDX",
+          "description": "Claude Code for Everyone - Learn Claude Code in Claude Code",
+          "tags": []
+        },
+        {
+          "name": "MHaggis/Security-Detections-MCP",
+          "url": "https://github.com/MHaggis/Security-Detections-MCP",
+          "stars": 461,
+          "language": "TypeScript",
+          "description": "MCP to help Defenders Detection Engineer Harder and Smarter",
+          "tags": []
+        },
+        {
+          "name": "bobek-balinek/claude-lamp",
+          "url": "https://github.com/bobek-balinek/claude-lamp",
+          "stars": 287,
+          "language": "Python",
+          "description": "Claude hooks integration with Moonside lamps",
+          "tags": []
+        },
+        {
+          "name": "SCStelz/security-investigator",
+          "url": "https://github.com/SCStelz/security-investigator",
+          "stars": 225,
+          "language": "Python",
+          "description": "Automated security investigation tool using Microsoft MCP Servers, GitHub Copilot, Python Modules and custom copilot-instructions.",
+          "tags": [
+            "Security · OSINT & Privacy"
+          ]
+        },
+        {
+          "name": "antropos17/Aegis",
+          "url": "https://github.com/antropos17/Aegis",
+          "stars": 134,
+          "language": "JavaScript",
+          "description": "Open-source EDR for AI agents",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "cyberbuff/atomic-red-team-mcp",
+          "url": "https://github.com/cyberbuff/atomic-red-team-mcp",
+          "stars": 128,
+          "language": "Python",
+          "description": "MCP server for Atomic Red Team",
+          "tags": [
+            "Security · Offensive",
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "ugurkocde/AgentsForAdmins",
+          "url": "https://github.com/ugurkocde/AgentsForAdmins",
+          "stars": 24,
+          "language": null,
+          "description": "Community-driven catalog of ready-to-use agents for the Security Copilot portal.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "depalmar/AI-Powered-Ransomware-Intelligence-Agent",
+          "url": "https://github.com/depalmar/AI-Powered-Ransomware-Intelligence-Agent",
+          "stars": 22,
+          "language": "Python",
+          "description": "Automated n8n workflow for ransomware threat monitoring using ransomware.live API and Claude AI",
+          "tags": [
+            "Security · Threat Intel & Malware",
+            "Developer Tools"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Security · Defensive",
+      "count": 81,
+      "repos": [
+        {
+          "name": "danielmiessler/SecLists",
+          "url": "https://github.com/danielmiessler/SecLists",
+          "stars": 72117,
+          "language": "PHP",
+          "description": "SecLists is the security tester's companion. It's a collection of multiple types of lists used during security assessments, collected in one place. List types include usernames, passwords, URLs, and more.",
+          "tags": [
+            "Security · Offensive",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "trufflesecurity/trufflehog",
+          "url": "https://github.com/trufflesecurity/trufflehog",
+          "stars": 27021,
+          "language": "Go",
+          "description": "Find, verify, and analyze leaked credentials",
+          "tags": []
+        },
+        {
+          "name": "deviantony/docker-elk",
+          "url": "https://github.com/deviantony/docker-elk",
+          "stars": 18374,
+          "language": "Shell",
+          "description": "The Elastic stack (ELK) powered by Docker and Compose.",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "wazuh/wazuh",
+          "url": "https://github.com/wazuh/wazuh",
+          "stars": 16094,
+          "language": "C++",
+          "description": "Wazuh - The Open Source Security Platform. Unified XDR and SIEM protection for endpoints and cloud workloads.",
+          "tags": []
+        },
+        {
+          "name": "semgrep/semgrep",
+          "url": "https://github.com/semgrep/semgrep",
+          "stars": 15850,
+          "language": "OCaml",
+          "description": "Lightweight static analysis for many languages. Find bug variants with patterns that look like source code.",
+          "tags": []
+        },
+        {
+          "name": "awslabs/git-secrets",
+          "url": "https://github.com/awslabs/git-secrets",
+          "stars": 13345,
+          "language": "Shell",
+          "description": "Prevents you from committing secrets and credentials into git repositories",
+          "tags": []
+        },
+        {
+          "name": "SigmaHQ/sigma",
+          "url": "https://github.com/SigmaHQ/sigma",
+          "stars": 10735,
+          "language": "Python",
+          "description": "Main Sigma Rule Repository",
+          "tags": []
+        },
+        {
+          "name": "VirusTotal/yara",
+          "url": "https://github.com/VirusTotal/yara",
+          "stars": 9747,
+          "language": "C",
+          "description": "The pattern matching swiss knife",
+          "tags": []
+        },
+        {
+          "name": "telekom-security/tpotce",
+          "url": "https://github.com/telekom-security/tpotce",
+          "stars": 9340,
+          "language": "Shell",
+          "description": "T-Pot - The All In One Multi Honeypot Platform",
+          "tags": []
+        },
+        {
+          "name": "zeek/zeek",
+          "url": "https://github.com/zeek/zeek",
+          "stars": 7762,
+          "language": "C++",
+          "description": "Zeek is a powerful network analysis framework that is much different from the typical IDS you may know",
+          "tags": []
+        },
+        {
+          "name": "Cisco-Talos/clamav",
+          "url": "https://github.com/Cisco-Talos/clamav",
+          "stars": 6964,
+          "language": "C",
+          "description": "ClamAV - antivirus engine",
+          "tags": []
+        },
+        {
+          "name": "openbao/openbao",
+          "url": "https://github.com/openbao/openbao",
+          "stars": 6617,
+          "language": "Go",
+          "description": "Software solution to manage, store, and distribute sensitive data including secrets and certificates",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "decalage2/awesome-security-hardening",
+          "url": "https://github.com/decalage2/awesome-security-hardening",
+          "stars": 6462,
+          "language": null,
+          "description": "A collection of awesome security hardening guides, tools and other resources",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "OISF/suricata",
+          "url": "https://github.com/OISF/suricata",
+          "stars": 6454,
+          "language": "C",
+          "description": "Suricata is a network Intrusion Detection System, Intrusion Prevention System and Network Security Monitoring engine developed by the OISF and the Suricata community",
+          "tags": []
+        },
+        {
+          "name": "cowrie/cowrie",
+          "url": "https://github.com/cowrie/cowrie",
+          "stars": 6452,
+          "language": "Python",
+          "description": "Cowrie SSH/Telnet Honeypot",
+          "tags": []
+        },
+        {
+          "name": "undergroundwires/privacy.sexy",
+          "url": "https://github.com/undergroundwires/privacy.sexy",
+          "stars": 5809,
+          "language": "TypeScript",
+          "description": "Open-source tool to enforce privacy & security best-practices on Windows, macOS and Linux, because privacy is sexy",
+          "tags": [
+            "Security · OSINT & Privacy"
+          ]
+        },
+        {
+          "name": "SwiftOnSecurity/sysmon-config",
+          "url": "https://github.com/SwiftOnSecurity/sysmon-config",
+          "stars": 5587,
+          "language": null,
+          "description": "Sysmon configuration file template with default high-quality event tracing",
+          "tags": []
+        },
+        {
+          "name": "ossec/ossec-hids",
+          "url": "https://github.com/ossec/ossec-hids",
+          "stars": 5028,
+          "language": "C",
+          "description": "OSSEC is an Open Source Host-based Intrusion Detection System that performs log analysis, file integrity checking, policy monitoring, rootkit detection, real-time alerting and active response",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "clong/DetectionLab",
+          "url": "https://github.com/clong/DetectionLab",
+          "stars": 4996,
+          "language": "HTML",
+          "description": "Automate the creation of a lab environment complete with security tooling and logging best practices",
+          "tags": []
+        },
+        {
+          "name": "DefectDojo/django-DefectDojo",
+          "url": "https://github.com/DefectDojo/django-DefectDojo",
+          "stars": 4822,
+          "language": "HTML",
+          "description": "Open-Source Unified Vulnerability Management, DevSecOps & ASPM",
+          "tags": []
+        },
+        {
+          "name": "intuitem/ciso-assistant-community",
+          "url": "https://github.com/intuitem/ciso-assistant-community",
+          "stars": 4251,
+          "language": "Python",
+          "description": "CISO Assistant is a one-stop-shop GRC platform for Risk Management, AppSec, Compliance & Audit, TPRM, BIA, Privacy, and Reporting.",
+          "tags": [
+            "Security · OSINT & Privacy"
+          ]
+        },
+        {
+          "name": "DependencyTrack/dependency-track",
+          "url": "https://github.com/DependencyTrack/dependency-track",
+          "stars": 4010,
+          "language": "Java",
+          "description": "Dependency-Track is an intelligent Component Analysis platform that allows organizations to identify and reduce risk in the software supply chain.",
+          "tags": []
+        },
+        {
+          "name": "Cyb3rWard0g/HELK",
+          "url": "https://github.com/Cyb3rWard0g/HELK",
+          "stars": 3928,
+          "language": "Jupyter Notebook",
+          "description": "The Hunting ELK",
+          "tags": []
+        },
+        {
+          "name": "snort3/snort3",
+          "url": "https://github.com/snort3/snort3",
+          "stars": 3383,
+          "language": "C++",
+          "description": "Snort++",
+          "tags": []
+        },
+        {
+          "name": "salesforce/ja3",
+          "url": "https://github.com/salesforce/ja3",
+          "stars": 3105,
+          "language": "Python",
+          "description": "JA3 is a standard for creating SSL client fingerprints in an easy to produce and shareable way.",
+          "tags": []
+        },
+        {
+          "name": "olafhartong/sysmon-modular",
+          "url": "https://github.com/olafhartong/sysmon-modular",
+          "stars": 3076,
+          "language": "PowerShell",
+          "description": "A repository of sysmon configuration modules",
+          "tags": []
+        },
+        {
+          "name": "thinkst/opencanary",
+          "url": "https://github.com/thinkst/opencanary",
+          "stars": 2923,
+          "language": "Python",
+          "description": "Modular and decentralised honeypot",
+          "tags": []
+        },
+        {
+          "name": "rbsec/sslscan",
+          "url": "https://github.com/rbsec/sslscan",
+          "stars": 2608,
+          "language": "C",
+          "description": "sslscan tests SSL/TLS enabled services to discover supported cipher suites",
+          "tags": []
+        },
+        {
+          "name": "splunk/attack_range",
+          "url": "https://github.com/splunk/attack_range",
+          "stars": 2518,
+          "language": "Python",
+          "description": "A tool that allows you to create vulnerable instrumented local or cloud environments to simulate attacks against and collect the data into Splunk",
+          "tags": []
+        },
+        {
+          "name": "drk1wi/Portspoof",
+          "url": "https://github.com/drk1wi/Portspoof",
+          "stars": 2421,
+          "language": "C++",
+          "description": "Portspoof",
+          "tags": []
+        },
+        {
+          "name": "tsale/EDR-Telemetry",
+          "url": "https://github.com/tsale/EDR-Telemetry",
+          "stars": 1970,
+          "language": "Python",
+          "description": "This project aims to compare and evaluate the telemetry of various EDR products.",
+          "tags": []
+        },
+        {
+          "name": "Neo23x0/auditd",
+          "url": "https://github.com/Neo23x0/auditd",
+          "stars": 1865,
+          "language": "Shell",
+          "description": "Best Practice Auditd Configuration",
+          "tags": []
+        },
+        {
+          "name": "cisagov/cset",
+          "url": "https://github.com/cisagov/cset",
+          "stars": 1859,
+          "language": "TSQL",
+          "description": "Cybersecurity Evaluation Tool",
+          "tags": []
+        },
+        {
+          "name": "scipag/HardeningKitty",
+          "url": "https://github.com/scipag/HardeningKitty",
+          "stars": 1792,
+          "language": "PowerShell",
+          "description": "HardeningKitty - Checks and hardens your Windows configuration",
+          "tags": []
+        },
+        {
+          "name": "chenjj/espoofer",
+          "url": "https://github.com/chenjj/espoofer",
+          "stars": 1730,
+          "language": "Python",
+          "description": "An email spoofing testing tool that aims to bypass SPF/DKIM/DMARC and forge DKIM signatures.",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "Bert-JanP/Hunting-Queries-Detection-Rules",
+          "url": "https://github.com/Bert-JanP/Hunting-Queries-Detection-Rules",
+          "stars": 1718,
+          "language": "Python",
+          "description": "KQL Queries. Defender For Endpoint and Azure Sentinel Hunting and Detection Queries in KQL. Out of the box KQL queries for: Advanced Hunting, Custom Detection, Analytics Rules & Hunting Rules.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "trailofbits/buttercup",
+          "url": "https://github.com/trailofbits/buttercup",
+          "stars": 1614,
+          "language": "Python",
+          "description": "Buttercup finds and patches software vulnerabilities",
+          "tags": []
+        },
+        {
+          "name": "SecurityRiskAdvisors/VECTR",
+          "url": "https://github.com/SecurityRiskAdvisors/VECTR",
+          "stars": 1596,
+          "language": null,
+          "description": "VECTR is a tool that facilitates tracking of your red and blue team testing activities to measure detection and prevention capabilities across different attack scenarios",
+          "tags": [
+            "Security · OSINT & Privacy"
+          ]
+        },
+        {
+          "name": "myzxcg/RealBlindingEDR",
+          "url": "https://github.com/myzxcg/RealBlindingEDR",
+          "stars": 1319,
+          "language": "C++",
+          "description": "Remove AV/EDR Kernel ObRegisterCallbacks, CmRegisterCallback, MiniFilter Callback, PsSetCreateProcessNotifyRoutine Callback, PsSetCreateThreadNotifyRoutine Callback, PsSetLoadImageNotifyRoutine Callback",
+          "tags": []
+        },
+        {
+          "name": "OTRF/OSSEM",
+          "url": "https://github.com/OTRF/OSSEM",
+          "stars": 1300,
+          "language": "Python",
+          "description": "Open Source Security Events Metadata (OSSEM)",
+          "tags": []
+        },
+        {
+          "name": "PlumHound/PlumHound",
+          "url": "https://github.com/PlumHound/PlumHound",
+          "stars": 1297,
+          "language": "Python",
+          "description": "Bloodhound Reporting for Blue and Purple Teams",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "subat0mik/Misconfiguration-Manager",
+          "url": "https://github.com/subat0mik/Misconfiguration-Manager",
+          "stars": 1154,
+          "language": "PowerShell",
+          "description": "Misconfiguration Manager is a central knowledge base for all known Microsoft Configuration Manager tradecraft and associated defensive and hardening guidance.",
+          "tags": []
+        },
+        {
+          "name": "BinaryDefense/artillery",
+          "url": "https://github.com/BinaryDefense/artillery",
+          "stars": 1042,
+          "language": "Python",
+          "description": "The Artillery Project is an open-source blue team tool designed to protect Linux and Windows operating systems through multiple methods.",
+          "tags": [
+            "Operating Systems & Desktop"
+          ]
+        },
+        {
+          "name": "ScarredMonk/SysmonSimulator",
+          "url": "https://github.com/ScarredMonk/SysmonSimulator",
+          "stars": 867,
+          "language": "C",
+          "description": "Sysmon event simulation utility for testing EDR detections and correlation rules.",
+          "tags": []
+        },
+        {
+          "name": "scythe-io/purple-team-exercise-framework",
+          "url": "https://github.com/scythe-io/purple-team-exercise-framework",
+          "stars": 805,
+          "language": "PowerShell",
+          "description": "Purple Team Exercise Framework",
+          "tags": []
+        },
+        {
+          "name": "PHPIDS/PHPIDS",
+          "url": "https://github.com/PHPIDS/PHPIDS",
+          "stars": 790,
+          "language": "PHP",
+          "description": "PHPIDS (PHP-Intrusion Detection System) is a simple to use, well structured, fast and state-of-the-art security layer for your PHP based web application",
+          "tags": []
+        },
+        {
+          "name": "cyberdefenders/email-header-analyzer",
+          "url": "https://github.com/cyberdefenders/email-header-analyzer",
+          "stars": 695,
+          "language": "HTML",
+          "description": "E-Mail Header Analyzer",
+          "tags": []
+        },
+        {
+          "name": "0x4D31/galah",
+          "url": "https://github.com/0x4D31/galah",
+          "stars": 657,
+          "language": "Go",
+          "description": "An LLM-powered web honeypot.",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "OTRF/Microsoft-Sentinel2Go",
+          "url": "https://github.com/OTRF/Microsoft-Sentinel2Go",
+          "stars": 595,
+          "language": "PowerShell",
+          "description": "Microsoft Sentinel2Go is an open source project developed to expedite the deployment of a Microsoft Sentinel research lab.",
+          "tags": []
+        },
+        {
+          "name": "peasead/elastic-container",
+          "url": "https://github.com/peasead/elastic-container",
+          "stars": 563,
+          "language": "Shell",
+          "description": "Stand up a simple Elastic container with Kibana, Fleet, and the Detection Engine",
+          "tags": []
+        },
+        {
+          "name": "salesforce/hassh",
+          "url": "https://github.com/salesforce/hassh",
+          "stars": 553,
+          "language": "Python",
+          "description": "HASSH is a network fingerprinting standard which can be used to identify specific Client and Server SSH implementations.",
+          "tags": []
+        },
+        {
+          "name": "sublime-security/emailrep.io",
+          "url": "https://github.com/sublime-security/emailrep.io",
+          "stars": 373,
+          "language": null,
+          "description": "emailrep.io Public API",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "microsoft/zerotrustassessment",
+          "url": "https://github.com/microsoft/zerotrustassessment",
+          "stars": 371,
+          "language": "HTML",
+          "description": "Repository for the Zero Trust Assessment project",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "srlabs/Certiception",
+          "url": "https://github.com/srlabs/Certiception",
+          "stars": 330,
+          "language": "Jinja",
+          "description": "An ADCS honeypot to catch attackers in your internal network.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "narbehaj/ssl-checker",
+          "url": "https://github.com/narbehaj/ssl-checker",
+          "stars": 321,
+          "language": "Python",
+          "description": "Python script that collects SSL/TLS information from hosts",
+          "tags": []
+        },
+        {
+          "name": "DefensiveOrigins/AtomicPurpleTeam",
+          "url": "https://github.com/DefensiveOrigins/AtomicPurpleTeam",
+          "stars": 303,
+          "language": null,
+          "description": "Atomic Purple Team Framework and Lifecycle",
+          "tags": []
+        },
+        {
+          "name": "redcanaryco/AtomicTestHarnesses",
+          "url": "https://github.com/redcanaryco/AtomicTestHarnesses",
+          "stars": 289,
+          "language": "PowerShell",
+          "description": "Public Repo for Atomic Test Harness",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "Cisco-Talos/DECEIVE",
+          "url": "https://github.com/Cisco-Talos/DECEIVE",
+          "stars": 286,
+          "language": "Python",
+          "description": "DECeption with Evaluative Integrated Validation Engine (DECEIVE): Let an LLM do all the hard honeypot work!",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "sametsazak/mergen",
+          "url": "https://github.com/sametsazak/mergen",
+          "stars": 238,
+          "language": "Swift",
+          "description": "Mergen is an open-source, native macOS application for auditing and checking the security of your MacOS.",
+          "tags": []
+        },
+        {
+          "name": "opendns/Security_Ninjas_AppSec_Training",
+          "url": "https://github.com/opendns/Security_Ninjas_AppSec_Training",
+          "stars": 235,
+          "language": "Groff",
+          "description": "OpenDNS application security training program",
+          "tags": []
+        },
+        {
+          "name": "internetstandards/Internet.nl",
+          "url": "https://github.com/internetstandards/Internet.nl",
+          "stars": 226,
+          "language": "Python",
+          "description": "Internet standards compliance test suite",
+          "tags": []
+        },
+        {
+          "name": "HackingLZ/IndicatorOfCanary",
+          "url": "https://github.com/HackingLZ/IndicatorOfCanary",
+          "stars": 199,
+          "language": "Python",
+          "description": "Canary Detection",
+          "tags": []
+        },
+        {
+          "name": "tolgadevsec/Awesome-Deception",
+          "url": "https://github.com/tolgadevsec/Awesome-Deception",
+          "stars": 182,
+          "language": null,
+          "description": "An awesome list of resources on deception-based security with honeypots and honeytokens",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "internetstandards/toolbox-wiki",
+          "url": "https://github.com/internetstandards/toolbox-wiki",
+          "stars": 177,
+          "language": null,
+          "description": "Internet.nl toolbox - how-to's for modern mail security standards (DMARC, DKIM, SPF and DANE)",
+          "tags": []
+        },
+        {
+          "name": "yuriskinfo/Fortinet-tools",
+          "url": "https://github.com/yuriskinfo/Fortinet-tools",
+          "stars": 151,
+          "language": "Awk",
+          "description": "Tools to help you with daily tasks of configuring/debugging/monitoring Fortinet products - Fortigate, FortiAnalyzer, Fortimanager.",
+          "tags": []
+        },
+        {
+          "name": "Cisco-Talos/snort-faq",
+          "url": "https://github.com/Cisco-Talos/snort-faq",
+          "stars": 118,
+          "language": null,
+          "description": "Snort FAQ",
+          "tags": []
+        },
+        {
+          "name": "fortinet-ansible-dev/ansible-galaxy-fortios-collection",
+          "url": "https://github.com/fortinet-ansible-dev/ansible-galaxy-fortios-collection",
+          "stars": 105,
+          "language": "Python",
+          "description": "Ansible Galaxy FortiOS collection",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "40net-cloud/fortinet-azure-solutions",
+          "url": "https://github.com/40net-cloud/fortinet-azure-solutions",
+          "stars": 82,
+          "language": "HCL",
+          "description": "Azure Templates for getting you started with Fortinet solutions.",
+          "tags": []
+        },
+        {
+          "name": "cisagov/cybersecurity-performance-goals",
+          "url": "https://github.com/cisagov/cybersecurity-performance-goals",
+          "stars": 76,
+          "language": "Shell",
+          "description": "CISA's space for collaboration on the Cybersecurity Performance Goals",
+          "tags": []
+        },
+        {
+          "name": "jeffbencteux/mailsecchk",
+          "url": "https://github.com/jeffbencteux/mailsecchk",
+          "stars": 75,
+          "language": "Shell",
+          "description": "POSIX script for mail security checks of domain names",
+          "tags": []
+        },
+        {
+          "name": "soteria-security/ADInspect",
+          "url": "https://github.com/soteria-security/ADInspect",
+          "stars": 70,
+          "language": "HTML",
+          "description": "A PowerShell script that automates the security assessment of Microsoft Active Directory environments.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "msigley/PHP-HTTP-Tarpit",
+          "url": "https://github.com/msigley/PHP-HTTP-Tarpit",
+          "stars": 70,
+          "language": "PHP",
+          "description": "Confuse and waste bot scanners time.",
+          "tags": []
+        },
+        {
+          "name": "mayhemiclabs/weblabyrinth",
+          "url": "https://github.com/mayhemiclabs/weblabyrinth",
+          "stars": 68,
+          "language": "PHP",
+          "description": "A system that creates a bogus web structure to entrap and delay web scanners",
+          "tags": []
+        },
+        {
+          "name": "malcolmmcdonald1982/M365-Assessment-Toolkit",
+          "url": "https://github.com/malcolmmcdonald1982/M365-Assessment-Toolkit",
+          "stars": 65,
+          "language": "Python",
+          "description": "Free, open-source Microsoft 365 security assessment tool. Evaluates 23 findings, auto-remediates with rollback, generates professional reports, and simulates attack chains.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "DefensiveOrigins/DO-LAB",
+          "url": "https://github.com/DefensiveOrigins/DO-LAB",
+          "stars": 50,
+          "language": "HTML",
+          "description": "Defensive Origins lab",
+          "tags": []
+        },
+        {
+          "name": "ondrejholecek/sniftran",
+          "url": "https://github.com/ondrejholecek/sniftran",
+          "stars": 50,
+          "language": "Python",
+          "description": "Fortinet packet sniffer convertor",
+          "tags": []
+        },
+        {
+          "name": "msdirtbag/MicrosoftPurpleTeamToolkit",
+          "url": "https://github.com/msdirtbag/MicrosoftPurpleTeamToolkit",
+          "stars": 46,
+          "language": null,
+          "description": "Microsoft Purple Team Toolkit",
+          "tags": []
+        },
+        {
+          "name": "fortinet/aws-cloudformation-templates",
+          "url": "https://github.com/fortinet/aws-cloudformation-templates",
+          "stars": 40,
+          "language": "Python",
+          "description": "Cloud Formation Templates for getting you started in AWS with Fortinet.",
+          "tags": []
+        },
+        {
+          "name": "KevinGuenay/fortigate-baseline",
+          "url": "https://github.com/KevinGuenay/fortigate-baseline",
+          "stars": 36,
+          "language": null,
+          "description": "A baseline for FortiGates including best practices, security settings, checks, etc.",
+          "tags": []
+        },
+        {
+          "name": "40net-cloud/fortinet-aws-solutions",
+          "url": "https://github.com/40net-cloud/fortinet-aws-solutions",
+          "stars": 19,
+          "language": "HCL",
+          "description": "Fortinet AWS solutions",
+          "tags": []
+        },
+        {
+          "name": "0xMuhammad/Bro-PCAP-Dissector",
+          "url": "https://github.com/0xMuhammad/Bro-PCAP-Dissector",
+          "stars": 9,
+          "language": "Bro",
+          "description": "Bro script to dissect PCAP traces",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Security · Windows & Active Directory",
+      "count": 78,
+      "repos": [
+        {
+          "name": "fortra/impacket",
+          "url": "https://github.com/fortra/impacket",
+          "stars": 15899,
+          "language": "Python",
+          "description": "Impacket is a collection of Python classes for working with network protocols.",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "SpecterOps/BloodHound-Legacy",
+          "url": "https://github.com/SpecterOps/BloodHound-Legacy",
+          "stars": 10567,
+          "language": "PowerShell",
+          "description": "Six Degrees of Domain Admin",
+          "tags": []
+        },
+        {
+          "name": "Orange-Cyberdefense/GOAD",
+          "url": "https://github.com/Orange-Cyberdefense/GOAD",
+          "stars": 8016,
+          "language": "PowerShell",
+          "description": "game of active directory",
+          "tags": []
+        },
+        {
+          "name": "Pennyw0rth/NetExec",
+          "url": "https://github.com/Pennyw0rth/NetExec",
+          "stars": 5687,
+          "language": "Python",
+          "description": "The Network Execution Tool",
+          "tags": []
+        },
+        {
+          "name": "GhostPack/Rubeus",
+          "url": "https://github.com/GhostPack/Rubeus",
+          "stars": 5084,
+          "language": "C#",
+          "description": "Trying to tame the three-headed dog.",
+          "tags": []
+        },
+        {
+          "name": "HotCakeX/Harden-Windows-Security",
+          "url": "https://github.com/HotCakeX/Harden-Windows-Security",
+          "stars": 4466,
+          "language": "C#",
+          "description": "Harden Windows Safely, Securely using Official Supported Microsoft methods and proper explanation",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "ly4k/Certipy",
+          "url": "https://github.com/ly4k/Certipy",
+          "stars": 3588,
+          "language": "Python",
+          "description": "Tool for Active Directory Certificate Services enumeration and abuse",
+          "tags": []
+        },
+        {
+          "name": "0x6d69636b/windows_hardening",
+          "url": "https://github.com/0x6d69636b/windows_hardening",
+          "stars": 2636,
+          "language": "PowerShell",
+          "description": "HardeningKitty and Windows Hardening Settings",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "cisagov/ScubaGear",
+          "url": "https://github.com/cisagov/ScubaGear",
+          "stars": 2609,
+          "language": "PowerShell",
+          "description": "Automation to assess the state of your M365 tenant against CISA's baselines",
+          "tags": [
+            "Security · Defensive",
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "Cloud-Architekt/AzureAD-Attack-Defense",
+          "url": "https://github.com/Cloud-Architekt/AzureAD-Attack-Defense",
+          "stars": 2539,
+          "language": "PowerShell",
+          "description": "This publication is a collection of various common attack scenarios on Microsoft Entra ID (formerly known as Azure Active Directory) and how they can be mitigated or detected.",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "Microsoft365DSC/Microsoft365DSC",
+          "url": "https://github.com/Microsoft365DSC/Microsoft365DSC",
+          "stars": 2328,
+          "language": "PowerShell",
+          "description": "Manages, configures, extracts and monitors Microsoft 365 tenant configurations",
+          "tags": []
+        },
+        {
+          "name": "davidprowe/BadBlood",
+          "url": "https://github.com/davidprowe/BadBlood",
+          "stars": 2255,
+          "language": "PowerShell",
+          "description": "BadBlood fills a Microsoft Active Directory Domain with a structure and thousands of objects. The output of the tool is a domain similar to a domain in the real world.",
+          "tags": []
+        },
+        {
+          "name": "MicrosoftDocs/architecture-center",
+          "url": "https://github.com/MicrosoftDocs/architecture-center",
+          "stars": 2007,
+          "language": "PowerShell",
+          "description": "Open source documentation for the Azure Architecture Center on Microsoft Learn.",
+          "tags": []
+        },
+        {
+          "name": "sense-of-security/ADRecon",
+          "url": "https://github.com/sense-of-security/ADRecon",
+          "stars": 1923,
+          "language": "HTML",
+          "description": "ADRecon is a tool which gathers information about the Active Directory and generates a report which can provide a holistic picture of the current state of the target AD environment.",
+          "tags": []
+        },
+        {
+          "name": "12Knocksinna/Office365itpros",
+          "url": "https://github.com/12Knocksinna/Office365itpros",
+          "stars": 1770,
+          "language": "PowerShell",
+          "description": "PowerShell examples for articles published on office365itpros.com and practical365.com.",
+          "tags": []
+        },
+        {
+          "name": "Gerenios/AADInternals",
+          "url": "https://github.com/Gerenios/AADInternals",
+          "stars": 1665,
+          "language": "PowerShell",
+          "description": "AADInternals PowerShell module for administering Azure AD and Office 365",
+          "tags": []
+        },
+        {
+          "name": "jakehildreth/Locksmith",
+          "url": "https://github.com/jakehildreth/Locksmith",
+          "stars": 1555,
+          "language": "PowerShell",
+          "description": "A small tool built to find and fix common misconfigurations in Active Directory Certificate Services.",
+          "tags": []
+        },
+        {
+          "name": "AD-Security/AD_Miner",
+          "url": "https://github.com/AD-Security/AD_Miner",
+          "stars": 1543,
+          "language": "JavaScript",
+          "description": "AD Miner is an Active Directory audit tool that leverages cypher queries to crunch data from the Bloodhound graph database to uncover security weaknesses",
+          "tags": []
+        },
+        {
+          "name": "SkipToTheEndpoint/OpenIntuneBaseline",
+          "url": "https://github.com/SkipToTheEndpoint/OpenIntuneBaseline",
+          "stars": 1386,
+          "language": "PowerShell",
+          "description": "Community-driven baseline to accelerate Intune adoption and learning.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "silverhack/monkey365",
+          "url": "https://github.com/silverhack/monkey365",
+          "stars": 1307,
+          "language": "PowerShell",
+          "description": "Monkey365 is an open-source security assessment tool for Microsoft 365, Azure, and Microsoft Entra ID.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "KelvinTegelaar/CIPP",
+          "url": "https://github.com/KelvinTegelaar/CIPP",
+          "stars": 1209,
+          "language": "JavaScript",
+          "description": "CIPP is a M365 multitenant management solution",
+          "tags": []
+        },
+        {
+          "name": "EvotecIT/GPOZaurr",
+          "url": "https://github.com/EvotecIT/GPOZaurr",
+          "stars": 1200,
+          "language": "PowerShell",
+          "description": "Group Policy Eater is a PowerShell module that aims to gather information about Group Policies but also allows fixing issues that you may find in them.",
+          "tags": []
+        },
+        {
+          "name": "lkarlslund/ldapnomnom",
+          "url": "https://github.com/lkarlslund/ldapnomnom",
+          "stars": 1122,
+          "language": "Go",
+          "description": "Quietly and anonymously bruteforce Active Directory usernames at insane speeds from Domain Controllers by (ab)using LDAP Ping requests (cLDAP)",
+          "tags": []
+        },
+        {
+          "name": "indianajson/can-i-take-over-dns",
+          "url": "https://github.com/indianajson/can-i-take-over-dns",
+          "stars": 1100,
+          "language": null,
+          "description": "Can I take over DNS? — a list of DNS providers and how to claim vulnerable domains",
+          "tags": [
+            "Homelab & Infrastructure",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "maester365/maester",
+          "url": "https://github.com/maester365/maester",
+          "stars": 983,
+          "language": "HTML",
+          "description": "Maester is a test automation framework to help you stay in control of your Microsoft security configuration.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "Semperis/EntraGoat",
+          "url": "https://github.com/Semperis/EntraGoat",
+          "stars": 961,
+          "language": "PowerShell",
+          "description": "A deliberately vulnerable Microsoft Entra ID environment. Learn identity security through hands-on, realistic attack challenges.",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "microsoft/EntraExporter",
+          "url": "https://github.com/microsoft/EntraExporter",
+          "stars": 866,
+          "language": "PowerShell",
+          "description": "PowerShell module to export a local copy of an Entra (Azure AD) tenant configuration.",
+          "tags": []
+        },
+        {
+          "name": "cyberark/ACLight",
+          "url": "https://github.com/cyberark/ACLight",
+          "stars": 830,
+          "language": "PowerShell",
+          "description": "A script for advanced discovery of Privileged Accounts - includes Shadow Admins",
+          "tags": []
+        },
+        {
+          "name": "techspence/ScriptSentry",
+          "url": "https://github.com/techspence/ScriptSentry",
+          "stars": 663,
+          "language": "PowerShell",
+          "description": "ScriptSentry finds misconfigured and dangerous logon scripts.",
+          "tags": []
+        },
+        {
+          "name": "soteria-security/365Inspect",
+          "url": "https://github.com/soteria-security/365Inspect",
+          "stars": 658,
+          "language": "PowerShell",
+          "description": "A PowerShell script that automates the security assessment of Microsoft 365 environments.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "tomwechsler/Active_Directory_Advanced_Threat_Hunting",
+          "url": "https://github.com/tomwechsler/Active_Directory_Advanced_Threat_Hunting",
+          "stars": 650,
+          "language": "PowerShell",
+          "description": "This repo is about Active Directory Advanced Threat Hunting",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "LETHAL-FORENSICS/Microsoft-Analyzer-Suite",
+          "url": "https://github.com/LETHAL-FORENSICS/Microsoft-Analyzer-Suite",
+          "stars": 645,
+          "language": "PowerShell",
+          "description": "A collection of PowerShell scripts for analyzing data from Microsoft 365 and Microsoft Entra ID",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "ThomasKur/M365Documentation",
+          "url": "https://github.com/ThomasKur/M365Documentation",
+          "stars": 615,
+          "language": "PowerShell",
+          "description": "Automatic Microsoft 365 Documentation to simplify the life of admins and consultants.",
+          "tags": []
+        },
+        {
+          "name": "BloodHoundAD/BARK",
+          "url": "https://github.com/BloodHoundAD/BARK",
+          "stars": 598,
+          "language": "PowerShell",
+          "description": "BloodHound Attack Research Kit",
+          "tags": []
+        },
+        {
+          "name": "JamesCooteUK/SharpSphere",
+          "url": "https://github.com/JamesCooteUK/SharpSphere",
+          "stars": 559,
+          "language": "C#",
+          "description": ".NET Project for Attacking vCenter",
+          "tags": []
+        },
+        {
+          "name": "ANSSI-FR/ADTimeline",
+          "url": "https://github.com/ANSSI-FR/ADTimeline",
+          "stars": 527,
+          "language": "PowerShell",
+          "description": "Timeline of Active Directory changes with replication metadata",
+          "tags": []
+        },
+        {
+          "name": "mtth-bfft/adeleg",
+          "url": "https://github.com/mtth-bfft/adeleg",
+          "stars": 512,
+          "language": "C#",
+          "description": "Active Directory delegation management tool",
+          "tags": []
+        },
+        {
+          "name": "microsoftarchive/New-KrbtgtKeys.ps1",
+          "url": "https://github.com/microsoftarchive/New-KrbtgtKeys.ps1",
+          "stars": 468,
+          "language": "PowerShell",
+          "description": "This script will enable you to reset the krbtgt account password and related keys while minimizing the likelihood of Kerberos authentication issues being caused by the operation.",
+          "tags": []
+        },
+        {
+          "name": "zjorz/Public-AD-Scripts",
+          "url": "https://github.com/zjorz/Public-AD-Scripts",
+          "stars": 464,
+          "language": "PowerShell",
+          "description": "AD Scripts",
+          "tags": []
+        },
+        {
+          "name": "AzureAD/Azure-AD-Incident-Response-PowerShell-Module",
+          "url": "https://github.com/AzureAD/Azure-AD-Incident-Response-PowerShell-Module",
+          "stars": 457,
+          "language": "PowerShell",
+          "description": "The Azure Active Directory Incident Response PowerShell module provides a number of tools, developed by the Azure Active Directory Product Group in conjunction with the Microsoft Detection and Response Team.",
+          "tags": [
+            "Security · DFIR"
+          ]
+        },
+        {
+          "name": "zeronetworks/BloodHound-Tools",
+          "url": "https://github.com/zeronetworks/BloodHound-Tools",
+          "stars": 452,
+          "language": "Python",
+          "description": "Collection of tools that reflect the network dimension into Bloodhound's data",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "microsoft/aka",
+          "url": "https://github.com/microsoft/aka",
+          "stars": 449,
+          "language": null,
+          "description": "Doc page listing all public aka.ms links for Microsoft admin portals",
+          "tags": []
+        },
+        {
+          "name": "ugurkocde/IntuneAssignmentChecker",
+          "url": "https://github.com/ugurkocde/IntuneAssignmentChecker",
+          "stars": 444,
+          "language": "PowerShell",
+          "description": "This script enables IT administrators to analyze and audit Intune assignments. It checks assignments for specific users, groups, or devices, displays all policies and their assignments.",
+          "tags": []
+        },
+        {
+          "name": "techspence/ADeleginator",
+          "url": "https://github.com/techspence/ADeleginator",
+          "stars": 431,
+          "language": "PowerShell",
+          "description": "A companion tool that uses ADeleg to find insecure trustee and resource delegations in Active Directory",
+          "tags": []
+        },
+        {
+          "name": "garrettfoster13/pre2k",
+          "url": "https://github.com/garrettfoster13/pre2k",
+          "stars": 391,
+          "language": "Python",
+          "description": "A tool to query for the existence of pre-windows 2000 computer objects.",
+          "tags": []
+        },
+        {
+          "name": "DanielChronlund/DCToolbox",
+          "url": "https://github.com/DanielChronlund/DCToolbox",
+          "stars": 378,
+          "language": "PowerShell",
+          "description": "Tools for Microsoft cloud fans",
+          "tags": []
+        },
+        {
+          "name": "cammurray/orca",
+          "url": "https://github.com/cammurray/orca",
+          "stars": 370,
+          "language": "PowerShell",
+          "description": "The Microsoft Defender for Office 365 Recommended Configuration Analyzer (ORCA)",
+          "tags": []
+        },
+        {
+          "name": "synacktiv/gpoParser",
+          "url": "https://github.com/synacktiv/gpoParser",
+          "stars": 365,
+          "language": "Python",
+          "description": "gpoParser is a tool designed to extract and analyze configurations applied through Group Policy Objects (GPOs) in an Active Directory environment.",
+          "tags": []
+        },
+        {
+          "name": "MG-Cloudflow/Intune-Toolkit",
+          "url": "https://github.com/MG-Cloudflow/Intune-Toolkit",
+          "stars": 342,
+          "language": "PowerShell",
+          "description": "The Intune-Toolkit offers a basic & user-friendly interface to connect to Microsoft Graph, manage policy assignments, and handle backup and restore operations",
+          "tags": []
+        },
+        {
+          "name": "OTRF/Blacksmith",
+          "url": "https://github.com/OTRF/Blacksmith",
+          "stars": 335,
+          "language": "PowerShell",
+          "description": "Building environments to replicate small networks and deploy applications",
+          "tags": []
+        },
+        {
+          "name": "adamfowlerit/msportals.io",
+          "url": "https://github.com/adamfowlerit/msportals.io",
+          "stars": 327,
+          "language": "HTML",
+          "description": "MSPortals.io - Microsoft Administrator Sites, Training, and Licensing Resources",
+          "tags": []
+        },
+        {
+          "name": "Cloud-Architekt/EntraOps",
+          "url": "https://github.com/Cloud-Architekt/EntraOps",
+          "stars": 282,
+          "language": "PowerShell",
+          "description": "Community project to classify, identify and protect your privileges based on Enterprise Access Model (EAM)",
+          "tags": []
+        },
+        {
+          "name": "ANSSI-FR/DFIR-O365RC",
+          "url": "https://github.com/ANSSI-FR/DFIR-O365RC",
+          "stars": 281,
+          "language": "PowerShell",
+          "description": "PowerShell module for Office 365 and Azure log collection",
+          "tags": [
+            "Security · DFIR"
+          ]
+        },
+        {
+          "name": "SpecterOps/TierZeroTable",
+          "url": "https://github.com/SpecterOps/TierZeroTable",
+          "stars": 268,
+          "language": "HTML",
+          "description": "Table of AD and Azure assets and whether they belong to Tier Zero",
+          "tags": []
+        },
+        {
+          "name": "AirbusProtect/AD-Canaries",
+          "url": "https://github.com/AirbusProtect/AD-Canaries",
+          "stars": 266,
+          "language": "PowerShell",
+          "description": "The purpose of this project is to publish and maintain the deployment PowerShell script that automates deployments for Active Directory Canary objects.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "Azure/securedworkstation",
+          "url": "https://github.com/Azure/securedworkstation",
+          "stars": 260,
+          "language": "PowerShell",
+          "description": "Intune managed Secured workstation",
+          "tags": []
+        },
+        {
+          "name": "samratashok/Deploy-Deception",
+          "url": "https://github.com/samratashok/Deploy-Deception",
+          "stars": 241,
+          "language": "PowerShell",
+          "description": "A PowerShell module to deploy active directory decoy objects.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "f-bader/MSRC-PatchReview",
+          "url": "https://github.com/f-bader/MSRC-PatchReview",
+          "stars": 222,
+          "language": "PowerShell",
+          "description": "PowerShell variant of patch_review.py by kevthehermit",
+          "tags": []
+        },
+        {
+          "name": "ricardojoserf/WhoamiAlternatives",
+          "url": "https://github.com/ricardojoserf/WhoamiAlternatives",
+          "stars": 188,
+          "language": "C#",
+          "description": "Different methods to get current username without using whoami",
+          "tags": []
+        },
+        {
+          "name": "jonny-jhnson/Marvel-Lab",
+          "url": "https://github.com/jonny-jhnson/Marvel-Lab",
+          "stars": 153,
+          "language": "PowerShell",
+          "description": "A collection of Powershell scripts that will help automate the build process for a Marvel domain.",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "PyroTek3/ADLab",
+          "url": "https://github.com/PyroTek3/ADLab",
+          "stars": 142,
+          "language": "PowerShell",
+          "description": "Location of some Active Directory lab scripts I have created and find useful",
+          "tags": []
+        },
+        {
+          "name": "jakehildreth/PowerPUG",
+          "url": "https://github.com/jakehildreth/PowerPUG",
+          "stars": 142,
+          "language": "PowerShell",
+          "description": "A tiny tool built to help AD Admins tame the Protected Users group.",
+          "tags": []
+        },
+        {
+          "name": "davidalonsod/Dalonso-Security-Repo",
+          "url": "https://github.com/davidalonsod/Dalonso-Security-Repo",
+          "stars": 107,
+          "language": "Jupyter Notebook",
+          "description": "Share Information about Microsoft Security Products",
+          "tags": []
+        },
+        {
+          "name": "0x706972686f/RMM-Catalogue",
+          "url": "https://github.com/0x706972686f/RMM-Catalogue",
+          "stars": 107,
+          "language": null,
+          "description": "RMM Catalogue",
+          "tags": []
+        },
+        {
+          "name": "Qazeer/FarsightAD",
+          "url": "https://github.com/Qazeer/FarsightAD",
+          "stars": 100,
+          "language": "PowerShell",
+          "description": "PowerShell script that aim to help uncovering (eventual) persistence mechanisms deployed by a threat actor following an Active Directory domain compromise",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "bsysop/servicenow",
+          "url": "https://github.com/bsysop/servicenow",
+          "stars": 65,
+          "language": "Python",
+          "description": "ServiceNow widge-simple-list misconfiguration scanner",
+          "tags": []
+        },
+        {
+          "name": "PwnDefend/Active_Directory_ADSI_Audit_Powershell",
+          "url": "https://github.com/PwnDefend/Active_Directory_ADSI_Audit_Powershell",
+          "stars": 42,
+          "language": "PowerShell",
+          "description": "Active Directory ADSI Audit Powershell",
+          "tags": []
+        },
+        {
+          "name": "nathanmcnulty/azd-maester",
+          "url": "https://github.com/nathanmcnulty/azd-maester",
+          "stars": 37,
+          "language": "PowerShell",
+          "description": "azd-maester",
+          "tags": []
+        },
+        {
+          "name": "kayasax/SCIMTool",
+          "url": "https://github.com/kayasax/SCIMTool",
+          "stars": 36,
+          "language": "TypeScript",
+          "description": "inspect EntraID SCIM flows for troubleshooting",
+          "tags": []
+        },
+        {
+          "name": "Noble-Effeciency13/M365IdentityPosture",
+          "url": "https://github.com/Noble-Effeciency13/M365IdentityPosture",
+          "stars": 35,
+          "language": "PowerShell",
+          "description": "PowerShell security reporting framework for Microsoft 365 identity posture assessment. Analyzes Authentication Context, PIM, Conditional Access & more.",
+          "tags": []
+        },
+        {
+          "name": "SalutAToi/AD-Tier-Administration",
+          "url": "https://github.com/SalutAToi/AD-Tier-Administration",
+          "stars": 31,
+          "language": "PowerShell",
+          "description": "Powershell scripts to implement a Tier administration model in Active Directory",
+          "tags": []
+        },
+        {
+          "name": "prjblk/aura-dump",
+          "url": "https://github.com/prjblk/aura-dump",
+          "stars": 29,
+          "language": "Python",
+          "description": "Dumps Salesforce objects if provided with credentials.",
+          "tags": []
+        },
+        {
+          "name": "Marlyns-GitHub/AD-Tiering",
+          "url": "https://github.com/Marlyns-GitHub/AD-Tiering",
+          "stars": 28,
+          "language": "PowerShell",
+          "description": "Automating Active Directory Tiering",
+          "tags": []
+        },
+        {
+          "name": "rapid7/insightvm-api-examples",
+          "url": "https://github.com/rapid7/insightvm-api-examples",
+          "stars": 22,
+          "language": "Python",
+          "description": "InsightVM API examples",
+          "tags": []
+        },
+        {
+          "name": "gfoss/PowerShell-Honeyport",
+          "url": "https://github.com/gfoss/PowerShell-Honeyport",
+          "stars": 12,
+          "language": "PowerShell",
+          "description": "A powershell script for creating a Windows honeyport.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "Trimarc/Create-Vulnerable-ADDS",
+          "url": "https://github.com/Trimarc/Create-Vulnerable-ADDS",
+          "stars": 9,
+          "language": "PowerShell",
+          "description": "Installs ADDS and configures a vulnerable domain via a powershell script",
+          "tags": []
+        },
+        {
+          "name": "GuidoBaijense/architecture-center-ca-backup",
+          "url": "https://github.com/GuidoBaijense/architecture-center-ca-backup",
+          "stars": 2,
+          "language": null,
+          "description": "Open source documentation for the Azure Architecture Center on Microsoft Learn.",
+          "tags": []
+        },
+        {
+          "name": "krooth/the-lazy-enterprise-AD",
+          "url": "https://github.com/krooth/the-lazy-enterprise-AD",
+          "stars": 2,
+          "language": "HTML",
+          "description": "AD Lab setup for learning infosec",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Security · Offensive",
+      "count": 69,
+      "repos": [
+        {
+          "name": "swisskyrepo/PayloadsAllTheThings",
+          "url": "https://github.com/swisskyrepo/PayloadsAllTheThings",
+          "stars": 79107,
+          "language": "Python",
+          "description": "A list of useful payloads and bypass for Web Application Security and Pentest/CTF",
+          "tags": [
+            "Security · Defensive",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "Z4nzu/hackingtool",
+          "url": "https://github.com/Z4nzu/hackingtool",
+          "stars": 51229,
+          "language": "Python",
+          "description": "ALL IN ONE Hacking Tool For Hackers",
+          "tags": []
+        },
+        {
+          "name": "usestrix/strix",
+          "url": "https://github.com/usestrix/strix",
+          "stars": 40839,
+          "language": "Python",
+          "description": "Open-source AI penetration testing tool to find and fix your app's vulnerabilities.",
+          "tags": []
+        },
+        {
+          "name": "projectdiscovery/nuclei",
+          "url": "https://github.com/projectdiscovery/nuclei",
+          "stars": 29759,
+          "language": "Go",
+          "description": "Nuclei is a fast, customizable vulnerability scanner powered by the global security community and built on a simple YAML-based DSL.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "robertdavidgraham/masscan",
+          "url": "https://github.com/robertdavidgraham/masscan",
+          "stars": 25849,
+          "language": "C",
+          "description": "TCP port scanner, spews SYN packets asynchronously, scanning entire Internet in under 5 minutes.",
+          "tags": []
+        },
+        {
+          "name": "peass-ng/PEASS-ng",
+          "url": "https://github.com/peass-ng/PEASS-ng",
+          "stars": 20132,
+          "language": "C#",
+          "description": "PEASS - Privilege Escalation Awesome Scripts SUITE (with colors)",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "MatrixTM/MHDDoS",
+          "url": "https://github.com/MatrixTM/MHDDoS",
+          "stars": 16375,
+          "language": "Python",
+          "description": "Best DDoS Attack Script Python3, (Cyber / DDos) Attack With 56 Methods",
+          "tags": []
+        },
+        {
+          "name": "kgretzky/evilginx2",
+          "url": "https://github.com/kgretzky/evilginx2",
+          "stars": 15317,
+          "language": "Go",
+          "description": "Standalone man-in-the-middle attack framework used for phishing login credentials along with session cookies, allowing for the bypass of 2-factor authentication",
+          "tags": []
+        },
+        {
+          "name": "PowerShellMafia/PowerSploit",
+          "url": "https://github.com/PowerShellMafia/PowerSploit",
+          "stars": 13071,
+          "language": "PowerShell",
+          "description": "PowerSploit - A PowerShell Post-Exploitation Framework",
+          "tags": []
+        },
+        {
+          "name": "redcanaryco/atomic-red-team",
+          "url": "https://github.com/redcanaryco/atomic-red-team",
+          "stars": 12215,
+          "language": "C",
+          "description": "Small and highly portable detection tests based on MITRE's ATT&CK.",
+          "tags": [
+            "Security · Defensive",
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "dstotijn/hetty",
+          "url": "https://github.com/dstotijn/hetty",
+          "stars": 11662,
+          "language": "Go",
+          "description": "An HTTP toolkit for security research.",
+          "tags": []
+        },
+        {
+          "name": "AlessandroZ/LaZagne",
+          "url": "https://github.com/AlessandroZ/LaZagne",
+          "stars": 10904,
+          "language": "Python",
+          "description": "Credentials recovery project",
+          "tags": []
+        },
+        {
+          "name": "OWASP/wstg",
+          "url": "https://github.com/OWASP/wstg",
+          "stars": 9567,
+          "language": null,
+          "description": "The Web Security Testing Guide is a comprehensive Open Source guide to testing the security of web applications.",
+          "tags": []
+        },
+        {
+          "name": "byt3bl33d3r/CrackMapExec",
+          "url": "https://github.com/byt3bl33d3r/CrackMapExec",
+          "stars": 9153,
+          "language": "Python",
+          "description": "A swiss army knife for pentesting networks",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "LOLBAS-Project/LOLBAS",
+          "url": "https://github.com/LOLBAS-Project/LOLBAS",
+          "stars": 8679,
+          "language": "XSLT",
+          "description": "Living Off The Land Binaries And Scripts - (LOLBins and LOLScripts)",
+          "tags": []
+        },
+        {
+          "name": "HavocFramework/Havoc",
+          "url": "https://github.com/HavocFramework/Havoc",
+          "stars": 8475,
+          "language": "Go",
+          "description": "The Havoc Framework",
+          "tags": []
+        },
+        {
+          "name": "trickest/cve",
+          "url": "https://github.com/trickest/cve",
+          "stars": 7936,
+          "language": "HTML",
+          "description": "Gather and update all available and newest CVEs with their PoC.",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "apache/caldera",
+          "url": "https://github.com/apache/caldera",
+          "stars": 7111,
+          "language": "Python",
+          "description": "Automated Adversary Emulation Platform",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "guardicore/monkey",
+          "url": "https://github.com/guardicore/monkey",
+          "stars": 7027,
+          "language": "Python",
+          "description": "Infection Monkey - An open-source adversary emulation platform",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet",
+          "url": "https://github.com/S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet",
+          "stars": 6683,
+          "language": null,
+          "description": "A cheat sheet that contains common enumeration and attack methods for Windows Active Directory.",
+          "tags": [
+            "Security · Windows & Active Directory",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "madhuakula/kubernetes-goat",
+          "url": "https://github.com/madhuakula/kubernetes-goat",
+          "stars": 5708,
+          "language": "HTML",
+          "description": "Kubernetes Goat is a Vulnerable by Design cluster environment to learn and practice Kubernetes security using an interactive hands-on playground",
+          "tags": [
+            "Security · Cloud",
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "Ne0nd0g/merlin",
+          "url": "https://github.com/Ne0nd0g/merlin",
+          "stars": 5568,
+          "language": "Go",
+          "description": "Merlin is a cross-platform post-exploitation HTTP/2 Command & Control server and agent written in golang.",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "BC-SECURITY/Empire",
+          "url": "https://github.com/BC-SECURITY/Empire",
+          "stars": 5218,
+          "language": "PowerShell",
+          "description": "Empire is a post-exploitation and adversary emulation framework that is used to aid Red Teams and Penetration Testers.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "cobbr/Covenant",
+          "url": "https://github.com/cobbr/Covenant",
+          "stars": 4705,
+          "language": "C#",
+          "description": "Covenant is a collaborative .NET C2 framework for red teamers.",
+          "tags": []
+        },
+        {
+          "name": "GhostPack/Seatbelt",
+          "url": "https://github.com/GhostPack/Seatbelt",
+          "stars": 4634,
+          "language": "C#",
+          "description": "Seatbelt is a C# project that performs a number of security oriented host-survey safety checks.",
+          "tags": []
+        },
+        {
+          "name": "KeygraphHQ/shannon",
+          "url": "https://github.com/KeygraphHQ/shannon",
+          "stars": 4562,
+          "language": "TypeScript",
+          "description": "Shannon is an autonomous, white-box AI pentester for web applications and APIs. It analyzes your source code, identifies attack vectors, and executes real exploits to prove vulnerabilities.",
+          "tags": []
+        },
+        {
+          "name": "bluscreenofjeff/Red-Team-Infrastructure-Wiki",
+          "url": "https://github.com/bluscreenofjeff/Red-Team-Infrastructure-Wiki",
+          "stars": 4500,
+          "language": null,
+          "description": "Wiki to collect Red Team infrastructure hardening resources",
+          "tags": [
+            "Security · Defensive",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "RhinoSecurityLabs/cloudgoat",
+          "url": "https://github.com/RhinoSecurityLabs/cloudgoat",
+          "stars": 3665,
+          "language": "Python",
+          "description": "CloudGoat is Rhino Security Labs' Vulnerable by Design AWS deployment tool",
+          "tags": [
+            "Security · Cloud"
+          ]
+        },
+        {
+          "name": "matro7sh/BypassAV",
+          "url": "https://github.com/matro7sh/BypassAV",
+          "stars": 3356,
+          "language": null,
+          "description": "This map lists the essential techniques to bypass anti-virus and EDR",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "s0md3v/Smap",
+          "url": "https://github.com/s0md3v/Smap",
+          "stars": 3272,
+          "language": "Go",
+          "description": "a drop-in replacement for Nmap powered by shodan.io",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "six2dez/OneListForAll",
+          "url": "https://github.com/six2dez/OneListForAll",
+          "stars": 3197,
+          "language": "Go",
+          "description": "Rockyou for web fuzzing",
+          "tags": []
+        },
+        {
+          "name": "SnaffCon/Snaffler",
+          "url": "https://github.com/SnaffCon/Snaffler",
+          "stars": 2884,
+          "language": "C#",
+          "description": "a tool for pentesters to help find delicious candy",
+          "tags": []
+        },
+        {
+          "name": "gkbrk/slowloris",
+          "url": "https://github.com/gkbrk/slowloris",
+          "stars": 2813,
+          "language": "Python",
+          "description": "Low bandwidth DoS tool. Slowloris rewrite in Python.",
+          "tags": []
+        },
+        {
+          "name": "SnailSploit/Claude-Red",
+          "url": "https://github.com/SnailSploit/Claude-Red",
+          "stars": 2685,
+          "language": "Python",
+          "description": "claude-red is a curated library of offensive security skills designed for the Claude skills system. Each skill is a structured SKILL.md file that primes Claude with expert-level methodology.",
+          "tags": [
+            "AI & LLM Tooling",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "activecm/rita-legacy",
+          "url": "https://github.com/activecm/rita-legacy",
+          "stars": 2507,
+          "language": "Go",
+          "description": "Real Intelligence Threat Analytics (RITA) is a framework for detecting command and control communication through network traffic analysis.",
+          "tags": []
+        },
+        {
+          "name": "DataDog/stratus-red-team",
+          "url": "https://github.com/DataDog/stratus-red-team",
+          "stars": 2355,
+          "language": "Go",
+          "description": "Granular, Actionable Adversary Emulation for the Cloud",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "bigb0sss/RedTeam-OffensiveSecurity",
+          "url": "https://github.com/bigb0sss/RedTeam-OffensiveSecurity",
+          "stars": 2292,
+          "language": "Python",
+          "description": "Tools & Interesting Things for RedTeam Ops",
+          "tags": []
+        },
+        {
+          "name": "cider-security-research/cicd-goat",
+          "url": "https://github.com/cider-security-research/cicd-goat",
+          "stars": 2280,
+          "language": "Python",
+          "description": "A deliberately vulnerable CI/CD environment. Learn CI/CD security through multiple challenges.",
+          "tags": []
+        },
+        {
+          "name": "kgretzky/pwndrop",
+          "url": "https://github.com/kgretzky/pwndrop",
+          "stars": 2269,
+          "language": "JavaScript",
+          "description": "Self-deployable file hosting service for red teamers, allowing to easily upload and share payloads over HTTP and WebDAV.",
+          "tags": []
+        },
+        {
+          "name": "samugit83/redamon",
+          "url": "https://github.com/samugit83/redamon",
+          "stars": 2174,
+          "language": "Python",
+          "description": "An AI-powered agentic red team framework that automates offensive security operations",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "dafthack/DomainPasswordSpray",
+          "url": "https://github.com/dafthack/DomainPasswordSpray",
+          "stars": 2064,
+          "language": "PowerShell",
+          "description": "DomainPasswordSpray is a tool written in PowerShell to perform a password spray attack against users of a domain. By default it will automatically generate the userlist from the domain.",
+          "tags": []
+        },
+        {
+          "name": "0xInfection/TIDoS-Framework",
+          "url": "https://github.com/0xInfection/TIDoS-Framework",
+          "stars": 1865,
+          "language": "Python",
+          "description": "The Offensive Manual Web Application Penetration Testing Framework.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "GoSecure/pyrdp",
+          "url": "https://github.com/GoSecure/pyrdp",
+          "stars": 1772,
+          "language": "Python",
+          "description": "RDP monster-in-the-middle (mitm) and library for Python with the ability to watch connections live or after the fact",
+          "tags": []
+        },
+        {
+          "name": "magicsword-io/LOLDrivers",
+          "url": "https://github.com/magicsword-io/LOLDrivers",
+          "stars": 1693,
+          "language": "YARA",
+          "description": "Living Off The Land Drivers",
+          "tags": []
+        },
+        {
+          "name": "inguardians/peirates",
+          "url": "https://github.com/inguardians/peirates",
+          "stars": 1465,
+          "language": "Go",
+          "description": "Peirates - Kubernetes Penetration Testing tool",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "nikaiw/VMkatz",
+          "url": "https://github.com/nikaiw/VMkatz",
+          "stars": 1412,
+          "language": "Rust",
+          "description": "Extract Windows credentials directly from VM memory snapshots and virtual disks",
+          "tags": []
+        },
+        {
+          "name": "0xacb/recollapse",
+          "url": "https://github.com/0xacb/recollapse",
+          "stars": 1362,
+          "language": "Python",
+          "description": "REcollapse is a helper tool for black-box regex fuzzing to bypass validations and discover normalizations in web applications",
+          "tags": []
+        },
+        {
+          "name": "alphasoc/flightsim",
+          "url": "https://github.com/alphasoc/flightsim",
+          "stars": 1361,
+          "language": "Go",
+          "description": "A utility to safely generate malicious network traffic patterns and evaluate controls.",
+          "tags": []
+        },
+        {
+          "name": "RedTeamPentesting/pretender",
+          "url": "https://github.com/RedTeamPentesting/pretender",
+          "stars": 1294,
+          "language": "Go",
+          "description": "Your MitM sidekick for relaying attacks featuring DHCPv6 DNS takeover as well as mDNS, LLMNR and NetBIOS-NS spoofing.",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "Arcanum-Sec/msftrecon",
+          "url": "https://github.com/Arcanum-Sec/msftrecon",
+          "stars": 790,
+          "language": "Python",
+          "description": "Recon tool for Microsoft/Azure environments",
+          "tags": []
+        },
+        {
+          "name": "PyroTek3/PowerShell-AD-Recon",
+          "url": "https://github.com/PyroTek3/PowerShell-AD-Recon",
+          "stars": 783,
+          "language": null,
+          "description": "PowerShell Scripts I find useful",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "pop3ret/AWSome-Pentesting",
+          "url": "https://github.com/pop3ret/AWSome-Pentesting",
+          "stars": 713,
+          "language": null,
+          "description": "My cheatsheet notes to pentest AWS infrastructure",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "orangetw/tsh",
+          "url": "https://github.com/orangetw/tsh",
+          "stars": 710,
+          "language": "C",
+          "description": "Tiny SHell is an open-source UNIX backdoor.",
+          "tags": []
+        },
+        {
+          "name": "3ct0s/dystopia-c2",
+          "url": "https://github.com/3ct0s/dystopia-c2",
+          "stars": 688,
+          "language": "Python",
+          "description": "Windows Remote Administration Tool that uses Discord, Telegram and GitHub as C2s",
+          "tags": []
+        },
+        {
+          "name": "vu-ls/Crassus",
+          "url": "https://github.com/vu-ls/Crassus",
+          "stars": 631,
+          "language": "C#",
+          "description": "Windows privilege escalation via service misconfigurations",
+          "tags": []
+        },
+        {
+          "name": "OWASP/DVSA",
+          "url": "https://github.com/OWASP/DVSA",
+          "stars": 545,
+          "language": "JavaScript",
+          "description": "a Damn Vulnerable Serverless Application",
+          "tags": []
+        },
+        {
+          "name": "infosecB/LOOBins",
+          "url": "https://github.com/infosecB/LOOBins",
+          "stars": 540,
+          "language": "Astro",
+          "description": "Living Off the Orchard: macOS Binaries (LOOBins) is designed to provide detailed information on various built-in living off the land macOS binaries and how they can be used by threat actors.",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "Orange-Cyberdefense/KeePwn",
+          "url": "https://github.com/Orange-Cyberdefense/KeePwn",
+          "stars": 524,
+          "language": "Python",
+          "description": "A python tool to automate KeePass discovery and secret extraction.",
+          "tags": []
+        },
+        {
+          "name": "maldevel/gdog",
+          "url": "https://github.com/maldevel/gdog",
+          "stars": 508,
+          "language": "Python",
+          "description": "A fully featured Windows backdoor that uses Gmail as a C&C server",
+          "tags": []
+        },
+        {
+          "name": "BishopFox/cloudfoxable",
+          "url": "https://github.com/BishopFox/cloudfoxable",
+          "stars": 462,
+          "language": "Python",
+          "description": "Create your own vulnerable by design AWS penetration testing playground",
+          "tags": [
+            "Security · Cloud"
+          ]
+        },
+        {
+          "name": "dievus/ADPulse",
+          "url": "https://github.com/dievus/ADPulse",
+          "stars": 458,
+          "language": "Python",
+          "description": "Active Directory Vulnerability Scanner",
+          "tags": [
+            "Security · Defensive",
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "vysecurity/IPFuscator",
+          "url": "https://github.com/vysecurity/IPFuscator",
+          "stars": 408,
+          "language": "HTML",
+          "description": "IPFuscator - A tool to automatically generate alternative IP representations",
+          "tags": []
+        },
+        {
+          "name": "nirajkharel/AD-Pentesting-Notes",
+          "url": "https://github.com/nirajkharel/AD-Pentesting-Notes",
+          "stars": 324,
+          "language": null,
+          "description": "Active Directory Pentesting Notes",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "cycurity/wister",
+          "url": "https://github.com/cycurity/wister",
+          "stars": 124,
+          "language": "Python",
+          "description": "A wordlist generator tool, that allows you to supply a set of words, giving you the possibility to craft multiple variations from the given words, creating a unique and ideal wordlist.",
+          "tags": []
+        },
+        {
+          "name": "darkweak/rudy",
+          "url": "https://github.com/darkweak/rudy",
+          "stars": 121,
+          "language": "Go",
+          "description": "RUDY is an acronym used to describe a Denial of Service (DoS) tool used by hackers to perform slow-rate a.k.a. Low and slow attacks.",
+          "tags": []
+        },
+        {
+          "name": "bvcyber/RedWizard",
+          "url": "https://github.com/bvcyber/RedWizard",
+          "stars": 110,
+          "language": "Python",
+          "description": "RedWizard",
+          "tags": []
+        },
+        {
+          "name": "irsdl/auraditor",
+          "url": "https://github.com/irsdl/auraditor",
+          "stars": 67,
+          "language": "Java",
+          "description": "A Burp Suite extension for Lightning/Aura framework security testing with advanced action management, context editing, and comprehensive audit capabilities.",
+          "tags": []
+        },
+        {
+          "name": "C3n7ral051nt4g3ncy/TraceLabs-Flag-Categories-Guide",
+          "url": "https://github.com/C3n7ral051nt4g3ncy/TraceLabs-Flag-Categories-Guide",
+          "stars": 32,
+          "language": null,
+          "description": "This is a guide to understand Flag categories for Trace Labs OSINT Search Party CTF events",
+          "tags": [
+            "Security · OSINT & Privacy"
+          ]
+        },
+        {
+          "name": "randomstr1ng/virtual-sap-death-star",
+          "url": "https://github.com/randomstr1ng/virtual-sap-death-star",
+          "stars": 5,
+          "language": "C",
+          "description": "This repo contains research and PoCs to bypass security mechanisms of the Virtual SAP user and to tamper with the SAP Audit Log on a SAP kernel level.",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Reference, Awesome Lists & Learning",
+      "count": 41,
+      "repos": [
+        {
+          "name": "sindresorhus/awesome",
+          "url": "https://github.com/sindresorhus/awesome",
+          "stars": 484316,
+          "language": null,
+          "description": "Awesome lists about all kinds of interesting topics",
+          "tags": []
+        },
+        {
+          "name": "public-apis/public-apis",
+          "url": "https://github.com/public-apis/public-apis",
+          "stars": 449373,
+          "language": "Python",
+          "description": "A collective list of free APIs",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "jwasham/coding-interview-university",
+          "url": "https://github.com/jwasham/coding-interview-university",
+          "stars": 356023,
+          "language": null,
+          "description": "A complete computer science study plan to become a software engineer.",
+          "tags": []
+        },
+        {
+          "name": "trimstray/the-book-of-secret-knowledge",
+          "url": "https://github.com/trimstray/the-book-of-secret-knowledge",
+          "stars": 172966,
+          "language": null,
+          "description": "A collection of inspiring lists, manuals, cheatsheets, blogs, hacks, one-liners, cli/web tools and more.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "ripienaar/free-for-dev",
+          "url": "https://github.com/ripienaar/free-for-dev",
+          "stars": 129015,
+          "language": "HTML",
+          "description": "A list of SaaS, PaaS and IaaS offerings that have free tiers of interest to devops and infradev",
+          "tags": []
+        },
+        {
+          "name": "Hack-with-Github/Awesome-Hacking",
+          "url": "https://github.com/Hack-with-Github/Awesome-Hacking",
+          "stars": 116082,
+          "language": null,
+          "description": "A collection of various awesome lists for hackers, pentesters and security researchers",
+          "tags": []
+        },
+        {
+          "name": "jaywcjlove/awesome-mac",
+          "url": "https://github.com/jaywcjlove/awesome-mac",
+          "stars": 107634,
+          "language": "Swift",
+          "description": "This project is dedicated to collecting high-quality macOS software and organizing them systematically by different categories for easy search and use.",
+          "tags": []
+        },
+        {
+          "name": "florinpop17/app-ideas",
+          "url": "https://github.com/florinpop17/app-ideas",
+          "stars": 95763,
+          "language": null,
+          "description": "A Collection of application ideas which can be used to improve your coding skills.",
+          "tags": []
+        },
+        {
+          "name": "bradtraversy/design-resources-for-developers",
+          "url": "https://github.com/bradtraversy/design-resources-for-developers",
+          "stars": 66383,
+          "language": null,
+          "description": "Curated list of design and UI resources from stock photos, web templates, CSS frameworks, UI libraries, tools and much more",
+          "tags": [
+            "Media & Content",
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "veggiemonk/awesome-docker",
+          "url": "https://github.com/veggiemonk/awesome-docker",
+          "stars": 36417,
+          "language": null,
+          "description": "A curated list of Docker resources and projects",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "OWASP/CheatSheetSeries",
+          "url": "https://github.com/OWASP/CheatSheetSeries",
+          "stars": 32564,
+          "language": "Python",
+          "description": "The OWASP Cheat Sheet Series was created to provide a concise collection of high value information on specific application security topics.",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "abhisheknaiidu/awesome-github-profile-readme",
+          "url": "https://github.com/abhisheknaiidu/awesome-github-profile-readme",
+          "stars": 30501,
+          "language": null,
+          "description": "A curated list of awesome GitHub Profile which updates in real time",
+          "tags": [
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "imthenachoman/How-To-Secure-A-Linux-Server",
+          "url": "https://github.com/imthenachoman/How-To-Secure-A-Linux-Server",
+          "stars": 29412,
+          "language": null,
+          "description": "An evolving how-to guide for securing a Linux server.",
+          "tags": [
+            "Operating Systems & Desktop"
+          ]
+        },
+        {
+          "name": "liquidslr/leetcode-company-wise-problems",
+          "url": "https://github.com/liquidslr/leetcode-company-wise-problems",
+          "stars": 26538,
+          "language": null,
+          "description": "Lists of company wise questions. Every csv file in the companies directory corresponds to a list of questions on leetcode for a specific company based on the leetcode company tags.",
+          "tags": []
+        },
+        {
+          "name": "projectdiscovery/nuclei-templates",
+          "url": "https://github.com/projectdiscovery/nuclei-templates",
+          "stars": 12623,
+          "language": "JavaScript",
+          "description": "Community curated list of templates for the nuclei engine to find security vulnerabilities.",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "iptv-org/awesome-iptv",
+          "url": "https://github.com/iptv-org/awesome-iptv",
+          "stars": 11901,
+          "language": null,
+          "description": "A curated list of resources related to IPTV",
+          "tags": [
+            "Media & Content"
+          ]
+        },
+        {
+          "name": "Kristories/awesome-guidelines",
+          "url": "https://github.com/Kristories/awesome-guidelines",
+          "stars": 10951,
+          "language": "JavaScript",
+          "description": "Programming style, best practices, and coding conventions",
+          "tags": []
+        },
+        {
+          "name": "onceupon/Bash-Oneliner",
+          "url": "https://github.com/onceupon/Bash-Oneliner",
+          "stars": 10749,
+          "language": null,
+          "description": "A collection of handy Bash One-Liners and terminal tricks for data processing and Linux system maintenance.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "meirwah/awesome-incident-response",
+          "url": "https://github.com/meirwah/awesome-incident-response",
+          "stars": 9257,
+          "language": null,
+          "description": "A curated list of tools for incident response",
+          "tags": [
+            "Security · DFIR"
+          ]
+        },
+        {
+          "name": "humanloop/awesome-chatgpt",
+          "url": "https://github.com/humanloop/awesome-chatgpt",
+          "stars": 8207,
+          "language": null,
+          "description": "Curated list of awesome tools, demos, docs for ChatGPT and GPT-3",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "fr0gger/Awesome-GPT-Agents",
+          "url": "https://github.com/fr0gger/Awesome-GPT-Agents",
+          "stars": 6554,
+          "language": null,
+          "description": "A curated list of GPT agents for cybersecurity",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "0x90n/InfoSec-Black-Friday",
+          "url": "https://github.com/0x90n/InfoSec-Black-Friday",
+          "stars": 4358,
+          "language": null,
+          "description": "All the deals for InfoSec related software/tools this Black Friday",
+          "tags": []
+        },
+        {
+          "name": "pedramamini/awesome-yara",
+          "url": "https://github.com/pedramamini/awesome-yara",
+          "stars": 4245,
+          "language": null,
+          "description": "A curated list of awesome YARA rules, tools, and people.",
+          "tags": [
+            "Security · Threat Intel & Malware",
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "sergiomarotco/Network-segmentation-cheat-sheet",
+          "url": "https://github.com/sergiomarotco/Network-segmentation-cheat-sheet",
+          "stars": 3482,
+          "language": null,
+          "description": "Best practices for segmentation of the corporate network of any company",
+          "tags": []
+        },
+        {
+          "name": "onhexgroup/Conferences",
+          "url": "https://github.com/onhexgroup/Conferences",
+          "stars": 2378,
+          "language": null,
+          "description": "Conference presentation slides",
+          "tags": []
+        },
+        {
+          "name": "strandjs/IntroLabs",
+          "url": "https://github.com/strandjs/IntroLabs",
+          "stars": 1807,
+          "language": "HTML",
+          "description": "These are the labs for my Intro class. Yes, this is public. Yes, this is intentional.",
+          "tags": []
+        },
+        {
+          "name": "jpantunes/awesome-cryptoeconomics",
+          "url": "https://github.com/jpantunes/awesome-cryptoeconomics",
+          "stars": 1768,
+          "language": null,
+          "description": "An awesome curated list of Cryptoeconomic research and learning materials",
+          "tags": [
+            "Finance & Trading"
+          ]
+        },
+        {
+          "name": "timvisee/send-instances",
+          "url": "https://github.com/timvisee/send-instances",
+          "stars": 1120,
+          "language": null,
+          "description": "A list of public Send instances. Mirror",
+          "tags": []
+        },
+        {
+          "name": "Arudjreis/awesome-security-GRC",
+          "url": "https://github.com/Arudjreis/awesome-security-GRC",
+          "stars": 1060,
+          "language": null,
+          "description": "Curated list of resources for security Governance, Risk Management, Compliance and Audit professionals and enthusiasts",
+          "tags": []
+        },
+        {
+          "name": "nathanlesage/academics-on-mastodon",
+          "url": "https://github.com/nathanlesage/academics-on-mastodon",
+          "stars": 973,
+          "language": null,
+          "description": "A list of various lists consisting of academics on Mastodon",
+          "tags": []
+        },
+        {
+          "name": "dalisoft/awesome-hosting",
+          "url": "https://github.com/dalisoft/awesome-hosting",
+          "stars": 907,
+          "language": null,
+          "description": "List of awesome hosting sorted by minimal plan price",
+          "tags": []
+        },
+        {
+          "name": "Adamkadaban/CTFs",
+          "url": "https://github.com/Adamkadaban/CTFs",
+          "stars": 842,
+          "language": "C",
+          "description": "CTF Cheat Sheet + Writeups / Files for some of the Security CTFs that I've done",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "merill/awesome-entra",
+          "url": "https://github.com/merill/awesome-entra",
+          "stars": 765,
+          "language": null,
+          "description": "Awesome list of all things related to Microsoft Entra",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "cyb3rmik3/MDE-DFIR-Resources",
+          "url": "https://github.com/cyb3rmik3/MDE-DFIR-Resources",
+          "stars": 470,
+          "language": null,
+          "description": "A curated list of resources for DFIR through Microsoft Defender for Endpoint leveraging kusto queries, powershell scripts, tools such as KAPE and THOR Cloud and more.",
+          "tags": [
+            "Security · Windows & Active Directory",
+            "Security · DFIR"
+          ]
+        },
+        {
+          "name": "reswob10/HomeLabResources",
+          "url": "https://github.com/reswob10/HomeLabResources",
+          "stars": 318,
+          "language": null,
+          "description": "List of resources for buiding a home lab",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "Hellfire0x01/cert-cheatsheets",
+          "url": "https://github.com/Hellfire0x01/cert-cheatsheets",
+          "stars": 202,
+          "language": null,
+          "description": "Certification Cheatsheets",
+          "tags": []
+        },
+        {
+          "name": "fortinet/4D-Demo",
+          "url": "https://github.com/fortinet/4D-Demo",
+          "stars": 89,
+          "language": "HCL",
+          "description": "4-D Demo configurations are a collection of configurations which complement the preceeding 3 Ds: Define, Design, and Deploy.",
+          "tags": []
+        },
+        {
+          "name": "olafhartong/Presentations",
+          "url": "https://github.com/olafhartong/Presentations",
+          "stars": 85,
+          "language": null,
+          "description": "My conference presentations",
+          "tags": []
+        },
+        {
+          "name": "0xjet/ccc",
+          "url": "https://github.com/0xjet/ccc",
+          "stars": 84,
+          "language": null,
+          "description": "A short graduate course on cybercrime, cyberespionage, and cyberoperations",
+          "tags": []
+        },
+        {
+          "name": "yuriskinfo/awesome-Fortinet",
+          "url": "https://github.com/yuriskinfo/awesome-Fortinet",
+          "stars": 44,
+          "language": null,
+          "description": "Curated list of useful resources for those working with Fortinet products",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "fg0x0/XSS-Cheat-Sheets-2020",
+          "url": "https://github.com/fg0x0/XSS-Cheat-Sheets-2020",
+          "stars": 6,
+          "language": null,
+          "description": "By the way you may need it.",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Developer Tools",
+      "count": 33,
+      "repos": [
+        {
+          "name": "microsoft/terminal",
+          "url": "https://github.com/microsoft/terminal",
+          "stars": 103930,
+          "language": "C++",
+          "description": "The new Windows Terminal and the original Windows console host, all in the same place!",
+          "tags": []
+        },
+        {
+          "name": "microsoft/playwright",
+          "url": "https://github.com/microsoft/playwright",
+          "stars": 92685,
+          "language": "TypeScript",
+          "description": "Playwright is a framework for Web Testing and Automation. It allows testing Chromium, Firefox and WebKit with a single API.",
+          "tags": [
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "alacritty/alacritty",
+          "url": "https://github.com/alacritty/alacritty",
+          "stars": 64869,
+          "language": "Rust",
+          "description": "A cross-platform, OpenGL terminal emulator.",
+          "tags": []
+        },
+        {
+          "name": "scrapy/scrapy",
+          "url": "https://github.com/scrapy/scrapy",
+          "stars": 63107,
+          "language": "Python",
+          "description": "Scrapy, a fast high-level web crawling & scraping framework for Python.",
+          "tags": []
+        },
+        {
+          "name": "firecrawl/firecrawl",
+          "url": "https://github.com/firecrawl/firecrawl",
+          "stars": 49867,
+          "language": "TypeScript",
+          "description": "The API to search, scrape, and interact with the web at scale",
+          "tags": []
+        },
+        {
+          "name": "mitmproxy/mitmproxy",
+          "url": "https://github.com/mitmproxy/mitmproxy",
+          "stars": 44257,
+          "language": "Python",
+          "description": "An interactive TLS-capable intercepting HTTP proxy for penetration testers and software developers.",
+          "tags": []
+        },
+        {
+          "name": "lightpanda-io/browser",
+          "url": "https://github.com/lightpanda-io/browser",
+          "stars": 31768,
+          "language": "Zig",
+          "description": "Lightpanda: the headless browser designed for AI and automation",
+          "tags": []
+        },
+        {
+          "name": "googleworkspace/cli",
+          "url": "https://github.com/googleworkspace/cli",
+          "stars": 29632,
+          "language": "Rust",
+          "description": "Google Workspace CLI — one command-line tool for Drive, Gmail, Calendar, Sheets, Docs, Chat, Admin, and more",
+          "tags": []
+        },
+        {
+          "name": "wezterm/wezterm",
+          "url": "https://github.com/wezterm/wezterm",
+          "stars": 27542,
+          "language": "Rust",
+          "description": "A GPU-accelerated cross-platform terminal emulator and multiplexer written by @wez and implemented in Rust",
+          "tags": []
+        },
+        {
+          "name": "magic-wormhole/magic-wormhole",
+          "url": "https://github.com/magic-wormhole/magic-wormhole",
+          "stars": 22706,
+          "language": "Python",
+          "description": "get things from one computer to another, safely",
+          "tags": []
+        },
+        {
+          "name": "gnachman/iTerm2",
+          "url": "https://github.com/gnachman/iTerm2",
+          "stars": 17810,
+          "language": "Objective-C",
+          "description": "iTerm2 is a terminal emulator for Mac OS X that does amazing things.",
+          "tags": []
+        },
+        {
+          "name": "ahmedkhaleel2004/gitdiagram",
+          "url": "https://github.com/ahmedkhaleel2004/gitdiagram",
+          "stars": 15803,
+          "language": "TypeScript",
+          "description": "Free, simple, fast interactive diagrams for any GitHub repository",
+          "tags": []
+        },
+        {
+          "name": "faker-js/faker",
+          "url": "https://github.com/faker-js/faker",
+          "stars": 15409,
+          "language": "TypeScript",
+          "description": "Generate massive amounts of fake data in the browser and node.js",
+          "tags": []
+        },
+        {
+          "name": "pyinstaller/pyinstaller",
+          "url": "https://github.com/pyinstaller/pyinstaller",
+          "stars": 13037,
+          "language": "Python",
+          "description": "Freeze (package) Python programs into stand-alone executables",
+          "tags": []
+        },
+        {
+          "name": "phw/peek",
+          "url": "https://github.com/phw/peek",
+          "stars": 10565,
+          "language": "Vala",
+          "description": "Simple animated GIF screen recorder with an easy to use interface",
+          "tags": [
+            "Media & Content"
+          ]
+        },
+        {
+          "name": "apache/jmeter",
+          "url": "https://github.com/apache/jmeter",
+          "stars": 9462,
+          "language": "Java",
+          "description": "Apache JMeter open-source load testing tool for analyzing and measuring the performance of a variety of services",
+          "tags": []
+        },
+        {
+          "name": "pinchtab/pinchtab",
+          "url": "https://github.com/pinchtab/pinchtab",
+          "stars": 9419,
+          "language": "Go",
+          "description": "High-performance browser automation bridge and multi-instance orchestrator with advanced stealth injection and real-time dashboard",
+          "tags": [
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "artilleryio/artillery",
+          "url": "https://github.com/artilleryio/artillery",
+          "stars": 9023,
+          "language": "JavaScript",
+          "description": "The complete load testing platform. Everything you need for production-grade load tests. Serverless & distributed.",
+          "tags": []
+        },
+        {
+          "name": "dependabot/dependabot-core",
+          "url": "https://github.com/dependabot/dependabot-core",
+          "stars": 5680,
+          "language": "Ruby",
+          "description": "Dependabot's core logic for creating update PRs.",
+          "tags": []
+        },
+        {
+          "name": "Pagefind/pagefind",
+          "url": "https://github.com/Pagefind/pagefind",
+          "stars": 5340,
+          "language": "Rust",
+          "description": "Static low-bandwidth search at scale",
+          "tags": []
+        },
+        {
+          "name": "rorkai/App-Store-Connect-CLI",
+          "url": "https://github.com/rorkai/App-Store-Connect-CLI",
+          "stars": 5035,
+          "language": "Go",
+          "description": "Fast, scriptable CLI for the App Store Connect API with automation capabilities",
+          "tags": []
+        },
+        {
+          "name": "abhigyanpatwari/GitNexus",
+          "url": "https://github.com/abhigyanpatwari/GitNexus",
+          "stars": 4402,
+          "language": "TypeScript",
+          "description": "GitNexus: The Zero-Server Code Intelligence Engine",
+          "tags": []
+        },
+        {
+          "name": "nextdns/nextdns",
+          "url": "https://github.com/nextdns/nextdns",
+          "stars": 4095,
+          "language": "Go",
+          "description": "NextDNS CLI client (DoH Proxy)",
+          "tags": []
+        },
+        {
+          "name": "aws/aws-lambda-go",
+          "url": "https://github.com/aws/aws-lambda-go",
+          "stars": 3797,
+          "language": "Go",
+          "description": "Libraries, samples and tools to help Go developers develop AWS Lambda functions.",
+          "tags": []
+        },
+        {
+          "name": "pester/Pester",
+          "url": "https://github.com/pester/Pester",
+          "stars": 3302,
+          "language": "PowerShell",
+          "description": "Pester is the ubiquitous test and mock framework for PowerShell.",
+          "tags": []
+        },
+        {
+          "name": "ericosiu/ai-marketing-skills",
+          "url": "https://github.com/ericosiu/ai-marketing-skills",
+          "stars": 2836,
+          "language": "Python",
+          "description": "Open-source AI marketing skills — growth experiments, sales pipeline, content ops, outbound, SEO, and finance automation",
+          "tags": [
+            "Finance & Trading"
+          ]
+        },
+        {
+          "name": "claffin/cloudproxy",
+          "url": "https://github.com/claffin/cloudproxy",
+          "stars": 1710,
+          "language": "Python",
+          "description": "Hide your scrapers IP behind the cloud. Provision proxy servers across different cloud providers to improve your scraping success.",
+          "tags": []
+        },
+        {
+          "name": "projectdiscovery/notify",
+          "url": "https://github.com/projectdiscovery/notify",
+          "stars": 1593,
+          "language": "Go",
+          "description": "Notify is a Go-based assistance package that enables you to stream the output of several tools (or read from a file) and publish it to a variety of supported platforms.",
+          "tags": []
+        },
+        {
+          "name": "JoasASantos/n8n-CyberSecurity-Workflows",
+          "url": "https://github.com/JoasASantos/n8n-CyberSecurity-Workflows",
+          "stars": 882,
+          "language": null,
+          "description": "Security automation with 100+ Red/Blue/AppSec workflows and playbooks",
+          "tags": [
+            "Security · Defensive",
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "AnswerDotAI/fastsetup",
+          "url": "https://github.com/AnswerDotAI/fastsetup",
+          "stars": 479,
+          "language": "Shell",
+          "description": "Setup all the things",
+          "tags": []
+        },
+        {
+          "name": "arvydas/blinkstick-python",
+          "url": "https://github.com/arvydas/blinkstick-python",
+          "stars": 139,
+          "language": "Python",
+          "description": "BlinkStick Python interface to control devices connected to the computer",
+          "tags": []
+        },
+        {
+          "name": "merill/yako",
+          "url": "https://github.com/merill/yako",
+          "stars": 20,
+          "language": "TypeScript",
+          "description": "A better new tab page for your browser",
+          "tags": [
+            "Operating Systems & Desktop"
+          ]
+        },
+        {
+          "name": "fortinet/aws-lambda-guardduty",
+          "url": "https://github.com/fortinet/aws-lambda-guardduty",
+          "stars": 14,
+          "language": "JavaScript",
+          "description": "Lambda function to be called in CloudWatch when GuardDuty sends logs to CloudWatch. This script will write the malicious IP to a dedicated file in an S3 bucket.",
+          "tags": [
+            "Security · Cloud"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Homelab & Infrastructure",
+      "count": 31,
+      "repos": [
+        {
+          "name": "awesome-selfhosted/awesome-selfhosted",
+          "url": "https://github.com/awesome-selfhosted/awesome-selfhosted",
+          "stars": 304955,
+          "language": null,
+          "description": "A list of Free Software network services and web applications which can be hosted on your own servers",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "coollabsio/coolify",
+          "url": "https://github.com/coollabsio/coolify",
+          "stars": 58359,
+          "language": "PHP",
+          "description": "An open-source, self-hostable PaaS alternative to Vercel, Heroku & Netlify that lets you easily deploy static sites, databases, full-stack applications and 280+ one-click services on your own servers.",
+          "tags": [
+            "Web & Frontend"
+          ]
+        },
+        {
+          "name": "hashicorp/terraform",
+          "url": "https://github.com/hashicorp/terraform",
+          "stars": 49449,
+          "language": "Go",
+          "description": "Terraform enables you to safely and predictably create, change, and improve infrastructure.",
+          "tags": []
+        },
+        {
+          "name": "balena-io/etcher",
+          "url": "https://github.com/balena-io/etcher",
+          "stars": 33976,
+          "language": "TypeScript",
+          "description": "Flash OS images to SD cards & USB drives, safely and easily.",
+          "tags": []
+        },
+        {
+          "name": "tailscale/tailscale",
+          "url": "https://github.com/tailscale/tailscale",
+          "stars": 33880,
+          "language": "Go",
+          "description": "Easiest, most secure way to use WireGuard and 2FA",
+          "tags": []
+        },
+        {
+          "name": "certbot/certbot",
+          "url": "https://github.com/certbot/certbot",
+          "stars": 33129,
+          "language": "Python",
+          "description": "Certbot is EFF's tool to obtain certs from Let's Encrypt and (optionally) auto-enable HTTPS on your server. It can also act as a client for any other CA that uses the ACME protocol.",
+          "tags": []
+        },
+        {
+          "name": "hashicorp/vagrant",
+          "url": "https://github.com/hashicorp/vagrant",
+          "stars": 27184,
+          "language": "Ruby",
+          "description": "Vagrant is a tool for building and distributing development environments.",
+          "tags": []
+        },
+        {
+          "name": "Anil-matcha/Open-Generative-AI",
+          "url": "https://github.com/Anil-matcha/Open-Generative-AI",
+          "stars": 23229,
+          "language": "JavaScript",
+          "description": "Unrestricted Open-source alternative to AI video platforms — Free AI image & video generation studio with 200+ models (Flux, Midjourney, Kling, Sora, Veo). No content filters. Self-hosted, MIT license.",
+          "tags": [
+            "AI & LLM Tooling",
+            "Media & Content"
+          ]
+        },
+        {
+          "name": "m1k1o/neko",
+          "url": "https://github.com/m1k1o/neko",
+          "stars": 21370,
+          "language": "Go",
+          "description": "A self hosted virtual browser that runs in docker and uses WebRTC.",
+          "tags": []
+        },
+        {
+          "name": "Billionmail/BillionMail",
+          "url": "https://github.com/Billionmail/BillionMail",
+          "stars": 15307,
+          "language": "Go",
+          "description": "BillionMail gives you open-source MailServer, NewsLetter, Email Marketing — fully self-hosted, dev-friendly, and free from monthly fees.",
+          "tags": []
+        },
+        {
+          "name": "grokability/snipe-it",
+          "url": "https://github.com/grokability/snipe-it",
+          "stars": 14043,
+          "language": "PHP",
+          "description": "A free open source IT asset/license management system",
+          "tags": []
+        },
+        {
+          "name": "dotnet/yarp",
+          "url": "https://github.com/dotnet/yarp",
+          "stars": 9558,
+          "language": "C#",
+          "description": "A toolkit for developing high-performance HTTP reverse proxy applications.",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "linuxserver/Heimdall",
+          "url": "https://github.com/linuxserver/Heimdall",
+          "stars": 9263,
+          "language": "PHP",
+          "description": "An Application dashboard and launcher",
+          "tags": []
+        },
+        {
+          "name": "masterking32/MasterDnsVPN",
+          "url": "https://github.com/masterking32/MasterDnsVPN",
+          "stars": 6797,
+          "language": "Go",
+          "description": "Advanced DNS tunneling VPN for censorship bypass, optimized beyond DNSTT and SlipStream with low-overhead ARQ, resolver load balancing, high packet-loss stability and speed.",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "netalertx/NetAlertX",
+          "url": "https://github.com/netalertx/NetAlertX",
+          "stars": 6686,
+          "language": "Python",
+          "description": "Centralized network visibility and continuous asset discovery. Monitor devices, detect change, and stay aware across distributed networks.",
+          "tags": []
+        },
+        {
+          "name": "vas3k/TaxHacker",
+          "url": "https://github.com/vas3k/TaxHacker",
+          "stars": 6530,
+          "language": "TypeScript",
+          "description": "Self-hosted AI accounting app. LLM analyzer for receipts, invoices, transactions with custom prompts and categories",
+          "tags": [
+            "AI & LLM Tooling",
+            "Finance & Trading"
+          ]
+        },
+        {
+          "name": "wger-project/wger",
+          "url": "https://github.com/wger-project/wger",
+          "stars": 6404,
+          "language": "Python",
+          "description": "Self hosted FLOSS fitness/workout, nutrition and weight tracker",
+          "tags": []
+        },
+        {
+          "name": "timvisee/send",
+          "url": "https://github.com/timvisee/send",
+          "stars": 5833,
+          "language": "JavaScript",
+          "description": "Simple, private file sharing. Mirror of gitlab.com/timvisee/send",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "jedisct1/dsvpn",
+          "url": "https://github.com/jedisct1/dsvpn",
+          "stars": 5803,
+          "language": "C",
+          "description": "A Dead Simple VPN.",
+          "tags": []
+        },
+        {
+          "name": "win-acme/win-acme",
+          "url": "https://github.com/win-acme/win-acme",
+          "stars": 5722,
+          "language": "C#",
+          "description": "Automate SSL/TLS certificates on Windows with ease",
+          "tags": []
+        },
+        {
+          "name": "iagox86/dnscat2",
+          "url": "https://github.com/iagox86/dnscat2",
+          "stars": 3925,
+          "language": "PHP",
+          "description": "dnscat2 - DNS tunnel",
+          "tags": []
+        },
+        {
+          "name": "onedr0p/cluster-template",
+          "url": "https://github.com/onedr0p/cluster-template",
+          "stars": 2770,
+          "language": "YAML",
+          "description": "A template for deploying a Talos Kubernetes cluster including Flux for GitOps",
+          "tags": []
+        },
+        {
+          "name": "Madelena/hass-config-public",
+          "url": "https://github.com/Madelena/hass-config-public",
+          "stars": 1143,
+          "language": "CSS",
+          "description": "My Dashboards for Home Assistant - Advanced data visualizations, responsive design, a neat maximalist Metro Live Tile layout, and an ultraminimal tablet layout!",
+          "tags": []
+        },
+        {
+          "name": "AdguardTeam/AdGuardDNS",
+          "url": "https://github.com/AdguardTeam/AdGuardDNS",
+          "stars": 936,
+          "language": "Go",
+          "description": "Public DNS resolver that protects you from ad trackers",
+          "tags": []
+        },
+        {
+          "name": "Corollarium/localtls",
+          "url": "https://github.com/Corollarium/localtls",
+          "stars": 583,
+          "language": "Python",
+          "description": "DNS server for providing TLS to webservices on local addresses",
+          "tags": []
+        },
+        {
+          "name": "whazor/k8s-at-home-search",
+          "url": "https://github.com/whazor/k8s-at-home-search",
+          "stars": 395,
+          "language": "TypeScript",
+          "description": "Your Gateway Drug to Kubernetes at Home!",
+          "tags": []
+        },
+        {
+          "name": "askblaker/k3s.rocks",
+          "url": "https://github.com/askblaker/k3s.rocks",
+          "stars": 243,
+          "language": "Shell",
+          "description": "k3s.rocks",
+          "tags": []
+        },
+        {
+          "name": "coolstartnow/isms-builder",
+          "url": "https://github.com/coolstartnow/isms-builder",
+          "stars": 166,
+          "language": "JavaScript",
+          "description": "Self-hosted Information Security Management System — ISO 27001, NIS2, GDPR/DSGVO, BSI IT-Grundschutz",
+          "tags": []
+        },
+        {
+          "name": "pl4nty/homelab",
+          "url": "https://github.com/pl4nty/homelab",
+          "stars": 47,
+          "language": "YAML",
+          "description": "Powered by Kubernetes",
+          "tags": []
+        },
+        {
+          "name": "Josh-Tracy/Kubernetes-Home-Lab",
+          "url": "https://github.com/Josh-Tracy/Kubernetes-Home-Lab",
+          "stars": 35,
+          "language": "Jinja",
+          "description": "Kubernetes Home Lab",
+          "tags": []
+        },
+        {
+          "name": "vidavidorra/renovate",
+          "url": "https://github.com/vidavidorra/renovate",
+          "stars": 7,
+          "language": "JavaScript",
+          "description": "Self-hosted Renovate using the Renovate GitHub Action",
+          "tags": [
+            "Developer Tools"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Security · DFIR",
+      "count": 26,
+      "repos": [
+        {
+          "name": "moonD4rk/HackBrowserData",
+          "url": "https://github.com/moonD4rk/HackBrowserData",
+          "stars": 14318,
+          "language": "Go",
+          "description": "Extract and decrypt browser data, supporting multiple data types, runnable on various operating systems (macOS, Windows, Linux).",
+          "tags": [
+            "Operating Systems & Desktop"
+          ]
+        },
+        {
+          "name": "mvt-project/mvt",
+          "url": "https://github.com/mvt-project/mvt",
+          "stars": 12682,
+          "language": "Python",
+          "description": "MVT (Mobile Verification Toolkit) helps with conducting forensics of mobile devices in order to find signs of a potential compromise.",
+          "tags": []
+        },
+        {
+          "name": "volatilityfoundation/volatility",
+          "url": "https://github.com/volatilityfoundation/volatility",
+          "stars": 8044,
+          "language": "Python",
+          "description": "An advanced memory forensics framework",
+          "tags": []
+        },
+        {
+          "name": "volatilityfoundation/volatility3",
+          "url": "https://github.com/volatilityfoundation/volatility3",
+          "stars": 4238,
+          "language": "Python",
+          "description": "Volatility 3.0 development",
+          "tags": []
+        },
+        {
+          "name": "unode/firefox_decrypt",
+          "url": "https://github.com/unode/firefox_decrypt",
+          "stars": 2450,
+          "language": "Python",
+          "description": "Firefox Decrypt is a tool to extract passwords from Mozilla (Firefox, Waterfox, Thunderbird, SeaMonkey) profiles",
+          "tags": []
+        },
+        {
+          "name": "log2timeline/plaso",
+          "url": "https://github.com/log2timeline/plaso",
+          "stars": 2114,
+          "language": "Python",
+          "description": "Super timeline all the things",
+          "tags": []
+        },
+        {
+          "name": "jtsylve/LiME",
+          "url": "https://github.com/jtsylve/LiME",
+          "stars": 2010,
+          "language": "C",
+          "description": "LiME (formerly DMD) is a Loadable Kernel Module (LKM), which allows the acquisition of volatile memory from Linux and Linux-based devices.",
+          "tags": []
+        },
+        {
+          "name": "RyanDFIR/hindsight",
+          "url": "https://github.com/RyanDFIR/hindsight",
+          "stars": 1465,
+          "language": "Python",
+          "description": "Browser forensics tool for Google Chrome (and other Chromium-based browsers)",
+          "tags": []
+        },
+        {
+          "name": "andreas-mausch/whatsapp-viewer",
+          "url": "https://github.com/andreas-mausch/whatsapp-viewer",
+          "stars": 1432,
+          "language": "C",
+          "description": "Small tool to display chats from the Android msgstore.db database (crypt12)",
+          "tags": []
+        },
+        {
+          "name": "tclahr/uac",
+          "url": "https://github.com/tclahr/uac",
+          "stars": 1399,
+          "language": "Shell",
+          "description": "UAC is a powerful and extensible incident response tool designed for forensic investigators, security analysts, and IT professionals. It automates the collection of artifacts from a wide range of Unix-like systems.",
+          "tags": [
+            "Security · OSINT & Privacy",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "microsoft/avml",
+          "url": "https://github.com/microsoft/avml",
+          "stars": 1103,
+          "language": "Rust",
+          "description": "AVML - Acquire Volatile Memory for Linux",
+          "tags": []
+        },
+        {
+          "name": "orlikoski/CyLR",
+          "url": "https://github.com/orlikoski/CyLR",
+          "stars": 731,
+          "language": "C#",
+          "description": "CyLR - Live Response Collection Tool",
+          "tags": []
+        },
+        {
+          "name": "AndrewRathbun/DFIRArtifactMuseum",
+          "url": "https://github.com/AndrewRathbun/DFIRArtifactMuseum",
+          "stars": 659,
+          "language": "HTML",
+          "description": "The goal of this repo is to archive artifacts from all versions of various OS's and categorizing them by type.",
+          "tags": []
+        },
+        {
+          "name": "vm32/Linux-Incident-Response",
+          "url": "https://github.com/vm32/Linux-Incident-Response",
+          "stars": 412,
+          "language": "Shell",
+          "description": "practical toolkit for cybersecurity and IT professionals.",
+          "tags": []
+        },
+        {
+          "name": "SafeBreach-Labs/EDRaser",
+          "url": "https://github.com/SafeBreach-Labs/EDRaser",
+          "stars": 375,
+          "language": "Python",
+          "description": "EDRaser is a powerful tool for remotely deleting access logs, Windows event logs, databases, and other files on remote machines.",
+          "tags": []
+        },
+        {
+          "name": "EricZimmerman/MFTECmd",
+          "url": "https://github.com/EricZimmerman/MFTECmd",
+          "stars": 320,
+          "language": "C#",
+          "description": "Parses $MFT from NTFS file systems",
+          "tags": [
+            "Documents & Data Processing"
+          ]
+        },
+        {
+          "name": "WiredPulse/PoSh-R2",
+          "url": "https://github.com/WiredPulse/PoSh-R2",
+          "stars": 307,
+          "language": "PowerShell",
+          "description": "PowerShell - Rapid Response... For the incident responder in you!",
+          "tags": []
+        },
+        {
+          "name": "ANSSI-FR/DFIR4vSphere",
+          "url": "https://github.com/ANSSI-FR/DFIR4vSphere",
+          "stars": 184,
+          "language": "PowerShell",
+          "description": "Powershell module for VMWare vSphere forensics",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "strozfriedberg/sidr",
+          "url": "https://github.com/strozfriedberg/sidr",
+          "stars": 139,
+          "language": "Rust",
+          "description": "Search Index Database Reporter",
+          "tags": []
+        },
+        {
+          "name": "moaistory/WinSearchDBAnalyzer",
+          "url": "https://github.com/moaistory/WinSearchDBAnalyzer",
+          "stars": 132,
+          "language": "C#",
+          "description": "Windows Search DB Analyzer",
+          "tags": []
+        },
+        {
+          "name": "woanware/usbdeviceforensics",
+          "url": "https://github.com/woanware/usbdeviceforensics",
+          "stars": 130,
+          "language": "Python",
+          "description": "Python script for extracting USB information from Windows registry hives",
+          "tags": []
+        },
+        {
+          "name": "resurrecting-open-source-projects/dcfldd",
+          "url": "https://github.com/resurrecting-open-source-projects/dcfldd",
+          "stars": 127,
+          "language": "C",
+          "description": "Enhanced version of dd for forensics and security",
+          "tags": []
+        },
+        {
+          "name": "Koifman/LUMEN",
+          "url": "https://github.com/Koifman/LUMEN",
+          "stars": 121,
+          "language": "TypeScript",
+          "description": "Your Browser-based EVTX Companion",
+          "tags": []
+        },
+        {
+          "name": "harelsegev/INDXRipper",
+          "url": "https://github.com/harelsegev/INDXRipper",
+          "stars": 73,
+          "language": "Python",
+          "description": "Carve file metadata from NTFS index ($I30) attributes",
+          "tags": []
+        },
+        {
+          "name": "reverseame/winesap",
+          "url": "https://github.com/reverseame/winesap",
+          "stars": 10,
+          "language": "Python",
+          "description": "Volatility plugin to search for all Autostart Extensibility Points (AESPs)",
+          "tags": []
+        },
+        {
+          "name": "threat-hunt-ai/threat-hunt-ai",
+          "url": "https://github.com/threat-hunt-ai/threat-hunt-ai",
+          "stars": 7,
+          "language": "Python",
+          "description": "AI-powered threat hunting, incident response, and detection engineering for FortiSIEM",
+          "tags": [
+            "AI & LLM Tooling",
+            "Security · Defensive",
+            "Security · Threat Intel & Malware"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Security · Threat Intel & Malware",
+      "count": 20,
+      "repos": [
+        {
+          "name": "ytisf/theZoo",
+          "url": "https://github.com/ytisf/theZoo",
+          "stars": 13197,
+          "language": "Python",
+          "description": "A repository of LIVE malwares for your own joy and pleasure.",
+          "tags": []
+        },
+        {
+          "name": "Yara-Rules/rules",
+          "url": "https://github.com/Yara-Rules/rules",
+          "stars": 4843,
+          "language": "YARA",
+          "description": "Repository of yara rules",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "alexandreborges/malwoverview",
+          "url": "https://github.com/alexandreborges/malwoverview",
+          "stars": 3945,
+          "language": "Python",
+          "description": "Malwoverview is a first response tool for threat hunting across VirusTotal, Hybrid Analysis, URLHaus, Polyswarm, Malshare, Alien Vault, Malpedia, Malware Bazaar, ThreatFox, Triage, IPInfo, Shodan",
+          "tags": [
+            "Security · DFIR"
+          ]
+        },
+        {
+          "name": "Neo23x0/Loki",
+          "url": "https://github.com/Neo23x0/Loki",
+          "stars": 3768,
+          "language": "Python",
+          "description": "Loki - Simple IOC and YARA Scanner",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "NextronSystems/APTSimulator",
+          "url": "https://github.com/NextronSystems/APTSimulator",
+          "stars": 2756,
+          "language": "Batchfile",
+          "description": "A toolset to make a system look as if it was the victim of an APT attack",
+          "tags": []
+        },
+        {
+          "name": "mandiant/red_team_tool_countermeasures",
+          "url": "https://github.com/mandiant/red_team_tool_countermeasures",
+          "stars": 2667,
+          "language": "YARA",
+          "description": "Red team tool countermeasures YARA rules",
+          "tags": [
+            "Security · Offensive",
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "microsoft/msticpy",
+          "url": "https://github.com/microsoft/msticpy",
+          "stars": 1979,
+          "language": "Python",
+          "description": "Microsoft Threat Intelligence Security Tools",
+          "tags": []
+        },
+        {
+          "name": "ThreatHuntingProject/ThreatHunting",
+          "url": "https://github.com/ThreatHuntingProject/ThreatHunting",
+          "stars": 1880,
+          "language": null,
+          "description": "An informational repo about hunting for adversaries in your IT environment.",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "hasherezade/tiny_tracer",
+          "url": "https://github.com/hasherezade/tiny_tracer",
+          "stars": 1665,
+          "language": "C++",
+          "description": "A Pin Tool for tracing API calls etc",
+          "tags": []
+        },
+        {
+          "name": "Yaxser/Backstab",
+          "url": "https://github.com/Yaxser/Backstab",
+          "stars": 1518,
+          "language": "C",
+          "description": "A tool to kill antimalware protected processes",
+          "tags": []
+        },
+        {
+          "name": "mukul975/cve-mcp-server",
+          "url": "https://github.com/mukul975/cve-mcp-server",
+          "stars": 1079,
+          "language": "Python",
+          "description": "Production-grade MCP server giving Claude 27 security intelligence tools across 21 APIs — CVE lookup, EPSS scoring, CISA KEV, MITRE ATT&CK, Shodan, VirusTotal, and more.",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "chronicle/GCTI",
+          "url": "https://github.com/chronicle/GCTI",
+          "stars": 553,
+          "language": "YARA",
+          "description": "Google Cloud Threat Intelligence YARA rules",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "NextronSystems/ransomware-simulator",
+          "url": "https://github.com/NextronSystems/ransomware-simulator",
+          "stars": 482,
+          "language": "Go",
+          "description": "Ransomware simulator written in Golang",
+          "tags": []
+        },
+        {
+          "name": "CERT-Polska/malduck",
+          "url": "https://github.com/CERT-Polska/malduck",
+          "stars": 355,
+          "language": "Python",
+          "description": "Malduck is your ducky companion in malware analysis journeys",
+          "tags": []
+        },
+        {
+          "name": "urule99/jsunpack-n",
+          "url": "https://github.com/urule99/jsunpack-n",
+          "stars": 169,
+          "language": "Python",
+          "description": "Automatically exported from code.google.com/p/jsunpack-n",
+          "tags": []
+        },
+        {
+          "name": "buguroo/cuckooautoinstall",
+          "url": "https://github.com/buguroo/cuckooautoinstall",
+          "stars": 164,
+          "language": "Shell",
+          "description": "Auto Installer Script for Cuckoo Sandbox",
+          "tags": []
+        },
+        {
+          "name": "fr0gger/unprotect",
+          "url": "https://github.com/fr0gger/unprotect",
+          "stars": 121,
+          "language": "Python",
+          "description": "Unprotect is a python tool for parsing PE malware and extract evasion techniques.",
+          "tags": []
+        },
+        {
+          "name": "intel471/CU-GIR",
+          "url": "https://github.com/intel471/CU-GIR",
+          "stars": 102,
+          "language": "JSON",
+          "description": "Cyber Underground General Intelligence Requirements",
+          "tags": []
+        },
+        {
+          "name": "timo123421/Automatic-Intelligence-feed",
+          "url": "https://github.com/timo123421/Automatic-Intelligence-feed",
+          "stars": 34,
+          "language": "PowerShell",
+          "description": "Automatic Intelligence feed",
+          "tags": []
+        },
+        {
+          "name": "wit0k/tarrask",
+          "url": "https://github.com/wit0k/tarrask",
+          "stars": 3,
+          "language": "PowerShell",
+          "description": "Tarrask: Hafnium's persistence via hidden scheduled task",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Security · OSINT & Privacy",
+      "count": 17,
+      "repos": [
+        {
+          "name": "sherlock-project/sherlock",
+          "url": "https://github.com/sherlock-project/sherlock",
+          "stars": 86453,
+          "language": "Python",
+          "description": "Hunt down social media accounts by username across social networks",
+          "tags": []
+        },
+        {
+          "name": "HunxByts/GhostTrack",
+          "url": "https://github.com/HunxByts/GhostTrack",
+          "stars": 14464,
+          "language": "Python",
+          "description": "Useful tool to track location or mobile number",
+          "tags": []
+        },
+        {
+          "name": "reconurge/flowsint",
+          "url": "https://github.com/reconurge/flowsint",
+          "stars": 7265,
+          "language": "TypeScript",
+          "description": "A modern platform for visual, flexible, and extensible graph-based investigations. For cybersecurity analysts and investigators.",
+          "tags": []
+        },
+        {
+          "name": "simplifaisoul/osiris",
+          "url": "https://github.com/simplifaisoul/osiris",
+          "stars": 6732,
+          "language": "TypeScript",
+          "description": "Open Source Global Intelligence Platform - Real-Time OSINT Dashboard - A Palantir Alternative",
+          "tags": []
+        },
+        {
+          "name": "apurvsinghgautam/robin",
+          "url": "https://github.com/apurvsinghgautam/robin",
+          "stars": 5901,
+          "language": "Python",
+          "description": "AI-Powered Dark Web OSINT Tool",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "lanmaster53/recon-ng",
+          "url": "https://github.com/lanmaster53/recon-ng",
+          "stars": 5769,
+          "language": "Python",
+          "description": "Open Source Intelligence gathering tool aimed at reducing the time spent harvesting information from open sources.",
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
+          "name": "EFForg/rayhunter",
+          "url": "https://github.com/EFForg/rayhunter",
+          "stars": 5356,
+          "language": "Rust",
+          "description": "Rust tool to detect cell site simulators on an orbic mobile hotspot",
+          "tags": []
+        },
+        {
+          "name": "niespodd/browser-fingerprinting",
+          "url": "https://github.com/niespodd/browser-fingerprinting",
+          "stars": 5101,
+          "language": "JavaScript",
+          "description": "Analysis of Bot Protection systems with available countermeasures. How to defeat anti-bot system and get around browser fingerprinting scripts when scraping the web?",
+          "tags": [
+            "Security · Defensive"
+          ]
+        },
+        {
+          "name": "rdegges/ipify-api",
+          "url": "https://github.com/rdegges/ipify-api",
+          "stars": 1979,
+          "language": "Go",
+          "description": "A public IP API service",
+          "tags": [
+            "Developer Tools"
+          ]
+        },
+        {
+          "name": "pirxthepilot/wtfis",
+          "url": "https://github.com/pirxthepilot/wtfis",
+          "stars": 1814,
+          "language": "Python",
+          "description": "Passive hostname, domain and IP lookup tool for non-robots",
+          "tags": []
+        },
+        {
+          "name": "exentriquesolutions/nip.io",
+          "url": "https://github.com/exentriquesolutions/nip.io",
+          "stars": 1758,
+          "language": "Python",
+          "description": "nip.io - dead simple wildcard DNS for any IP address",
+          "tags": [
+            "Homelab & Infrastructure"
+          ]
+        },
+        {
+          "name": "elm1nst3r/GHOST-osint-crm",
+          "url": "https://github.com/elm1nst3r/GHOST-osint-crm",
+          "stars": 635,
+          "language": "JavaScript",
+          "description": "GHOST - Global Human Operations & Surveillance Tracking: Open-source investigation management platform",
+          "tags": []
+        },
+        {
+          "name": "mitchmoser/sputnik",
+          "url": "https://github.com/mitchmoser/sputnik",
+          "stars": 415,
+          "language": "JavaScript",
+          "description": "Open Source Intelligence Browser Extension",
+          "tags": []
+        },
+        {
+          "name": "mihemihe/myADMonitor",
+          "url": "https://github.com/mihemihe/myADMonitor",
+          "stars": 224,
+          "language": "C#",
+          "description": "myADMonitor is an open-source Active Directory changes tracking tool",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "C3n7ral051nt4g3ncy/OSINT_Inception-links",
+          "url": "https://github.com/C3n7ral051nt4g3ncy/OSINT_Inception-links",
+          "stars": 210,
+          "language": null,
+          "description": "Current links from the OSINT Inception start-me project",
+          "tags": []
+        },
+        {
+          "name": "cipher387/OSINT-and-Cybersecurity-accounts-in-Mastodon",
+          "url": "https://github.com/cipher387/OSINT-and-Cybersecurity-accounts-in-Mastodon",
+          "stars": 144,
+          "language": null,
+          "description": "This repository brings together tool builders, bloggers, speakers, book authors, and other interesting Mastodon accounts",
+          "tags": []
+        },
+        {
+          "name": "EvotecIT/DomainDetective",
+          "url": "https://github.com/EvotecIT/DomainDetective",
+          "stars": 63,
+          "language": "C#",
+          "description": "Domain Detective is a C# library, Tool and PowerShell module in one project. It is designed to help you find interesting information about a domain name.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Web & Frontend",
+      "count": 10,
+      "repos": [
+        {
+          "name": "realworld-apps/realworld",
+          "url": "https://github.com/realworld-apps/realworld",
+          "stars": 83850,
+          "language": "TypeScript",
+          "description": "The mother of all demo apps — Exemplary fullstack Medium.com clone powered by React, Angular, Node, Django, and many more",
+          "tags": []
+        },
+        {
+          "name": "badges/shields",
+          "url": "https://github.com/badges/shields",
+          "stars": 26925,
+          "language": "JavaScript",
+          "description": "Concise, consistent, and legible badges in SVG and raster format",
+          "tags": []
+        },
+        {
+          "name": "simple-icons/simple-icons",
+          "url": "https://github.com/simple-icons/simple-icons",
+          "stars": 25390,
+          "language": "JavaScript",
+          "description": "SVG icons for popular brands",
+          "tags": []
+        },
+        {
+          "name": "rahuldkjain/github-profile-readme-generator",
+          "url": "https://github.com/rahuldkjain/github-profile-readme-generator",
+          "stars": 24340,
+          "language": "TypeScript",
+          "description": "Generate GitHub profile README easily with the latest add-ons like visitors count, GitHub stats, etc using minimal UI.",
+          "tags": []
+        },
+        {
+          "name": "tandpfun/skill-icons",
+          "url": "https://github.com/tandpfun/skill-icons",
+          "stars": 12733,
+          "language": "SVG",
+          "description": "Showcase your skills on your Github readme or resumé with ease",
+          "tags": []
+        },
+        {
+          "name": "RedSiege/EyeWitness",
+          "url": "https://github.com/RedSiege/EyeWitness",
+          "stars": 5785,
+          "language": "Python",
+          "description": "EyeWitness is designed to take screenshots of websites, provide some server header info, and identify default credentials if possible.",
+          "tags": [
+            "Media & Content"
+          ]
+        },
+        {
+          "name": "marwin1991/profile-technology-icons",
+          "url": "https://github.com/marwin1991/profile-technology-icons",
+          "stars": 999,
+          "language": "JavaScript",
+          "description": "Add icons to your GitHub profile using this generator",
+          "tags": []
+        },
+        {
+          "name": "ABSphreak/readme-jokes",
+          "url": "https://github.com/ABSphreak/readme-jokes",
+          "stars": 708,
+          "language": "JavaScript",
+          "description": "Jokes for your GitHub READMEs",
+          "tags": []
+        },
+        {
+          "name": "GrapheneOS/grapheneos.org",
+          "url": "https://github.com/GrapheneOS/grapheneos.org",
+          "stars": 703,
+          "language": "HTML",
+          "description": "Servers for our website, HTTP/HTTPS connectivity checks, HTTPS network time, NTP, attestation",
+          "tags": []
+        },
+        {
+          "name": "QubesOS/qubesos.github.io",
+          "url": "https://github.com/QubesOS/qubesos.github.io",
+          "stars": 363,
+          "language": "SCSS",
+          "description": "Qubes OS Project Official Website",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Finance & Trading",
+      "count": 10,
+      "repos": [
+        {
+          "name": "virattt/ai-hedge-fund",
+          "url": "https://github.com/virattt/ai-hedge-fund",
+          "stars": 61367,
+          "language": "Python",
+          "description": "An AI Hedge Fund Team",
+          "tags": []
+        },
+        {
+          "name": "maybe-finance/maybe",
+          "url": "https://github.com/maybe-finance/maybe",
+          "stars": 54336,
+          "language": "Ruby",
+          "description": "The personal finance app for everyone",
+          "tags": []
+        },
+        {
+          "name": "Fincept-Corporation/FinceptTerminal",
+          "url": "https://github.com/Fincept-Corporation/FinceptTerminal",
+          "stars": 28284,
+          "language": "C++",
+          "description": "FinceptTerminal is a modern finance application offering advanced market analytics, investment research, and economic data tools.",
+          "tags": []
+        },
+        {
+          "name": "Codehagen/Badget",
+          "url": "https://github.com/Codehagen/Badget",
+          "stars": 2778,
+          "language": "TypeScript",
+          "description": "Badget aims to simplify financial management with a user-friendly interface and robust backend",
+          "tags": []
+        },
+        {
+          "name": "OffcierCia/ultimate-defi-research-base",
+          "url": "https://github.com/OffcierCia/ultimate-defi-research-base",
+          "stars": 2199,
+          "language": null,
+          "description": "Here we collect and discuss the best DeFI & Blockchain researches and tools.",
+          "tags": []
+        },
+        {
+          "name": "vasu-devs/JustHireMe",
+          "url": "https://github.com/vasu-devs/JustHireMe",
+          "stars": 2155,
+          "language": "Python",
+          "description": "Local-first AI job intelligence workbench for scraping roles, ranking fit, and generating tailored application materials.",
+          "tags": []
+        },
+        {
+          "name": "OffcierCia/Crypto-OpSec-SelfGuard-RoadMap",
+          "url": "https://github.com/OffcierCia/Crypto-OpSec-SelfGuard-RoadMap",
+          "stars": 1776,
+          "language": null,
+          "description": "Here we collect and discuss the best DeFi, Blockchain and crypto-related OpSec researches and data terminals.",
+          "tags": [
+            "Security · OSINT & Privacy",
+            "Developer Tools",
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "lit26/finvizfinance",
+          "url": "https://github.com/lit26/finvizfinance",
+          "stars": 1485,
+          "language": "Jupyter Notebook",
+          "description": "Finviz analysis python library.",
+          "tags": []
+        },
+        {
+          "name": "shner-elmo/TradingView-Screener",
+          "url": "https://github.com/shner-elmo/TradingView-Screener",
+          "stars": 1040,
+          "language": "Python",
+          "description": "A package that lets you create TradingView screeners in Python",
+          "tags": []
+        },
+        {
+          "name": "impersonator-eth/impersonator",
+          "url": "https://github.com/impersonator-eth/impersonator",
+          "stars": 323,
+          "language": "TypeScript",
+          "description": "Login into dapps by impersonating any Ethereum address via WalletConnect or iFrame",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Misc & Other",
+      "count": 10,
+      "repos": [
+        {
+          "name": "FujiwaraChoki/MoneyPrinterV2",
+          "url": "https://github.com/FujiwaraChoki/MoneyPrinterV2",
+          "stars": 31193,
+          "language": "Python",
+          "description": "Automate the process of making money online.",
+          "tags": []
+        },
+        {
+          "name": "kleampa/not-paid",
+          "url": "https://github.com/kleampa/not-paid",
+          "stars": 15586,
+          "language": "JavaScript",
+          "description": "Client did not pay? Add opacity to the body tag and decrease it every day until their site completely fades away",
+          "tags": []
+        },
+        {
+          "name": "donlon/cloudflare-error-page",
+          "url": "https://github.com/donlon/cloudflare-error-page",
+          "stars": 5479,
+          "language": "HTML",
+          "description": "Customized Cloudflare error page generator (unofficial)",
+          "tags": []
+        },
+        {
+          "name": "keydet89/RegRipper3.0",
+          "url": "https://github.com/keydet89/RegRipper3.0",
+          "stars": 710,
+          "language": "Perl",
+          "description": "RegRipper3.0",
+          "tags": []
+        },
+        {
+          "name": "bijomaru78/eccm",
+          "url": "https://github.com/bijomaru78/eccm",
+          "stars": 560,
+          "language": "HTML",
+          "description": "Ethernet Cable Connection Manager",
+          "tags": []
+        },
+        {
+          "name": "HackingDave/nightwire",
+          "url": "https://github.com/HackingDave/nightwire",
+          "stars": 164,
+          "language": "Python",
+          "description": "A secure way to code via Signal",
+          "tags": []
+        },
+        {
+          "name": "bit-of-a-shambles/open-tender-watch",
+          "url": "https://github.com/bit-of-a-shambles/open-tender-watch",
+          "stars": 104,
+          "language": "Ruby",
+          "description": "Rails 8 app monitoring public procurement to detect corruption risk patterns across Portuguese and EU databases",
+          "tags": []
+        },
+        {
+          "name": "WiredPulse/PowerShell",
+          "url": "https://github.com/WiredPulse/PowerShell",
+          "stars": 101,
+          "language": "PowerShell",
+          "description": "A series of scripts",
+          "tags": []
+        },
+        {
+          "name": "pathaksomesh06/Fleetly",
+          "url": "https://github.com/pathaksomesh06/Fleetly",
+          "stars": 15,
+          "language": null,
+          "description": "Fleetly",
+          "tags": []
+        },
+        {
+          "name": "Godi13/Godi13",
+          "url": "https://github.com/Godi13/Godi13",
+          "stars": 8,
+          "language": null,
+          "description": "Godi13 profile",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Media & Content",
+      "count": 7,
+      "repos": [
+        {
+          "name": "iptv-org/iptv",
+          "url": "https://github.com/iptv-org/iptv",
+          "stars": 132609,
+          "language": "TypeScript",
+          "description": "Collection of publicly available IPTV channels from all over the world",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "harry0703/MoneyPrinterTurbo",
+          "url": "https://github.com/harry0703/MoneyPrinterTurbo",
+          "stars": 96934,
+          "language": "Python",
+          "description": "Generate short videos with one click using AI LLM.",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "hacksider/Deep-Live-Cam",
+          "url": "https://github.com/hacksider/Deep-Live-Cam",
+          "stars": 94837,
+          "language": "Python",
+          "description": "real time face swap and one-click video deepfake with only a single image",
+          "tags": [
+            "AI & LLM Tooling"
+          ]
+        },
+        {
+          "name": "Free-TV/IPTV",
+          "url": "https://github.com/Free-TV/IPTV",
+          "stars": 19150,
+          "language": "Python",
+          "description": "M3U Playlist for free TV channels",
+          "tags": []
+        },
+        {
+          "name": "roboflow/sports",
+          "url": "https://github.com/roboflow/sports",
+          "stars": 5177,
+          "language": "Python",
+          "description": "computer vision and sports",
+          "tags": []
+        },
+        {
+          "name": "rauchg/doom-captcha",
+          "url": "https://github.com/rauchg/doom-captcha",
+          "stars": 720,
+          "language": "C++",
+          "description": "Doom captcha",
+          "tags": []
+        },
+        {
+          "name": "B03GHB4L1/ClipMaker",
+          "url": "https://github.com/B03GHB4L1/ClipMaker",
+          "stars": 89,
+          "language": "Python",
+          "description": "Football highlight reel generator from match event data",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "name": "Operating Systems & Desktop",
+      "count": 6,
+      "repos": [
+        {
+          "name": "massgravel/Microsoft-Activation-Scripts",
+          "url": "https://github.com/massgravel/Microsoft-Activation-Scripts",
+          "stars": 182927,
+          "language": "Batchfile",
+          "description": "Open-source Windows and Office activator featuring HWID, Ohook, TSforge, and Online KMS activation methods, along with advanced troubleshooting.",
+          "tags": []
+        },
+        {
+          "name": "Raphire/Win11Debloat",
+          "url": "https://github.com/Raphire/Win11Debloat",
+          "stars": 50424,
+          "language": "PowerShell",
+          "description": "A simple, lightweight PowerShell script that allows you to remove pre-installed apps, disable telemetry, as well as perform various other changes to declutter and customize your Windows experience.",
+          "tags": [
+            "Security · Windows & Active Directory"
+          ]
+        },
+        {
+          "name": "eythaann/Seelen-UI",
+          "url": "https://github.com/eythaann/Seelen-UI",
+          "stars": 17309,
+          "language": "Rust",
+          "description": "The Fully Customizable Desktop Environment for Windows 10/11.",
+          "tags": []
+        },
+        {
+          "name": "leaningtech/webvm",
+          "url": "https://github.com/leaningtech/webvm",
+          "stars": 17061,
+          "language": "JavaScript",
+          "description": "Virtual Machine for the Web",
+          "tags": []
+        },
+        {
+          "name": "microsoft/azurelinux",
+          "url": "https://github.com/microsoft/azurelinux",
+          "stars": 5272,
+          "language": "Python",
+          "description": "General purpose Linux OS for Azure",
+          "tags": []
+        },
+        {
+          "name": "Harvester57/Security-ADMX",
+          "url": "https://github.com/Harvester57/Security-ADMX",
+          "stars": 102,
+          "language": "PowerShell",
+          "description": "Custom ADMX template focused on hardening Windows 10 & Windows 11 systems",
+          "tags": [
+            "Security · Defensive"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Security · Cloud",
+      "count": 5,
+      "repos": [
+        {
+          "name": "duo-labs/cloudmapper",
+          "url": "https://github.com/duo-labs/cloudmapper",
+          "stars": 6292,
+          "language": "JavaScript",
+          "description": "CloudMapper helps you analyze your Amazon Web Services (AWS) environments.",
+          "tags": []
+        },
+        {
+          "name": "NetSPI/MicroBurst",
+          "url": "https://github.com/NetSPI/MicroBurst",
+          "stars": 2402,
+          "language": "PowerShell",
+          "description": "A collection of scripts for assessing Microsoft Azure security",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
+          "name": "Azure/review-checklists",
+          "url": "https://github.com/Azure/review-checklists",
+          "stars": 1327,
+          "language": "Python",
+          "description": "Azure Review Checklists helps ensure you are following Microsoft best practices and recommendations across Platform, Applications and Services on Azure",
+          "tags": []
+        },
+        {
+          "name": "zoph-io/aws-security-survival-kit",
+          "url": "https://github.com/zoph-io/aws-security-survival-kit",
+          "stars": 521,
+          "language": "Makefile",
+          "description": "Bare minimum AWS Security Alerting and Secure by default Configuration",
+          "tags": []
+        },
+        {
+          "name": "salesforce/cloud-guardrails",
+          "url": "https://github.com/salesforce/cloud-guardrails",
+          "stars": 182,
+          "language": "HCL",
+          "description": "Rapidly apply hundreds of security controls in Azure",
+          "tags": [
+            "Security · Defensive"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Documents & Data Processing",
+      "count": 5,
+      "repos": [
+        {
+          "name": "microsoft/markitdown",
+          "url": "https://github.com/microsoft/markitdown",
+          "stars": 165141,
+          "language": "Python",
+          "description": "Python tool for converting files and office documents to Markdown.",
+          "tags": []
+        },
+        {
+          "name": "freedomofpress/dangerzone",
+          "url": "https://github.com/freedomofpress/dangerzone",
+          "stars": 5588,
+          "language": "Python",
+          "description": "Take potentially dangerous PDFs, office documents, or images and convert them to safe PDFs",
+          "tags": []
+        },
+        {
+          "name": "smalot/pdfparser",
+          "url": "https://github.com/smalot/pdfparser",
+          "stars": 2710,
+          "language": "PHP",
+          "description": "PdfParser, a standalone PHP library, provides various tools to extract data from a PDF file.",
+          "tags": []
+        },
+        {
+          "name": "jesparza/peepdf",
+          "url": "https://github.com/jesparza/peepdf",
+          "stars": 1458,
+          "language": "Python",
+          "description": "Powerful Python tool to analyze PDF documents",
+          "tags": [
+            "Security · Threat Intel & Malware"
+          ]
+        },
+        {
+          "name": "Mustafa-Almohsen/Punycode-Converter",
+          "url": "https://github.com/Mustafa-Almohsen/Punycode-Converter",
+          "stars": 5,
+          "language": "Python",
+          "description": "Full Homoglyph Punycode Viewer. This Python script allows you to explore all possible homoglyphs (look-alike characters) for letters, numbers, and some symbols, and instantly converts them into Punycode.",
+          "tags": []
+        }
+      ]
+    }
+  ]
+}
