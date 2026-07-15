@@ -60,7 +60,9 @@ jobs:
       - name: Instalar Semgrep
         run: pipx install semgrep==1.170.0
       - name: SAST
-        run: semgrep scan --metrics=off --error --config p/typescript --config p/javascript --config .semgrep/
+        # --severity ERROR: só falhamos em achados de alta severidade
+        # (XSS/injeção/etc.), não em ruído de estilo das regras públicas.
+        run: semgrep scan --metrics=off --error --severity ERROR --config p/typescript --config p/javascript --config .semgrep/
 
   # Auditoria dos próprios workflows: pins em falta, permissions excessivas,
   # injeção de template em run:, credenciais persistidas, tags impostoras.
