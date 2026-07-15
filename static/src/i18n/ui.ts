@@ -117,7 +117,8 @@ export const ui = {
       legend24h: 'últimas 24h',
       legend7d: 'últimos 7 dias',
       destination: 'Porto, PT',
-      totals: 'eventos · países',
+      eventsWord: 'eventos',
+      countriesWord: 'países',
       unavailable: 'Sem dados de mapa até o Worker estar publicado.',
     },
     ticker: {
@@ -450,7 +451,8 @@ export const ui = {
       legend24h: 'last 24h',
       legend7d: 'last 7 days',
       destination: 'Porto, PT',
-      totals: 'events · countries',
+      eventsWord: 'events',
+      countriesWord: 'countries',
       unavailable: 'No map data until the Worker is published.',
     },
     ticker: {

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import HostMap from '../HostMap.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -59,6 +60,8 @@ const jsStrings = {
 
     <p class="note warn">🔒 {h.privacyNote}</p>
   </section>
+
+  <HostMap lang={lang} />
 </BaseLayout>
 
 <script>

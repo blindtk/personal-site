@@ -1,0 +1,98 @@
+---
+import { API_BASE, type Lang } from '../config';
+import { t } from '../i18n/ui';
+import { project, PORTO } from '../scripts/geo.js';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const m = t(lang).hostmap;
+
+// Porto (destino) é fixo — projeta-se no build.
+const [portoX, portoY] = project(PORTO);
+
+const jsStrings = {
+  eventsWord: m.eventsWord,
+  countriesWord: m.countriesWord,
+  unavailable: m.unavailable,
+};
+---
+
+<section class="hostmap" id="hostmap" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)}>
+  <div class="section-title">
+    <h2 id="h-hostmap">{m.title}</h2>
+  </div>
+  <p class="intro">{m.intro}</p>
+
+  <p class="hp-fallback" id="map-fallback" hidden>{m.unavailable}</p>
+
+  <div class="map-frame" id="map-frame">
+    <svg viewBox="0 0 800 340" role="img" aria-label={m.title} class="map-svg">
+      <defs>
+        <pattern id="map-dots" width="14" height="14" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1"></circle>
+        </pattern>
+      </defs>
+      <rect width="800" height="340" fill="url(#map-dots)"></rect>
+      <g id="map-arcs"></g>
+      <g id="map-nodes"></g>
+      <circle class="map-pulse" cx={portoX} cy={portoY} r="6"></circle>
+      <circle class="map-dst" cx={portoX} cy={portoY} r="4"></circle>
+      <text class="map-label pt" x={portoX - 26} y={portoY + 20}>{m.destination}</text>
+    </svg>
+    <div class="map-legend">
+      <span><i class="mk g" aria-hidden="true"></i>{m.legend24h}</span>
+      <span><i class="mk a" aria-hidden="true"></i>{m.legend7d}</span>
+      <span class="map-totals" id="map-totals"></span>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { countryPoint, arcPath, project, PORTO } from '../scripts/geo.js';
+
+  const root = document.getElementById('hostmap')!;
+  const base = root.dataset.api ?? '';
+  const S = JSON.parse(root.dataset.strings!);
+  const NS = 'http://www.w3.org/2000/svg';
+  const arcsG = document.getElementById('map-arcs')!;
+  const nodesG = document.getElementById('map-nodes')!;
+  const porto = project(PORTO);
+
+  const el = (name: string, attrs: Record<string, string>) => {
+    const node = document.createElementNS(NS, name);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    return node;
+  };
+
+  function draw(data: any) {
+    const recent = new Set((data.last24h ?? []).map((d: any) => d.country));
+    const list = (data.last7d ?? []).slice(0, 12);
+    for (const { country, count } of list) {
+      const point = countryPoint(country);
+      if (!point) continue; // sem coordenada → conta no total, não desenha
+      const is24 = recent.has(country);
+      const cls = is24 ? '' : ' amber';
+
+      arcsG.append(el('path', { class: `arc${cls}`, d: arcPath(point, porto) }));
+      nodesG.append(el('circle', { class: 'src', cx: String(point[0]), cy: String(point[1]), r: '4' }));
+      const label = el('text', { class: 'map-label', x: String(point[0] + 8), y: String(point[1] + 3) });
+      label.textContent = `${country} · ${count}`;
+      nodesG.append(label);
+    }
+    const totals = data.totals ?? {};
+    document.getElementById('map-totals')!.textContent =
+      `${totals.events7d ?? 0} ${S.eventsWord} · ${totals.countries7d ?? 0} ${S.countriesWord}`;
+  }
+
+  (async () => {
+    try {
+      const res = await fetch(`${base}/api/map`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      draw(await res.json());
+    } catch {
+      document.getElementById('map-fallback')!.hidden = false;
+      document.getElementById('map-frame')!.setAttribute('hidden', '');
+    }
+  })();
+</script>
