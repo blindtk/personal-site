@@ -1,0 +1,12 @@
+---
+import { getCollection } from 'astro:content';
+import BlogIndexPage from '../../../components/pages/BlogIndexPage.astro';
+
+// Ver comentário no ficheiro gémeo em pt/blog/[...page].astro.
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', (e) => e.id.startsWith('en/') && !e.data.draft);
+  return posts.length > 0 ? [{ params: { page: undefined } }] : [];
+}
+---
+
+<BlogIndexPage lang="en" />

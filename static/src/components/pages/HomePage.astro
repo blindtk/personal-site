@@ -80,17 +80,19 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     <div class="section-title">
       <h2 id="h-journey">{dict.home.journey.title}</h2>
     </div>
-    <ol class="journey">
-      {dict.home.journey.items.map((stop) => (
-        <li class="stop">
-          <span class="dot" aria-hidden="true"></span>
-          <span class="years">{stop.years}</span>
-          <span class="name">{stop.flag} {stop.name}</span>
-          <span class="place">{stop.place}</span>
-          <span class="note">{stop.note}</span>
-        </li>
-      ))}
-    </ol>
+    <div class="journey-wrap">
+      <ol class="journey">
+        {dict.home.journey.items.map((stop) => (
+          <li class="stop">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="years">{stop.years}</span>
+            <span class="name">{stop.flag} {stop.name}</span>
+            <span class="place">{stop.place}</span>
+            <span class="note">{stop.note}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   </section>
 
   {posts.length > 0 && (

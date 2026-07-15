@@ -704,6 +704,25 @@ input[type='checkbox'] {
 
 /* ---------- Percurso (timeline horizontal) ---------- */
 
+.journey-wrap {
+  position: relative;
+}
+/* Sombra no bordo direito, só onde o scroll horizontal é mesmo preciso
+   (a mesma largura a partir da qual o Lab também muda de layout),
+   para sinalizar que há mais paragens fora do ecrã. */
+@media (max-width: 900px) {
+  .journey-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2.4rem;
+    background: linear-gradient(to right, transparent, var(--bg));
+    pointer-events: none;
+  }
+}
+
 .journey {
   list-style: none;
   margin: 0;

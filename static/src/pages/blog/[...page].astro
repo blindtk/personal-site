@@ -1,0 +1,16 @@
+---
+import { getCollection } from 'astro:content';
+import BlogIndexPage from '../../components/pages/BlogIndexPage.astro';
+
+// Página índice do blog — só gera rota quando houver pelo menos um post
+// publicado (mesma condição usada para mostrar "Blog" na nav e a secção
+// "Últimos posts" da home). Enquanto não houver posts, esta página fica
+// no repo mas não é acessível por nenhum URL — é a forma idiomática do
+// Astro de "esconder" uma página estática sem a apagar.
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', (e) => e.id.startsWith('pt/') && !e.data.draft);
+  return posts.length > 0 ? [{ params: { page: undefined } }] : [];
+}
+---
+
+<BlogIndexPage lang="pt" />
