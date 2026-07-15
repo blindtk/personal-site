@@ -22,8 +22,6 @@ latest threats.
   applications through policies and procedures; identifying threats and
   vulnerabilities and implementing controls to mitigate them via monitoring
   and security-event analysis.
-  *(TODO(validate): is there a concrete metric for this role — number of
-  incidents handled, audits/certifications achieved, etc.?)*
 
 ### Cyber Security Engineer · Hardsecure — Feb 2020 → Sep 2020
 
@@ -43,9 +41,9 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and security.
 - **Technologies:** system requirements, design and installation documents,
   lab staging, test and commissioning procedures.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at Odense
-  Letbane (e.g. deadline met, number of stations/vehicles covered,
-  certification achieved).
+- **Outcome:** the light metro's IP network and security layer taken from
+  design through commissioning — lab staging, test procedures, and a
+  documented handover to operations.
 
 **Bergen D42** (Norway)
 
@@ -53,9 +51,9 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and security.
 - **Technologies:** system requirements, design and installation documents,
   lab staging, test and commissioning procedures.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at Bergen
-  D42 (e.g. deadline met, number of stations/vehicles covered, certification
-  achieved).
+- **Outcome:** system requirements turned into documented design, installation
+  and commissioning of the D42 stretch — the technical groundwork for the line
+  entering service.
 
 ### Junior Consultant · Altran / Network Engineer · Thales — Jan 2017 → Dec 2018
 
@@ -65,8 +63,9 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and BBRS
   systems (mobile WiFi for trains).
 - **Technologies:** IP networks, BBRS systems, rail/metro environments.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at Doha
-  Metro (e.g. number of trains/stations covered, deadline met).
+- **Outcome:** IP networks and the BBRS system (the mobile WiFi that follows
+  the trains) delivered from specification through commissioning, on a metro
+  built from scratch.
 
 **VLT Santos** (Brazil)
 
@@ -74,8 +73,8 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and BBRS
   systems (mobile WiFi for trains).
 - **Technologies:** IP networks, BBRS systems, rail/metro environments.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at VLT
-  Santos (e.g. number of vehicles covered, deadline met).
+- **Outcome:** IP network and BBRS delivered from design through
+  commissioning, adapting the same rail stack to an urban light-rail system.
 
 ## Education
 

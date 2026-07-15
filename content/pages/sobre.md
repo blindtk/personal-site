@@ -22,8 +22,6 @@ atualizado face às últimas ameaças.
   aplicações através de políticas e procedimentos; deteção de ameaças e
   vulnerabilidades e implementação de controlos para as mitigar via
   monitorização e análise de eventos de segurança.
-  *(TODO(validar): há alguma métrica concreta para este papel — nº de
-  incidentes geridos, auditorias/certificações alcançadas, etc.?)*
 
 ### Cyber Security Engineer · Hardsecure — fev 2020 → set 2020
 
@@ -43,9 +41,9 @@ atualizado face às últimas ameaças.
 - **Papel:** desenho, instalação e comissionamento de redes IP e segurança.
 - **Tecnologias:** requisitos de sistema, documentos de desenho e instalação,
   lab staging, procedimentos de teste e comissionamento.
-- **Resultado:** TODO(validar): descrever o resultado/problema resolvido em
-  Odense Letbane (ex.: prazo cumprido, nº de estações/veículos cobertos,
-  certificação obtida).
+- **Resultado:** rede IP e camada de segurança do metro ligeiro levadas do
+  desenho ao comissionamento — staging em laboratório, procedimentos de teste
+  e entrega documentada à operação.
 
 **Bergen D42** (Noruega)
 
@@ -53,9 +51,9 @@ atualizado face às últimas ameaças.
 - **Papel:** desenho, instalação e comissionamento de redes IP e segurança.
 - **Tecnologias:** requisitos de sistema, documentos de desenho e instalação,
   lab staging, procedimentos de teste e comissionamento.
-- **Resultado:** TODO(validar): descrever o resultado/problema resolvido em
-  Bergen D42 (ex.: prazo cumprido, nº de estações/veículos cobertos,
-  certificação obtida).
+- **Resultado:** requisitos de sistema transformados em desenho, instalação e
+  comissionamento documentados do troço D42 — a base técnica para a linha
+  entrar em serviço.
 
 ### Junior Consultant · Altran / Network Engineer · Thales — jan 2017 → dez 2018
 
@@ -65,8 +63,9 @@ atualizado face às últimas ameaças.
 - **Papel:** desenho, instalação e comissionamento de redes IP e sistemas
   BBRS (WiFi móvel para comboios).
 - **Tecnologias:** redes IP, sistemas BBRS, ambientes ferroviários/de metro.
-- **Resultado:** TODO(validar): descrever o resultado/problema resolvido no
-  Metro de Doha (ex.: nº de comboios/estações cobertos, prazo cumprido).
+- **Resultado:** redes IP e sistema BBRS (o WiFi móvel que acompanha os
+  comboios) entregues da especificação ao comissionamento, num metro
+  construído de raiz.
 
 **VLT Santos** (Brasil)
 
@@ -74,8 +73,8 @@ atualizado face às últimas ameaças.
 - **Papel:** desenho, instalação e comissionamento de redes IP e sistemas
   BBRS (WiFi móvel para comboios).
 - **Tecnologias:** redes IP, sistemas BBRS, ambientes ferroviários/de metro.
-- **Resultado:** TODO(validar): descrever o resultado/problema resolvido na
-  VLT Santos (ex.: nº de veículos cobertos, prazo cumprido).
+- **Resultado:** rede IP e BBRS entregues do desenho ao comissionamento,
+  adaptando a mesma stack ferroviária a um sistema de VLT urbano.
 
 ## Formação
 
