@@ -78,6 +78,16 @@ const scanners = [
       ))}
     </ul>
   </section>
+
+  <section aria-labelledby="h-attack">
+    <div class="section-title">
+      <h2 id="h-attack">{sec.attackTitle}</h2>
+    </div>
+    <p>{sec.attackBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={routes.attack[lang]}>{sec.attackCta}</a></li>
+    </ul>
+  </section>
 </BaseLayout>
 
 <style>
