@@ -137,7 +137,7 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
         <h2 id="h-projects">{dict.home.projects}</h2>
         {projects.length >= 3 && <a class="more" href={routes.projects[lang]}>{dict.home.allProjects} →</a>}
       </div>
-      <div class="grid grid-3">
+      <div class="grid grid-2">
         {projects.map((project) => (
           <a class="card" href={routes.projects[lang]}>
             <h3>{project.data.title}</h3>

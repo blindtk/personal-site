@@ -29,7 +29,7 @@ const projects = await Promise.all(
       <div class="card">
         <h3>{entry.data.title}</h3>
         <p>{entry.data.description}</p>
-        <div class="prose" style="font-size: 0.92rem;">
+        <div class="prose project-prose">
           <Content />
         </div>
         <div class="meta">
@@ -41,3 +41,7 @@ const projects = await Promise.all(
     ))}
   </div>
 </BaseLayout>
+
+<style>
+  .project-prose { font-size: 0.92rem; }
+</style>

@@ -7,7 +7,7 @@ const dictEn = t('en');
 ---
 
 <BaseLayout lang="pt" title="404">
-  <div class="page-head" style="margin-top: 3rem;">
+  <div class="page-head not-found-head">
     <h1>404</h1>
     <p class="intro">{dict.notFound.body}</p>
     <p class="intro" lang="en">{dictEn.notFound.body}</p>
@@ -15,7 +15,11 @@ const dictEn = t('en');
   <pre>~$ cd /404
 bash: cd: /404: No such file or directory</pre>
   <p>
-    <a href="/" class="mono">→ {dict.notFound.home}</a> ·
+    <a href="/" class="mono">→ {dict.notFound.home}</a> ·{' '}
     <a href="/en/" class="mono" lang="en">→ {dictEn.notFound.home}</a>
   </p>
 </BaseLayout>
+
+<style>
+  .not-found-head { margin-top: 3rem; }
+</style>

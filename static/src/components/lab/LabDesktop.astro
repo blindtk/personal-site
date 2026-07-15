@@ -57,7 +57,7 @@ const windows = [
   <div class="construction">
     <strong>[ {lab.mobileTitle} ]</strong>
   </div>
-  <p class="intro" style="color: var(--muted); max-width: 42rem;">{lab.mobileBody}</p>
+  <p class="intro">{lab.mobileBody}</p>
   <a class="btn" href={routes.tools[lang]}>{lab.mobileCta} →</a>
 </div>
 
@@ -80,7 +80,7 @@ const windows = [
     </div>
 
     {/* ---- janelas ---- */}
-    <div class="win closed" data-win="terminal" style="width:660px;height:420px;left:220px;top:24px;">
+    <div class="win closed" data-win="terminal">
       <div class="win-bar"><span class="wt">>_ terminal</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -94,7 +94,7 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="subnets" style="width:560px;height:520px;left:120px;top:48px;">
+    <div class="win closed" data-win="subnets">
       <div class="win-bar"><span class="wt">⌗ {dict.tools.subnets.name}</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -102,7 +102,7 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="hashes" style="width:600px;height:560px;left:160px;top:72px;">
+    <div class="win closed" data-win="hashes">
       <div class="win-bar"><span class="wt"># {dict.tools.hashes.name}</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -110,7 +110,7 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="encoder" style="width:560px;height:560px;left:200px;top:96px;">
+    <div class="win closed" data-win="encoder">
       <div class="win-bar"><span class="wt">⇄ {dict.tools.encoder.name}</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -118,7 +118,7 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="passwords" style="width:520px;height:560px;left:240px;top:120px;">
+    <div class="win closed" data-win="passwords">
       <div class="win-bar"><span class="wt">⚿ {dict.tools.passwords.name}</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -126,7 +126,7 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="sobre" style="width:640px;height:540px;left:280px;top:40px;">
+    <div class="win closed" data-win="sobre">
       <div class="win-bar"><span class="wt">☰ {lab.windowAbout}</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -134,7 +134,7 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="roadmap" style="width:520px;height:320px;left:320px;top:140px;">
+    <div class="win closed" data-win="roadmap">
       <div class="win-bar"><span class="wt">⚑ {lab.windowRoadmap}</span>
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
@@ -155,6 +155,7 @@ const windows = [
 <style>
   /* ---- fallback mobile ---- */
   .lab-mobile { display: none; }
+  .lab-mobile .intro { color: var(--muted); max-width: 42rem; }
   @media (max-width: 900px) {
     .lab-mobile { display: block; }
     .lab-desktop { display: none; }
@@ -234,6 +235,18 @@ const windows = [
   }
   .win.closed { display: none; }
   .win.focused { border-color: var(--accent); }
+
+  /* Geometria inicial de cada janela (antes era style="…" inline; movida
+     para aqui para ser compatível com a CSP estrita — sem inline styles.
+     O arrasto/redimensionamento em JS lê offsetLeft/Width e escreve via
+     .style em runtime, o que a CSP não bloqueia). */
+  .win[data-win="terminal"]  { width: 660px; height: 420px; left: 220px; top: 24px; }
+  .win[data-win="subnets"]   { width: 560px; height: 520px; left: 120px; top: 48px; }
+  .win[data-win="hashes"]    { width: 600px; height: 560px; left: 160px; top: 72px; }
+  .win[data-win="encoder"]   { width: 560px; height: 560px; left: 200px; top: 96px; }
+  .win[data-win="passwords"] { width: 520px; height: 560px; left: 240px; top: 120px; }
+  .win[data-win="sobre"]     { width: 640px; height: 540px; left: 280px; top: 40px; }
+  .win[data-win="roadmap"]   { width: 520px; height: 320px; left: 320px; top: 140px; }
   .win.maxed {
     position: fixed;
     inset: 0.6rem;

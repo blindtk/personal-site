@@ -28,7 +28,7 @@ const jsStrings = { error: s.error, copy: s.copy, copied: s.copied };
     <button type="button" class="btn ghost" id="enc-swap">{s.swap}</button>
   </div>
   <p class="error-msg" id="enc-error" hidden></p>
-  <div class="field" style="margin-top: 1rem;">
+  <div class="field output-field">
     <label for="enc-output">{s.outputLabel}</label>
     <textarea id="enc-output" spellcheck="false" readonly></textarea>
   </div>
@@ -73,3 +73,7 @@ const jsStrings = { error: s.error, copy: s.copy, copied: s.copied };
     setTimeout(() => (copyBtn.textContent = strings.copy), 1500);
   });
 </script>
+
+<style>
+  .output-field { margin-top: 1rem; }
+</style>

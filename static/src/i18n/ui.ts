@@ -19,6 +19,36 @@ export const ui = {
     footer: {
       built: 'Construído com Astro. Código-fonte no',
       rights: 'Estático, bilingue e sem trackers.',
+      security: 'Segurança',
+    },
+    security: {
+      title: 'Segurança',
+      metaTitle: 'Postura de segurança',
+      intro:
+        'A segurança é o foco deste site — não só no que diz, mas na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
+      measures: [
+        {
+          name: 'Sem backend, sem trackers',
+          desc: 'Site 100% estático. As ferramentas correm inteiramente no browser — nenhuma faz chamadas de rede. Zero cookies, zero analytics, zero scripts de terceiros.',
+        },
+        {
+          name: 'Content-Security-Policy estrita',
+          desc: "CSP gerada no build, com um hash SHA-256 por cada script inline. Sem 'unsafe-inline' — JavaScript injetado não executa. default-src, object-src e base-uri fechados a 'self'/'none'.",
+        },
+        {
+          name: 'Cabeçalhos de segurança',
+          desc: 'HSTS, X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Referrer-Policy, Permissions-Policy e isolamento de origem (COOP/CORP).',
+        },
+        {
+          name: 'Divulgação responsável',
+          desc: 'Política de contacto para reporte de vulnerabilidades publicada em /.well-known/security.txt (RFC 9116).',
+        },
+      ],
+      verifyTitle: 'Verifica tu mesmo',
+      verifyIntro: 'Não fiques pela minha palavra — corre os scanners públicos:',
+      securityTxtLabel: 'security.txt (RFC 9116)',
+      headersScanLabel: 'Scan em securityheaders.com',
+      observatoryLabel: 'Scan no Mozilla Observatory',
     },
     home: {
       metaTitle: 'Information Security Engineer',
@@ -237,6 +267,36 @@ export const ui = {
     footer: {
       built: 'Built with Astro. Source code on',
       rights: 'Static, bilingual, and tracker-free.',
+      security: 'Security',
+    },
+    security: {
+      title: 'Security',
+      metaTitle: 'Security posture',
+      intro:
+        'Security is the focus of this site — not just in what it says, but in how it is served. Here is what is in place, for anyone who wants to check.',
+      measures: [
+        {
+          name: 'No backend, no trackers',
+          desc: '100% static site. The tools run entirely in the browser — none make network calls. Zero cookies, zero analytics, zero third-party scripts.',
+        },
+        {
+          name: 'Strict Content-Security-Policy',
+          desc: "CSP generated at build time, with a SHA-256 hash for every inline script. No 'unsafe-inline' — injected JavaScript does not run. default-src, object-src and base-uri locked to 'self'/'none'.",
+        },
+        {
+          name: 'Security headers',
+          desc: 'HSTS, X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Referrer-Policy, Permissions-Policy and origin isolation (COOP/CORP).',
+        },
+        {
+          name: 'Responsible disclosure',
+          desc: 'Vulnerability reporting contact policy published at /.well-known/security.txt (RFC 9116).',
+        },
+      ],
+      verifyTitle: 'Check for yourself',
+      verifyIntro: 'Don’t take my word for it — run the public scanners:',
+      securityTxtLabel: 'security.txt (RFC 9116)',
+      headersScanLabel: 'Scan on securityheaders.com',
+      observatoryLabel: 'Scan on Mozilla Observatory',
     },
     home: {
       metaTitle: 'Information Security Engineer',

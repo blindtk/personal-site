@@ -6,5 +6,5 @@ repo: 'https://github.com/blindtk/personal-site'
 order: 1
 ---
 
-Site pessoal bilingue construído com Astro: blog em markdown, calculadora de
-subnets, gerador de hashes e mais — tudo a correr no browser, sem backend.
+Site pessoal bilingue construído com Astro: calculadora de subnets, gerador
+de hashes e mais — tudo a correr no browser, sem backend.
