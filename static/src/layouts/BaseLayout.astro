@@ -75,7 +75,10 @@ const personSchema = {
     <meta property="og:image" content={new URL(ogImage, SITE_URL)} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+    {/* < evita que um valor de config com "</script>" alguma vez quebre
+       para fora da tag — hoje os valores são todos estáticos e inofensivos,
+       mas é a mitigação padrão para JSON-LD via set:html. */}
+    <script type="application/ld+json" set:html={JSON.stringify(personSchema).replace(/</g, '\\u003c')} />
     <meta property="og:locale" content={lang === 'pt' ? 'pt_PT' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />

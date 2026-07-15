@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Least-privilege: este workflow só lê o repo e corre build/audit — não
+# precisa de escrever nada. Evita herdar o default do repo (que pode ser
+# read-write) se o GITHUB_TOKEN alguma vez for usado por engano.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
