@@ -1,0 +1,22 @@
+# Regras próprias para os componentes .astro, que o Semgrep não parseia
+# nativamente (sem parser para a extensão). Em modo generic apanhamos os
+# sinks de DOM XSS nos <script> inline — a convenção do projeto é construir
+# DOM com textContent / createElement / replaceChildren, nunca com HTML em
+# string. As regras p/typescript e p/javascript cobrem os .js/.ts normais.
+rules:
+  - id: astro-no-dom-xss-sinks
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      Sink de DOM XSS num componente Astro. Constrói o DOM com
+      textContent/createElement/replaceChildren em vez de HTML em string —
+      é a única forma de manter a garantia anti-XSS da CSP.
+    paths:
+      include:
+        - '*.astro'
+    patterns:
+      - pattern-either:
+          - pattern: .innerHTML =
+          - pattern: .outerHTML =
+          - pattern: document.write(
+          - pattern: .insertAdjacentHTML(

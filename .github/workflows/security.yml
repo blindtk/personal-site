@@ -45,6 +45,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # SAST (Semgrep): regras públicas de TS/JS + regras próprias em modo
+  # generic para os <script> dos componentes .astro (.semgrep/). Foco:
+  # sinks de DOM XSS (innerHTML, document.write, insertAdjacentHTML) nas
+  # ferramentas client-side, no terminal do Lab e nos Workers futuros.
+  semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Instalar Semgrep
+        run: pipx install semgrep==1.170.0
+      - name: SAST
+        run: semgrep scan --metrics=off --error --config p/typescript --config p/javascript --config .semgrep/
+
   # Auditoria dos próprios workflows: pins em falta, permissions excessivas,
   # injeção de template em run:, credenciais persistidas, tags impostoras.
   zizmor:

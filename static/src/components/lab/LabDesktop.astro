@@ -580,7 +580,7 @@ const windows = [
       }
       print(`~$ ${raw}`, 't-cmd');
       const result = await term.exec(raw);
-      if (result.clear) termOut.innerHTML = '';
+      if (result.clear) termOut.replaceChildren();
       for (const line of result.lines ?? []) print(line);
       if (result.open) openWin(result.open);
     });
