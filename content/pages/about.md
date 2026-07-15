@@ -14,32 +14,68 @@ latest threats.
 
 ### Information Security Engineer · Ascendi — Nov 2020 → present
 
-- Information security architecture: designing, deploying and operating NGFW,
-  AV/EDR, VA, SIEM, IAM, WAF and SEG, handling tasks/incidents in ITSM.
-- Maintaining the security of networks, systems and applications through
-  policies, procedures and guidelines.
-- Monitoring and analysing security events, identifying threats and
-  vulnerabilities, and implementing controls to mitigate them.
+- **Context:** security of critical road infrastructure, in Portugal.
+- **Role:** designing, deploying and operating information security
+  architecture, handling tasks/incidents in ITSM.
+- **Technologies:** NGFW, AV/EDR, VA, SIEM, IAM, WAF, SEG.
+- **Outcome:** ongoing maintenance of the security of networks, systems and
+  applications through policies and procedures; identifying threats and
+  vulnerabilities and implementing controls to mitigate them via monitoring
+  and security-event analysis.
+  *(TODO(validate): is there a concrete metric for this role — number of
+  incidents handled, audits/certifications achieved, etc.?)*
 
 ### Cyber Security Engineer · Hardsecure — Feb 2020 → Sep 2020
 
-- Deployed next-generation firewalls and performed internal penetration
-  testing assessments.
-- Installed, configured and supported NGFW equipment; scanned and enumerated
-  networks to locate vulnerabilities before they could be exploited.
+- **Context:** next-generation firewall deployment and internal penetration
+  testing.
+- **Role:** installing, configuring and supporting NGFW equipment.
+- **Technologies:** next-generation firewalls (NGFW), network scanning and
+  enumeration.
+- **Outcome:** located vulnerabilities in networks before they could be
+  exploited.
 
 ### Systems Engineer · Efacec — Jan 2019 → Feb 2020
 
-- Designed, installed and commissioned IP networks and security in light-metro
-  environments: system requirements, design and installation documents, lab
-  staging, test procedures and commissioning.
-- Projects: **Odense Letbane** (Denmark), **Bergen D42** (Norway).
+**Odense Letbane** (Denmark)
+
+- **Context:** light-metro project in Denmark.
+- **Role:** designing, installing and commissioning IP networks and security.
+- **Technologies:** system requirements, design and installation documents,
+  lab staging, test and commissioning procedures.
+- **Outcome:** TODO(validate): describe the outcome/problem solved at Odense
+  Letbane (e.g. deadline met, number of stations/vehicles covered,
+  certification achieved).
+
+**Bergen D42** (Norway)
+
+- **Context:** light-metro project in Norway.
+- **Role:** designing, installing and commissioning IP networks and security.
+- **Technologies:** system requirements, design and installation documents,
+  lab staging, test and commissioning procedures.
+- **Outcome:** TODO(validate): describe the outcome/problem solved at Bergen
+  D42 (e.g. deadline met, number of stations/vehicles covered, certification
+  achieved).
 
 ### Junior Consultant · Altran / Network Engineer · Thales — Jan 2017 → Dec 2018
 
-- Designed, installed and commissioned IP networks and BBRS systems (mobile
-  WiFi for trains) in rail/metro environments.
-- Projects: **Doha Metro** (Qatar), **VLT Santos** (Brazil).
+**Doha Metro** (Qatar)
+
+- **Context:** metro project in Qatar.
+- **Role:** designing, installing and commissioning IP networks and BBRS
+  systems (mobile WiFi for trains).
+- **Technologies:** IP networks, BBRS systems, rail/metro environments.
+- **Outcome:** TODO(validate): describe the outcome/problem solved at Doha
+  Metro (e.g. number of trains/stations covered, deadline met).
+
+**VLT Santos** (Brazil)
+
+- **Context:** light rail vehicle (VLT) project in Brazil.
+- **Role:** designing, installing and commissioning IP networks and BBRS
+  systems (mobile WiFi for trains).
+- **Technologies:** IP networks, BBRS systems, rail/metro environments.
+- **Outcome:** TODO(validate): describe the outcome/problem solved at VLT
+  Santos (e.g. number of vehicles covered, deadline met).
 
 ## Education
 

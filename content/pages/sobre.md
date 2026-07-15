@@ -14,31 +14,68 @@ atualizado face às últimas ameaças.
 
 ### Information Security Engineer · Ascendi — nov 2020 → presente
 
-- Arquitetura de segurança da informação: desenho, deployment e operação de
-  NGFW, AV/EDR, VA, SIEM, IAM, WAF e SEG, com gestão de tarefas/incidentes em ITSM.
-- Manutenção da segurança de redes, sistemas e aplicações através de políticas,
-  procedimentos e guidelines.
-- Monitorização e análise de eventos de segurança, identificação de ameaças e
-  vulnerabilidades, e implementação de controlos para as mitigar.
+- **Contexto:** segurança de infraestruturas críticas rodoviárias, em Portugal.
+- **Papel:** desenho, deployment e operação de arquitetura de segurança da
+  informação, com gestão de tarefas/incidentes em ITSM.
+- **Tecnologias:** NGFW, AV/EDR, VA, SIEM, IAM, WAF, SEG.
+- **Resultado:** manutenção contínua da segurança de redes, sistemas e
+  aplicações através de políticas e procedimentos; deteção de ameaças e
+  vulnerabilidades e implementação de controlos para as mitigar via
+  monitorização e análise de eventos de segurança.
+  *(TODO(validar): há alguma métrica concreta para este papel — nº de
+  incidentes geridos, auditorias/certificações alcançadas, etc.?)*
 
 ### Cyber Security Engineer · Hardsecure — fev 2020 → set 2020
 
-- Deployment de firewalls de nova geração e testes de intrusão internos.
-- Instalação, configuração e suporte de NGFW; scanning e enumeração de redes
-  para localizar vulnerabilidades antes de serem exploradas.
+- **Contexto:** deployment de firewalls de nova geração e testes de intrusão
+  internos.
+- **Papel:** instalação, configuração e suporte de NGFW.
+- **Tecnologias:** firewalls de nova geração (NGFW), scanning e enumeração de
+  redes.
+- **Resultado:** localização de vulnerabilidades em redes antes de serem
+  exploradas.
 
 ### Systems Engineer · Efacec — jan 2019 → fev 2020
 
-- Desenho, instalação e comissionamento de redes IP e segurança em ambientes
-  de metro ligeiro: requisitos de sistema, documentos de desenho e instalação,
+**Odense Letbane** (Dinamarca)
+
+- **Contexto:** projeto de metro ligeiro na Dinamarca.
+- **Papel:** desenho, instalação e comissionamento de redes IP e segurança.
+- **Tecnologias:** requisitos de sistema, documentos de desenho e instalação,
   lab staging, procedimentos de teste e comissionamento.
-- Projetos: **Odense Letbane** (Dinamarca), **Bergen D42** (Noruega).
+- **Resultado:** TODO(validar): descrever o resultado/problema resolvido em
+  Odense Letbane (ex.: prazo cumprido, nº de estações/veículos cobertos,
+  certificação obtida).
+
+**Bergen D42** (Noruega)
+
+- **Contexto:** projeto de metro ligeiro na Noruega.
+- **Papel:** desenho, instalação e comissionamento de redes IP e segurança.
+- **Tecnologias:** requisitos de sistema, documentos de desenho e instalação,
+  lab staging, procedimentos de teste e comissionamento.
+- **Resultado:** TODO(validar): descrever o resultado/problema resolvido em
+  Bergen D42 (ex.: prazo cumprido, nº de estações/veículos cobertos,
+  certificação obtida).
 
 ### Junior Consultant · Altran / Network Engineer · Thales — jan 2017 → dez 2018
 
-- Desenho, instalação e comissionamento de redes IP e sistemas BBRS (WiFi
-  móvel para comboios) em ambientes ferroviários e de metro.
-- Projetos: **Metro de Doha** (Qatar), **VLT Santos** (Brasil).
+**Metro de Doha** (Qatar)
+
+- **Contexto:** projeto de metro no Qatar.
+- **Papel:** desenho, instalação e comissionamento de redes IP e sistemas
+  BBRS (WiFi móvel para comboios).
+- **Tecnologias:** redes IP, sistemas BBRS, ambientes ferroviários/de metro.
+- **Resultado:** TODO(validar): descrever o resultado/problema resolvido no
+  Metro de Doha (ex.: nº de comboios/estações cobertos, prazo cumprido).
+
+**VLT Santos** (Brasil)
+
+- **Contexto:** projeto de veículo leve sobre trilhos (VLT) no Brasil.
+- **Papel:** desenho, instalação e comissionamento de redes IP e sistemas
+  BBRS (WiFi móvel para comboios).
+- **Tecnologias:** redes IP, sistemas BBRS, ambientes ferroviários/de metro.
+- **Resultado:** TODO(validar): descrever o resultado/problema resolvido na
+  VLT Santos (ex.: nº de veículos cobertos, prazo cumprido).
 
 ## Formação
 

@@ -25,7 +25,10 @@ export const ui = {
       identity: 'identidade',
       statsLabel: 'stats',
       location: 'Porto, PT',
-      bio: 'Planeamento e operação de infraestruturas de rede e cibersegurança. Foco em threat intelligence, forense digital e resposta a incidentes.',
+      // TODO(validar): frase de posicionamento — escolhi a variante A.
+      // Variante B: 'Segurança de redes em infraestrutura crítica, na prática: desenho, opero, e construo as ferramentas que faltam. Foco em threat intelligence, forense digital e resposta a incidentes.'
+      // Variante C: 'Da arquitetura à operação: segurança de redes em infraestrutura crítica, com ferramentas próprias para o trabalho do dia a dia. Foco em threat intelligence, forense digital e resposta a incidentes.'
+      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
       chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
@@ -161,6 +164,7 @@ export const ui = {
       catalogTitle: 'Repos que sigo',
       catalogNote: 'Gerado automaticamente a partir das minhas estrelas do GitHub, atualizado semanalmente.',
       catalogLink: 'como isto é gerado →',
+      hubNote: 'Isto é um hub pessoal: organizo-o para o meu uso diário, e deixo-o aberto a quem quiser explorar.',
       sortLabel: 'ordenar',
       sortStars: '★ estrelas',
       sortAlpha: 'A–Z',
@@ -237,7 +241,10 @@ export const ui = {
       identity: 'identity',
       statsLabel: 'stats',
       location: 'Porto, PT',
-      bio: 'Planning and operating network and cybersecurity infrastructures. Focused on threat intelligence, digital forensics, and incident response.',
+      // TODO(validar): positioning line — variant A implemented.
+      // Variant B: 'Network security for critical infrastructure, hands-on: I design it, operate it, and build the tools that are missing. Focused on threat intelligence, digital forensics, and incident response.'
+      // Variant C: 'From architecture to operations: network security for critical infrastructure, with my own tools for the day-to-day work. Focused on threat intelligence, digital forensics, and incident response.'
+      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
       chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Competence signals (not consumption). Country count matches the "4"
@@ -373,6 +380,7 @@ export const ui = {
       catalogTitle: 'Repos I follow',
       catalogNote: 'Automatically generated from my GitHub stars, updated weekly.',
       catalogLink: 'how this is generated →',
+      hubNote: 'This is a personal hub: I keep it organized for my own daily use, and leave it open for anyone who wants to explore.',
       sortLabel: 'sort',
       sortStars: '★ stars',
       sortAlpha: 'A–Z',
