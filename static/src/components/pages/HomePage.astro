@@ -14,9 +14,11 @@ const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) &&
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
 
+// A home é pitch: 2 projetos e 3 ferramentas em destaque, com link para as
+// páginas dedicadas — é lá que vive a lista completa e o detalhe.
 const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 3);
+  .slice(0, 2);
 
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
@@ -24,6 +26,7 @@ const tools = [
   { slug: 'encoder', ...dict.tools.encoder },
   { slug: 'passwords', ...dict.tools.passwords },
 ];
+const featuredTools = tools.slice(0, 3);
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
@@ -121,11 +124,12 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       <h2 id="h-tools">{dict.home.featuredTools}</h2>
       <a class="more" href={routes.tools[lang]}>{dict.home.allTools} →</a>
     </div>
-    <div class="grid grid-2">
-      {tools.map((tool) => (
-        <a class="card" href={toolUrl(lang, tool.slug)}>
-          <h3>{tool.name}</h3>
-          <p>{tool.desc}</p>
+    <div class="mini-list">
+      {featuredTools.map((tool) => (
+        <a href={toolUrl(lang, tool.slug)}>
+          <span class="name">{tool.name}</span>
+          <span class="desc">{tool.desc}</span>
+          <span class="go" aria-hidden="true">→</span>
         </a>
       ))}
     </div>
@@ -135,16 +139,14 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     <section aria-labelledby="h-projects">
       <div class="section-title">
         <h2 id="h-projects">{dict.home.projects}</h2>
-        {projects.length >= 3 && <a class="more" href={routes.projects[lang]}>{dict.home.allProjects} →</a>}
+        <a class="more" href={routes.projects[lang]}>{dict.home.allProjects} →</a>
       </div>
-      <div class="grid grid-2">
+      <div class="mini-list">
         {projects.map((project) => (
-          <a class="card" href={routes.projects[lang]}>
-            <h3>{project.data.title}</h3>
-            <p>{project.data.description}</p>
-            <div class="meta">
-              {project.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-            </div>
+          <a href={routes.projects[lang]}>
+            <span class="name">{project.data.title}</span>
+            <span class="desc">{project.data.description}</span>
+            <span class="go" aria-hidden="true">→</span>
           </a>
         ))}
       </div>
