@@ -76,22 +76,23 @@ export const ui = {
       // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
       // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
       // exclui Portugal/Ascendi que é a base atual, não um destacamento
-      // internacional). O nº de ferramentas é calculado em HomePage.astro
-      // a partir do array `tools` (não hardcoded, para não desatualizar).
+      // internacional).
       statsStatic: [
         { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
         { n: '9', d: 'certificações NSE/SANS', tone: 'amber' },
         { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
+        { n: '1.º', d: "lugar no CTF · SANS SEC504, Lisboa '22", tone: 'green' },
       ],
-      statsTools: 'ferramentas construídas',
+      // flag = código do SVG em public/flags/ (render consistente entre
+      // sistemas; o emoji nativo variava com o OS).
       journey: {
         title: 'Percurso · redes & segurança em 4 países',
         items: [
-          { years: '2017–18', flag: '🇶🇦', name: 'Metro de Doha', place: 'Doha, Qatar', note: 'Redes IP e WiFi móvel (BBRS) · Thales/Altran' },
-          { years: '2017–18', flag: '🇧🇷', name: 'VLT Santos', place: 'Santos, Brasil', note: 'Redes IP em ferrovia ligeira · Thales/Altran' },
-          { years: '2019–20', flag: '🇩🇰', name: 'Odense Letbane', place: 'Odense, Dinamarca', note: 'Redes e segurança em metro ligeiro · Efacec' },
-          { years: '2019–20', flag: '🇳🇴', name: 'Bergen D42', place: 'Bergen, Noruega', note: 'Redes e segurança em metro ligeiro · Efacec' },
-          { years: '2020–hoje', flag: '🇵🇹', name: 'Ascendi', place: 'Porto, Portugal', note: 'Segurança de infraestruturas críticas rodoviárias' },
+          { years: '2017–18', flag: 'qa', name: 'Metro de Doha', place: 'Doha, Qatar', note: 'Redes IP e WiFi móvel (BBRS) · Thales/Altran' },
+          { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brasil', note: 'Redes IP em ferrovia ligeira · Thales/Altran' },
+          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', place: 'Odense, Dinamarca', note: 'Redes e segurança em metro ligeiro · Efacec' },
+          { years: '2019–20', flag: 'no', name: 'Bergen D42', place: 'Bergen, Noruega', note: 'Redes e segurança em metro ligeiro · Efacec' },
+          { years: '2020–hoje', flag: 'pt', name: 'Ascendi', place: 'Porto, Portugal', note: 'Segurança de infraestruturas críticas rodoviárias' },
         ],
       },
       latestPosts: 'Últimos posts',
@@ -345,22 +346,23 @@ export const ui = {
       // Competence signals (not consumption). Country count matches the "4"
       // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
       // excludes Portugal/Ascendi, which is the current home base, not an
-      // international posting). Tool count is computed in HomePage.astro
-      // from the `tools` array (not hardcoded, to avoid going stale).
+      // international posting).
       statsStatic: [
         { n: '6+', d: 'years in security & networking', tone: 'green' },
         { n: '9', d: 'NSE/SANS certifications', tone: 'amber' },
         { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
+        { n: '1st', d: "place · SANS SEC504 CTF, Lisbon '22", tone: 'green' },
       ],
-      statsTools: 'tools built',
+      // flag = code of the SVG in public/flags/ (consistent rendering across
+      // systems; native emoji varied with the OS).
       journey: {
         title: 'Journey · networking & security across 4 countries',
         items: [
-          { years: '2017–18', flag: '🇶🇦', name: 'Doha Metro', place: 'Doha, Qatar', note: 'IP networks & mobile WiFi (BBRS) · Thales/Altran' },
-          { years: '2017–18', flag: '🇧🇷', name: 'VLT Santos', place: 'Santos, Brazil', note: 'IP networks in light rail · Thales/Altran' },
-          { years: '2019–20', flag: '🇩🇰', name: 'Odense Letbane', place: 'Odense, Denmark', note: 'Light-metro networks & security · Efacec' },
-          { years: '2019–20', flag: '🇳🇴', name: 'Bergen D42', place: 'Bergen, Norway', note: 'Light-metro networks & security · Efacec' },
-          { years: '2020–now', flag: '🇵🇹', name: 'Ascendi', place: 'Porto, Portugal', note: 'Critical road-infrastructure security' },
+          { years: '2017–18', flag: 'qa', name: 'Doha Metro', place: 'Doha, Qatar', note: 'IP networks & mobile WiFi (BBRS) · Thales/Altran' },
+          { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brazil', note: 'IP networks in light rail · Thales/Altran' },
+          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', place: 'Odense, Denmark', note: 'Light-metro networks & security · Efacec' },
+          { years: '2019–20', flag: 'no', name: 'Bergen D42', place: 'Bergen, Norway', note: 'Light-metro networks & security · Efacec' },
+          { years: '2020–now', flag: 'pt', name: 'Ascendi', place: 'Porto, Portugal', note: 'Critical road-infrastructure security' },
         ],
       },
       latestPosts: 'Latest posts',

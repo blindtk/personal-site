@@ -593,6 +593,55 @@ input[type='checkbox'] {
   height: 1rem;
 }
 
+/* O botão nativo do input de ficheiro destoava do tema — estiliza-se via
+   ::file-selector-button (mesma linguagem dos .btn). */
+input[type='file'] {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+input[type='file']::file-selector-button {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--bg-raise-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  margin-right: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+input[type='file']::file-selector-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Select sem a seta nativa do sistema; o chevron é desenhado em CSS pelo
+   .select-wrap (sem imagens nem data: URIs, para não alargar a CSP). */
+select {
+  appearance: none;
+  padding-right: 2.2rem;
+  cursor: pointer;
+}
+.select-wrap {
+  position: relative;
+}
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0.95rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: -0.4rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
 .check-row {
   display: flex;
   align-items: center;
@@ -808,6 +857,13 @@ input[type='checkbox'] {
   font-weight: 700;
   font-size: 0.95rem;
   margin-top: 0.25rem;
+}
+.journey .name .flag {
+  display: inline-block;
+  vertical-align: -2px;
+  border-radius: 2px;
+  outline: 1px solid var(--border);
+  margin-right: 0.3rem;
 }
 .journey .place {
   font-size: 0.8rem;

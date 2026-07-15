@@ -31,13 +31,8 @@ const featuredTools = tools.slice(0, 3);
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
 // Stats: sinais de competência, não de consumo (os 550 repos do catálogo
-// GitHub vivem na página Links, não aqui). O nº de ferramentas é derivado
-// do array `tools` acima, para nunca desatualizar.
-type Stat = { n: string; d: string; tone: string };
-const stats: Stat[] = [
-  ...dict.home.statsStatic,
-  { n: String(tools.length), d: dict.home.statsTools, tone: 'green' },
-];
+// GitHub vivem na página Links, não aqui).
+const stats = dict.home.statsStatic;
 
 const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
@@ -89,7 +84,10 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
           <li class="stop">
             <span class="dot" aria-hidden="true"></span>
             <span class="years">{stop.years}</span>
-            <span class="name">{stop.flag} {stop.name}</span>
+            <span class="name">
+              <img class="flag" src={`/flags/${stop.flag}.svg`} alt="" width="20" height="15" decoding="async" />
+              {stop.name}
+            </span>
             <span class="place">{stop.place}</span>
             <span class="note">{stop.note}</span>
           </li>
