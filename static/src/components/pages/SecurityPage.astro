@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SelfScan from '../tools/SelfScan.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -71,7 +72,9 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-verify">{sec.verifyTitle}</h2>
     </div>
-    <p class="intro">{sec.verifyIntro}</p>
+    <p class="intro">{dict.selfscan.intro}</p>
+    <SelfScan lang={lang} />
+    <p class="intro scan-links-intro">{sec.verifyIntro}</p>
     <ul class="sec-links mono">
       {scanners.map((l) => (
         <li><a href={l.href} rel="noopener">→ {l.label}</a></li>

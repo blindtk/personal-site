@@ -43,3 +43,10 @@ export const SITE = {
 } as const;
 
 export type Lang = 'pt' | 'en';
+
+// Base da API das features dinâmicas (Worker do Bloco 3, em dynamic/worker/).
+// Vazio = same-origin (/api/...): correto quando o Worker está nas rotas do
+// próprio domínio, e mantém a CSP connect-src 'self'. Para testar contra um
+// Worker em *.workers.dev, define PUBLIC_API_BASE no build (ver
+// dynamic/worker/README.md, modo 2b) — exige também abrir o connect-src.
+export const API_BASE = import.meta.env.PUBLIC_API_BASE ?? '';

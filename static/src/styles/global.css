@@ -1119,6 +1119,67 @@ select {
   margin-bottom: 2rem;
 }
 
+/* ---------- Self-scan (página Segurança) ---------- */
+
+.self-scan {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+  padding: 1.2rem 1.3rem;
+  margin: 1rem 0 1.4rem;
+}
+@media (min-width: 560px) {
+  .self-scan { grid-template-columns: 8rem 1fr; }
+}
+.scan-grade {
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-dim);
+  text-align: center;
+  padding: 1rem 0.6rem;
+  align-self: start;
+}
+.grade-badge {
+  font-family: var(--mono);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+.grade-badge[data-grade='mid'] { color: var(--accent-2); }
+.grade-badge[data-grade='bad'] { color: var(--danger); }
+.grade-cap {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+.scan-status { color: var(--muted); font-size: 0.82rem; margin: 0 0 0.6rem; }
+.hdrlist { font-size: 0.8rem; }
+.hdrlist div {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.hdrlist div:last-child { border-bottom: 0; }
+.hdrlist .ok { color: var(--accent); }
+.hdrlist .no { color: var(--danger); }
+.hdrlist code { background: none; border: 0; padding: 0; color: var(--muted); }
+.scan-foot {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+.scan-ts { font-size: 0.72rem; color: var(--faint); }
+.scan-links-intro { margin-top: 1.4rem; }
+
 /* ---------- Heatmap ATT&CK ---------- */
 
 .atk-legend {
