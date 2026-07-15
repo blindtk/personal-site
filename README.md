@@ -1,5 +1,9 @@
 # personal-site
 
+[![CI](https://github.com/blindtk/personal-site/actions/workflows/ci.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/ci.yml)
+[![Security](https://github.com/blindtk/personal-site/actions/workflows/security.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security.yml)
+[![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
+
 Site pessoal de Daniel Malaco — monorepo com três partes:
 
 | Pasta | O que é | Estado |
@@ -92,6 +96,29 @@ Se preferires alojar na tua VPS com a Cloudflare à frente (DNS + proxy):
 
 A opção Pages é mais simples (zero manutenção); a VPS dá jeito quando o
 `dynamic/` existir e quiseres tudo na mesma máquina — decide-se nessa altura.
+
+## Segurança do pipeline
+
+O repositório trata a própria cadeia de build como superfície de ataque.
+Cada push/PR passa por:
+
+| Verificação | Onde | O que garante |
+| --- | --- | --- |
+| **Build + `npm audit`** | `ci.yml` | O site compila sem erros e sem advisories high/critical nas dependências. |
+| **OSV-Scanner** | `security.yml` | O `package-lock.json` não tem vulnerabilidades conhecidas (base [OSV.dev](https://osv.dev), inclui GHSA); resultados também em *Security → Code scanning*. |
+| **gitleaks** | `security.yml` + hook local | Nenhum segredo (tokens Cloudflare, chaves) entra na história do git. Localmente: `pipx install pre-commit && pre-commit install`. |
+| **Semgrep** | `security.yml` | SAST nas regras `p/typescript`/`p/javascript` + regras próprias para sinks de DOM XSS nos componentes `.astro` (`.semgrep/`). |
+| **zizmor** | `security.yml` | Os próprios workflows são auditados: pins em falta, permissions excessivas, injeção de template, credenciais persistidas. |
+| **Headers em produção** | `headers.yml` | Após cada deploy (e num cron diário), a produção é verificada contra `.github/expected-headers.json` — se um header de segurança faltar ou regredir, o workflow falha. |
+
+Práticas transversais: todas as actions **pinadas por commit SHA** (o
+[Renovate](renovate.json5) mantém os digests e agrupa atualizações num PR
+semanal), `permissions: {}` por omissão com o mínimo por job, e
+`persist-credentials: false` em todos os checkouts. A CSP é gerada no build
+em duas camadas (`<meta>` estrita por página + header site-wide com
+`frame-ancestors` — ver [docs/security-headers.md](docs/security-headers.md)).
+O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
+[docs/dns-tls.md](docs/dns-tls.md).
 
 ## Estrutura do código
 
