@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
+import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -20,6 +21,7 @@ const scanners = [
 ---
 
 <BaseLayout lang={lang} title={sec.metaTitle} altUrl={routes.security[other]} active="security">
+  <Ticker lang={lang} />
   <div class="page-head">
     <h1>{sec.title}</h1>
     <p class="intro">{sec.intro}</p>

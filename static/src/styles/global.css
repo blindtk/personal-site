@@ -1141,6 +1141,46 @@ select {
 .hp-path { color: var(--accent-2); }
 .hp-verdict { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
 
+/* ---------- Ticker SOC (topo da Segurança) ---------- */
+
+.ticker {
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise-2);
+  padding: 0.5rem 0;
+  margin-bottom: 1.4rem;
+}
+.ticker-track {
+  display: inline-flex;
+  gap: 0;
+  animation: ticker-slide 60s linear infinite;
+  will-change: transform;
+}
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+.ticker .ti {
+  margin: 0 1.6rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.ticker .ti a { color: var(--muted); }
+.ticker .ti a:hover { color: var(--accent); }
+.ticker .tag { color: var(--danger); margin-right: 0.5rem; }
+.ticker .tag.k { color: var(--accent-2); }
+@keyframes ticker-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker { white-space: normal; }
+  .ticker-track { animation: none; flex-wrap: wrap; }
+}
+
 /* ---------- Mapa de tráfego hostil (/honeypot) ---------- */
 
 .hostmap { margin-top: 2rem; }
