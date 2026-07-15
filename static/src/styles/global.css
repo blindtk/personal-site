@@ -1119,6 +1119,132 @@ select {
   margin-bottom: 2rem;
 }
 
+/* ---------- Heatmap ATT&CK ---------- */
+
+.atk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.3rem;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.4rem 0 1rem;
+}
+.atk-legend .sw {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  margin-right: 0.4rem;
+  vertical-align: -1px;
+  border: 1px solid var(--border-strong);
+}
+.atk-legend .sw.prod { background: var(--accent-dim); border-color: var(--accent); }
+.atk-legend .sw.exp { background: rgba(120, 200, 90, 0.12); border-color: #5f9e46; }
+.atk-legend .sw.off { background: var(--bg-raise-2); }
+.atk-legend .atk-count { margin-left: auto; color: var(--faint); }
+
+.atk-hint {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--faint);
+  margin: 0 0 0.6rem;
+}
+@media (min-width: 900px) {
+  .atk-hint { display: none; }
+}
+
+.atk-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+}
+.atk {
+  display: grid;
+  /* 14 táticas Enterprise do ATT&CK (número canónico). Colunas em CSS e não
+     inline — a CSP estrita bloqueia style="" (sem 'unsafe-inline'). */
+  grid-template-columns: repeat(14, minmax(9.5rem, 1fr));
+  gap: 6px;
+  padding: 12px;
+  min-width: max-content;
+}
+.atk-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.atk-tactic {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 0.2rem;
+  min-height: 2.4em;
+  line-height: 1.3;
+}
+.atk-cell {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 6px;
+  background: var(--bg-raise-2);
+  color: #4a5768;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+.atk-cell .atk-tid {
+  display: block;
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+.atk-cell.prod {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.atk-cell.exp {
+  border-color: #5f9e46;
+  background: rgba(120, 200, 90, 0.08);
+  color: #9fd48a;
+}
+.atk-cell.prod, .atk-cell.exp { cursor: help; }
+.atk-cell.prod:focus-visible, .atk-cell.exp:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Tooltip da técnica (CSS puro, revelado em hover/foco). */
+.atk-tip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  width: max-content;
+  max-width: 15rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+.atk-cell:hover .atk-tip,
+.atk-cell:focus .atk-tip,
+.atk-cell:focus-within .atk-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* ---------- Rodapé ---------- */
 
 .site-footer {
