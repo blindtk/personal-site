@@ -50,6 +50,10 @@ export default defineConfig({
       // errado. O <link rel="alternate" hreflang> já é feito à mão no
       // BaseLayout, por página.
       filter: (page) => !page.endsWith('/404/') && !page.endsWith('/404'),
+      // lastmod global = data do build. Não há tracking de mtime por
+      // página; isto sinaliza pelo menos que o sitemap foi gerado de
+      // fresco em cada deploy, em vez de não ter lastmod nenhum.
+      lastmod: new Date(),
     }),
   ],
 });
