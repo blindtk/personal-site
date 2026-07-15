@@ -6,6 +6,35 @@ import { SITE_URL } from './src/config.ts';
 export default defineConfig({
   // Muda o domínio em src/config.ts (SITE_URL) quando comprares o teu.
   site: SITE_URL,
+  markdown: {
+    // O Shiki (highlighter por defeito) emite estilos inline nos blocos de
+    // código, incompatíveis com a CSP estrita. O Prism gera classes CSS —
+    // sem impacto visual agora (nenhuma página renderizada tem blocos de
+    // código; o blog está escondido) e, quando o blog voltar, os blocos
+    // estilizam-se por classes no global.css.
+    syntaxHighlight: 'prism',
+  },
+  // Content-Security-Policy estrita, gerada em build. O Astro calcula os
+  // hashes SHA-256 de cada <script> inline (ferramentas, Lab, toggle da
+  // nav) e injeta-os num <meta http-equiv="content-security-policy"> por
+  // pagina. Nem script-src nem style-src tem 'unsafe-inline': JS injetado
+  // nao executa (defesa real contra XSS) e nao ha estilos inline — todos os
+  // style="..." foram movidos para classes/CSS nos componentes.
+  //   - frame-ancestors nao e valido em <meta>; o anti-clickjacking fica a
+  //     cargo do X-Frame-Options em public/_headers.
+  security: {
+    csp: {
+      directives: [
+        "default-src 'self'",
+        "img-src 'self'",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'self'",
+      ],
+    },
+  },
   i18n: {
     defaultLocale: 'pt',
     locales: ['pt', 'en'],

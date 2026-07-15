@@ -10,6 +10,7 @@ export const routes = {
   links: { pt: '/links/', en: '/en/links/' },
   contact: { pt: '/contactos/', en: '/en/contact/' },
   lab: { pt: '/lab/', en: '/en/lab/' },
+  security: { pt: '/seguranca/', en: '/en/security/' },
 } as const;
 
 export type RouteKey = keyof typeof routes;

@@ -112,7 +112,10 @@ const ogImage = lang === 'pt' ? '/og-image.png' : '/og-image-en.png';
 
     <footer class="site-footer">
       <div class="container inner">
-        <span>© {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]}</span>
+        <span>
+          © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
+          <a href={routes.security[lang]}>{dict.footer.security}</a>
+        </span>
         <span>
           {dict.footer.built}
           {' '}

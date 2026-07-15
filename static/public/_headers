@@ -1,0 +1,30 @@
+# Cabeçalhos de segurança (Cloudflare Pages lê este ficheiro).
+# A Content-Security-Policy é entregue por <meta> gerado pelo Astro em cada
+# página (com hashes por script) — ver security.csp em astro.config.mjs.
+# Aqui ficam os cabeçalhos que a CSP em <meta> não cobre.
+/*
+  # Força HTTPS por 2 anos (sem "preload" para manter reversível enquanto o
+  # domínio é provisório; acrescenta "; preload" e submete em hstspreload.org
+  # quando o domínio final estiver fixo).
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  # Impede MIME sniffing.
+  X-Content-Type-Options: nosniff
+  # Anti-clickjacking (frame-ancestors não é válido em CSP via <meta>).
+  X-Frame-Options: DENY
+  # Não vaza o path completo como referer para outros sites.
+  Referrer-Policy: strict-origin-when-cross-origin
+  # Desliga APIs de browser que o site não usa.
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+  # Isolamento de contexto de navegação e de recursos.
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+
+# As imagens Open Graph precisam de ser carregáveis por outras origens
+# (pré-visualizações de LinkedIn/Slack/etc.), por isso relaxa-se o CORP e
+# fixa-se um cache longo.
+/og-image.png
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=31536000, immutable
+/og-image-en.png
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=31536000, immutable
