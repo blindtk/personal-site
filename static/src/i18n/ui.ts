@@ -26,27 +26,39 @@ export const ui = {
       metaTitle: 'Postura de segurança',
       intro:
         'A segurança é o foco deste site — não só no que diz, mas na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
-      measures: [
-        {
-          name: 'Sem backend, sem trackers',
-          desc: 'Site 100% estático. As ferramentas correm inteiramente no browser — nenhuma faz chamadas de rede. Zero cookies, zero analytics, zero scripts de terceiros.',
-        },
-        {
-          name: 'Content-Security-Policy estrita',
-          desc: "CSP gerada no build, com um hash SHA-256 por cada script inline. Sem 'unsafe-inline' — JavaScript injetado não executa. default-src, object-src e base-uri fechados a 'self'/'none'.",
-        },
-        {
-          name: 'Cabeçalhos de segurança',
-          desc: 'HSTS, X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Referrer-Policy, Permissions-Policy e isolamento de origem (COOP/CORP).',
-        },
-        {
-          name: 'Divulgação responsável',
-          desc: 'Política de contacto para reporte de vulnerabilidades publicada em /.well-known/security.txt (RFC 9116).',
-        },
+      // ----- Modelo de ameaça -----
+      threatTitle: 'Modelo de ameaça',
+      // TODO(daniel): este enquadramento é um juízo teu — confirma/afina. Os
+      // factos técnicos (estático, sem backend/BD, sem input server-side) são
+      // verdade hoje; a leitura de "o que interessa proteger" é opinião.
+      threatBody:
+        'Este site é estático: sem backend, sem base de dados, sem input de utilizador que chegue a um servidor. A superfície de ataque é mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
+      // ----- Cabeçalhos e porquê -----
+      headersTitle: 'Cabeçalhos e porquê',
+      headersIntro: 'O que é enviado em cada resposta, e a razão de ser:',
+      headers: [
+        { name: 'Content-Security-Policy', why: "Hash SHA-256 por cada script inline, gerado no build. Sem 'unsafe-inline' — JavaScript injetado não executa. É a defesa real contra XSS." },
+        { name: 'Strict-Transport-Security', why: 'Força HTTPS no browser durante 2 anos, mesmo que alguém tente rebaixar para HTTP.' },
+        { name: 'X-Frame-Options: DENY', why: 'Impede que o site seja embebido noutro (anti-clickjacking) — a parte que a CSP em <meta> não cobre.' },
+        { name: 'X-Content-Type-Options: nosniff', why: 'Impede o browser de adivinhar o tipo de um ficheiro e executá-lo como algo que não é.' },
+        { name: 'Referrer-Policy', why: 'Não vaza o caminho completo desta página para sites externos ao seguir uma ligação.' },
+        { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
+        { name: 'COOP / CORP', why: 'Isola o contexto de navegação e os recursos de outras origens.' },
       ],
+      // ----- Privacidade e dados -----
+      privacyTitle: 'Privacidade e dados',
+      // TODO(daniel): decidir se queres uma política de privacidade formal
+      // separada. Por agora esta secção descreve a prática real.
+      privacyBody:
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas (subnets, hashes, encoder, passwords) processam tudo no teu browser — nenhum dado sai da máquina, não há servidor a receber o que escreves.',
+      // ----- Como reportar -----
+      reportTitle: 'Como reportar',
+      reportBody:
+        'Encontraste algo? A política de contacto para divulgação responsável está publicada em formato legível por máquinas:',
+      securityTxtLabel: 'security.txt (RFC 9116)',
+      // ----- Scans públicos -----
       verifyTitle: 'Verifica tu mesmo',
       verifyIntro: 'Não fiques pela minha palavra — corre os scanners públicos:',
-      securityTxtLabel: 'security.txt (RFC 9116)',
       headersScanLabel: 'Scan em securityheaders.com',
       observatoryLabel: 'Scan no Mozilla Observatory',
     },
@@ -274,27 +286,39 @@ export const ui = {
       metaTitle: 'Security posture',
       intro:
         'Security is the focus of this site — not just in what it says, but in how it is served. Here is what is in place, for anyone who wants to check.',
-      measures: [
-        {
-          name: 'No backend, no trackers',
-          desc: '100% static site. The tools run entirely in the browser — none make network calls. Zero cookies, zero analytics, zero third-party scripts.',
-        },
-        {
-          name: 'Strict Content-Security-Policy',
-          desc: "CSP generated at build time, with a SHA-256 hash for every inline script. No 'unsafe-inline' — injected JavaScript does not run. default-src, object-src and base-uri locked to 'self'/'none'.",
-        },
-        {
-          name: 'Security headers',
-          desc: 'HSTS, X-Content-Type-Options: nosniff, X-Frame-Options: DENY, Referrer-Policy, Permissions-Policy and origin isolation (COOP/CORP).',
-        },
-        {
-          name: 'Responsible disclosure',
-          desc: 'Vulnerability reporting contact policy published at /.well-known/security.txt (RFC 9116).',
-        },
+      // ----- Threat model -----
+      threatTitle: 'Threat model',
+      // TODO(daniel): this framing is your judgement — confirm/refine. The
+      // technical facts (static, no backend/DB, no server-side input) are
+      // true today; the reading of "what's worth protecting" is opinion.
+      threatBody:
+        'This site is static: no backend, no database, no user input that reaches a server. The attack surface is minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
+      // ----- Headers and why -----
+      headersTitle: 'Headers and why',
+      headersIntro: 'What is sent on every response, and the reason for it:',
+      headers: [
+        { name: 'Content-Security-Policy', why: "A SHA-256 hash per inline script, generated at build. No 'unsafe-inline' — injected JavaScript does not run. The real defence against XSS." },
+        { name: 'Strict-Transport-Security', why: 'Forces HTTPS in the browser for 2 years, even if someone tries to downgrade to HTTP.' },
+        { name: 'X-Frame-Options: DENY', why: 'Stops the site being embedded in another (anti-clickjacking) — the part a <meta> CSP cannot cover.' },
+        { name: 'X-Content-Type-Options: nosniff', why: 'Stops the browser guessing a file’s type and running it as something it is not.' },
+        { name: 'Referrer-Policy', why: 'Does not leak this page’s full path to external sites when following a link.' },
+        { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
+        { name: 'COOP / CORP', why: 'Isolates the browsing context and resources from other origins.' },
       ],
+      // ----- Privacy and data -----
+      privacyTitle: 'Privacy and data',
+      // TODO(daniel): decide whether you want a separate formal privacy
+      // policy. For now this section describes actual practice.
+      privacyBody:
+        'There are no cookies, no analytics, no third-party scripts. The tools (subnets, hashes, encoder, passwords) process everything in your browser — no data leaves your machine, there is no server receiving what you type.',
+      // ----- How to report -----
+      reportTitle: 'How to report',
+      reportBody:
+        'Found something? The responsible-disclosure contact policy is published in a machine-readable format:',
+      securityTxtLabel: 'security.txt (RFC 9116)',
+      // ----- Public scans -----
       verifyTitle: 'Check for yourself',
       verifyIntro: 'Don’t take my word for it — run the public scanners:',
-      securityTxtLabel: 'security.txt (RFC 9116)',
       headersScanLabel: 'Scan on securityheaders.com',
       observatoryLabel: 'Scan on Mozilla Observatory',
     },
