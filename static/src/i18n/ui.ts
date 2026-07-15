@@ -14,12 +14,12 @@ export const ui = {
       links: 'Links',
       contact: 'Contactos',
       lab: 'Lab',
+      security: 'Segurança',
       menu: 'Menu',
     },
     footer: {
       built: 'Construído com Astro. Código-fonte no',
       rights: 'Estático, bilingue e sem trackers.',
-      security: 'Segurança',
     },
     security: {
       title: 'Segurança',
@@ -274,12 +274,12 @@ export const ui = {
       links: 'Links',
       contact: 'Contact',
       lab: 'Lab',
+      security: 'Security',
       menu: 'Menu',
     },
     footer: {
       built: 'Built with Astro. Source code on',
       rights: 'Static, bilingual, and tracker-free.',
-      security: 'Security',
     },
     security: {
       title: 'Security',
