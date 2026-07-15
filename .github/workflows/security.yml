@@ -1,0 +1,28 @@
+# Verificações de segurança do repositório. Complementa o ci.yml (build):
+# aqui vivem supply chain, segredos e SAST. Todas as actions estão pinadas
+# por commit SHA (o Renovate mantém os digests atualizados).
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Nada por omissão — cada job declara o mínimo de que precisa.
+permissions: {}
+
+jobs:
+  # Dependências com vulnerabilidades conhecidas (base OSV.dev, inclui as
+  # advisories do GitHub). Analisa o lockfile e falha o CI se houver vuln;
+  # o SARIF alimenta o separador Security → Code scanning.
+  osv-scanner:
+    permissions:
+      # exigidas pelo workflow reutilizável chamado
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+    with:
+      scan-args: |-
+        --lockfile=./static/package-lock.json

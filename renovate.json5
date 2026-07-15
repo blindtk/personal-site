@@ -1,0 +1,27 @@
+// Renovate (substitui o Dependabot — não correr os dois em simultâneo).
+// Requer a app "Renovate" (Mend) instalada no repositório:
+//   https://github.com/apps/renovate
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:recommended',
+    // Tudo o que não é major agrupado num único PR (menos ruído);
+    // majors continuam em PRs separados para revisão com calma.
+    'group:allNonMajor',
+    // Pina as GitHub Actions por digest SHA (uses: owner/repo@<sha> # vX.Y.Z)
+    // e mantém os digests atualizados — proteção contra tags movidas.
+    'helpers:pinGitHubActionDigests',
+  ],
+  timezone: 'Europe/Lisbon',
+  // Janela semanal única: segunda-feira de madrugada.
+  schedule: ['before 8am on monday'],
+  // Respeita os ranges semver do package.json (não os reescreve).
+  rangeStrategy: 'preserve',
+  // Refresca o package-lock.json uma vez por mês (apanha transitivas).
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ['before 8am on the first day of the month'],
+  },
+  prConcurrentLimit: 3,
+  labels: ['dependencies'],
+}
