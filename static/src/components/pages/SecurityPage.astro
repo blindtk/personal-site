@@ -12,8 +12,7 @@ const sec = dict.security;
 
 // Host real (do SITE_URL) para os links dos scanners externos.
 const host = new URL(SITE_URL).host;
-const links = [
-  { label: sec.securityTxtLabel, href: '/.well-known/security.txt' },
+const scanners = [
   { label: sec.headersScanLabel, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
   { label: sec.observatoryLabel, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
 ];
@@ -25,32 +24,64 @@ const links = [
     <p class="intro">{sec.intro}</p>
   </div>
 
-  <div class="grid grid-2">
-    {sec.measures.map((m) => (
-      <div class="card">
-        <h3>{m.name}</h3>
-        <p>{m.desc}</p>
-      </div>
-    ))}
-  </div>
+  <section aria-labelledby="h-threat">
+    <div class="section-title">
+      <h2 id="h-threat">{sec.threatTitle}</h2>
+    </div>
+    <p>{sec.threatBody}</p>
+  </section>
+
+  <section aria-labelledby="h-headers">
+    <div class="section-title">
+      <h2 id="h-headers">{sec.headersTitle}</h2>
+    </div>
+    <p class="intro">{sec.headersIntro}</p>
+    <div class="table-scroll">
+      <table class="result-table">
+        <tbody>
+          {sec.headers.map((h) => (
+            <tr>
+              <th class="mono">{h.name}</th>
+              <td>{h.why}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-privacy">
+    <div class="section-title">
+      <h2 id="h-privacy">{sec.privacyTitle}</h2>
+    </div>
+    <p>{sec.privacyBody}</p>
+  </section>
+
+  <section aria-labelledby="h-report">
+    <div class="section-title">
+      <h2 id="h-report">{sec.reportTitle}</h2>
+    </div>
+    <p>{sec.reportBody}</p>
+    <ul class="sec-links mono">
+      <li><a href="/.well-known/security.txt" rel="noopener">→ {sec.securityTxtLabel}</a></li>
+    </ul>
+  </section>
 
   <section aria-labelledby="h-verify">
     <div class="section-title">
       <h2 id="h-verify">{sec.verifyTitle}</h2>
     </div>
     <p class="intro">{sec.verifyIntro}</p>
-    <ul class="verify-links mono">
-      {links.map((l) => (
-        <li>
-          <a href={l.href} rel="noopener">→ {l.label}</a>
-        </li>
+    <ul class="sec-links mono">
+      {scanners.map((l) => (
+        <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
       ))}
     </ul>
   </section>
 </BaseLayout>
 
 <style>
-  .verify-links {
+  .sec-links {
     list-style: none;
     padding: 0;
     margin: 0.6rem 0 0;
@@ -58,11 +89,11 @@ const links = [
     flex-direction: column;
     gap: 0.5rem;
   }
-  .verify-links a {
+  .sec-links a {
     color: var(--accent);
     text-decoration: none;
   }
-  .verify-links a:hover {
+  .sec-links a:hover {
     text-decoration: underline;
   }
 </style>
