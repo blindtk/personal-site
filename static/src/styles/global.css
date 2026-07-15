@@ -1119,6 +1119,25 @@ select {
   margin-bottom: 2rem;
 }
 
+/* ---------- Honeypot (/honeypot) ---------- */
+
+.honeypot .stats-grid { margin-bottom: 1.2rem; }
+/* o atributo hidden tem de vencer o display:grid/flex das classes */
+.stats-grid[hidden], .table-scroll[hidden] { display: none; }
+.hp-fallback {
+  border: 1px dashed var(--accent-2);
+  border-radius: var(--radius);
+  background: rgba(240, 180, 92, 0.05);
+  padding: 1rem 1.2rem;
+  color: var(--accent-2);
+  font-size: 0.9rem;
+}
+.hp-table th { white-space: nowrap; }
+.hp-loading { color: var(--faint); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
+.hp-cc { color: var(--text); }
+.hp-path { color: var(--accent-2); }
+.hp-verdict { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
+
 /* ---------- Self-scan (página Segurança) ---------- */
 
 .self-scan {
