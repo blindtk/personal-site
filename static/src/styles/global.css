@@ -188,14 +188,11 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .brand .live-dot { animation: none; }
   html { scroll-behavior: auto; }
-  /* topologia do hero fica estática: pulsos (só existem em movimento)
-     desaparecem, nós "vivos" ficam acesos fixos */
-  .net-bg .pulse { animation: none; opacity: 0; }
-  .net-bg .node.live { animation: none; fill-opacity: 0.6; }
-  /* mapa de tráfego: arcos param (ficam visíveis, sólidos), pulso some */
-  .map-svg .arc { animation: none; stroke-dasharray: none; }
-  .map-svg .map-pulse { animation: none; opacity: 0; }
 }
+/* NOTA: os overrides de reduced-motion para .net-bg e .map-svg vivem no
+   fim do ficheiro (ver "reduced-motion — overrides tardios"), depois das
+   regras base que anulam — com a mesma especificidade, ganha o que vem
+   por último na cascata. */
 
 .nav-toggle {
   display: none;
@@ -1445,4 +1442,17 @@ select {
   font-family: var(--mono);
   font-size: 0.85rem;
   color: var(--accent-2);
+}
+
+/* ---------- reduced-motion — overrides tardios ----------
+   Ficam no fim de propósito: as regras base de .net-bg e .map-svg são
+   declaradas depois do bloco reduced-motion do topo, por isso o override
+   tem de vir depois delas para ganhar a cascata (mesma especificidade). */
+@media (prefers-reduced-motion: reduce) {
+  /* topologia do hero: pulsos somem, nós "vivos" ficam acesos fixos */
+  .net-bg .pulse { animation: none; opacity: 0; }
+  .net-bg .node.live { animation: none; fill-opacity: 0.6; }
+  /* mapa de tráfego: arcos param (visíveis, sólidos), pulso some */
+  .map-svg .arc { animation: none; stroke-dasharray: none; }
+  .map-svg .map-pulse { animation: none; opacity: 0; }
 }
