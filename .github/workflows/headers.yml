@@ -1,0 +1,38 @@
+# Headers de segurança como garantia testada, não prometida: verifica a
+# produção depois de cada deploy do Cloudflare Pages (evento
+# deployment_status, criado pela integração GitHub da Cloudflare), num cron
+# diário de rede de segurança, e à mão (workflow_dispatch, com URL opcional).
+# A lista de headers esperados é versionada em .github/expected-headers.json.
+name: Headers
+
+on:
+  deployment_status:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL a verificar (por omissão: a do expected-headers.json)'
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  check:
+    # em deployment_status só corre quando o deploy teve sucesso
+    if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Verificar headers em produção
+        env:
+          # valores externos entram por env e nunca interpolados no run: —
+          # evita injeção de template (auditado pelo zizmor)
+          TARGET_URL: ${{ inputs.url }}
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+        run: node .github/scripts/check-headers.mjs
