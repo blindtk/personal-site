@@ -27,14 +27,10 @@ const pageTitle = `${title} · ${SITE.handle}`;
 const publishedPosts = await getCollection('blog', (e) => !e.data.draft);
 const hasBlog = publishedPosts.length > 0;
 
-// "Projetos" fica fora da nav principal por agora — só há 2 projetos
-// publicados, pouco para justificar um item próprio. A página /projetos/
-// continua a existir e é alcançável a partir da secção "Projetos" da home;
-// basta repor a linha abaixo quando houver mais conteúdo.
 const navItems: { key: RouteKey; label: string }[] = [
   { key: 'about', label: dict.nav.about },
   ...(hasBlog ? [{ key: 'blog' as const, label: dict.nav.blog }] : []),
-  // { key: 'projects', label: dict.nav.projects },
+  { key: 'projects', label: dict.nav.projects },
   { key: 'tools', label: dict.nav.tools },
   { key: 'links', label: dict.nav.links },
   { key: 'contact', label: dict.nav.contact },
@@ -110,15 +106,6 @@ const personSchema = {
           ))}
           <li>
             <a
-              class="security-link"
-              href={routes.security[lang]}
-              aria-current={active === 'security' ? 'page' : undefined}
-            >
-              🔒 {dict.nav.security}
-            </a>
-          </li>
-          <li>
-            <a
               class="lab-link"
               href={routes.lab[lang]}
               aria-current={active === 'lab' ? 'page' : undefined}
@@ -141,7 +128,10 @@ const personSchema = {
 
     <footer class="site-footer">
       <div class="container inner">
-        <span>© {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]}</span>
+        <span>
+          © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
+          <a href={routes.security[lang]}>{dict.footer.security}</a>
+        </span>
         <span>
           {dict.footer.built}
           {' '}
