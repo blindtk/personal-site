@@ -188,6 +188,10 @@ img {
 @media (prefers-reduced-motion: reduce) {
   .brand .live-dot { animation: none; }
   html { scroll-behavior: auto; }
+  /* topologia do hero fica estática: pulsos (só existem em movimento)
+     desaparecem, nós "vivos" ficam acesos fixos */
+  .net-bg .pulse { animation: none; opacity: 0; }
+  .net-bg .node.live { animation: none; fill-opacity: 0.6; }
 }
 
 .nav-toggle {
@@ -465,6 +469,73 @@ a.card:hover {
 }
 .phead .live {
   color: var(--accent);
+}
+
+/* Fundo de topologia de rede do hero (componente NetworkTopology.astro).
+   O painel identity é o único sítio com este motivo — subtil por desenho:
+   traços finos da paleta de bordas, conteúdo sempre por cima (z-index). */
+.panel.identity {
+  position: relative;
+  overflow: hidden;
+}
+.panel.identity > :not(.net-bg) {
+  position: relative;
+  z-index: 1;
+}
+.net-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.net-bg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.net-bg .edge {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.net-bg .edge.accent {
+  stroke: var(--accent);
+  opacity: 0.28;
+}
+.net-bg .edge.amber {
+  stroke: var(--accent-2);
+  opacity: 0.18;
+}
+.net-bg .node {
+  fill: var(--bg-raise);
+  stroke: var(--faint);
+  stroke-width: 1;
+}
+.net-bg .node.live {
+  stroke: var(--accent);
+  fill: var(--accent);
+  fill-opacity: 0.2;
+  animation: net-blink 5s ease-in-out infinite;
+}
+.net-bg .node.live.b2 { animation-delay: -1.7s; }
+.net-bg .node.live.b3 { animation-delay: -3.4s; }
+.net-bg .pulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+  stroke-dasharray: 12 408;
+  animation: net-pulse 11s linear infinite;
+}
+.net-bg .pulse.p2 { animation-delay: -4s; opacity: 0.3; }
+.net-bg .pulse.p3 { animation-delay: -7s; opacity: 0.25; stroke: var(--accent-2); }
+@keyframes net-pulse {
+  to { stroke-dashoffset: -420; }
+}
+@keyframes net-blink {
+  50% { fill-opacity: 0.8; }
 }
 
 .identity h1 {

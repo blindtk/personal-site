@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl } from '../../i18n/routes';
@@ -44,6 +45,7 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
 >
   <div class="top-grid">
     <section class="panel identity" aria-label={dict.home.identity}>
+      <NetworkTopology />
       <div class="phead">
         <span>&#47;&#47; {dict.home.identity}</span>
         <span>{dict.home.location}</span>
