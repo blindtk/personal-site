@@ -24,18 +24,24 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
       statsLabel: 'stats',
-      live: 'live',
       location: 'Porto, PT',
-      bio: 'Planeamento e operação de infraestruturas de rede e cibersegurança. Foco em threat intelligence, forense digital e resposta a incidentes.',
+      // TODO(validar): frase de posicionamento — escolhi a variante A.
+      // Variante B: 'Segurança de redes em infraestrutura crítica, na prática: desenho, opero, e construo as ferramentas que faltam. Foco em threat intelligence, forense digital e resposta a incidentes.'
+      // Variante C: 'Da arquitetura à operação: segurança de redes em infraestrutura crítica, com ferramentas próprias para o trabalho do dia a dia. Foco em threat intelligence, forense digital e resposta a incidentes.'
+      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
       chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
+      // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
+      // exclui Portugal/Ascendi que é a base atual, não um destacamento
+      // internacional). O nº de ferramentas é calculado em HomePage.astro
+      // a partir do array `tools` (não hardcoded, para não desatualizar).
       statsStatic: [
         { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
         { n: '9', d: 'certificações NSE/SANS', tone: 'amber' },
+        { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
       ],
-      statsRepos: 'repos curados no GitHub',
-      statsCategories: 'categorias no catálogo',
-      statsUpdated: 'atualizado',
+      statsTools: 'ferramentas construídas',
       journey: {
         title: 'Percurso · redes & segurança em 4 países',
         items: [
@@ -158,6 +164,7 @@ export const ui = {
       catalogTitle: 'Repos que sigo',
       catalogNote: 'Gerado automaticamente a partir das minhas estrelas do GitHub, atualizado semanalmente.',
       catalogLink: 'como isto é gerado →',
+      hubNote: 'Isto é um hub pessoal: organizo-o para o meu uso diário, e deixo-o aberto a quem quiser explorar.',
       sortLabel: 'ordenar',
       sortStars: '★ estrelas',
       sortAlpha: 'A–Z',
@@ -233,18 +240,24 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
       statsLabel: 'stats',
-      live: 'live',
       location: 'Porto, PT',
-      bio: 'Planning and operating network and cybersecurity infrastructures. Focused on threat intelligence, digital forensics, and incident response.',
+      // TODO(validar): positioning line — variant A implemented.
+      // Variant B: 'Network security for critical infrastructure, hands-on: I design it, operate it, and build the tools that are missing. Focused on threat intelligence, digital forensics, and incident response.'
+      // Variant C: 'From architecture to operations: network security for critical infrastructure, with my own tools for the day-to-day work. Focused on threat intelligence, digital forensics, and incident response.'
+      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
       chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      // Competence signals (not consumption). Country count matches the "4"
+      // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
+      // excludes Portugal/Ascendi, which is the current home base, not an
+      // international posting). Tool count is computed in HomePage.astro
+      // from the `tools` array (not hardcoded, to avoid going stale).
       statsStatic: [
         { n: '6+', d: 'years in security & networking', tone: 'green' },
         { n: '9', d: 'NSE/SANS certifications', tone: 'amber' },
+        { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
       ],
-      statsRepos: 'curated repos on GitHub',
-      statsCategories: 'catalog categories',
-      statsUpdated: 'updated',
+      statsTools: 'tools built',
       journey: {
         title: 'Journey · networking & security across 4 countries',
         items: [
@@ -367,6 +380,7 @@ export const ui = {
       catalogTitle: 'Repos I follow',
       catalogNote: 'Automatically generated from my GitHub stars, updated weekly.',
       catalogLink: 'how this is generated →',
+      hubNote: 'This is a personal hub: I keep it organized for my own daily use, and leave it open for anyone who wants to explore.',
       sortLabel: 'sort',
       sortStars: '★ stars',
       sortAlpha: 'A–Z',

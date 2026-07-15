@@ -4,7 +4,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl } from '../../i18n/routes';
-import { getCatalog } from '../../lib/catalog';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -28,16 +27,14 @@ const tools = [
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
-// Stats: os dois primeiros são estáticos (CV); os restantes vêm do catálogo
-// de estrelas do GitHub.
-const catalog = getCatalog();
+// Stats: sinais de competência, não de consumo (os 550 repos do catálogo
+// GitHub vivem na página Links, não aqui). O nº de ferramentas é derivado
+// do array `tools` acima, para nunca desatualizar.
 type Stat = { n: string; d: string; tone: string };
 const stats: Stat[] = [
   ...dict.home.statsStatic,
-  { n: String(catalog.totalRepos), d: dict.home.statsRepos, tone: 'blue' },
-  { n: String(catalog.categories.length), d: dict.home.statsCategories, tone: 'green' },
+  { n: String(tools.length), d: dict.home.statsTools, tone: 'green' },
 ];
-const catalogDate = dateFmt.format(new Date(catalog.generatedAt));
 
 const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
@@ -67,7 +64,6 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     <section class="panel" aria-label={dict.home.statsLabel}>
       <div class="phead">
         <span>&#47;&#47; {dict.home.statsLabel}</span>
-        <span class="live">● {dict.home.live} · {dict.home.statsUpdated} {catalogDate}</span>
       </div>
       <div class="stats-grid">
         {stats.map((stat) => (
@@ -97,24 +93,26 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     </ol>
   </section>
 
-  <section aria-labelledby="h-posts">
-    <div class="section-title">
-      <h2 id="h-posts">{dict.home.latestPosts}</h2>
-      {posts.length >= 3 && <a class="more" href={routes.blog[lang]}>{dict.home.allPosts} →</a>}
-    </div>
-    <div class="grid grid-3">
-      {posts.map((post) => (
-        <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
-          <h3>{post.data.title}</h3>
-          <p>{post.data.description}</p>
-          <div class="meta">
-            <span>{dateFmt.format(post.data.pubDate)}</span>
-            {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-          </div>
-        </a>
-      ))}
-    </div>
-  </section>
+  {posts.length > 0 && (
+    <section aria-labelledby="h-posts">
+      <div class="section-title">
+        <h2 id="h-posts">{dict.home.latestPosts}</h2>
+        {posts.length >= 3 && <a class="more" href={routes.blog[lang]}>{dict.home.allPosts} →</a>}
+      </div>
+      <div class="grid grid-3">
+        {posts.map((post) => (
+          <a class="card" href={blogPostUrl(lang, post.id.slice(3))}>
+            <h3>{post.data.title}</h3>
+            <p>{post.data.description}</p>
+            <div class="meta">
+              <span>{dateFmt.format(post.data.pubDate)}</span>
+              {post.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
 
   <section aria-labelledby="h-tools">
     <div class="section-title">

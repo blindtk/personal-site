@@ -3,6 +3,7 @@ title: 'Hello, world'
 description: 'O primeiro post deste blog: porquê um site pessoal, e como isto está construído.'
 pubDate: 2026-07-13
 tags: ['meta']
+draft: true
 ---
 
 Este é o primeiro post do blog — o clássico `hello world` que existe para provar

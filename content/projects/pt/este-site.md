@@ -8,6 +8,3 @@ order: 1
 
 Site pessoal bilingue construído com Astro: blog em markdown, calculadora de
 subnets, gerador de hashes e mais — tudo a correr no browser, sem backend.
-
-> ✏️ Placeholder: substitui/acrescenta projetos criando ficheiros em
-> `content/projects/pt/` (e o gémeo em `en/`).
