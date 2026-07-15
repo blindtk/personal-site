@@ -178,6 +178,8 @@ export const ui = {
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
+      note: 'Fora do terminal ando por homelab e CTFs — mais sobre isso na página',
+      noteLink: 'Sobre',
     },
     lab: {
       title: 'Lab',
@@ -394,6 +396,8 @@ export const ui = {
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
+      note: 'Away from the terminal I run a homelab and do CTFs — more on that on the',
+      noteLink: 'About',
     },
     lab: {
       title: 'Lab',
