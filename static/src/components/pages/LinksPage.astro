@@ -54,6 +54,7 @@ const slug = (name: string) =>
       </div>
       <div class="catalog-meta mono">
         <span id="catalog-count">{catalog.totalRepos}</span> {dict.links.reposWord}
+        {' '}
         <span class="cat-updated">· {dict.links.updatedWord} {dateFmt.format(new Date(catalog.generatedAt))}</span>
       </div>
     </div>
