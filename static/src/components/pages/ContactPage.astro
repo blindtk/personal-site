@@ -8,35 +8,39 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const dict = t(lang);
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
+const c = dict.contact;
 
-// Ofusca o email no HTML gerado (dificulta scrapers de spam mais básicos).
-const emailEntities = [...SITE.email]
-  .map((c) => `&#${c.charCodeAt(0)};`)
-  .join('');
+// O endereço nunca aparece em claro no HTML servido: as duas metades vão
+// invertidas em data-attributes e o mailto é montado no browser (script
+// abaixo). Sem JavaScript fica a forma "user [at] dominio", legível por
+// humanos mas fora do alcance de scrapers básicos.
+const [emailUser, emailDomain] = SITE.email.split('@');
+const rev = (s: string) => [...s].reverse().join('');
+const emailObfuscated = `${emailUser} [at] ${emailDomain.replaceAll('.', ' [dot] ')}`;
 ---
 
-<BaseLayout lang={lang} title={dict.contact.title} altUrl={routes.contact[other]} active="contact">
+<BaseLayout lang={lang} title={c.title} altUrl={routes.contact[other]} active="contact">
   <div class="page-head">
-    <h1>{dict.contact.title}</h1>
-    <p class="intro">{dict.contact.intro}</p>
+    <h1>{c.title}</h1>
+    <p class="intro">{c.intro}</p>
   </div>
 
   <div class="table-scroll">
     <table class="result-table">
       <tbody>
         <tr>
-          <th>{dict.contact.emailLabel}</th>
-          <td><a href={`mailto:${SITE.email}`} set:html={emailEntities} /></td>
+          <th>{c.emailLabel}</th>
+          <td><a id="email-link" class="mono" data-u={rev(emailUser)} data-d={rev(emailDomain)}>{emailObfuscated}</a></td>
         </tr>
         {SITE.github && (
           <tr>
-            <th>{dict.contact.githubLabel}</th>
+            <th>{c.githubLabel}</th>
             <td><a href={SITE.github} rel="noopener">{SITE.github.replace('https://', '')}</a></td>
           </tr>
         )}
         {SITE.linkedin && (
           <tr>
-            <th>{dict.contact.linkedinLabel}</th>
+            <th>{c.linkedinLabel}</th>
             <td><a href={SITE.linkedin} rel="noopener">{SITE.linkedin.replace('https://', '')}</a></td>
           </tr>
         )}
@@ -44,7 +48,52 @@ const emailEntities = [...SITE.email]
     </table>
   </div>
 
+  <section aria-labelledby="h-status">
+    <div class="section-title">
+      <h2 id="h-status">{c.statusTitle}</h2>
+    </div>
+    <div class="table-scroll">
+      <table class="result-table">
+        <tbody>
+          <tr>
+            <th>{c.availabilityLabel}</th>
+            <td>{SITE.contact.availability[lang]}</td>
+          </tr>
+          <tr>
+            <th>{c.responseLabel}</th>
+            <td>{SITE.contact.responseTime[lang]}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-seccontact">
+    <div class="section-title">
+      <h2 id="h-seccontact">{c.securityTitle}</h2>
+    </div>
+    <p>{c.securityBody} <a href={routes.security[lang]}>{c.securityLink}</a>.</p>
+    <p class="mono"><a href="/.well-known/security.txt" rel="noopener">→ {c.securityTxtLabel}</a></p>
+    {SITE.contact.pgpFingerprint ? (
+      <p class="mono"><strong>{c.pgpLabel}:</strong> <code>{SITE.contact.pgpFingerprint}</code></p>
+    ) : (
+      <p class="note warn">⚠ {c.pgpLabel}: {c.pgpPending}</p>
+    )}
+  </section>
+
   <p class="note">
-    {dict.contact.note} <a href={routes.about[lang]}>{dict.contact.noteLink}</a>.
+    {c.note} <a href={routes.about[lang]}>{c.noteLink}</a>.
   </p>
+
+  <script>
+    // Monta o mailto a partir das metades invertidas nos data-attributes —
+    // o endereço só existe completo no DOM depois de correr JS.
+    const el = document.getElementById('email-link') as HTMLAnchorElement | null;
+    if (el) {
+      const rev = (s: string) => [...s].reverse().join('');
+      const addr = `${rev(el.dataset.u ?? '')}@${rev(el.dataset.d ?? '')}`;
+      el.href = `mailto:${addr}`;
+      el.textContent = addr;
+    }
+  </script>
 </BaseLayout>
