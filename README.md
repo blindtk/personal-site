@@ -10,7 +10,7 @@ Site pessoal de Daniel Malaco — monorepo com três partes:
 | --- | --- | --- |
 | `content/` | Todo o conteúdo em markdown (posts, sobre, projetos, links) — **a fonte única de verdade** | ✅ ativo |
 | `static/` | O site estático (Astro): blog, ferramentas client-side, páginas | ✅ ativo |
-| `dynamic/` | Futura app com backend (DNS lookup, whois, …) | 📝 só planeamento — ver [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `dynamic/` | Backend em Cloudflare Worker: honeypot, mapa de tráfego hostil, self-scan e ticker SOC (`dynamic/worker/`); DNS/whois ainda planeados | ⚙️ primeiro código a bordo — ver [`dynamic/worker/README.md`](dynamic/worker/README.md) e [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 | `design/` | Mockups das 7 direções de design exploradas (a nº 4 foi a escolhida) | 🎨 referência |
 
 O site é bilingue: PT em `/` e EN em `/en/`.
@@ -119,6 +119,24 @@ em duas camadas (`<meta>` estrita por página + header site-wide com
 `frame-ancestors` — ver [docs/security-headers.md](docs/security-headers.md)).
 O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
 [docs/dns-tls.md](docs/dns-tls.md).
+
+## Features de segurança (tema do site)
+
+Além das ferramentas client-side, o site tem cinco vitrines de cibersegurança:
+
+| Feature | Onde | Depende do Worker? |
+| --- | --- | --- |
+| **Heatmap MITRE ATT&CK** | `/attack` | Não — 100% estático (`content/attack.json`) |
+| **Self-scan de cabeçalhos** | página Segurança | Sim — `/api/scan` |
+| **Ticker SOC** (CISA KEV + NVD) | topo da Segurança | Sim — `/api/ticker` |
+| **Painel do honeypot** | `/honeypot` | Sim — `/api/honeypot` |
+| **Mapa de tráfego hostil** | `/honeypot` | Sim — `/api/map` |
+
+As quatro que dependem do Worker degradam com graça quando ele não está
+publicado (mostram uma nota em vez de partir). O backend, os endpoints, a
+privacidade (nenhum IP armazenado) e o deploy estão em
+[`dynamic/worker/README.md`](dynamic/worker/README.md). O heatmap ATT&CK
+funciona sempre, por ser estático.
 
 ## Estrutura do código
 
