@@ -77,6 +77,16 @@ export function normalizeCveId(input) {
   return m ? `CVE-${m[1]}-${m[2]}` : '';
 }
 
+/** Lista de IDs de técnica ATT&CK (TNNNN), validados e sem repetições. */
+export function normalizeTechniques(input) {
+  if (!Array.isArray(input)) return [];
+  const out = [];
+  for (const t of input) {
+    if (typeof t === 'string' && /^T\d{4}$/.test(t) && !out.includes(t)) out.push(t);
+  }
+  return out;
+}
+
 /**
  * Normaliza uma entrada do ticker vinda de CISA KEV ou NVD para uma forma
  * estrita e escapada. Devolve null se não for válida (sem CVE-ID).
@@ -91,5 +101,7 @@ export function normalizeTickerItem(raw) {
     source,
     severity: sanitizeText(raw.severity ?? '', 24),
     title: sanitizeText(raw.title ?? '', 140),
+    // técnicas ATT&CK prováveis (correlação com o honeypot); [] se nenhuma.
+    techniques: normalizeTechniques(raw.techniques),
   };
 }

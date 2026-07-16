@@ -15,6 +15,16 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
 const techniques = attack.tactics.flatMap((tactic) => tactic.techniques);
 const prod = techniques.filter((tech) => tech.level === 'prod').length;
 const exp = techniques.filter((tech) => tech.level === 'exp').length;
+
+// Âncora por técnica para deep-links (ex.: vindos de /honeypot). Um mesmo ID
+// pode surgir em duas táticas (ex.: T1078) — só a 1.ª ocorrência leva o id,
+// para não gerar IDs duplicados no DOM.
+const seenAnchors = new Set<string>();
+const anchorFor = (id: string): string | undefined => {
+  if (seenAnchors.has(id)) return undefined;
+  seenAnchors.add(id);
+  return id;
+};
 ---
 
 <BaseLayout lang={lang} title={a.metaTitle} altUrl={routes.attack[other]}>
@@ -41,6 +51,7 @@ const exp = techniques.filter((tech) => tech.level === 'exp').length;
           {tactic.techniques.map((tech) => (
             tech.level ? (
               <div
+                id={anchorFor(tech.id)}
                 class={`atk-cell ${tech.level}`}
                 tabindex="0"
                 aria-label={`${tech.id} ${tech.name} — ${a.coveredBy}: ${tech.by[lang]}`}
@@ -50,7 +61,7 @@ const exp = techniques.filter((tech) => tech.level === 'exp').length;
                 <span class="atk-tip" role="tooltip">{a.coveredBy}: {tech.by[lang]}</span>
               </div>
             ) : (
-              <div class="atk-cell off" aria-label={`${tech.id} ${tech.name} — ${a.notCovered}`}>
+              <div id={anchorFor(tech.id)} class="atk-cell off" aria-label={`${tech.id} ${tech.name} — ${a.notCovered}`}>
                 <span class="atk-tid mono">{tech.id}</span>
                 <span class="atk-tname">{tech.name}</span>
               </div>

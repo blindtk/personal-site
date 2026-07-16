@@ -1,0 +1,10 @@
+{
+  "_comment": "Mapeamento estático path-isco → técnica MITRE ATT&CK. Liga o honeypot (dynamic/worker/) ao heatmap /attack: cada path que um scanner tenta é classificado com a técnica que melhor o descreve, reutilizando os IDs já presentes em content/attack.json (o nome e a tática vêm de lá — não duplicar aqui). 100% estático, sem chamadas externas. Os paths têm de coincidir com os DECOYS do Worker (dynamic/worker/src/index.js) e com PATH_TECHNIQUE em dynamic/worker/src/lib/attack-map.js (há um teste que verifica a sincronização).",
+  "paths": {
+    "/wp-login.php": "T1110",
+    "/.env": "T1592",
+    "/.git/config": "T1592",
+    "/admin": "T1595",
+    "/phpmyadmin/": "T1190"
+  }
+}

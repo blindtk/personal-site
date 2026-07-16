@@ -3,6 +3,7 @@
 // FETCH (rede). Tudo o que sai daqui já passou por normalizeTickerItem.
 
 import { normalizeTickerItem, sanitizeText } from './sanitize.js';
+import { techniquesForText } from './attack-map.js';
 
 /** Parse do JSON da CISA KEV → itens normalizados, mais recentes primeiro. */
 export function parseKev(json, limit = 12) {
@@ -17,6 +18,8 @@ export function parseKev(json, limit = 12) {
         source: 'kev',
         severity: 'KEV',
         title: `${sanitizeText(v.vendorProject ?? '', 40)} ${sanitizeText(v.product ?? '', 40)}`.trim(),
+        // técnica inferida do nome/descrição da vuln (não do título mostrado)
+        techniques: techniquesForText(`${v.vulnerabilityName ?? ''} ${v.shortDescription ?? ''}`),
       }),
     )
     .filter(Boolean);
@@ -39,6 +42,7 @@ export function parseNvd(json, limit = 12) {
       source: 'nvd',
       severity: `CRIT ${Number(cvss.baseScore).toFixed(1)}`,
       title: desc,
+      techniques: techniquesForText(desc),
     });
     if (normalized) out.push(normalized);
     if (out.length >= limit) break;
