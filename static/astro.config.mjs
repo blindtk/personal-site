@@ -20,8 +20,24 @@ export default defineConfig({
   // pagina. Nem script-src nem style-src tem 'unsafe-inline': JS injetado
   // nao executa (defesa real contra XSS) e nao ha estilos inline — todos os
   // style="..." foram movidos para classes/CSS nos componentes.
-  //   - frame-ancestors nao e valido em <meta>; o anti-clickjacking fica a
-  //     cargo do X-Frame-Options em public/_headers.
+  //
+  // FONTE ÚNICA DE VERDADE: este array é o único sítio onde as diretivas se
+  // definem. O header real (dist/_headers) é DERIVADO destas <meta> pelo
+  // scripts/csp-headers.mjs (união dos hashes de todas as páginas), nunca
+  // escrito à mão — por isso não podem divergir. A única exceção é
+  // frame-ancestors, inválida em <meta>: o csp-headers.mjs acrescenta-a só
+  // no header (a par do X-Frame-Options em public/_headers, para browsers
+  // antigos). Um teste no ci.yml (check-csp-consistency.mjs) volta a validar
+  // que header e <meta> coincidem em cada build.
+  //
+  // Endurecimentos:
+  //   - object-src/base-uri 'none': sem plugins nem <base> injetável.
+  //   - form-action 'none': o único <form> (SubnetCalc) faz preventDefault e
+  //     nunca submete — nada navega, por isso 'none' em vez de 'self'.
+  //   - require-trusted-types-for 'script' + trusted-types 'none': todo o JS
+  //     constrói DOM via createElement + textContent (zero innerHTML/eval),
+  //     logo nenhuma política de Trusted Types é precisa e proibimos criar
+  //     uma — bloqueia sinks de injeção de script em runtime.
   security: {
     csp: {
       directives: [
@@ -31,7 +47,9 @@ export default defineConfig({
         "connect-src 'self'",
         "object-src 'none'",
         "base-uri 'none'",
-        "form-action 'self'",
+        "form-action 'none'",
+        "require-trusted-types-for 'script'",
+        "trusted-types 'none'",
       ],
     },
   },

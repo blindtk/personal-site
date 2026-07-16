@@ -23,6 +23,12 @@
   # Isolamento de contexto de navegação e de recursos.
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+  # Só carrega subrecursos same-origin ou com CORP explícito. Todo o site é
+  # same-origin (CSS/JS/fontes/imagens/favicon), por isso não quebra nada; a
+  # par do COOP acima ativa cross-origin isolation (defesa contra Spectre).
+  # As og-image.png são cross-origin mas só as buscam OUTROS sites (previews),
+  # nunca as nossas páginas — daí o CORP: cross-origin específico delas abaixo.
+  Cross-Origin-Embedder-Policy: require-corp
 
 # As imagens Open Graph precisam de ser carregáveis por outras origens
 # (pré-visualizações de LinkedIn/Slack/etc.), por isso relaxa-se o CORP e
