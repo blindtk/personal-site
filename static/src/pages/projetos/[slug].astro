@@ -1,0 +1,22 @@
+---
+import { getCollection } from 'astro:content';
+import ProjectPostPage from '../../components/pages/ProjectPostPage.astro';
+import { projectUrl } from '../../i18n/routes';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', (e) => e.id.startsWith('pt/'));
+  const enProjects = await getCollection('projects', (e) => e.id.startsWith('en/'));
+  const enSlugs = new Set(enProjects.map((e) => e.id.slice(3)));
+  return projects.map((project) => {
+    const slug = project.id.slice(3);
+    return {
+      params: { slug },
+      props: { project, altUrl: enSlugs.has(slug) ? projectUrl('en', slug) : undefined },
+    };
+  });
+}
+
+const { project, altUrl } = Astro.props;
+---
+
+<ProjectPostPage lang="pt" project={project} altUrl={altUrl} />
