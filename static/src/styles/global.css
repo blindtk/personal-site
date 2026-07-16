@@ -334,14 +334,14 @@ main {
 .grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 @media (min-width: 640px) {
-  .grid-2 { grid-template-columns: repeat(2, 1fr); }
-  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 960px) {
-  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 .card[hidden] {
@@ -364,6 +364,7 @@ a.card:hover {
 }
 .card h3 {
   margin: 0 0 0.35rem;
+  overflow-wrap: anywhere;
 }
 .card p {
   margin: 0;
@@ -865,6 +866,13 @@ select {
 }
 
 /* ---------- Percurso (timeline horizontal) ---------- */
+
+.journey-hint {
+  text-align: right;
+}
+@media (min-width: 901px) {
+  .journey-hint { display: none; }
+}
 
 .journey-wrap {
   position: relative;

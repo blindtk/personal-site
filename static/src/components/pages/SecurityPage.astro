@@ -111,4 +111,17 @@ const scanners = [
   .sec-links a:hover {
     text-decoration: underline;
   }
+  /* .result-table td tem word-break: break-all para valores curtos sem
+     espaços (hash/binário noutras páginas) — aqui o conteúdo é prosa em
+     português e precisa de quebrar por palavra, não a meio. */
+  .result-table td {
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+  @media (max-width: 480px) {
+    .result-table th {
+      width: auto;
+      white-space: normal;
+    }
+  }
 </style>

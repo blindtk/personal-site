@@ -80,8 +80,9 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     <div class="section-title">
       <h2 id="h-journey">{dict.home.journey.title}</h2>
     </div>
+    <p class="atk-hint journey-hint" aria-hidden="true">{dict.home.journey.scrollHint}</p>
     <div class="journey-wrap">
-      <ol class="journey">
+      <ol class="journey" id="journey-scroll">
         {dict.home.journey.items.map((stop) => (
           <li class="stop">
             <span class="dot" aria-hidden="true"></span>
@@ -153,3 +154,20 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     </section>
   )}
 </BaseLayout>
+
+<script>
+  // Esconde o hint textual quando o utilizador chega ao fim do scroll
+  // horizontal da timeline — mesmo padrão do heatmap ATT&CK.
+  const scrollEl = document.getElementById('journey-scroll');
+  const hint = document.querySelector('.journey-hint');
+
+  if (scrollEl && hint) {
+    const checkEnd = () => {
+      const atEnd = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 4;
+      hint.classList.toggle('hidden', atEnd);
+    };
+    scrollEl.addEventListener('scroll', checkEnd, { passive: true });
+    window.addEventListener('resize', checkEnd);
+    checkEnd();
+  }
+</script>
