@@ -6,7 +6,7 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const s = t(lang).tools.hashes;
 
-const jsStrings = { copy: s.copy, copied: s.copied, noMatch: s.noMatch };
+const jsStrings = { copy: s.copy, copied: s.copied, noMatch: s.noMatch, noFileChosen: s.noFileChosen };
 const ALGS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
 ---
 
@@ -17,7 +17,11 @@ const ALGS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
   </div>
   <div class="field">
     <label for="hash-file">{s.fileLabel}</label>
-    <input type="file" id="hash-file" />
+    <div class="file-picker">
+      <input type="file" id="hash-file" class="sr-only" />
+      <label for="hash-file" class="btn ghost small">{s.chooseFile}</label>
+      <span id="hash-file-name" class="mono file-name">{s.noFileChosen}</span>
+    </div>
   </div>
   <div class="field">
     <label for="hash-verify">{s.verifyLabel}</label>
@@ -51,6 +55,7 @@ const ALGS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
   const verifyInput = document.getElementById('hash-verify') as HTMLInputElement;
   const results = document.getElementById('hash-results')!;
   const noMatchEl = document.getElementById('hash-nomatch')!;
+  const fileNameEl = document.getElementById('hash-file-name')!;
 
   async function digest(alg: string, bytes: Uint8Array): Promise<string> {
     if (alg === 'MD5') return md5(bytes);
@@ -84,7 +89,10 @@ const ALGS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
 
   document.getElementById('hash-generate')!.addEventListener('click', run);
   // limpar o outro input quando um é usado, para ficar claro qual é a fonte
-  fileInput.addEventListener('change', () => { if (fileInput.files?.length) input.value = ''; });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files?.length) input.value = '';
+    fileNameEl.textContent = fileInput.files?.[0]?.name ?? strings.noFileChosen;
+  });
   input.addEventListener('input', () => { if (input.value) fileInput.value = ''; });
 
   results.addEventListener('click', async (e) => {
@@ -96,3 +104,29 @@ const ALGS = ['MD5', 'SHA-1', 'SHA-256', 'SHA-512'];
     setTimeout(() => (btn.textContent = strings.copy), 1500);
   });
 </script>
+
+<style>
+  /* Visualmente escondido mas continua no fluxo de acessibilidade/tab —
+     o botão .btn e o span de nome de ficheiro é que ficam visíveis. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .file-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+  .file-picker .file-name {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+</style>

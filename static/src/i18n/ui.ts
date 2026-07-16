@@ -77,7 +77,7 @@ export const ui = {
       coveredBy: 'coberto por',
       notCovered: 'Sem cobertura direta no meu percurso.',
       countsLabel: 'técnicas mapeadas',
-      scrollHint: 'Desliza na horizontal para ver todas as táticas →',
+      scrollHint: '← scroll para ver as 14 táticas →',
     },
     selfscan: {
       title: 'Self-scan ao vivo',
@@ -179,6 +179,7 @@ export const ui = {
       intro: 'Coisas que construí ou mantenho — de scripts a infraestrutura.',
       repo: 'código',
       demo: 'demo',
+      back: '← Voltar aos projetos',
     },
     tools: {
       title: 'Ferramentas',
@@ -216,6 +217,8 @@ export const ui = {
         fileTab: 'Ficheiro',
         inputLabel: 'Texto a processar',
         fileLabel: 'Escolhe um ficheiro (processado localmente)',
+        chooseFile: 'escolher ficheiro',
+        noFileChosen: 'nenhum ficheiro',
         verifyLabel: 'Verificar contra hash esperada (opcional)',
         verifyPlaceholder: 'cola aqui a hash esperada…',
         generate: 'Gerar hashes',
@@ -411,7 +414,7 @@ export const ui = {
       coveredBy: 'covered by',
       notCovered: 'No direct coverage in my track record.',
       countsLabel: 'techniques mapped',
-      scrollHint: 'Scroll horizontally to see all tactics →',
+      scrollHint: '← scroll to see all 14 tactics →',
     },
     selfscan: {
       title: 'Live self-scan',
@@ -513,6 +516,7 @@ export const ui = {
       intro: 'Things I built or maintain — from scripts to infrastructure.',
       repo: 'code',
       demo: 'demo',
+      back: '← Back to projects',
     },
     tools: {
       title: 'Tools',
@@ -550,6 +554,8 @@ export const ui = {
         fileTab: 'File',
         inputLabel: 'Text to process',
         fileLabel: 'Pick a file (processed locally)',
+        chooseFile: 'choose file',
+        noFileChosen: 'no file chosen',
         verifyLabel: 'Verify against expected hash (optional)',
         verifyPlaceholder: 'paste the expected hash here…',
         generate: 'Generate hashes',
