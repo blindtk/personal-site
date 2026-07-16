@@ -1318,17 +1318,39 @@ select {
   font-size: 0.72rem;
   color: var(--faint);
   margin: 0 0 0.6rem;
+  text-align: right;
+  opacity: 1;
+  transition: opacity 0.2s ease;
 }
-@media (min-width: 900px) {
+.atk-hint.hidden {
+  opacity: 0;
+}
+@media (min-width: 1200px) {
   .atk-hint { display: none; }
 }
 
+/* .atk-wrap (não faz scroll) é a containing block do gradiente — se o fade
+   fosse filho de .atk-scroll (o elemento com overflow-x), position:absolute
+   desliza com o conteúdo scrollado em vez de ficar fixo no bordo. */
+.atk-wrap {
+  position: relative;
+}
 .atk-scroll {
   overflow-x: auto;
   padding-bottom: 0.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-raise);
+}
+.atk-fade {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 2.5rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: linear-gradient(to right, transparent, var(--bg-raise));
+  pointer-events: none;
 }
 .atk {
   display: grid;

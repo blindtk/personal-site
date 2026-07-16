@@ -25,3 +25,7 @@ export function toolUrl(lang: Lang, slug: string): string {
 export function blogPostUrl(lang: Lang, slug: string): string {
   return `${routes.blog[lang]}${slug}/`;
 }
+
+export function projectUrl(lang: Lang, slug: string): string {
+  return `${routes.projects[lang]}${slug}/`;
+}

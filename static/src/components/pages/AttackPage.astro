@@ -32,9 +32,10 @@ const exp = techniques.filter((tech) => tech.level === 'exp').length;
 
   <p class="atk-hint" aria-hidden="true">{a.scrollHint}</p>
 
-  <div class="atk-scroll">
-    <div class="atk">
-      {attack.tactics.map((tactic) => (
+  <div class="atk-wrap">
+    <div class="atk-scroll" id="atk-scroll">
+      <div class="atk">
+        {attack.tactics.map((tactic) => (
         <div class="atk-col">
           <h2 class="atk-tactic">{tactic.name}</h2>
           {tactic.techniques.map((tech) => (
@@ -56,7 +57,26 @@ const exp = techniques.filter((tech) => tech.level === 'exp').length;
             )
           ))}
         </div>
-      ))}
+        ))}
+      </div>
     </div>
+    <div class="atk-fade" aria-hidden="true"></div>
   </div>
 </BaseLayout>
+
+<script>
+  // Esconde o hint textual quando o utilizador chega ao fim do scroll
+  // horizontal — a partir daí não há mais nada para "descobrir" à direita.
+  const scrollEl = document.getElementById('atk-scroll');
+  const hint = document.querySelector('.atk-hint');
+
+  if (scrollEl && hint) {
+    const checkEnd = () => {
+      const atEnd = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 4;
+      hint.classList.toggle('hidden', atEnd);
+    };
+    scrollEl.addEventListener('scroll', checkEnd, { passive: true });
+    window.addEventListener('resize', checkEnd);
+    checkEnd();
+  }
+</script>

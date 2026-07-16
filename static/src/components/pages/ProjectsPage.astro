@@ -1,9 +1,9 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
+import { routes, projectUrl } from '../../i18n/routes';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -13,9 +13,16 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
 const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order);
 
-const projects = await Promise.all(
-  entries.map(async (entry) => ({ entry, Content: (await render(entry)).Content }))
-);
+// Gancho compacto do índice: primeira frase da descrição, cortada a ~100
+// caracteres num limite de palavra. A escrita longa vive na página própria
+// de cada projeto (projectUrl), não aqui.
+function excerpt(text: string, max = 100): string {
+  const firstSentence = text.split(/(?<=[.!?])\s/)[0] ?? text;
+  if (firstSentence.length <= max) return firstSentence;
+  const cut = firstSentence.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${lastSpace > 0 ? cut.slice(0, lastSpace) : cut}…`;
+}
 ---
 
 <BaseLayout lang={lang} title={dict.projects.title} altUrl={routes.projects[other]} active="projects">
@@ -25,23 +32,15 @@ const projects = await Promise.all(
   </div>
 
   <div class="grid grid-2">
-    {projects.map(({ entry, Content }) => (
+    {entries.map((entry) => (
       <div class="card">
-        <h3>{entry.data.title}</h3>
-        <p>{entry.data.description}</p>
-        <div class="prose project-prose">
-          <Content />
-        </div>
+        <h3><a href={projectUrl(lang, entry.id.slice(3))}>{entry.data.title}</a></h3>
+        <p>{excerpt(entry.data.description)}</p>
         <div class="meta">
           {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
           {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
-          {entry.data.demo && <a href={entry.data.demo} rel="noopener">[{dict.projects.demo}]</a>}
         </div>
       </div>
     ))}
   </div>
 </BaseLayout>
-
-<style>
-  .project-prose { font-size: 0.92rem; }
-</style>
