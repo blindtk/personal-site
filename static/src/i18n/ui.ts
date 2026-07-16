@@ -215,7 +215,7 @@ export const ui = {
       // Variante C: 'Da arquitetura à operação: segurança de redes em infraestrutura crítica, com ferramentas próprias para o trabalho do dia a dia. Foco em threat intelligence, forense digital e resposta a incidentes.'
       bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
-      chips: ['Fortinet NSE 4/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
       // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
       // exclui Portugal/Ascendi que é a base atual, não um destacamento
@@ -633,7 +633,7 @@ export const ui = {
       // Variant C: 'From architecture to operations: network security for critical infrastructure, with my own tools for the day-to-day work. Focused on threat intelligence, digital forensics, and incident response.'
       bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
-      chips: ['Fortinet NSE 4/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Competence signals (not consumption). Country count matches the "4"
       // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
       // excludes Portugal/Ascendi, which is the current home base, not an
