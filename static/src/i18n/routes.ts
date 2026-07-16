@@ -13,6 +13,7 @@ export const routes = {
   security: { pt: '/seguranca/', en: '/en/security/' },
   honeypot: { pt: '/honeypot/', en: '/en/honeypot/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
+  evidence: { pt: '/provas/', en: '/en/evidence/' },
 } as const;
 
 export type RouteKey = keyof typeof routes;

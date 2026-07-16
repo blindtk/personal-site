@@ -93,6 +93,16 @@ const scanners = [
       <li><a href={routes.attack[lang]}>{sec.attackCta}</a></li>
     </ul>
   </section>
+
+  <section aria-labelledby="h-evidence">
+    <div class="section-title">
+      <h2 id="h-evidence">{sec.evidenceTitle}</h2>
+    </div>
+    <p>{sec.evidenceBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={routes.evidence[lang]}>{sec.evidenceCta}</a></li>
+    </ul>
+  </section>
 </BaseLayout>
 
 <style>

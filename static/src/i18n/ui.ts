@@ -21,6 +21,7 @@ export const ui = {
       built: 'Construído com Astro. Código-fonte no',
       rights: 'Estático, bilingue e sem trackers.',
       security: 'Segurança',
+      evidence: 'Provas',
     },
     security: {
       title: 'Segurança',
@@ -65,6 +66,50 @@ export const ui = {
       attackTitle: 'Cobertura defensiva',
       attackBody: 'Do lado de quem defende: as técnicas do MITRE ATT&CK que cubro em produção, mapeadas às ferramentas e à experiência.',
       attackCta: 'Ver o heatmap ATT&CK →',
+      // ----- Provas -----
+      evidenceTitle: 'Transparência verificável',
+      evidenceBody:
+        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, os hashes SHA-256 dos scripts inline (os mesmos da CSP), o scan aos cabeçalhos ao vivo e os workflows que correm a cada push.',
+      evidenceCta: 'Ver a página Provas →',
+    },
+    evidence: {
+      metaTitle: 'Provas — transparência verificável',
+      title: 'Provas',
+      intro:
+        '"Não acredites, verifica" — levado ao limite. Tudo nesta página é gerado no build ou lido ao vivo: sem números escritos à mão, sem capturas de ecrã. Confirma cada linha por ti.',
+      commitTitle: 'Último commit',
+      commitIntro:
+        'Este site é servido a partir de main. O código que estás a ler corresponde a este commit:',
+      commitSubjectLabel: 'mensagem',
+      commitDateLabel: 'data',
+      commitViewLabel: 'ver commit no GitHub →',
+      commitPending:
+        'Hash do commit indisponível neste build (fora de um clone git). Consulta o histórico no repositório.',
+      hashesTitle: 'Hashes dos scripts inline',
+      hashesIntro:
+        'Cada script inline do site tem o seu SHA-256 na Content-Security-Policy — JavaScript que não corresponda a um destes hashes não executa. Estes são os hashes deste build, lidos do output, não escritos à mão:',
+      hashesCount: 'hashes ativos',
+      hashesGeneratedAt: 'gerado no build',
+      hashesPending:
+        'A lista carrega de /evidence.json (gerado no build). Com o JavaScript desligado, abre o ficheiro diretamente ou inspeciona o cabeçalho Content-Security-Policy.',
+      hashesLink: 'abrir evidence.json →',
+      headersTitle: 'Cabeçalhos, ao vivo',
+      headersIntro:
+        'O mesmo self-scan da página Segurança: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
+      contractTitle: 'Contrato de cabeçalhos',
+      contractIntro:
+        'A lista versionada de cabeçalhos que a produção tem de servir — o workflow Headers falha se algum faltar:',
+      contractHeader: 'cabeçalho',
+      contractRequires: 'exige',
+      workflowsTitle: 'Workflows',
+      workflowsIntro:
+        'A cada push para main, estes workflows correm no GitHub Actions. Verdes = build limpo, sem vulnerabilidades conhecidas, e segredos + SAST a passar.',
+      workflowsView: 'ver execuções →',
+      verifyTitle: 'Verifica tu mesmo',
+      verifyIntro: 'Não fiques pela minha palavra:',
+      verifyRepo: 'Código-fonte no GitHub',
+      verifyHeadersScan: 'Scan em securityheaders.com',
+      verifyObservatory: 'Scan no Mozilla Observatory',
     },
     attack: {
       metaTitle: 'Cobertura MITRE ATT&CK',
@@ -365,6 +410,7 @@ export const ui = {
       built: 'Built with Astro. Source code on',
       rights: 'Static, bilingual, and tracker-free.',
       security: 'Security',
+      evidence: 'Evidence',
     },
     security: {
       title: 'Security',
@@ -409,6 +455,50 @@ export const ui = {
       attackTitle: 'Defensive coverage',
       attackBody: "From the defender's side: the MITRE ATT&CK techniques I cover in production, mapped to the tools and the experience.",
       attackCta: 'See the ATT&CK heatmap →',
+      // ----- Evidence -----
+      evidenceTitle: 'Verifiable transparency',
+      evidenceBody:
+        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the SHA-256 hashes of the inline scripts (the same ones in the CSP), the live header scan, and the workflows that run on every push.",
+      evidenceCta: 'See the Evidence page →',
+    },
+    evidence: {
+      metaTitle: 'Evidence — verifiable transparency',
+      title: 'Evidence',
+      intro:
+        '"Don\'t trust, verify" — taken to the limit. Everything on this page is generated at build time or read live: no hand-typed numbers, no screenshots. Check every line yourself.',
+      commitTitle: 'Latest commit',
+      commitIntro:
+        'This site is served from main. The code you are reading matches this commit:',
+      commitSubjectLabel: 'message',
+      commitDateLabel: 'date',
+      commitViewLabel: 'view commit on GitHub →',
+      commitPending:
+        'Commit hash unavailable in this build (outside a git clone). Check the history in the repository.',
+      hashesTitle: 'Inline-script hashes',
+      hashesIntro:
+        'Every inline script on the site has its SHA-256 in the Content-Security-Policy — JavaScript that does not match one of these hashes does not run. These are this build\'s hashes, read from the output, not hand-typed:',
+      hashesCount: 'active hashes',
+      hashesGeneratedAt: 'generated at build',
+      hashesPending:
+        'The list loads from /evidence.json (generated at build). With JavaScript off, open the file directly or inspect the Content-Security-Policy header.',
+      hashesLink: 'open evidence.json →',
+      headersTitle: 'Headers, live',
+      headersIntro:
+        'The same self-scan as the Security page: a grade for the headers production serves right now, with a timestamp.',
+      contractTitle: 'Header contract',
+      contractIntro:
+        'The versioned list of headers production must serve — the Headers workflow fails if any is missing:',
+      contractHeader: 'header',
+      contractRequires: 'requires',
+      workflowsTitle: 'Workflows',
+      workflowsIntro:
+        'On every push to main, these workflows run on GitHub Actions. Green = clean build, no known vulnerabilities, and secrets + SAST passing.',
+      workflowsView: 'view runs →',
+      verifyTitle: 'Check for yourself',
+      verifyIntro: "Don't take my word for it:",
+      verifyRepo: 'Source code on GitHub',
+      verifyHeadersScan: 'Scan on securityheaders.com',
+      verifyObservatory: 'Scan on Mozilla Observatory',
     },
     attack: {
       metaTitle: 'MITRE ATT&CK coverage',

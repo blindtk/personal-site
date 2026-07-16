@@ -1,0 +1,269 @@
+---
+import { readFileSync, readdirSync } from 'node:fs';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SelfScan from '../tools/SelfScan.astro';
+import { SITE, SITE_URL, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const ev = dict.evidence;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+const host = new URL(SITE_URL).host;
+
+// --- Último commit (build-time, best-effort) ---
+// Em CI/Cloudflare Pages e localmente há um clone git; se por algum motivo
+// não houver, a secção degrada com graça (ver ev.commitPending).
+type Commit = { full: string; short: string; date: string; subject: string };
+let commit: Commit | null = null;
+try {
+  const NUL = String.fromCharCode(0);
+  const raw = execSync('git log -1 --format=%H%x00%h%x00%cI%x00%s', {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  }).trim();
+  const [full, short, date, subject] = raw.split(NUL);
+  if (full && short) commit = { full, short, date, subject };
+} catch {
+  commit = null;
+}
+const commitDate = commit
+  ? new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(commit.date))
+  : '';
+
+// --- Contrato de cabeçalhos (fonte: .github/expected-headers.json) ---
+const expected = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../../../../.github/expected-headers.json', import.meta.url)), 'utf8'),
+) as { headers: Record<string, string[]> };
+const contract = Object.entries(expected.headers);
+
+// --- Workflows (fonte: .github/workflows/*.yml) ---
+const workflowsDir = fileURLToPath(new URL('../../../../.github/workflows', import.meta.url));
+const workflows = readdirSync(workflowsDir)
+  .filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'))
+  .sort();
+
+const scanners = [
+  { label: ev.verifyRepo, href: SITE.repo },
+  { label: ev.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
+  { label: ev.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
+];
+
+const hashStrings = {
+  count: ev.hashesCount,
+  generatedAt: ev.hashesGeneratedAt,
+};
+---
+
+<BaseLayout lang={lang} title={ev.metaTitle} altUrl={routes.evidence[other]}>
+  <div class="page-head">
+    <h1>{ev.title}</h1>
+    <p class="intro">{ev.intro}</p>
+  </div>
+
+  <section aria-labelledby="h-commit">
+    <div class="section-title">
+      <h2 id="h-commit">{ev.commitTitle}</h2>
+    </div>
+    <p>{ev.commitIntro}</p>
+    {commit ? (
+      <>
+        <div class="table-scroll">
+          <table class="result-table">
+            <tbody>
+              <tr>
+                <th class="mono">commit</th>
+                <td><span class="hl">{commit.full}</span></td>
+              </tr>
+              <tr>
+                <th class="mono">{ev.commitSubjectLabel}</th>
+                <td>{commit.subject}</td>
+              </tr>
+              <tr>
+                <th class="mono">{ev.commitDateLabel}</th>
+                <td>{commitDate}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ul class="ev-links mono">
+          <li><a href={`${SITE.repo}/commit/${commit.full}`} rel="noopener">→ {ev.commitViewLabel}</a></li>
+        </ul>
+      </>
+    ) : (
+      <p class="note warn">{ev.commitPending}</p>
+    )}
+  </section>
+
+  <section aria-labelledby="h-hashes">
+    <div class="section-title">
+      <h2 id="h-hashes">{ev.hashesTitle}</h2>
+    </div>
+    <p class="intro">{ev.hashesIntro}</p>
+    <div id="evidence-hashes" data-strings={JSON.stringify(hashStrings)}>
+      <p class="scan-status mono" id="ev-hash-status">{ev.hashesPending}</p>
+      <ol class="hash-list mono" id="ev-hash-list" hidden></ol>
+      <p class="ev-hash-meta mono" id="ev-hash-meta" hidden></p>
+      <ul class="ev-links mono">
+        <li><a href="/evidence.json" rel="noopener">→ {ev.hashesLink}</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-headers">
+    <div class="section-title">
+      <h2 id="h-headers">{ev.headersTitle}</h2>
+    </div>
+    <p class="intro">{ev.headersIntro}</p>
+    <SelfScan lang={lang} />
+    <p class="intro">{ev.contractIntro}</p>
+    <div class="table-scroll">
+      <table class="result-table ev-contract">
+        <thead>
+          <tr>
+            <th class="mono">{ev.contractHeader}</th>
+            <th class="mono">{ev.contractRequires}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {contract.map(([name, requires]) => (
+            <tr>
+              <th class="mono">{name}</th>
+              <td>
+                {requires.map((r) => <span class="badge">{r}</span>)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-workflows">
+    <div class="section-title">
+      <h2 id="h-workflows">{ev.workflowsTitle}</h2>
+    </div>
+    <p>{ev.workflowsIntro}</p>
+    <ul class="ev-links mono">
+      {workflows.map((wf) => (
+        <li>
+          <a href={`${SITE.repo}/actions/workflows/${wf}`} rel="noopener">→ {wf}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-verify">
+    <div class="section-title">
+      <h2 id="h-verify">{ev.verifyTitle}</h2>
+    </div>
+    <p>{ev.verifyIntro}</p>
+    <ul class="ev-links mono">
+      {scanners.map((l) => (
+        <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>
+
+<script>
+  // Enche a lista de hashes a partir de /evidence.json (gerado no build).
+  // Same-origin, permitido pela CSP connect-src 'self'. DOM via createElement
+  // + textContent (sem innerHTML) — compatível com Trusted Types e Semgrep.
+  const root = document.getElementById('evidence-hashes');
+  if (root) {
+    const S = JSON.parse(root.dataset.strings!);
+    const statusEl = document.getElementById('ev-hash-status')!;
+    const listEl = document.getElementById('ev-hash-list') as HTMLOListElement;
+    const metaEl = document.getElementById('ev-hash-meta')!;
+
+    (async () => {
+      try {
+        const res = await fetch('/evidence.json', { headers: { accept: 'application/json' } });
+        if (!res.ok) throw new Error('no evidence.json');
+        const data = await res.json();
+        const hashes: string[] = Array.isArray(data.scriptHashes) ? data.scriptHashes : [];
+        if (hashes.length === 0) throw new Error('empty');
+
+        listEl.replaceChildren();
+        for (const h of hashes) {
+          const li = document.createElement('li');
+          const code = document.createElement('code');
+          code.textContent = h;
+          li.append(code);
+          listEl.append(li);
+        }
+        listEl.hidden = false;
+
+        statusEl.hidden = true;
+        const parts = [`${hashes.length} ${S.count}`];
+        if (data.generatedAt) {
+          parts.push(`${S.generatedAt}: ${new Date(data.generatedAt).toLocaleString()}`);
+        }
+        metaEl.textContent = parts.join(' · ');
+        metaEl.hidden = false;
+      } catch {
+        // Mantém o texto de fallback (com o link para /evidence.json).
+      }
+    })();
+  }
+</script>
+
+<style>
+  .ev-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .ev-links a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .ev-links a:hover {
+    text-decoration: underline;
+  }
+  .hash-list {
+    margin: 0.4rem 0 0;
+    padding-left: 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .hash-list li {
+    word-break: break-all;
+  }
+  .hash-list code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.82rem;
+    color: var(--accent);
+  }
+  .ev-hash-meta {
+    font-size: 0.75rem;
+    color: var(--faint);
+    margin: 0.8rem 0 0;
+  }
+  /* A coluna "exige" alinha os requisitos como chips; os valores são curtos
+     e técnicos, por isso quebram por chip e não a meio da palavra. */
+  .ev-contract td {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    word-break: normal;
+  }
+  .ev-contract th[scope],
+  .ev-contract thead th {
+    color: var(--muted);
+  }
+</style>
