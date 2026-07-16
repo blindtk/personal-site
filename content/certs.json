@@ -1,0 +1,17 @@
+{
+  "groups": ["track", "nse", "product", "blueteam"],
+  "items": [
+    { "name": "FCSS in Cloud Security", "full": "Fortinet Certified Solution Specialist Cloud Security", "issuer": "Fortinet", "group": "track", "expires": "2026-09-29" },
+    { "name": "FCP Secure Networking", "full": "Fortinet Certified Professional Secure Networking", "issuer": "Fortinet", "group": "track", "expires": "2026-09-08" },
+    { "name": "FCP Security Operations", "full": "Fortinet Certified Professional Security Operations", "issuer": "Fortinet", "group": "track", "expires": "2025-09-08" },
+    { "name": "NSE 7 — Cloud Security", "full": "Fortinet NSE 7 Certified in Cloud Security", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29" },
+    { "name": "NSE 6 — Secure Networking", "full": "Fortinet NSE 6 Certified in Secure Networking", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-08" },
+    { "name": "NSE 4 — FortiOS", "full": "Fortinet NSE 4 Certified in FortiOS", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29" },
+    { "name": "Cloud Security 7.2 Architect", "full": "Fortinet Cloud Security 7.2 Architect", "issuer": "Fortinet", "group": "product", "issued": "2024-09-29" },
+    { "name": "FortiAnalyzer 7.4 Administrator", "full": "Fortinet FortiAnalyzer 7.4 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-09-08" },
+    { "name": "FortiSIEM 6.3 Administrator", "full": "Fortinet FortiSIEM 6.3 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-04-04" },
+    { "name": "FortiEDR 5.0 Administrator", "full": "Fortinet FortiEDR 5.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2023-09-08" },
+    { "name": "FortiGate 7.0 Administrator", "full": "Fortinet FortiGate 7.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2022-10-22" },
+    { "name": "Certified CyberDefender — Level 2 (CCDL2)", "full": "Certified CyberDefender Level 2 (CCDL2)", "issuer": "CyberDefenders", "group": "blueteam", "issued": "2024-03-02" }
+  ]
+}

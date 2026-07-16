@@ -48,6 +48,12 @@ const displayUrl = (url: string) => url.replace('https://', '').replace(/^www\./
             <td><a href={SITE.linkedin} rel="noopener">{displayUrl(SITE.linkedin)}</a></td>
           </tr>
         )}
+        {SITE.credly && (
+          <tr>
+            <th>{c.credlyLabel}</th>
+            <td><a href={SITE.credly} rel="noopener">{displayUrl(SITE.credly)}</a></td>
+          </tr>
+        )}
       </tbody>
     </table>
   </div>

@@ -51,7 +51,7 @@ const personSchema = {
   name: SITE.name,
   jobTitle: SITE.role[lang],
   url: SITE_URL,
-  sameAs: [SITE.github, SITE.linkedin].filter(Boolean),
+  sameAs: [SITE.github, SITE.linkedin, SITE.credly].filter(Boolean),
 };
 ---
 
@@ -132,7 +132,8 @@ const personSchema = {
         <span>
           © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
-          <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
+          <a href={routes.evidence[lang]}>{dict.footer.evidence}</a> ·{' '}
+          <a href={routes.certifications[lang]}>{dict.footer.certs}</a>
         </span>
         <span>
           {dict.footer.built}
