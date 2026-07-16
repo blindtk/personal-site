@@ -119,16 +119,9 @@ The essentials are above; the detail of each role lives here, collapsed.
 
 ## Certifications
 
-- **Fortinet:** NSE 4 · NSE 5 (FortiSIEM, FortiClient EMS, FortiEDR) ·
-  NSE 6 (FortiMail, FortiWeb, FortiADC) · NSE 7 (Secure Access) ·
-  Xperts Summit 2022
-- **SANS:** SEC504 — Hacker Tools, Techniques and Incident Handling
-  (On-Demand 2023; Lisbon, Nov 2022 — **CTF winner**)
-- **SANS summits:** Blockchain Security '22 · Digital Forensic Incident
-  Response '22 · Ransomware '22 · CloudSecNext '22 · Cyber Defense Forum '20
-- **Cybrary:** Advanced Penetration Testing
-- **Udemy:** Windows Privilege Escalation · Docker · Offensive Security
-  Engineering · Practical Ethical Hacking · Python Network Programming
+Fortinet (Credly), SANS SEC504 and the summits, Microsoft, CyberDefenders and
+more — the full list, with current status and independent verification on
+Credly, lives on its own page: **[Certifications](/en/certifications/)**.
 
 ## Skills
 

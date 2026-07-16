@@ -130,6 +130,8 @@ export const ui = {
       statusExpired: 'expirado',
       statusIssued: 'emitido',
       until: 'até',
+      othersTitle: 'Outras certificações e formação',
+      othersNote: 'Sem badge Credly — listadas aqui para registo, não verificáveis nesta página.',
       groups: {
         track: 'Fortinet — tracks de certificação',
         nse: 'Fortinet — NSE (formato legado)',
@@ -546,6 +548,8 @@ export const ui = {
       statusExpired: 'expired',
       statusIssued: 'issued',
       until: 'until',
+      othersTitle: 'Other certifications & training',
+      othersNote: 'No Credly badge — listed here for the record, not verifiable on this page.',
       groups: {
         track: 'Fortinet — certification tracks',
         nse: 'Fortinet — NSE (legacy format)',

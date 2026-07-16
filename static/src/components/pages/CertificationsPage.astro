@@ -13,27 +13,32 @@ const dict = t(lang);
 const c = dict.certs;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
-type Cert = { name: string; full: string; issuer: string; group: string; expires?: string; issued?: string; url?: string };
+type Cert = { name: string; full?: string; issuer: string; group: string; expires?: string; issued?: string; url?: string; verified?: boolean };
 
 const monthFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-US', { month: 'short', year: 'numeric' });
 const fmt = (iso: string) => monthFmt.format(new Date(`${iso}T00:00:00Z`));
 const now = new Date();
 
-// Estado calculado no build: se tem data de expiração, compara-a com agora;
-// senão, é uma credencial sem validade (mostra só a data de emissão).
-function statusOf(item: Cert): { kind: 'valid' | 'expired' | 'issued'; label: string } {
+// Estado calculado no build: expira → compara com agora; só emissão → "emitido";
+// sem qualquer data (ex.: formação sem validade registada) → sem selo.
+function statusOf(item: Cert): { kind: 'valid' | 'expired' | 'issued'; label: string } | null {
   if (item.expires) {
     const expired = new Date(`${item.expires}T00:00:00Z`) < now;
     return expired
       ? { kind: 'expired', label: `${c.statusExpired} · ${fmt(item.expires)}` }
       : { kind: 'valid', label: `${c.statusValid} · ${c.until} ${fmt(item.expires)}` };
   }
-  return { kind: 'issued', label: `${c.statusIssued} · ${item.issued ? fmt(item.issued) : '—'}` };
+  if (item.issued) return { kind: 'issued', label: `${c.statusIssued} · ${fmt(item.issued)}` };
+  return null;
 }
+
+const items = certs.items as Cert[];
+const verified = items.filter((it) => it.verified !== false);
+const others = items.filter((it) => it.verified === false);
 
 const groupLabels = c.groups as Record<string, string>;
 const groups = certs.groups
-  .map((id) => ({ id, label: groupLabels[id], items: (certs.items as Cert[]).filter((it) => it.group === id) }))
+  .map((id) => ({ id, label: groupLabels[id], items: verified.filter((it) => it.group === id) }))
   .filter((g) => g.items.length > 0);
 ---
 
@@ -68,10 +73,10 @@ const groups = certs.groups
                     ) : (
                       <span class="cert-name">{item.name}</span>
                     )}
-                    <span class="cert-full">{item.full}</span>
+                    {item.full && item.full !== item.name && <span class="cert-full">{item.full}</span>}
                   </td>
                   <td class="mono cert-issuer">{item.issuer}</td>
-                  <td class="cert-status"><span class={`badge cert-${st.kind}`}>{st.label}</span></td>
+                  <td class="cert-status">{st && <span class={`badge cert-${st.kind}`}>{st.label}</span>}</td>
                 </tr>
               );
             })}
@@ -80,6 +85,32 @@ const groups = certs.groups
       </div>
     </section>
   ))}
+
+  {others.length > 0 && (
+    <section aria-label={c.othersTitle}>
+      <div class="section-title"><h2>{c.othersTitle}</h2></div>
+      <p class="note">{c.othersNote}</p>
+      <div class="table-scroll">
+        <table class="result-table certs-table">
+          <tbody>
+            {others.map((item) => {
+              const st = statusOf(item);
+              return (
+                <tr>
+                  <td>
+                    <span class="cert-name">{item.name}</span>
+                    {item.full && item.full !== item.name && <span class="cert-full">{item.full}</span>}
+                  </td>
+                  <td class="mono cert-issuer">{item.issuer}</td>
+                  <td class="cert-status">{st && <span class={`badge cert-${st.kind}`}>{st.label}</span>}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )}
 </BaseLayout>
 
 <style>

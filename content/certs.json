@@ -12,6 +12,29 @@
     { "name": "FortiSIEM 6.3 Administrator", "full": "Fortinet FortiSIEM 6.3 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-04-04", "url": "https://www.credly.com/badges/20681ad4-c27d-4ae1-af68-dbd3a0e61336" },
     { "name": "FortiEDR 5.0 Administrator", "full": "Fortinet FortiEDR 5.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2023-09-08", "url": "https://www.credly.com/badges/a3a29972-3ad5-436b-8981-65d9e69ad316" },
     { "name": "FortiGate 7.0 Administrator", "full": "Fortinet FortiGate 7.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2022-10-22", "url": "https://www.credly.com/badges/3bb6b8cb-77f3-462d-9de4-8586528ba5c7" },
-    { "name": "Certified CyberDefender — Level 2 (CCDL2)", "full": "Certified CyberDefender Level 2 (CCDL2)", "issuer": "CyberDefenders", "group": "blueteam", "issued": "2024-03-02", "url": "https://www.credly.com/badges/a04d97e6-995b-4099-8387-873ef9abe7ec" }
+    { "name": "Certified CyberDefender — Level 2 (CCDL2)", "full": "Certified CyberDefender Level 2 (CCDL2)", "issuer": "CyberDefenders", "group": "blueteam", "issued": "2024-03-02", "url": "https://www.credly.com/badges/a04d97e6-995b-4099-8387-873ef9abe7ec" },
+
+    { "name": "NSE 6 — FortiWeb 6.1", "issuer": "Fortinet", "group": "fortinet-sp", "issued": "2021-07-01", "verified": false },
+    { "name": "NSE 6 — FortiMail 6.2", "issuer": "Fortinet", "group": "fortinet-sp", "issued": "2020-12-01", "verified": false },
+    { "name": "NSE 5 — FortiSIEM 5.2", "issuer": "Fortinet", "group": "fortinet-sp", "issued": "2022-01-01", "verified": false },
+    { "name": "NSE 5 — FortiClient EMS 6.2", "issuer": "Fortinet", "group": "fortinet-sp", "issued": "2021-03-01", "verified": false },
+
+    { "name": "Applied Skills: Administer AD DS", "full": "Administer Active Directory Domain Services", "issuer": "Microsoft", "group": "vendor", "issued": "2024-12-01", "verified": false },
+    { "name": "Firewall Essentials (EDU-110)", "full": "Firewall 9.0 Essentials: Configuration and Management", "issuer": "Palo Alto Networks", "group": "vendor", "issued": "2020-06-01", "verified": false },
+
+    { "name": "SEC504 · Incident Handling", "full": "Hacker Tools, Techniques and Incident Handling", "issuer": "SANS Institute", "group": "sans", "issued": "2022-11-01", "verified": false },
+    { "name": "Ransomware Summit", "issuer": "SANS Institute", "group": "sans", "issued": "2022-06-01", "verified": false },
+    { "name": "CloudSecNext Summit", "issuer": "SANS Institute", "group": "sans", "issued": "2022-05-01", "verified": false },
+    { "name": "Blockchain Security Summit", "issuer": "SANS Institute", "group": "sans", "issued": "2022-09-01", "verified": false },
+    { "name": "Cyber Defense Forum", "issuer": "SANS Institute", "group": "sans", "issued": "2020-10-01", "verified": false },
+    { "name": "Digital Forensic & Incident Response Summit", "issuer": "SANS Institute", "group": "sans", "verified": false },
+
+    { "name": "Advanced Penetration Testing", "issuer": "Cybrary", "group": "training", "issued": "2020-02-01", "verified": false },
+    { "name": "Practical Ethical Hacking", "issuer": "Udemy", "group": "training", "issued": "2020-06-01", "verified": false },
+    { "name": "Offensive Security Engineering", "issuer": "Udemy", "group": "training", "issued": "2022-06-01", "expires": "2023-06-01", "verified": false },
+    { "name": "Windows Privilege Escalation", "issuer": "Udemy", "group": "training", "verified": false },
+    { "name": "Docker for the Absolute Beginner", "issuer": "Udemy", "group": "training", "verified": false },
+    { "name": "Python Network Programming", "issuer": "Udemy", "group": "training", "verified": false },
+    { "name": "Cidadão Ciberseguro", "issuer": "CNCS", "group": "national", "issued": "2019-09-01", "verified": false }
   ]
 }
