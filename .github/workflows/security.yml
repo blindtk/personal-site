@@ -14,8 +14,11 @@ permissions: {}
 
 jobs:
   # Dependências com vulnerabilidades conhecidas (base OSV.dev, inclui as
-  # advisories do GitHub). Analisa o lockfile e falha o CI se houver vuln;
-  # o SARIF alimenta o separador Security → Code scanning.
+  # advisories do GitHub). Analisa o lockfile e falha o CI se houver vuln.
+  # upload-sarif: false — o upload para Security → Code scanning exige o
+  # GitHub Advanced Security (indisponível neste repo privado) e fazia o job
+  # falhar mesmo sem vulnerabilidades. Sem upload, a deteção mantém-se e o
+  # fail-on-vuln (default) continua a bloquear em vulnerabilidades reais.
   osv-scanner:
     permissions:
       # exigidas pelo workflow reutilizável chamado
@@ -26,6 +29,7 @@ jobs:
     with:
       scan-args: |-
         --lockfile=./static/package-lock.json
+      upload-sarif: false
 
   # Segredos committados (tokens Cloudflare, chaves privadas, …). Corre
   # sobre a história completa (fetch-depth: 0) para apanhar segredos
@@ -36,6 +40,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # a gitleaks-action enumera os commits do PR pela API em eventos
+      # pull_request — sem isto responde 403 "Resource not accessible"
+      pull-requests: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
