@@ -1,0 +1,90 @@
+# Verificações de segurança do repositório. Complementa o ci.yml (build):
+# aqui vivem supply chain, segredos e SAST. Todas as actions estão pinadas
+# por commit SHA (o Renovate mantém os digests atualizados).
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Nada por omissão — cada job declara o mínimo de que precisa.
+permissions: {}
+
+jobs:
+  # Dependências com vulnerabilidades conhecidas (base OSV.dev, inclui as
+  # advisories do GitHub). Analisa o lockfile e falha o CI se houver vuln.
+  # upload-sarif: false — o upload para Security → Code scanning exige o
+  # GitHub Advanced Security (indisponível neste repo privado) e fazia o job
+  # falhar mesmo sem vulnerabilidades. Sem upload, a deteção mantém-se e o
+  # fail-on-vuln (default) continua a bloquear em vulnerabilidades reais.
+  osv-scanner:
+    permissions:
+      # exigidas pelo workflow reutilizável chamado
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+    with:
+      scan-args: |-
+        --lockfile=./static/package-lock.json
+      upload-sarif: false
+
+  # Segredos committados (tokens Cloudflare, chaves privadas, …). Corre
+  # sobre a história completa (fetch-depth: 0) para apanhar segredos
+  # introduzidos em qualquer commit do PR, não só no último. Existe também
+  # como hook local (.pre-commit-config.yaml) — o CI é a rede de segurança.
+  # Conta pessoal: GITLEAKS_LICENSE não é necessária.
+  gitleaks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # a gitleaks-action enumera os commits do PR pela API em eventos
+      # pull_request — sem isto responde 403 "Resource not accessible"
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # SAST (Semgrep): regras públicas de TS/JS + regras próprias em modo
+  # generic para os <script> dos componentes .astro (.semgrep/). Foco:
+  # sinks de DOM XSS (innerHTML, document.write, insertAdjacentHTML) nas
+  # ferramentas client-side, no terminal do Lab e nos Workers futuros.
+  semgrep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Instalar Semgrep
+        run: pipx install semgrep==1.170.0
+      - name: SAST
+        # --severity ERROR: só falhamos em achados de alta severidade
+        # (XSS/injeção/etc.), não em ruído de estilo das regras públicas.
+        run: semgrep scan --metrics=off --error --severity ERROR --config p/typescript --config p/javascript --config .semgrep/
+
+  # Auditoria dos próprios workflows: pins em falta, permissions excessivas,
+  # injeção de template em run:, credenciais persistidas, tags impostoras.
+  zizmor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Instalar zizmor
+        run: pipx install zizmor==1.27.0
+      - name: Auditar workflows
+        env:
+          # permite as auditorias online (ex.: deteção de commits impostores)
+          GH_TOKEN: ${{ github.token }}
+        run: zizmor --min-severity medium .github/workflows/

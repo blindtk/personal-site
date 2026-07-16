@@ -85,8 +85,10 @@ const jsStrings = {
     cell('r-hosts').textContent = result.hosts.toLocaleString();
     cell('r-type').textContent =
       strings[result.kind] + (result.special ? ` · ${strings[result.special]}` : '');
-    cell('r-binary').innerHTML =
-      `<span class="hl">${result.binary.network}</span>${result.binary.hosts}`;
+    const hl = document.createElement('span');
+    hl.className = 'hl';
+    hl.textContent = result.binary.network;
+    cell('r-binary').replaceChildren(hl, result.binary.hosts);
     table.hidden = false;
   }
 

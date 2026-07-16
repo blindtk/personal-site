@@ -1,7 +1,12 @@
 # Cabeçalhos de segurança (Cloudflare Pages lê este ficheiro).
-# A Content-Security-Policy é entregue por <meta> gerado pelo Astro em cada
-# página (com hashes por script) — ver security.csp em astro.config.mjs.
-# Aqui ficam os cabeçalhos que a CSP em <meta> não cobre.
+# A Content-Security-Policy tem duas camadas:
+#   1) <meta> por página com hashes (security.csp em astro.config.mjs) —
+#      estrita e portável, viaja no próprio HTML;
+#   2) header real (união dos hashes + frame-ancestors), escrito em
+#      dist/_headers no build por scripts/csp-headers.mjs — é o que os
+#      scanners externos veem. NÃO acrescentar CSP aqui à mão: o build
+#      falha se já existir uma.
+# Aqui ficam os restantes cabeçalhos, estáticos.
 /*
   # Força HTTPS por 2 anos (sem "preload" para manter reversível enquanto o
   # domínio é provisório; acrescenta "; preload" e submete em hstspreload.org

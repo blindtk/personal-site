@@ -1,0 +1,129 @@
+{
+  "_comment": "Heatmap de cobertura ATT&CK pessoal do Daniel. 100% estático — edita aqui. As 14 táticas Enterprise; por técnica, level = 'prod' (controlo em produção) ou 'exp' (experiência pontual/lab); ausência = não coberto. 'by' é bilingue (a ferramenta/experiência que a cobre). Nomes de táticas/técnicas ficam em inglês, a linguagem nativa do ATT&CK.",
+  "tactics": [
+    {
+      "id": "TA0043",
+      "name": "Reconnaissance",
+      "techniques": [
+        { "id": "T1595", "name": "Active Scanning", "level": "prod", "by": { "pt": "FortiGate NGFW + IPS · deteção de scanning na borda · Ascendi", "en": "FortiGate NGFW + IPS · edge scan detection · Ascendi" } },
+        { "id": "T1592", "name": "Gather Victim Host Info", "level": "exp", "by": { "pt": "Enumeração em pentests internos · Hardsecure", "en": "Enumeration during internal pentests · Hardsecure" } },
+        { "id": "T1589", "name": "Gather Victim Identity Info", "level": "exp", "by": { "pt": "OSINT em exercícios de red team · CTFs", "en": "OSINT in red-team exercises · CTFs" } }
+      ]
+    },
+    {
+      "id": "TA0042",
+      "name": "Resource Development",
+      "techniques": [
+        { "id": "T1583", "name": "Acquire Infrastructure", "level": "exp", "by": { "pt": "Montagem de infra de ataque em lab · homelab k3s", "en": "Standing up attack infra in lab · k3s homelab" } },
+        { "id": "T1587", "name": "Develop Capabilities", "level": "exp", "by": { "pt": "Ferramentas próprias de scanning/scripting · Python/Go", "en": "Own scanning/scripting tooling · Python/Go" } }
+      ]
+    },
+    {
+      "id": "TA0001",
+      "name": "Initial Access",
+      "techniques": [
+        { "id": "T1190", "name": "Exploit Public-Facing App", "level": "prod", "by": { "pt": "FortiWeb WAF + análise de vulnerabilidades (Rapid7 InsightVM) · Ascendi", "en": "FortiWeb WAF + vulnerability assessment (Rapid7 InsightVM) · Ascendi" } },
+        { "id": "T1566", "name": "Phishing", "level": "prod", "by": { "pt": "FortiMail Security Email Gateway · sandboxing de anexos · Ascendi", "en": "FortiMail Security Email Gateway · attachment sandboxing · Ascendi" } },
+        { "id": "T1133", "name": "External Remote Services", "level": "prod", "by": { "pt": "NGFW + Secure Access (NSE 7) · VPN e ZTNA · Ascendi", "en": "NGFW + Secure Access (NSE 7) · VPN and ZTNA · Ascendi" } },
+        { "id": "T1078", "name": "Valid Accounts", "level": "prod", "by": { "pt": "IAM + Active Directory · MFA e revisão de acessos · Ascendi", "en": "IAM + Active Directory · MFA and access reviews · Ascendi" } }
+      ]
+    },
+    {
+      "id": "TA0002",
+      "name": "Execution",
+      "techniques": [
+        { "id": "T1059", "name": "Command & Scripting Interpreter", "level": "prod", "by": { "pt": "FortiEDR · deteção comportamental de scripts · Ascendi", "en": "FortiEDR · behavioural script detection · Ascendi" } },
+        { "id": "T1204", "name": "User Execution", "level": "prod", "by": { "pt": "SEG + EDR + awareness · Ascendi", "en": "SEG + EDR + awareness · Ascendi" } },
+        { "id": "T1053", "name": "Scheduled Task/Job", "level": "exp", "by": { "pt": "Deteção via SIEM em regras de baseline · FortiSIEM", "en": "SIEM detection via baseline rules · FortiSIEM" } }
+      ]
+    },
+    {
+      "id": "TA0003",
+      "name": "Persistence",
+      "techniques": [
+        { "id": "T1098", "name": "Account Manipulation", "level": "prod", "by": { "pt": "IAM/AD + alertas de alteração de privilégios no SIEM · Ascendi", "en": "IAM/AD + privilege-change alerts in SIEM · Ascendi" } },
+        { "id": "T1547", "name": "Boot/Logon Autostart", "level": "exp", "by": { "pt": "Telemetria FortiEDR · investigação pontual", "en": "FortiEDR telemetry · ad-hoc investigation" } },
+        { "id": "T1136", "name": "Create Account", "level": "prod", "by": { "pt": "Monitorização de criação de contas · FortiSIEM · Ascendi", "en": "Account-creation monitoring · FortiSIEM · Ascendi" } }
+      ]
+    },
+    {
+      "id": "TA0004",
+      "name": "Privilege Escalation",
+      "techniques": [
+        { "id": "T1068", "name": "Exploit for Privilege Escalation", "level": "prod", "by": { "pt": "Gestão de patches + VA (Rapid7 InsightVM) · Ascendi", "en": "Patch management + VA (Rapid7 InsightVM) · Ascendi" } },
+        { "id": "T1548", "name": "Abuse Elevation Control", "level": "exp", "by": { "pt": "Windows Privilege Escalation (formação) · lab", "en": "Windows Privilege Escalation (training) · lab" } },
+        { "id": "T1078", "name": "Valid Accounts", "level": "prod", "by": { "pt": "Least-privilege em AD · revisões de acesso · Ascendi", "en": "Least-privilege in AD · access reviews · Ascendi" } }
+      ]
+    },
+    {
+      "id": "TA0005",
+      "name": "Defense Evasion",
+      "techniques": [
+        { "id": "T1562", "name": "Impair Defenses", "level": "prod", "by": { "pt": "Alertas de tamper/health do EDR e SIEM · Ascendi", "en": "EDR/SIEM tamper and health alerts · Ascendi" } },
+        { "id": "T1070", "name": "Indicator Removal", "level": "prod", "by": { "pt": "Log forwarding para SIEM (fora do host) · FortiSIEM", "en": "Log forwarding to SIEM (off-host) · FortiSIEM" } },
+        { "id": "T1027", "name": "Obfuscated Files/Info", "level": "exp", "by": { "pt": "Deteção de ofuscação em sandbox · SEG/EDR", "en": "Obfuscation detection in sandbox · SEG/EDR" } },
+        { "id": "T1036", "name": "Masquerading", "level": "exp", "by": { "pt": "Regras de correlação no SIEM · FortiSIEM", "en": "SIEM correlation rules · FortiSIEM" } }
+      ]
+    },
+    {
+      "id": "TA0006",
+      "name": "Credential Access",
+      "techniques": [
+        { "id": "T1110", "name": "Brute Force", "level": "prod", "by": { "pt": "Lockout no AD + deteção de brute force no SIEM · Ascendi", "en": "AD lockout + SIEM brute-force detection · Ascendi" } },
+        { "id": "T1003", "name": "OS Credential Dumping", "level": "prod", "by": { "pt": "FortiEDR · deteção de acesso a LSASS · Ascendi", "en": "FortiEDR · LSASS-access detection · Ascendi" } },
+        { "id": "T1555", "name": "Credentials from Stores", "level": "exp", "by": { "pt": "Ethical hacking (formação) · lab", "en": "Ethical hacking (training) · lab" } }
+      ]
+    },
+    {
+      "id": "TA0007",
+      "name": "Discovery",
+      "techniques": [
+        { "id": "T1046", "name": "Network Service Discovery", "level": "prod", "by": { "pt": "Segmentação NGFW + deteção de scan interno · Ascendi", "en": "NGFW segmentation + internal-scan detection · Ascendi" } },
+        { "id": "T1087", "name": "Account Discovery", "level": "exp", "by": { "pt": "Baseline de queries a AD no SIEM · FortiSIEM", "en": "SIEM baseline of AD queries · FortiSIEM" } },
+        { "id": "T1018", "name": "Remote System Discovery", "level": "exp", "by": { "pt": "Enumeração em pentests · Hardsecure", "en": "Enumeration in pentests · Hardsecure" } }
+      ]
+    },
+    {
+      "id": "TA0008",
+      "name": "Lateral Movement",
+      "techniques": [
+        { "id": "T1021", "name": "Remote Services", "level": "prod", "by": { "pt": "Microssegmentação NGFW + regras leste-oeste · Ascendi", "en": "NGFW micro-segmentation + east-west rules · Ascendi" } },
+        { "id": "T1570", "name": "Lateral Tool Transfer", "level": "exp", "by": { "pt": "Deteção de transferências anómalas · FortiEDR/SIEM", "en": "Anomalous-transfer detection · FortiEDR/SIEM" } }
+      ]
+    },
+    {
+      "id": "TA0009",
+      "name": "Collection",
+      "techniques": [
+        { "id": "T1005", "name": "Data from Local System", "level": "exp", "by": { "pt": "Telemetria de acesso a ficheiros · FortiEDR", "en": "File-access telemetry · FortiEDR" } },
+        { "id": "T1114", "name": "Email Collection", "level": "prod", "by": { "pt": "Controlos e auditoria no SEG · FortiMail · Ascendi", "en": "SEG controls and auditing · FortiMail · Ascendi" } }
+      ]
+    },
+    {
+      "id": "TA0011",
+      "name": "Command & Control",
+      "techniques": [
+        { "id": "T1071", "name": "Application Layer Protocol", "level": "prod", "by": { "pt": "NGFW + inspeção TLS + filtragem DNS · Ascendi", "en": "NGFW + TLS inspection + DNS filtering · Ascendi" } },
+        { "id": "T1573", "name": "Encrypted Channel", "level": "prod", "by": { "pt": "Inspeção SSL/TLS na borda · FortiGate · Ascendi", "en": "SSL/TLS inspection at the edge · FortiGate · Ascendi" } },
+        { "id": "T1090", "name": "Proxy", "level": "exp", "by": { "pt": "Deteção de anonymizers/Tor · feeds de threat intel", "en": "Anonymizer/Tor detection · threat-intel feeds" } }
+      ]
+    },
+    {
+      "id": "TA0010",
+      "name": "Exfiltration",
+      "techniques": [
+        { "id": "T1041", "name": "Exfiltration Over C2 Channel", "level": "prod", "by": { "pt": "Análise de tráfego de saída no NGFW + SIEM · Ascendi", "en": "Egress-traffic analysis in NGFW + SIEM · Ascendi" } },
+        { "id": "T1048", "name": "Exfil Over Alternative Protocol", "level": "exp", "by": { "pt": "Regras de anomalia DNS/ICMP · FortiSIEM", "en": "DNS/ICMP anomaly rules · FortiSIEM" } }
+      ]
+    },
+    {
+      "id": "TA0040",
+      "name": "Impact",
+      "techniques": [
+        { "id": "T1486", "name": "Data Encrypted for Impact", "level": "prod", "by": { "pt": "EDR anti-ransomware + backups/BCP · SANS Ransomware '22 · Ascendi", "en": "EDR anti-ransomware + backups/BCP · SANS Ransomware '22 · Ascendi" } },
+        { "id": "T1490", "name": "Inhibit System Recovery", "level": "exp", "by": { "pt": "Deteção de eliminação de shadow copies · FortiEDR", "en": "Shadow-copy deletion detection · FortiEDR" } },
+        { "id": "T1498", "name": "Network Denial of Service", "level": "prod", "by": { "pt": "Proteção DDoS Cloudflare + NGFW · infraestrutura", "en": "Cloudflare DDoS protection + NGFW · infrastructure" } }
+      ]
+    }
+  ]
+}

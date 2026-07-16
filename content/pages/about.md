@@ -2,17 +2,41 @@
 title: 'About'
 ---
 
-I'm **Daniel Assis Malaco**, an **Information Security Engineer** based in Porto.
+I'm **Daniel Assis Malaco**, an **Information Security Engineer** in Porto.
+Since 2020 I've been at Ascendi, designing and operating the security
+architecture of critical road infrastructure: next-generation firewalls,
+SIEM, endpoint protection, identity management, threat intelligence and
+incident response — the full cycle, from designing the control to analysing
+the event.
 
-I plan and operate network and cybersecurity infrastructures: security
-architecture, next-generation firewalls, endpoint protection, SIEM, identity
-management, threat intelligence, digital forensics, and incident response. I
-pick up new technologies quickly and keep everything current against the
-latest threats.
+I came to security through networks. For the best part of a decade I
+designed, installed and commissioned IP networks for metro and rail systems
+across four countries — the Doha Metro in Qatar, the Santos VLT in Brazil,
+and the Odense and Bergen light metros in Denmark and Norway. In transport
+infrastructure a network failure is not an inconvenience: it is a stopped
+system and thousands of people going nowhere. That is where I learned to
+design for redundancy, document for whoever comes next, and test everything
+in staging before touching production.
+
+In 2020 I turned my focus from networks to the people attacking them. At
+Hardsecure I deployed next-generation firewalls and ran internal penetration
+tests — finding vulnerabilities before someone else could exploit them — and
+I carried that offensive perspective into the defensive work I do today. I
+take it seriously outside working hours too: SANS SEC504, DFIR and
+ransomware summits, and a CTF won in Lisbon in 2022.
+
+I like building the tools I use: the ones on this site all run in the
+browser, and at home I keep a homelab with a k3s cluster on Raspberry Pis
+that serves as the guinea pig for anything I want to try before it gets
+anywhere near production. This site is part of that — static, bilingual,
+tracker-free, with its security posture documented and verifiable.
 
 ## Experience
 
-### Information Security Engineer · Ascendi — Nov 2020 → present
+The essentials are above; the detail of each role lives here, collapsed.
+
+<details>
+<summary>Information Security Engineer · Ascendi <span>Nov 2020 → present</span></summary>
 
 - **Context:** security of critical road infrastructure, in Portugal.
 - **Role:** designing, deploying and operating information security
@@ -22,10 +46,11 @@ latest threats.
   applications through policies and procedures; identifying threats and
   vulnerabilities and implementing controls to mitigate them via monitoring
   and security-event analysis.
-  *(TODO(validate): is there a concrete metric for this role — number of
-  incidents handled, audits/certifications achieved, etc.?)*
 
-### Cyber Security Engineer · Hardsecure — Feb 2020 → Sep 2020
+</details>
+
+<details>
+<summary>Cyber Security Engineer · Hardsecure <span>Feb 2020 → Sep 2020</span></summary>
 
 - **Context:** next-generation firewall deployment and internal penetration
   testing.
@@ -35,7 +60,10 @@ latest threats.
 - **Outcome:** located vulnerabilities in networks before they could be
   exploited.
 
-### Systems Engineer · Efacec — Jan 2019 → Feb 2020
+</details>
+
+<details>
+<summary>Systems Engineer · Efacec <span>Jan 2019 → Feb 2020</span></summary>
 
 **Odense Letbane** (Denmark)
 
@@ -43,9 +71,9 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and security.
 - **Technologies:** system requirements, design and installation documents,
   lab staging, test and commissioning procedures.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at Odense
-  Letbane (e.g. deadline met, number of stations/vehicles covered,
-  certification achieved).
+- **Outcome:** the light metro's IP network and security layer taken from
+  design through commissioning — lab staging, test procedures, and a
+  documented handover to operations.
 
 **Bergen D42** (Norway)
 
@@ -53,11 +81,14 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and security.
 - **Technologies:** system requirements, design and installation documents,
   lab staging, test and commissioning procedures.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at Bergen
-  D42 (e.g. deadline met, number of stations/vehicles covered, certification
-  achieved).
+- **Outcome:** system requirements turned into documented design, installation
+  and commissioning of the D42 stretch — the technical groundwork for the line
+  entering service.
 
-### Junior Consultant · Altran / Network Engineer · Thales — Jan 2017 → Dec 2018
+</details>
+
+<details>
+<summary>Junior Consultant · Altran / Network Engineer · Thales <span>Jan 2017 → Dec 2018</span></summary>
 
 **Doha Metro** (Qatar)
 
@@ -65,8 +96,9 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and BBRS
   systems (mobile WiFi for trains).
 - **Technologies:** IP networks, BBRS systems, rail/metro environments.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at Doha
-  Metro (e.g. number of trains/stations covered, deadline met).
+- **Outcome:** IP networks and the BBRS system (the mobile WiFi that follows
+  the trains) delivered from specification through commissioning, on a metro
+  built from scratch.
 
 **VLT Santos** (Brazil)
 
@@ -74,8 +106,10 @@ latest threats.
 - **Role:** designing, installing and commissioning IP networks and BBRS
   systems (mobile WiFi for trains).
 - **Technologies:** IP networks, BBRS systems, rail/metro environments.
-- **Outcome:** TODO(validate): describe the outcome/problem solved at VLT
-  Santos (e.g. number of vehicles covered, deadline met).
+- **Outcome:** IP network and BBRS delivered from design through
+  commissioning, adapting the same rail stack to an urban light-rail system.
+
+</details>
 
 ## Education
 
@@ -108,9 +142,3 @@ latest threats.
 | Resilience | Business Continuity Planning (BCP) |
 | Languages | Python, Bash, PowerShell, Golang, C/C++ |
 | Platforms | Linux, Windows, AWS, Azure, Rapid7 InsightVM, ServiceNow |
-
-## Away from the terminal
-
-I run a homelab with a **k3s cluster on Raspberry Pis** (internal DNS,
-monitoring, and guinea pigs for everything I want to try before touching
-production), and I show up at CTFs and wargames whenever the calendar allows.

@@ -11,6 +11,8 @@ export const routes = {
   contact: { pt: '/contactos/', en: '/en/contact/' },
   lab: { pt: '/lab/', en: '/en/lab/' },
   security: { pt: '/seguranca/', en: '/en/security/' },
+  honeypot: { pt: '/honeypot/', en: '/en/honeypot/' },
+  attack: { pt: '/attack/', en: '/en/attack/' },
 } as const;
 
 export type RouteKey = keyof typeof routes;

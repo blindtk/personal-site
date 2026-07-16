@@ -189,6 +189,10 @@ img {
   .brand .live-dot { animation: none; }
   html { scroll-behavior: auto; }
 }
+/* NOTA: os overrides de reduced-motion para .net-bg e .map-svg vivem no
+   fim do ficheiro (ver "reduced-motion — overrides tardios"), depois das
+   regras base que anulam — com a mesma especificidade, ganha o que vem
+   por último na cascata. */
 
 .nav-toggle {
   display: none;
@@ -376,6 +380,48 @@ a.card:hover {
   color: var(--faint);
 }
 
+/* Lista compacta da home: destaques em linha única, distintos dos cards
+   das páginas dedicadas (a profundidade vive lá, aqui é só o gancho). */
+.mini-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mini-list a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  padding: 0.7rem 1rem;
+  background: var(--bg-raise);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.mini-list a:last-child { border-bottom: 0; }
+.mini-list a:hover {
+  text-decoration: none;
+  background: var(--bg-raise-2);
+}
+.mini-list .name {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  color: var(--accent);
+  flex: none;
+}
+.mini-list .desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-list .go {
+  margin-left: auto;
+  font-family: var(--mono);
+  color: var(--faint);
+  flex: none;
+}
+.mini-list a:hover .go { color: var(--accent); }
+
 .badge {
   display: inline-block;
   font-family: var(--mono);
@@ -423,6 +469,73 @@ a.card:hover {
 }
 .phead .live {
   color: var(--accent);
+}
+
+/* Fundo de topologia de rede do hero (componente NetworkTopology.astro).
+   O painel identity é o único sítio com este motivo — subtil por desenho:
+   traços finos da paleta de bordas, conteúdo sempre por cima (z-index). */
+.panel.identity {
+  position: relative;
+  overflow: hidden;
+}
+.panel.identity > :not(.net-bg) {
+  position: relative;
+  z-index: 1;
+}
+.net-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+}
+.net-bg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.net-bg .edge {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.net-bg .edge.accent {
+  stroke: var(--accent);
+  opacity: 0.28;
+}
+.net-bg .edge.amber {
+  stroke: var(--accent-2);
+  opacity: 0.18;
+}
+.net-bg .node {
+  fill: var(--bg-raise);
+  stroke: var(--faint);
+  stroke-width: 1;
+}
+.net-bg .node.live {
+  stroke: var(--accent);
+  fill: var(--accent);
+  fill-opacity: 0.2;
+  animation: net-blink 5s ease-in-out infinite;
+}
+.net-bg .node.live.b2 { animation-delay: -1.7s; }
+.net-bg .node.live.b3 { animation-delay: -3.4s; }
+.net-bg .pulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  opacity: 0.5;
+  stroke-dasharray: 12 408;
+  animation: net-pulse 11s linear infinite;
+}
+.net-bg .pulse.p2 { animation-delay: -4s; opacity: 0.3; }
+.net-bg .pulse.p3 { animation-delay: -7s; opacity: 0.25; stroke: var(--accent-2); }
+@keyframes net-pulse {
+  to { stroke-dashoffset: -420; }
+}
+@keyframes net-blink {
+  50% { fill-opacity: 0.8; }
 }
 
 .identity h1 {
@@ -549,6 +662,55 @@ input[type='checkbox'] {
   accent-color: var(--accent);
   width: 1rem;
   height: 1rem;
+}
+
+/* O botão nativo do input de ficheiro destoava do tema — estiliza-se via
+   ::file-selector-button (mesma linguagem dos .btn). */
+input[type='file'] {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+input[type='file']::file-selector-button {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--bg-raise-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0.45rem 0.9rem;
+  margin-right: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+input[type='file']::file-selector-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Select sem a seta nativa do sistema; o chevron é desenhado em CSS pelo
+   .select-wrap (sem imagens nem data: URIs, para não alargar a CSP). */
+select {
+  appearance: none;
+  padding-right: 2.2rem;
+  cursor: pointer;
+}
+.select-wrap {
+  position: relative;
+}
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0.95rem;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: -0.4rem;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  pointer-events: none;
 }
 
 .check-row {
@@ -767,6 +929,13 @@ input[type='checkbox'] {
   font-size: 0.95rem;
   margin-top: 0.25rem;
 }
+.journey .name .flag {
+  display: inline-block;
+  vertical-align: -2px;
+  border-radius: 2px;
+  outline: 1px solid var(--border);
+  margin-right: 0.3rem;
+}
 .journey .place {
   font-size: 0.8rem;
   color: var(--muted);
@@ -895,11 +1064,353 @@ input[type='checkbox'] {
   text-align: left;
 }
 
+/* Accordions do Percurso (details/summary escritos no markdown do Sobre).
+   O corpo fica em sans (herda do body); só o summary é mono, como os títulos. */
+.prose details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+  margin: 0.8rem 0;
+}
+.prose details[open] {
+  border-color: var(--border-strong);
+  padding-bottom: 0.9rem;
+}
+.prose summary {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.prose summary::-webkit-details-marker { display: none; }
+.prose summary::before {
+  content: '▸';
+  color: var(--accent);
+  flex: none;
+}
+.prose details[open] > summary::before { content: '▾'; }
+.prose summary:hover { color: var(--accent); }
+.prose summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+.prose summary span {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+.prose details > *:not(summary) {
+  margin-left: 1.1rem;
+  margin-right: 1.1rem;
+}
+
 .post-meta {
   font-family: var(--mono);
   font-size: 0.8rem;
   color: var(--faint);
   margin-bottom: 2rem;
+}
+
+/* ---------- Honeypot (/honeypot) ---------- */
+
+.honeypot .stats-grid { margin-bottom: 1.2rem; }
+/* o atributo hidden tem de vencer o display:grid/flex das classes */
+.stats-grid[hidden], .table-scroll[hidden] { display: none; }
+.hp-fallback {
+  border: 1px dashed var(--accent-2);
+  border-radius: var(--radius);
+  background: rgba(240, 180, 92, 0.05);
+  padding: 1rem 1.2rem;
+  color: var(--accent-2);
+  font-size: 0.9rem;
+}
+.hp-table th { white-space: nowrap; }
+.hp-loading { color: var(--faint); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
+.hp-cc { color: var(--text); }
+.hp-path { color: var(--accent-2); }
+.hp-verdict { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
+
+/* ---------- Ticker SOC (topo da Segurança) ---------- */
+
+.ticker {
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise-2);
+  padding: 0.5rem 0;
+  margin-bottom: 1.4rem;
+}
+.ticker-track {
+  display: inline-flex;
+  gap: 0;
+  animation: ticker-slide 60s linear infinite;
+  will-change: transform;
+}
+.ticker:hover .ticker-track,
+.ticker:focus-within .ticker-track {
+  animation-play-state: paused;
+}
+.ticker .ti {
+  margin: 0 1.6rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.ticker .ti a { color: var(--muted); }
+.ticker .ti a:hover { color: var(--accent); }
+.ticker .tag { color: var(--danger); margin-right: 0.5rem; }
+.ticker .tag.k { color: var(--accent-2); }
+@keyframes ticker-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker { white-space: normal; }
+  .ticker-track { animation: none; flex-wrap: wrap; }
+}
+
+/* ---------- Mapa de tráfego hostil (/honeypot) ---------- */
+
+.hostmap { margin-top: 2rem; }
+.map-frame {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+  padding: 0.6rem;
+  overflow: hidden;
+}
+.map-svg { width: 100%; height: auto; display: block; }
+.map-svg #map-dots circle { fill: var(--border-strong); }
+.map-svg .src { fill: var(--bg-raise-2); stroke: var(--faint); stroke-width: 1; }
+.map-svg .arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.3;
+  opacity: 0.8;
+  stroke-dasharray: 6 5;
+  animation: map-flow 2.2s linear infinite;
+}
+.map-svg .arc.amber { stroke: var(--accent-2); opacity: 0.5; animation-duration: 3s; }
+.map-svg .map-dst { fill: var(--accent); }
+.map-svg .map-pulse {
+  fill: none;
+  stroke: var(--accent);
+  opacity: 0.6;
+  animation: map-pulse 1.8s ease-out infinite;
+}
+.map-svg .map-label { fill: var(--faint); font-size: 9px; font-family: var(--mono); }
+.map-svg .map-label.pt { fill: var(--accent); }
+@keyframes map-flow { to { stroke-dashoffset: -22; } }
+@keyframes map-pulse { from { r: 5; opacity: 0.7; } to { r: 16; opacity: 0; } }
+.map-legend {
+  display: flex;
+  gap: 1.1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.6rem 0.4rem 0.2rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--faint);
+}
+.map-legend .mk { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
+.map-legend .mk.g { background: var(--accent); }
+.map-legend .mk.a { background: var(--accent-2); }
+.map-legend .map-totals { margin-left: auto; }
+
+/* ---------- Self-scan (página Segurança) ---------- */
+
+.self-scan {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+  padding: 1.2rem 1.3rem;
+  margin: 1rem 0 1.4rem;
+}
+@media (min-width: 560px) {
+  .self-scan { grid-template-columns: 8rem 1fr; }
+}
+.scan-grade {
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-dim);
+  text-align: center;
+  padding: 1rem 0.6rem;
+  align-self: start;
+}
+.grade-badge {
+  font-family: var(--mono);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
+}
+.grade-badge[data-grade='mid'] { color: var(--accent-2); }
+.grade-badge[data-grade='bad'] { color: var(--danger); }
+.grade-cap {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+.scan-status { color: var(--muted); font-size: 0.82rem; margin: 0 0 0.6rem; }
+.hdrlist { font-size: 0.8rem; }
+.hdrlist div {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.hdrlist div:last-child { border-bottom: 0; }
+.hdrlist .ok { color: var(--accent); }
+.hdrlist .no { color: var(--danger); }
+.hdrlist code { background: none; border: 0; padding: 0; color: var(--muted); }
+.scan-foot {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+.scan-ts { font-size: 0.72rem; color: var(--faint); }
+.scan-links-intro { margin-top: 1.4rem; }
+
+/* ---------- Heatmap ATT&CK ---------- */
+
+.atk-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.3rem;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.4rem 0 1rem;
+}
+.atk-legend .sw {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  margin-right: 0.4rem;
+  vertical-align: -1px;
+  border: 1px solid var(--border-strong);
+}
+.atk-legend .sw.prod { background: var(--accent-dim); border-color: var(--accent); }
+.atk-legend .sw.exp { background: rgba(120, 200, 90, 0.12); border-color: #5f9e46; }
+.atk-legend .sw.off { background: var(--bg-raise-2); }
+.atk-legend .atk-count { margin-left: auto; color: var(--faint); }
+
+.atk-hint {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--faint);
+  margin: 0 0 0.6rem;
+}
+@media (min-width: 900px) {
+  .atk-hint { display: none; }
+}
+
+.atk-scroll {
+  overflow-x: auto;
+  padding-bottom: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+}
+.atk {
+  display: grid;
+  /* 14 táticas Enterprise do ATT&CK (número canónico). Colunas em CSS e não
+     inline — a CSP estrita bloqueia style="" (sem 'unsafe-inline'). */
+  grid-template-columns: repeat(14, minmax(9.5rem, 1fr));
+  gap: 6px;
+  padding: 12px;
+  min-width: max-content;
+}
+.atk-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.atk-tactic {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 0.2rem;
+  min-height: 2.4em;
+  line-height: 1.3;
+}
+.atk-cell {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 6px;
+  background: var(--bg-raise-2);
+  color: #4a5768;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+.atk-cell .atk-tid {
+  display: block;
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+.atk-cell.prod {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+.atk-cell.exp {
+  border-color: #5f9e46;
+  background: rgba(120, 200, 90, 0.08);
+  color: #9fd48a;
+}
+.atk-cell.prod, .atk-cell.exp { cursor: help; }
+.atk-cell.prod:focus-visible, .atk-cell.exp:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* Tooltip da técnica (CSS puro, revelado em hover/foco). */
+.atk-tip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  z-index: 5;
+  width: max-content;
+  max-width: 15rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+.atk-cell:hover .atk-tip,
+.atk-cell:focus .atk-tip,
+.atk-cell:focus-within .atk-tip {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ---------- Rodapé ---------- */
@@ -931,4 +1442,17 @@ input[type='checkbox'] {
   font-family: var(--mono);
   font-size: 0.85rem;
   color: var(--accent-2);
+}
+
+/* ---------- reduced-motion — overrides tardios ----------
+   Ficam no fim de propósito: as regras base de .net-bg e .map-svg são
+   declaradas depois do bloco reduced-motion do topo, por isso o override
+   tem de vir depois delas para ganhar a cascata (mesma especificidade). */
+@media (prefers-reduced-motion: reduce) {
+  /* topologia do hero: pulsos somem, nós "vivos" ficam acesos fixos */
+  .net-bg .pulse { animation: none; opacity: 0; }
+  .net-bg .node.live { animation: none; fill-opacity: 0.6; }
+  /* mapa de tráfego: arcos param (visíveis, sólidos), pulso some */
+  .map-svg .arc { animation: none; stroke-dasharray: none; }
+  .map-svg .map-pulse { animation: none; opacity: 0; }
 }

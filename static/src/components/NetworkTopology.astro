@@ -1,0 +1,46 @@
+---
+// Motivo assinatura do site: topologia de rede subtil em estilo mapa de
+// metro (arestas a 45°/90°, nós nas junções) — eco do percurso em redes de
+// transporte e infraestrutura crítica. Puramente decorativo: aria-hidden,
+// zero JS; estilos e animação vivem em global.css (.net-bg) e respeitam
+// prefers-reduced-motion. Só se usa no hero da home — o resto do site
+// mantém-se disciplinado.
+---
+
+<div class="net-bg" aria-hidden="true">
+  <svg viewBox="0 0 660 340" preserveAspectRatio="xMidYMid slice" focusable="false">
+    <!-- linhas base -->
+    <path class="edge" d="M-10 296 H120 L200 216 H420 L500 136 H670" />
+    <path class="edge" d="M-10 96 H90 L170 176 H310 L390 256 H670" />
+    <path class="edge" d="M210 -10 V60 L270 120 V230 L200 300 H-10" />
+    <!-- linhas de destaque -->
+    <path class="edge accent" d="M40 350 V240 L120 160 H300 L380 80 H560 V-10" />
+    <path class="edge amber" d="M610 350 L520 260 H360 L280 180 V60 L340 0" />
+    <!-- pulsos que percorrem as linhas (desligados em reduced-motion) -->
+    <path class="pulse" d="M40 350 V240 L120 160 H300 L380 80 H560 V-10" />
+    <path class="pulse p2" d="M-10 296 H120 L200 216 H420 L500 136 H670" />
+    <path class="pulse p3 amber" d="M610 350 L520 260 H360 L280 180 V60 L340 0" />
+    <!-- nós (estações/equipamentos) -->
+    <circle class="node" cx="120" cy="296" r="3.5" />
+    <circle class="node" cx="200" cy="216" r="3.5" />
+    <circle class="node" cx="500" cy="136" r="3.5" />
+    <circle class="node" cx="90" cy="96" r="3.5" />
+    <circle class="node" cx="170" cy="176" r="3.5" />
+    <circle class="node" cx="310" cy="176" r="3.5" />
+    <circle class="node" cx="390" cy="256" r="3.5" />
+    <circle class="node" cx="210" cy="60" r="3.5" />
+    <circle class="node" cx="270" cy="120" r="3.5" />
+    <circle class="node" cx="270" cy="230" r="3.5" />
+    <circle class="node" cx="200" cy="300" r="3.5" />
+    <circle class="node" cx="40" cy="240" r="3.5" />
+    <circle class="node" cx="120" cy="160" r="3.5" />
+    <circle class="node" cx="380" cy="80" r="3.5" />
+    <circle class="node" cx="560" cy="80" r="3.5" />
+    <circle class="node" cx="520" cy="260" r="3.5" />
+    <circle class="node" cx="280" cy="60" r="3.5" />
+    <!-- nós "vivos" -->
+    <circle class="node live" cx="300" cy="160" r="4" />
+    <circle class="node live b2" cx="420" cy="216" r="4" />
+    <circle class="node live b3" cx="280" cy="180" r="4" />
+  </svg>
+</div>

@@ -12,11 +12,13 @@ const jsStrings = { error: s.error, copy: s.copy, copied: s.copied };
 <div class="tool-panel" id="encoder-tool" data-strings={JSON.stringify(jsStrings)}>
   <div class="field">
     <label for="enc-mode">{s.mode}</label>
-    <select id="enc-mode">
-      <option value="base64" selected>Base64</option>
-      <option value="url">URL (percent-encoding)</option>
-      <option value="hex">Hex</option>
-    </select>
+    <div class="select-wrap">
+      <select id="enc-mode">
+        <option value="base64" selected>Base64</option>
+        <option value="url">URL (percent-encoding)</option>
+        <option value="hex">Hex</option>
+      </select>
+    </div>
   </div>
   <div class="field">
     <label for="enc-input">{s.inputLabel}</label>

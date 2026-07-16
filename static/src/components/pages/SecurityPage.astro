@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SelfScan from '../tools/SelfScan.astro';
+import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -19,6 +21,7 @@ const scanners = [
 ---
 
 <BaseLayout lang={lang} title={sec.metaTitle} altUrl={routes.security[other]} active="security">
+  <Ticker lang={lang} />
   <div class="page-head">
     <h1>{sec.title}</h1>
     <p class="intro">{sec.intro}</p>
@@ -71,11 +74,23 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-verify">{sec.verifyTitle}</h2>
     </div>
-    <p class="intro">{sec.verifyIntro}</p>
+    <p class="intro">{dict.selfscan.intro}</p>
+    <SelfScan lang={lang} />
+    <p class="intro scan-links-intro">{sec.verifyIntro}</p>
     <ul class="sec-links mono">
       {scanners.map((l) => (
         <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
       ))}
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-attack">
+    <div class="section-title">
+      <h2 id="h-attack">{sec.attackTitle}</h2>
+    </div>
+    <p>{sec.attackBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={routes.attack[lang]}>{sec.attackCta}</a></li>
     </ul>
   </section>
 </BaseLayout>

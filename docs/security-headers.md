@@ -9,15 +9,23 @@ configuração em qualquer servidor, para que migrar de Pages para VPS seja
 
 | Camada | Onde vive | Portável? |
 | --- | --- | --- |
-| **Content-Security-Policy** | `<meta http-equiv>` gerado pelo Astro em cada página (hashes SHA-256 por script/estilo) — ver `static/astro.config.mjs` | ✅ Automática — está dentro do HTML, independente do servidor. Nada a configurar na VPS. |
+| **CSP em `<meta>`** (por página) | `<meta http-equiv>` gerado pelo Astro em cada página (hashes SHA-256 por script/estilo) — ver `static/astro.config.mjs` | ✅ Automática — está dentro do HTML, independente do servidor. Nada a configurar na VPS. |
+| **CSP em header** (site-wide) | Gerada no build por `static/scripts/csp-headers.mjs`: união dos hashes de todas as páginas + `frame-ancestors 'none'`, escrita em `dist/_headers` | ⚠️ Na VPS, copiar o valor gerado em `dist/_headers` para a config do servidor (regenera a cada build). |
 | **Restantes cabeçalhos** (HSTS, nosniff, anti-clickjacking, Referrer-Policy, Permissions-Policy, COOP/CORP) | `static/public/_headers` (lido nativamente pelo Cloudflare Pages) | ⚠️ Precisa de ser replicado na config do servidor na VPS — ver abaixo. |
 
-> **Nota de design:** entregar a CSP por `<meta>` em vez de por cabeçalho torna-a
-> imune à migração — a política viaja no próprio HTML. O preço é não poder usar
-> `frame-ancestors` (inválido em `<meta>`), pelo que o anti-clickjacking fica a
-> cargo do `X-Frame-Options: DENY` na camada de cabeçalhos. Numa VPS podes, se
-> quiseres, promover isto a um `frame-ancestors 'none'` num cabeçalho CSP real
-> (ver nota no fim).
+> **Nota de design:** a CSP tem duas camadas deliberadas. A `<meta>` por página
+> é a mais estrita (só os hashes daquela página) e viaja no HTML — imune a
+> migrações. O header é a união de todas as páginas e acrescenta
+> `frame-ancestors 'none'` (inválido em `<meta>`); é a única camada que
+> scanners externos (securityheaders.com, Mozilla Observatory) conseguem
+> avaliar. O browser aplica a **interseção** das duas, por isso a política
+> efetiva por página continua a ser a estrita. O `X-Frame-Options: DENY`
+> mantém-se para browsers antigos.
+>
+> A presença destes cabeçalhos em produção é verificada automaticamente pelo
+> workflow `Headers` (`.github/workflows/headers.yml`) contra a lista
+> versionada em `.github/expected-headers.json` — após cada deploy e num cron
+> diário.
 
 A fonte de verdade dos valores é sempre `static/public/_headers`. Se o alterares,
 atualiza os blocos abaixo em espelho.

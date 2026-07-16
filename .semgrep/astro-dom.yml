@@ -1,0 +1,35 @@
+# Regras próprias para sinks de DOM XSS. Correm offline (parser nativo do
+# Semgrep, sem registo), por isso valem como rede de segurança local além
+# das regras públicas p/typescript e p/javascript que correm no CI.
+# Convenção do projeto: DOM construído com textContent/createElement/
+# replaceChildren, nunca com HTML em string.
+rules:
+  - id: astro-no-dom-xss-sinks
+    languages: [generic]
+    severity: ERROR
+    message: >-
+      Sink de DOM XSS num componente Astro. Constrói o DOM com
+      textContent/createElement/replaceChildren em vez de HTML em string —
+      é a única forma de manter a garantia anti-XSS da CSP.
+    paths:
+      include:
+        - '*.astro'
+    patterns:
+      - pattern-either:
+          - pattern: .innerHTML = ...
+          - pattern: .outerHTML = ...
+          - pattern: document.write(...)
+          - pattern: .insertAdjacentHTML(...)
+
+  - id: js-no-dom-xss-sinks
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >-
+      Sink de DOM XSS. Usa textContent/createElement/replaceChildren em vez
+      de atribuir HTML em string (defesa real contra XSS, alinhada com a CSP).
+    patterns:
+      - pattern-either:
+          - pattern: $EL.innerHTML = ...
+          - pattern: $EL.outerHTML = ...
+          - pattern: document.write(...)
+          - pattern: $EL.insertAdjacentHTML(...)

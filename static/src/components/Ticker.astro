@@ -1,0 +1,52 @@
+---
+import { API_BASE, type Lang } from '../config';
+import { t } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const tk = t(lang).ticker;
+---
+
+<!-- Ambiente, não protagonista: começa escondido e só aparece com dados. -->
+<div class="ticker" id="soc-ticker" data-api={API_BASE} aria-label={tk.label} hidden>
+  <div class="ticker-track" id="ticker-track" aria-live="off"></div>
+</div>
+
+<script>
+  const root = document.getElementById('soc-ticker')!;
+  const base = root.dataset.api ?? '';
+  const track = document.getElementById('ticker-track')!;
+
+  // https://nvd.nist.gov/vuln/detail/CVE-...  (id já validado no Worker)
+  function itemNode(item: any) {
+    const wrap = document.createElement('span');
+    wrap.className = 'ti';
+    const tag = document.createElement('span');
+    tag.className = item.source === 'kev' ? 'tag k' : 'tag';
+    tag.textContent = `[${item.severity || (item.source === 'kev' ? 'KEV' : 'CVE')}]`;
+    const link = document.createElement('a');
+    link.href = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(item.id)}`;
+    link.rel = 'noopener';
+    link.textContent = item.title ? `${item.id} · ${item.title}` : item.id;
+    wrap.append(tag, document.createTextNode(' '), link);
+    return wrap;
+  }
+
+  (async () => {
+    try {
+      const res = await fetch(`${base}/api/ticker`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const items = Array.isArray(data.items) ? data.items : [];
+      if (items.length === 0) return; // fica escondido — sem ruído
+      // duas cópias para o loop contínuo (translateX -50%)
+      for (let copy = 0; copy < 2; copy += 1) {
+        for (const item of items) track.append(itemNode(item));
+      }
+      root.hidden = false;
+    } catch {
+      // sem Worker: o ticker simplesmente não aparece
+    }
+  })();
+</script>

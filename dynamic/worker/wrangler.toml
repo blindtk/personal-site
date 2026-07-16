@@ -1,0 +1,45 @@
+# Cloudflare Worker das features de segurança. Ver README.md.
+name = "personal-site-worker"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Um namespace KV. Cria-o e cola o id:
+#   npx wrangler kv namespace create HONEYPOT
+#   npx wrangler kv namespace create HONEYPOT --preview
+[[kv_namespaces]]
+binding = "KV"
+id = "SET-ME-production-namespace-id"
+preview_id = "SET-ME-preview-namespace-id"
+
+[vars]
+# Origens autorizadas a chamar a API por CORS (só necessário quando o
+# frontend está noutra origem, ex.: *.pages.dev a chamar *.workers.dev).
+# No deploy final (Worker em rotas do próprio domínio) fica vazio — as
+# chamadas são same-origin e a CSP connect-src 'self' basta.
+ALLOWED_ORIGINS = ""
+# Alvo do self-scan (o próprio site).
+SCAN_TARGET = "https://danielmala.co/"
+# Marca temporal do deploy (epoch ms) para "tempo até 1.º scan". Opcional:
+# se vazio, usa a 1.ª tentativa registada. Define no deploy, ex.:
+#   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
+DEPLOY_TS = ""
+
+# Secrets (NÃO ficam aqui — o gitleaks do CI apanha qualquer deslize):
+#   npx wrangler secret put RATE_SALT   # segredo p/ rotação do hash de rate limit
+#   npx wrangler secret put NVD_API_KEY # opcional, sobe o rate limit do NVD
+
+# --- Rotas no domínio (descomentar quando o domínio estiver na Cloudflare) ---
+# Faz o Worker interceptar os paths-isco e a API no próprio site, mantendo
+# a CSP connect-src 'self'. O resto do site continua servido pelo Pages.
+# routes = [
+#   { pattern = "danielmala.co/api/*", zone_name = "danielmala.co" },
+#   { pattern = "danielmala.co/wp-login.php", zone_name = "danielmala.co" },
+#   { pattern = "danielmala.co/.env", zone_name = "danielmala.co" },
+#   { pattern = "danielmala.co/admin", zone_name = "danielmala.co" },
+#   { pattern = "danielmala.co/phpmyadmin/*", zone_name = "danielmala.co" },
+#   { pattern = "danielmala.co/.git/config", zone_name = "danielmala.co" },
+# ]
+
+# --- Cron opcional para aquecer caches (a agregação do honeypot é on-read) ---
+# [triggers]
+# crons = ["*/30 * * * *"]

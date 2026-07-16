@@ -1,12 +1,16 @@
 # personal-site
 
+[![CI](https://github.com/blindtk/personal-site/actions/workflows/ci.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/ci.yml)
+[![Security](https://github.com/blindtk/personal-site/actions/workflows/security.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security.yml)
+[![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
+
 Site pessoal de Daniel Malaco — monorepo com três partes:
 
 | Pasta | O que é | Estado |
 | --- | --- | --- |
 | `content/` | Todo o conteúdo em markdown (posts, sobre, projetos, links) — **a fonte única de verdade** | ✅ ativo |
 | `static/` | O site estático (Astro): blog, ferramentas client-side, páginas | ✅ ativo |
-| `dynamic/` | Futura app com backend (DNS lookup, whois, …) | 📝 só planeamento — ver [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `dynamic/` | Backend em Cloudflare Worker: honeypot, mapa de tráfego hostil, self-scan e ticker SOC (`dynamic/worker/`); DNS/whois ainda planeados | ⚙️ primeiro código a bordo — ver [`dynamic/worker/README.md`](dynamic/worker/README.md) e [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 | `design/` | Mockups das 7 direções de design exploradas (a nº 4 foi a escolhida) | 🎨 referência |
 
 O site é bilingue: PT em `/` e EN em `/en/`.
@@ -92,6 +96,47 @@ Se preferires alojar na tua VPS com a Cloudflare à frente (DNS + proxy):
 
 A opção Pages é mais simples (zero manutenção); a VPS dá jeito quando o
 `dynamic/` existir e quiseres tudo na mesma máquina — decide-se nessa altura.
+
+## Segurança do pipeline
+
+O repositório trata a própria cadeia de build como superfície de ataque.
+Cada push/PR passa por:
+
+| Verificação | Onde | O que garante |
+| --- | --- | --- |
+| **Build + `npm audit`** | `ci.yml` | O site compila sem erros e sem advisories high/critical nas dependências. |
+| **OSV-Scanner** | `security.yml` | O `package-lock.json` não tem vulnerabilidades conhecidas (base [OSV.dev](https://osv.dev), inclui GHSA); resultados também em *Security → Code scanning*. |
+| **gitleaks** | `security.yml` + hook local | Nenhum segredo (tokens Cloudflare, chaves) entra na história do git. Localmente: `pipx install pre-commit && pre-commit install`. |
+| **Semgrep** | `security.yml` | SAST nas regras `p/typescript`/`p/javascript` + regras próprias para sinks de DOM XSS nos componentes `.astro` (`.semgrep/`). |
+| **zizmor** | `security.yml` | Os próprios workflows são auditados: pins em falta, permissions excessivas, injeção de template, credenciais persistidas. |
+| **Headers em produção** | `headers.yml` | Após cada deploy (e num cron diário), a produção é verificada contra `.github/expected-headers.json` — se um header de segurança faltar ou regredir, o workflow falha. |
+
+Práticas transversais: todas as actions **pinadas por commit SHA** (o
+[Renovate](renovate.json5) mantém os digests e agrupa atualizações num PR
+semanal), `permissions: {}` por omissão com o mínimo por job, e
+`persist-credentials: false` em todos os checkouts. A CSP é gerada no build
+em duas camadas (`<meta>` estrita por página + header site-wide com
+`frame-ancestors` — ver [docs/security-headers.md](docs/security-headers.md)).
+O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
+[docs/dns-tls.md](docs/dns-tls.md).
+
+## Features de segurança (tema do site)
+
+Além das ferramentas client-side, o site tem cinco vitrines de cibersegurança:
+
+| Feature | Onde | Depende do Worker? |
+| --- | --- | --- |
+| **Heatmap MITRE ATT&CK** | `/attack` | Não — 100% estático (`content/attack.json`) |
+| **Self-scan de cabeçalhos** | página Segurança | Sim — `/api/scan` |
+| **Ticker SOC** (CISA KEV + NVD) | topo da Segurança | Sim — `/api/ticker` |
+| **Painel do honeypot** | `/honeypot` | Sim — `/api/honeypot` |
+| **Mapa de tráfego hostil** | `/honeypot` | Sim — `/api/map` |
+
+As quatro que dependem do Worker degradam com graça quando ele não está
+publicado (mostram uma nota em vez de partir). O backend, os endpoints, a
+privacidade (nenhum IP armazenado) e o deploy estão em
+[`dynamic/worker/README.md`](dynamic/worker/README.md). O heatmap ATT&CK
+funciona sempre, por ser estático.
 
 ## Estrutura do código
 

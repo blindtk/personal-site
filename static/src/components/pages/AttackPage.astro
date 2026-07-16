@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+// content/ é a fonte de verdade; JSON importado diretamente (ver CLAUDE.md).
+import attack from '../../../../content/attack.json';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const a = dict.attack;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const techniques = attack.tactics.flatMap((tactic) => tactic.techniques);
+const prod = techniques.filter((tech) => tech.level === 'prod').length;
+const exp = techniques.filter((tech) => tech.level === 'exp').length;
+---
+
+<BaseLayout lang={lang} title={a.metaTitle} altUrl={routes.attack[other]}>
+  <div class="page-head">
+    <h1>{a.title}</h1>
+    <p class="intro">{a.intro}</p>
+  </div>
+
+  <div class="atk-legend" role="list">
+    <span role="listitem"><i class="sw prod" aria-hidden="true"></i>{a.legendProd}</span>
+    <span role="listitem"><i class="sw exp" aria-hidden="true"></i>{a.legendExp}</span>
+    <span role="listitem"><i class="sw off" aria-hidden="true"></i>{a.legendOff}</span>
+    <span role="listitem" class="atk-count">{prod + exp} {a.countsLabel} · {prod} prod · {exp} lab</span>
+  </div>
+
+  <p class="atk-hint" aria-hidden="true">{a.scrollHint}</p>
+
+  <div class="atk-scroll">
+    <div class="atk">
+      {attack.tactics.map((tactic) => (
+        <div class="atk-col">
+          <h2 class="atk-tactic">{tactic.name}</h2>
+          {tactic.techniques.map((tech) => (
+            tech.level ? (
+              <div
+                class={`atk-cell ${tech.level}`}
+                tabindex="0"
+                aria-label={`${tech.id} ${tech.name} — ${a.coveredBy}: ${tech.by[lang]}`}
+              >
+                <span class="atk-tid mono">{tech.id}</span>
+                <span class="atk-tname">{tech.name}</span>
+                <span class="atk-tip" role="tooltip">{a.coveredBy}: {tech.by[lang]}</span>
+              </div>
+            ) : (
+              <div class="atk-cell off" aria-label={`${tech.id} ${tech.name} — ${a.notCovered}`}>
+                <span class="atk-tid mono">{tech.id}</span>
+                <span class="atk-tname">{tech.name}</span>
+              </div>
+            )
+          ))}
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

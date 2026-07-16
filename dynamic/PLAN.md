@@ -1,8 +1,10 @@
 # dynamic/ — plano da app dinâmica ("Lab")
 
-> **Estado: ainda não iniciado.** Esta pasta só contém este plano.
-> O site estático (`static/`) já tem a página `/lab/` ("em construção")
-> que apontará para esta app quando existir.
+> **Estado: primeiro código a bordo.** `dynamic/worker/` já contém o Worker
+> das features de segurança do site (honeypot, mapa de tráfego hostil,
+> self-scan de cabeçalhos e ticker SOC) — ver `dynamic/worker/README.md`.
+> As ferramentas de rede abaixo (DNS/whois/…) continuam por fazer; a página
+> `/lab/` ("em construção") apontará para elas quando existirem.
 
 ## O que vai ser
 
