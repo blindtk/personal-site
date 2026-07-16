@@ -11,7 +11,7 @@ configuração em qualquer servidor, para que migrar de Pages para VPS seja
 | --- | --- | --- |
 | **CSP em `<meta>`** (por página) | `<meta http-equiv>` gerado pelo Astro em cada página (hashes SHA-256 por script/estilo) — ver `static/astro.config.mjs` | ✅ Automática — está dentro do HTML, independente do servidor. Nada a configurar na VPS. |
 | **CSP em header** (site-wide) | Gerada no build por `static/scripts/csp-headers.mjs`: união dos hashes de todas as páginas + `frame-ancestors 'none'`, escrita em `dist/_headers` | ⚠️ Na VPS, copiar o valor gerado em `dist/_headers` para a config do servidor (regenera a cada build). |
-| **Restantes cabeçalhos** (HSTS, nosniff, anti-clickjacking, Referrer-Policy, Permissions-Policy, COOP/CORP) | `static/public/_headers` (lido nativamente pelo Cloudflare Pages) | ⚠️ Precisa de ser replicado na config do servidor na VPS — ver abaixo. |
+| **Restantes cabeçalhos** (HSTS, nosniff, anti-clickjacking, Referrer-Policy, Permissions-Policy, COOP/CORP/COEP) | `static/public/_headers` (lido nativamente pelo Cloudflare Pages) | ⚠️ Precisa de ser replicado na config do servidor na VPS — ver abaixo. |
 
 > **Nota de design:** a CSP tem duas camadas deliberadas. A `<meta>` por página
 > é a mais estrita (só os hashes daquela página) e viaja no HTML — imune a
@@ -40,7 +40,13 @@ Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Resource-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
 ```
+
+> **COEP `require-corp`:** todo o site é same-origin (CSS/JS/fontes/imagens),
+> por isso não quebra nada; a par do COOP ativa *cross-origin isolation*. As
+> imagens OG são cross-origin mas só as buscam **outros** sites (previews),
+> nunca as nossas páginas — daí o `CORP: cross-origin` específico delas.
 
 Exceção das imagens Open Graph (`/og-image.png`, `/og-image-en.png`), que
 precisam de ser carregáveis por outras origens (pré-visualizações de
@@ -74,6 +80,7 @@ server {
     add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()" always;
     add_header Cross-Origin-Opener-Policy "same-origin" always;
     add_header Cross-Origin-Resource-Policy "same-origin" always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
 
     # security.txt e restante conteúdo estático servem-se tal-e-qual.
     location / {
@@ -117,6 +124,7 @@ danielmala.co {
         Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
         Cross-Origin-Opener-Policy "same-origin"
         Cross-Origin-Resource-Policy "same-origin"
+        Cross-Origin-Embedder-Policy "require-corp"
         -Server                 # remove o cabeçalho Server (menos fingerprinting)
     }
 

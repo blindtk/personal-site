@@ -116,7 +116,9 @@ Práticas transversais: todas as actions **pinadas por commit SHA** (o
 semanal), `permissions: {}` por omissão com o mínimo por job, e
 `persist-credentials: false` em todos os checkouts. A CSP é gerada no build
 em duas camadas (`<meta>` estrita por página + header site-wide com
-`frame-ancestors` — ver [docs/security-headers.md](docs/security-headers.md)).
+`frame-ancestors` — ver [docs/security-headers.md](docs/security-headers.md)),
+a partir de um único array de diretivas; um teste no `ci.yml`
+(`check-csp-consistency.mjs`) falha se o header e a `<meta>` divergirem.
 O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
 [docs/dns-tls.md](docs/dns-tls.md).
 

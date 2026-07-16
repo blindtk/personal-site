@@ -54,6 +54,7 @@ directives.set('frame-ancestors', new Set(["'none'"]));
 const ORDER = [
   'default-src', 'script-src', 'style-src', 'img-src', 'font-src',
   'connect-src', 'object-src', 'base-uri', 'form-action', 'frame-ancestors',
+  'require-trusted-types-for', 'trusted-types',
 ];
 const names = [
   ...ORDER.filter((n) => directives.has(n)),
