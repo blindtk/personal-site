@@ -36,7 +36,25 @@ export async function clientHash(ip, dailySalt) {
   return [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** Salt do dia: prefixo secreto (env) + data UTC. Roda à meia-noite UTC. */
+/**
+ * Salt do dia: prefixo secreto (env RATE_SALT) + data UTC. A componente de
+ * data faz o salt rodar automaticamente à meia-noite UTC, o que:
+ *   · impede reidentificar o mesmo IP entre dias a partir da chave de
+ *     rate limit (a chave `rl:<rota>:<hash>` muda todos os dias), e
+ *   · reinicia as contagens acumuladas de forma limpa.
+ * Como a chave inclui a rota (ver index: `rl:${route}:${id}`), o limite é
+ * por IP+rota — cada rota tem o seu próprio balde por cliente.
+ *
+ * Rotação do SEGREDO (RATE_SALT), separada da rotação diária automática:
+ * trocar o segredo com `wrangler secret put RATE_SALT` invalida de imediato
+ * TODOS os rate-limits acumulados (o hash deixa de bater). Isto é
+ * intencional — é o botão de pânico se o esquema de limites for abusado.
+ * Cadência recomendada: SEMANAL (ex.: cron/rotina de segurança à segunda).
+ * Passos manuais no dia do deploy real (não fazer aqui): gerar string
+ * longa aleatória, `wrangler secret put RATE_SALT`, e agendar o lembrete
+ * semanal. O valor por omissão 'rotate-me' só serve em dev — em produção o
+ * segredo TEM de estar definido.
+ */
 export function dailySalt(secret, now = Date.now()) {
   const day = new Date(now).toISOString().slice(0, 10);
   return `${secret ?? 'rotate-me'}:${day}`;

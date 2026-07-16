@@ -10,8 +10,9 @@
 import { emptyBucket, addEvent, honeypotStats, mapData } from './lib/aggregate.js';
 import { gradeFromHeaders, SECURITY_HEADERS } from './lib/scan.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
+import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
-import { clampInt } from './lib/sanitize.js';
+import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 
 // Paths que só existem para apanhar scanners. Devolvem 404 como qualquer
 // path inexistente — a diferença é que registamos a tentativa.
@@ -19,6 +20,20 @@ const DECOYS = new Set(['/wp-login.php', '/.env', '/admin', '/phpmyadmin/', '/.g
 
 const HOUR_MS = 3600_000;
 const DAY_MS = 86400_000;
+
+// Anonimização: os eventos do honeypot guardam o timestamp arredondado a
+// esta janela (5 min), para não permitir correlação por instante preciso.
+const ANON_WINDOW_MS = 5 * 60_000;
+
+// Cap global de escritas do honeypot por janela: limita custo/abuso se
+// alguém martelar os paths-isco. Ver lib/kvcap.js. Generoso para tráfego
+// legítimo de scanners, mas põe um teto duro (max eventos → ~4×max escritas
+// de bucket por janela).
+const HONEYPOT_WRITE_CAP = { windowMs: HOUR_MS, max: 500 };
+
+// Timeout para fetches a montante (self-scan) — não deixar um alvo lento
+// pendurar o pedido.
+const UPSTREAM_TIMEOUT_MS = 5000;
 
 // ---------- helpers de tempo/KV ----------
 
@@ -45,30 +60,43 @@ async function readBuckets(env, now) {
 // ---------- honeypot: escrita ----------
 
 async function recordHoneypot(env, request, path, now) {
-  const country = request.headers.get('cf-ipcountry') || request.cf?.country || 'XX';
-  const asn = typeof request.cf?.asn === 'number' ? request.cf.asn : null;
-  const event = { ts: now, country, asn, path };
+  // Só metadados grosseiros, cada campo validado antes de persistir. NUNCA
+  // o IP: o cf-connecting-ip não é lido aqui de todo (só a lib de rate
+  // limit o vê, e apenas como hash salteado). O timestamp é arredondado a
+  // ANON_WINDOW_MS para não permitir correlação por instante preciso.
+  const country = normalizeCountry(request.headers.get('cf-ipcountry') || request.cf?.country);
+  const asn = normalizeAsn(request.cf?.asn);
+  const ts = floorToWindow(now, ANON_WINDOW_MS);
+  const event = { ts, country, asn, path };
 
-  const [recent, hBucket, dBucket, meta] = await Promise.all([
+  const capKey = `wcap:${hourKey(now)}`;
+  const [recent, hBucket, dBucket, meta, capPrev] = await Promise.all([
     getJSON(env, 'recent', []),
     getJSON(env, hourKey(now), emptyBucket()),
     getJSON(env, dayKey(now), emptyBucket()),
     getJSON(env, 'meta', {}),
+    getJSON(env, capKey),
   ]);
+
+  // Cap de escritas por janela: passado o teto, descarta o evento (o
+  // pedido já devolveu 404 na mesma) para não inflacionar o custo do KV.
+  const { allowed, state: capState } = underCap(capPrev, { now, ...HONEYPOT_WRITE_CAP });
+  if (!allowed) return;
 
   const nextRecent = [event, ...recent].slice(0, 30);
   addEvent(hBucket, event);
   addEvent(dBucket, event);
 
   // deployTs vem de var no deploy; firstScanTs = 1.ª tentativa alguma vez vista.
-  const deployTs = meta.deployTs ?? clampInt(env.DEPLOY_TS, 0, Number.MAX_SAFE_INTEGER, now);
-  const nextMeta = { deployTs, firstScanTs: meta.firstScanTs ?? now };
+  const deployTs = meta.deployTs ?? clampInt(env.DEPLOY_TS, 0, Number.MAX_SAFE_INTEGER, ts);
+  const nextMeta = { deployTs, firstScanTs: meta.firstScanTs ?? ts };
 
   await Promise.all([
     env.KV.put('recent', JSON.stringify(nextRecent)),
     env.KV.put(hourKey(now), JSON.stringify(hBucket), { expirationTtl: 2 * 86400 }),
     env.KV.put(dayKey(now), JSON.stringify(dBucket), { expirationTtl: 9 * 86400 }),
     env.KV.put('meta', JSON.stringify(nextMeta)),
+    env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(HONEYPOT_WRITE_CAP.windowMs / 1000) + 60 }),
   ]);
 }
 
@@ -88,10 +116,14 @@ async function cached(env, key, ttlSec, producer) {
 // ---------- self-scan ----------
 
 async function runScan(env) {
+  // Fetch direto ao próprio site + parsing dos seus cabeçalhos — sem
+  // scraping de terceiros (securityheaders.com), portanto imune a mudanças
+  // de HTML deles. Timeout para não pendurar o pedido se o alvo demorar.
   const target = env.SCAN_TARGET || 'https://danielmala.co/';
   const res = await fetch(target, {
     redirect: 'follow',
     headers: { 'user-agent': 'personal-site-worker (self-scan)' },
+    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
   const get = (name) => res.headers.get(name);
   const graded = gradeFromHeaders(get);
@@ -150,7 +182,13 @@ export default {
 
     // endpoints-isco: registar (em background) e devolver 404 seco
     if (DECOYS.has(path)) {
-      ctx.waitUntil(recordHoneypot(env, request, path, Date.now()).catch(() => {}));
+      ctx.waitUntil(
+        // Falha de escrita loga-se server-side (sem IP: recordHoneypot não o
+        // vê) e nunca chega ao cliente — a resposta é sempre o mesmo 404.
+        recordHoneypot(env, request, path, Date.now()).catch((err) =>
+          console.error('honeypot_write_failed', path, err?.message ?? String(err)),
+        ),
+      );
       return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
     }
 
@@ -206,6 +244,10 @@ export default {
         return json(data, request, env, { maxAge: 1800 });
       }
     } catch (err) {
+      // Detalhe (stack) só nos logs do Worker — server-side. O cliente
+      // recebe um erro genérico, sem stack, sem path interno, sem detalhes
+      // do KV. `path` é seguro (não contém IP nem segredos).
+      console.error('request_failed', path, err?.stack ?? err?.message ?? String(err));
       return json({ error: 'upstream_error' }, request, env, { status: 502 });
     }
 
