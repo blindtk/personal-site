@@ -1,17 +1,17 @@
 {
   "groups": ["track", "nse", "product", "blueteam"],
   "items": [
-    { "name": "FCSS in Cloud Security", "full": "Fortinet Certified Solution Specialist Cloud Security", "issuer": "Fortinet", "group": "track", "expires": "2026-09-29" },
-    { "name": "FCP Secure Networking", "full": "Fortinet Certified Professional Secure Networking", "issuer": "Fortinet", "group": "track", "expires": "2026-09-08" },
-    { "name": "FCP Security Operations", "full": "Fortinet Certified Professional Security Operations", "issuer": "Fortinet", "group": "track", "expires": "2025-09-08" },
-    { "name": "NSE 7 — Cloud Security", "full": "Fortinet NSE 7 Certified in Cloud Security", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29" },
-    { "name": "NSE 6 — Secure Networking", "full": "Fortinet NSE 6 Certified in Secure Networking", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-08" },
-    { "name": "NSE 4 — FortiOS", "full": "Fortinet NSE 4 Certified in FortiOS", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29" },
-    { "name": "Cloud Security 7.2 Architect", "full": "Fortinet Cloud Security 7.2 Architect", "issuer": "Fortinet", "group": "product", "issued": "2024-09-29" },
-    { "name": "FortiAnalyzer 7.4 Administrator", "full": "Fortinet FortiAnalyzer 7.4 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-09-08" },
-    { "name": "FortiSIEM 6.3 Administrator", "full": "Fortinet FortiSIEM 6.3 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-04-04" },
-    { "name": "FortiEDR 5.0 Administrator", "full": "Fortinet FortiEDR 5.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2023-09-08" },
-    { "name": "FortiGate 7.0 Administrator", "full": "Fortinet FortiGate 7.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2022-10-22" },
-    { "name": "Certified CyberDefender — Level 2 (CCDL2)", "full": "Certified CyberDefender Level 2 (CCDL2)", "issuer": "CyberDefenders", "group": "blueteam", "issued": "2024-03-02" }
+    { "name": "FCSS in Cloud Security", "full": "Fortinet Certified Solution Specialist Cloud Security", "issuer": "Fortinet", "group": "track", "expires": "2026-09-29", "url": "https://www.credly.com/badges/f38c5c9e-fd53-4868-a908-eab10b12c7b4" },
+    { "name": "FCP Secure Networking", "full": "Fortinet Certified Professional Secure Networking", "issuer": "Fortinet", "group": "track", "expires": "2026-09-08", "url": "https://www.credly.com/badges/a3b85495-17fa-4238-bfb3-f0d7a6820d12" },
+    { "name": "FCP Security Operations", "full": "Fortinet Certified Professional Security Operations", "issuer": "Fortinet", "group": "track", "expires": "2025-09-08", "url": "https://www.credly.com/badges/9864cc71-2862-4158-887d-6f5189ad8b22" },
+    { "name": "NSE 7 — Cloud Security", "full": "Fortinet NSE 7 Certified in Cloud Security", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29", "url": "https://www.credly.com/badges/1481a54b-d723-4282-80b0-24328d1e7e77" },
+    { "name": "NSE 6 — Secure Networking", "full": "Fortinet NSE 6 Certified in Secure Networking", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-08", "url": "https://www.credly.com/badges/9aa2fba2-0c49-4644-a37e-19e0ed129866" },
+    { "name": "NSE 4 — FortiOS", "full": "Fortinet NSE 4 Certified in FortiOS", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29", "url": "https://www.credly.com/badges/33660b5d-fb63-477d-8fd8-b6f1e246fcd7" },
+    { "name": "Cloud Security 7.2 Architect", "full": "Fortinet Cloud Security 7.2 Architect", "issuer": "Fortinet", "group": "product", "issued": "2024-09-29", "url": "https://www.credly.com/badges/434eb86b-bded-4a67-8165-bd1a7aa4903c" },
+    { "name": "FortiAnalyzer 7.4 Administrator", "full": "Fortinet FortiAnalyzer 7.4 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-09-08", "url": "https://www.credly.com/badges/0e243ba1-71e8-474e-9d75-e3f75d6276bc" },
+    { "name": "FortiSIEM 6.3 Administrator", "full": "Fortinet FortiSIEM 6.3 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2024-04-04", "url": "https://www.credly.com/badges/20681ad4-c27d-4ae1-af68-dbd3a0e61336" },
+    { "name": "FortiEDR 5.0 Administrator", "full": "Fortinet FortiEDR 5.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2023-09-08", "url": "https://www.credly.com/badges/a3a29972-3ad5-436b-8981-65d9e69ad316" },
+    { "name": "FortiGate 7.0 Administrator", "full": "Fortinet FortiGate 7.0 Administrator", "issuer": "Fortinet", "group": "product", "issued": "2022-10-22", "url": "https://www.credly.com/badges/3bb6b8cb-77f3-462d-9de4-8586528ba5c7" },
+    { "name": "Certified CyberDefender — Level 2 (CCDL2)", "full": "Certified CyberDefender Level 2 (CCDL2)", "issuer": "CyberDefenders", "group": "blueteam", "issued": "2024-03-02", "url": "https://www.credly.com/badges/a04d97e6-995b-4099-8387-873ef9abe7ec" }
   ]
 }

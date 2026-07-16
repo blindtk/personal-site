@@ -13,7 +13,7 @@ const dict = t(lang);
 const c = dict.certs;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
-type Cert = { name: string; full: string; issuer: string; group: string; expires?: string; issued?: string };
+type Cert = { name: string; full: string; issuer: string; group: string; expires?: string; issued?: string; url?: string };
 
 const monthFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-US', { month: 'short', year: 'numeric' });
 const fmt = (iso: string) => monthFmt.format(new Date(`${iso}T00:00:00Z`));
@@ -63,7 +63,11 @@ const groups = certs.groups
               return (
                 <tr>
                   <td>
-                    <span class="cert-name">{item.name}</span>
+                    {item.url ? (
+                      <a class="cert-name" href={item.url} rel="noopener">{item.name}</a>
+                    ) : (
+                      <span class="cert-name">{item.name}</span>
+                    )}
                     <span class="cert-full">{item.full}</span>
                   </td>
                   <td class="mono cert-issuer">{item.issuer}</td>
@@ -94,6 +98,8 @@ const groups = certs.groups
     overflow-wrap: anywhere;
   }
   .cert-name { display: block; font-weight: 600; }
+  a.cert-name { color: var(--accent); text-decoration: none; }
+  a.cert-name:hover { text-decoration: underline; }
   .cert-full {
     display: block;
     font-size: 0.8rem;
