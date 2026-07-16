@@ -1,9 +1,11 @@
 // Testes da lógica pura do Worker (node --test, sem rede nem Cloudflare).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 import {
-  clampInt, escapeHtml, sanitizeText, normalizeCveId, normalizeTickerItem,
+  clampInt, escapeHtml, sanitizeText, normalizeCveId, normalizeTechniques, normalizeTickerItem,
   normalizeCountry, normalizeAsn, floorToWindow,
 } from '../src/lib/sanitize.js';
 import {
@@ -13,6 +15,7 @@ import { gradeFromHeaders } from '../src/lib/scan.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
 import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
+import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import worker from '../src/index.js';
 
 test('clampInt', () => {
@@ -41,9 +44,41 @@ test('normalizeCveId valida o formato', () => {
 test('normalizeTickerItem rejeita sem CVE e sanitiza', () => {
   assert.equal(normalizeTickerItem({ id: 'x' }), null);
   assert.deepEqual(
-    normalizeTickerItem({ id: 'CVE-2026-0891', source: 'nvd', severity: 'CRIT 9.8', title: 'Struts <x> RCE' }),
-    { id: 'CVE-2026-0891', source: 'nvd', severity: 'CRIT 9.8', title: 'Struts x RCE' },
+    normalizeTickerItem({
+      id: 'CVE-2026-0891', source: 'nvd', severity: 'CRIT 9.8', title: 'Struts <x> RCE',
+      techniques: ['T1190', 'bad', 'T1190'],
+    }),
+    { id: 'CVE-2026-0891', source: 'nvd', severity: 'CRIT 9.8', title: 'Struts x RCE', techniques: ['T1190'] },
   );
+});
+
+test('normalizeTechniques valida IDs e remove repetições', () => {
+  assert.deepEqual(normalizeTechniques(['T1190', 'T1592', 'T1190']), ['T1190', 'T1592']);
+  assert.deepEqual(normalizeTechniques(['x', 'T99999', 42, null]), []);
+  assert.deepEqual(normalizeTechniques('T1190'), []);
+});
+
+test('attack-map: técnica por path-isco', () => {
+  assert.equal(techniqueForPath('/wp-login.php'), 'T1110');
+  assert.equal(techniqueForPath('/.env'), 'T1592');
+  assert.equal(techniqueForPath('/.git/config'), 'T1592');
+  assert.equal(techniqueForPath('/admin'), 'T1595');
+  assert.equal(techniqueForPath('/phpmyadmin/'), 'T1190');
+  assert.equal(techniqueForPath('/robots.txt'), null);
+});
+
+test('attack-map: técnicas por texto de CVE (heurística conservadora)', () => {
+  assert.deepEqual(techniquesForText('Ivanti Connect Secure authentication bypass'), ['T1110']);
+  assert.deepEqual(techniquesForText('Apache Struts remote code execution'), ['T1190']);
+  assert.deepEqual(techniquesForText('Path traversal leads to information disclosure'), ['T1592']);
+  assert.deepEqual(techniquesForText('A generic medium-severity bug'), []);
+  assert.deepEqual(techniquesForText(null), []);
+});
+
+test('attack-map sincroniza com content/honeypot-attack.json', () => {
+  const url = new URL('../../../content/honeypot-attack.json', import.meta.url);
+  const content = JSON.parse(readFileSync(fileURLToPath(url), 'utf8'));
+  assert.deepEqual(PATH_TECHNIQUE, content.paths);
 });
 
 test('agregação: addEvent/mergeBuckets contam por país e path', () => {
@@ -137,6 +172,25 @@ test('parseKev normaliza e ordena por data', () => {
   assert.equal(items[0].id, 'CVE-2026-1042'); // mais recente primeiro
   assert.equal(items[0].source, 'kev');
   assert.equal(items.length, 2); // o id inválido cai
+});
+
+test('parseKev anexa técnicas ATT&CK a partir da descrição da vuln', () => {
+  const items = parseKev({
+    vulnerabilities: [
+      {
+        cveID: 'CVE-2026-1042', vendorProject: 'Ivanti', product: 'Connect Secure', dateAdded: '2026-02-01',
+        vulnerabilityName: 'Ivanti Connect Secure Authentication Bypass',
+        shortDescription: 'Allows an attacker to bypass authentication.',
+      },
+      {
+        cveID: 'CVE-2026-0500', vendorProject: 'Acme', product: 'Widget', dateAdded: '2026-01-01',
+        vulnerabilityName: 'Acme Widget Remote Code Execution', shortDescription: 'Unauthenticated RCE.',
+      },
+    ],
+  });
+  assert.deepEqual(items[0].techniques, ['T1110']); // authentication bypass
+  assert.equal(items[0].title, 'Ivanti Connect Secure'); // título continua vendor+product
+  assert.deepEqual(items[1].techniques, ['T1190']); // RCE / unauthenticated
 });
 
 test('parseNvd só aceita CRITICAL', () => {
@@ -284,6 +338,7 @@ test('honeypot: nunca guarda nem loga o IP completo; ts arredondado; país/ASN v
     assert.equal(recent[0].country, 'XX'); // 'T1' inválido → XX
     assert.equal(recent[0].asn, 64512);
     assert.equal(recent[0].path, '/.env');
+    assert.equal(recent[0].technique, 'T1592'); // correlação com /attack anexada no registo
     assert.equal('ip' in recent[0], false); // o evento nem tem campo de IP
   } finally {
     Object.assign(console, orig);

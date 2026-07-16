@@ -13,6 +13,7 @@ import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
+import { techniqueForPath } from './lib/attack-map.js';
 
 // Paths que só existem para apanhar scanners. Devolvem 404 como qualquer
 // path inexistente — a diferença é que registamos a tentativa.
@@ -67,7 +68,10 @@ async function recordHoneypot(env, request, path, now) {
   const country = normalizeCountry(request.headers.get('cf-ipcountry') || request.cf?.country);
   const asn = normalizeAsn(request.cf?.asn);
   const ts = floorToWindow(now, ANON_WINDOW_MS);
-  const event = { ts, country, asn, path };
+  // Lookup local (sem rede): anexa a técnica ATT&CK do path-isco ao evento,
+  // para que o registo em KV já conte a que classe de ataque corresponde.
+  const technique = techniqueForPath(path);
+  const event = { ts, country, asn, path, technique };
 
   const capKey = `wcap:${hourKey(now)}`;
   const [recent, hBucket, dBucket, meta, capPrev] = await Promise.all([

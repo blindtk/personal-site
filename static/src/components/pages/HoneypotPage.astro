@@ -4,6 +4,10 @@ import HostMap from '../HostMap.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
+// content/ é a fonte de verdade (ver CLAUDE.md): o mapa path-isco → técnica e
+// os nomes/táticas ATT&CK vêm daqui, os mesmos IDs que alimentam /attack.
+import attack from '../../../../content/attack.json';
+import hpAttack from '../../../../content/honeypot-attack.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -11,11 +15,32 @@ const dict = t(lang);
 const h = dict.honeypot;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
+// Índice id → nome da técnica (1.ª ocorrência), a partir do heatmap ATT&CK.
+const techName = new Map<string, string>();
+for (const tactic of attack.tactics) {
+  for (const tech of tactic.techniques) {
+    if (!techName.has(tech.id)) techName.set(tech.id, tech.name);
+  }
+}
+
+// Deep-link para a entrada da técnica no heatmap, no idioma corrente.
+const attackBase = routes.attack[lang];
+type TechEntry = { id: string; name: string; href: string };
+const byPath: Record<string, TechEntry> = {};
+const byId: Record<string, TechEntry> = {};
+for (const [path, id] of Object.entries(hpAttack.paths)) {
+  const entry: TechEntry = { id, name: techName.get(id) ?? id, href: `${attackBase}#${id}` };
+  byPath[path] = entry;
+  byId[id] = entry;
+}
+
 const jsStrings = {
   verdict: h.verdict,
   empty: h.empty,
   unavailable: h.unavailable,
   secondsAgo: h.secondsAgo,
+  corrTitle: h.corrTitle,
+  techNone: h.techNone,
 };
 ---
 
@@ -30,6 +55,7 @@ const jsStrings = {
     id="honeypot"
     data-api={API_BASE}
     data-strings={JSON.stringify(jsStrings)}
+    data-tech={JSON.stringify({ byPath, byId })}
     aria-label={h.title}
   >
     <p class="hp-fallback" id="hp-fallback">{h.unavailable}</p>
@@ -41,6 +67,8 @@ const jsStrings = {
       <div class="stat"><div class="n" id="hp-firstscan">—</div><div class="l">{h.statFirstScan}</div></div>
     </div>
 
+    <p class="hp-corr-banner" id="hp-corr" role="status" hidden><span class="hp-corr-spark" aria-hidden="true">⚡</span> {h.corrLead}</p>
+
     <div class="table-scroll" hidden>
       <table class="result-table hp-table">
         <thead>
@@ -49,15 +77,17 @@ const jsStrings = {
             <th>{h.tableOrigin}</th>
             <th>{h.tableAsn}</th>
             <th>{h.tablePath}</th>
+            <th>{h.tableTechnique}</th>
             <th>{h.tableVerdict}</th>
           </tr>
         </thead>
         <tbody id="hp-rows">
-          <tr><td colspan="5" class="hp-loading">{h.loading}</td></tr>
+          <tr><td colspan="6" class="hp-loading">{h.loading}</td></tr>
         </tbody>
       </table>
     </div>
 
+    <p class="note">🧭 {h.techNote} <a href={attackBase}>{h.techNoteLink}</a></p>
     <p class="note warn">🔒 {h.privacyNote}</p>
   </section>
 
@@ -68,8 +98,15 @@ const jsStrings = {
   const root = document.getElementById('honeypot')!;
   const base = root.dataset.api ?? '';
   const S = JSON.parse(root.dataset.strings!);
+  // { byPath: {path:{id,name,href}}, byId: {id:{id,name,href}} } — estático,
+  // vindo de content/honeypot-attack.json + content/attack.json.
+  const TECH = JSON.parse(root.dataset.tech!) as {
+    byPath: Record<string, { id: string; name: string; href: string }>;
+    byId: Record<string, { id: string; name: string; href: string }>;
+  };
   const rowsEl = document.getElementById('hp-rows')!;
   const fallbackEl = document.getElementById('hp-fallback')!;
+  const corrEl = document.getElementById('hp-corr')!;
 
   const setText = (id: string, value: string) => {
     document.getElementById(id)!.textContent = value;
@@ -84,42 +121,116 @@ const jsStrings = {
 
   const timeFmt = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-  function renderRows(recent: any[]) {
+  // Técnica de um evento: preferir a que o Worker anexou; senão, lookup local
+  // por path (mesma fonte de dados — belt and suspenders).
+  function techOf(ev: any) {
+    const id = ev?.technique ?? TECH.byPath[ev?.path]?.id ?? null;
+    return id ? (TECH.byId[id] ?? TECH.byPath[ev?.path] ?? null) : null;
+  }
+
+  type Correlation = { active: Set<string>; cve: Record<string, string> };
+
+  // Célula da técnica (link para /attack#<id>). Se a técnica estiver a ser
+  // explorada agora (aparece no ticker CISA KEV), marca a linha e junta um
+  // selo ligado ao CVE — o cruzamento que junta honeypot + ATT&CK + ticker.
+  function techCell(ev: any, tr: HTMLTableRowElement, corr: Correlation): { td: HTMLTableCellElement; correlated: boolean } {
+    const td = document.createElement('td');
+    td.className = 'hp-tech';
+    const meta = techOf(ev);
+    if (!meta) {
+      td.textContent = S.techNone;
+      return { td, correlated: false };
+    }
+    const link = document.createElement('a');
+    link.href = meta.href;
+    link.className = 'mono hp-tech-id';
+    link.textContent = meta.id;
+    link.title = `${meta.id} · ${meta.name}`;
+    td.append(link);
+
+    const correlated = corr.active.has(meta.id);
+    if (correlated) {
+      tr.classList.add('hp-corr-row');
+      const cve = corr.cve[meta.id];
+      const badge = document.createElement('a');
+      badge.className = 'hp-corr-badge mono';
+      badge.href = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(cve)}`;
+      badge.rel = 'noopener';
+      badge.textContent = `⚡ ${cve}`;
+      badge.title = `${S.corrTitle}: ${cve}`;
+      td.append(document.createTextNode(' '), badge);
+    }
+    return { td, correlated };
+  }
+
+  function renderRows(recent: any[], corr: Correlation) {
     rowsEl.replaceChildren();
     if (!recent || recent.length === 0) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = 5;
+      td.colSpan = 6;
       td.className = 'hp-loading';
       td.textContent = S.empty;
       tr.append(td);
       rowsEl.append(tr);
+      corrEl.hidden = true;
       return;
     }
+    let anyCorr = false;
     for (const ev of recent) {
       const tr = document.createElement('tr');
-      const cells = [
+      const text = [
         timeFmt.format(new Date(ev.ts)),
         ev.country ?? 'XX',
         ev.asn ? `AS${ev.asn}` : '—',
         ev.path ?? '',
-        S.verdict,
       ];
-      cells.forEach((value, i) => {
+      text.forEach((value, i) => {
         const td = document.createElement('td');
         td.textContent = value;
         if (i === 1) td.className = 'mono hp-cc';
         if (i === 3) td.className = 'mono hp-path';
-        if (i === 4) td.className = 'hp-verdict';
         tr.append(td);
       });
+      const { td, correlated } = techCell(ev, tr, corr);
+      tr.append(td);
+      anyCorr = anyCorr || correlated;
+      const verdict = document.createElement('td');
+      verdict.className = 'hp-verdict';
+      verdict.textContent = S.verdict;
+      tr.append(verdict);
       rowsEl.append(tr);
     }
+    corrEl.hidden = !anyCorr;
+  }
+
+  // Técnicas atualmente exploradas (ticker CISA KEV/NVD). Nunca rejeita: se o
+  // ticker falhar, a correlação simplesmente não acende (degradação graciosa).
+  async function tickerCorrelation(): Promise<Correlation> {
+    const corr: Correlation = { active: new Set(), cve: {} };
+    try {
+      const res = await fetch(`${base}/api/ticker`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) return corr;
+      const data = await res.json();
+      for (const item of Array.isArray(data.items) ? data.items : []) {
+        for (const tid of Array.isArray(item.techniques) ? item.techniques : []) {
+          corr.active.add(tid);
+          if (!corr.cve[tid]) corr.cve[tid] = item.id;
+        }
+      }
+    } catch {
+      /* sem ticker: correlação vazia */
+    }
+    return corr;
   }
 
   async function load() {
     try {
-      const res = await fetch(`${base}/api/honeypot`, { headers: { accept: 'application/json' } });
+      const [res, corr] = await Promise.all([
+        fetch(`${base}/api/honeypot`, { headers: { accept: 'application/json' } }),
+        tickerCorrelation(),
+      ]);
       const ctype = res.headers.get('content-type') ?? '';
       if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
       const data = await res.json();
@@ -127,14 +238,14 @@ const jsStrings = {
       setText('hp-toppath', data.topPath ?? '—');
       setText('hp-countries', String(data.countryCount ?? 0));
       setText('hp-firstscan', fmtDuration(data.timeToFirstScanSec));
-      renderRows(data.recent ?? []);
+      renderRows(data.recent ?? [], corr);
       fallbackEl.hidden = true;
       document.getElementById('hp-stats')!.hidden = false;
       rowsEl.closest('.table-scroll')!.hidden = false;
     } catch {
       // Sem Worker publicado, o HTML já nasce neste estado (fallback visível,
-      // stats/tabela escondidos) — não há nada a mudar, e assim evita-se o
-      // salto de layout (CLS) de esconder conteúdo já pintado.
+      // stats/tabela/banner escondidos) — não há nada a mudar, e assim evita-se
+      // o salto de layout (CLS) de esconder conteúdo já pintado.
     }
   }
 
