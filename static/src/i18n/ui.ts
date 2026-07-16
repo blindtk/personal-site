@@ -81,7 +81,7 @@ export const ui = {
     },
     selfscan: {
       title: 'Self-scan ao vivo',
-      intro: 'Não acredites em mim — verifica. A nota abaixo vem de um scan real aos cabeçalhos que este site serve, feito por um Worker (com cache).',
+      intro: 'Não acredites em mim — verifica. A nota abaixo mostra o resultado de um scan aos cabeçalhos que este site serve, feito por um Worker (com cache).',
       gradeLabel: 'cabeçalhos de segurança',
       headersTitle: 'Cabeçalhos presentes',
       lastScan: 'último scan',
@@ -113,7 +113,7 @@ export const ui = {
     },
     hostmap: {
       title: 'Mapa de tráfego hostil',
-      intro: 'As mesmas tentativas, agregadas por país — arcos das origens até ao Porto. Dados reais do honeypot, nunca simulados.',
+      intro: 'As mesmas tentativas, agregadas por país — arcos das origens até ao Porto.',
       legend24h: 'últimas 24h',
       legend7d: 'últimos 7 dias',
       destination: 'Porto, PT',
@@ -418,7 +418,7 @@ export const ui = {
     },
     selfscan: {
       title: 'Live self-scan',
-      intro: "Don't take my word for it — check. The grade below comes from a real scan of the headers this site serves, run by a Worker (cached).",
+      intro: "Don't take my word for it — check. The grade below shows the result of a scan of the headers this site serves, run by a Worker (cached).",
       gradeLabel: 'security headers',
       headersTitle: 'Headers present',
       lastScan: 'last scan',
@@ -450,7 +450,7 @@ export const ui = {
     },
     hostmap: {
       title: 'Hostile-traffic map',
-      intro: 'The same attempts, aggregated by country — arcs from the origins to Porto. Real honeypot data, never simulated.',
+      intro: 'The same attempts, aggregated by country — arcs from the origins to Porto.',
       legend24h: 'last 24h',
       legend7d: 'last 7 days',
       destination: 'Porto, PT',

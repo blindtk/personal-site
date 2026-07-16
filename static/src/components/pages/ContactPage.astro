@@ -17,6 +17,10 @@ const c = dict.contact;
 const [emailUser, emailDomain] = SITE.email.split('@');
 const rev = (s: string) => [...s].reverse().join('');
 const emailObfuscated = `${emailUser} [at] ${emailDomain.replaceAll('.', ' [dot] ')}`;
+
+// Texto de apresentação dos links: sem protocolo nem "www.", para que
+// github.com/... e linkedin.com/... fiquem no mesmo formato.
+const displayUrl = (url: string) => url.replace('https://', '').replace(/^www\./, '');
 ---
 
 <BaseLayout lang={lang} title={c.title} altUrl={routes.contact[other]} active="contact">
@@ -35,13 +39,13 @@ const emailObfuscated = `${emailUser} [at] ${emailDomain.replaceAll('.', ' [dot]
         {SITE.github && (
           <tr>
             <th>{c.githubLabel}</th>
-            <td><a href={SITE.github} rel="noopener">{SITE.github.replace('https://', '')}</a></td>
+            <td><a href={SITE.github} rel="noopener">{displayUrl(SITE.github)}</a></td>
           </tr>
         )}
         {SITE.linkedin && (
           <tr>
             <th>{c.linkedinLabel}</th>
-            <td><a href={SITE.linkedin} rel="noopener">{SITE.linkedin.replace('https://', '')}</a></td>
+            <td><a href={SITE.linkedin} rel="noopener">{displayUrl(SITE.linkedin)}</a></td>
           </tr>
         )}
       </tbody>
@@ -77,7 +81,7 @@ const emailObfuscated = `${emailUser} [at] ${emailDomain.replaceAll('.', ' [dot]
     {SITE.contact.pgpFingerprint ? (
       <p class="mono"><strong>{c.pgpLabel}:</strong> <code>{SITE.contact.pgpFingerprint}</code></p>
     ) : (
-      <p class="note warn">⚠ {c.pgpLabel}: {c.pgpPending}</p>
+      <p class="hp-fallback">{c.pgpLabel}: {c.pgpPending}</p>
     )}
   </section>
 
