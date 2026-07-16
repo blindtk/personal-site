@@ -2,7 +2,7 @@
 title: 'Homelab'
 description: 'A k3s cluster on Raspberry Pi, at home — the ground where I test everything before it gets anywhere near production.'
 tags: ['kubernetes', 'k3s', 'raspberry-pi', 'homelab']
-order: 3
+order: 4
 ---
 
 At home I run a [k3s](https://k3s.io/) cluster — the lightweight Kubernetes

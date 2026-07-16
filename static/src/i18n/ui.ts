@@ -71,6 +71,10 @@ export const ui = {
       evidenceBody:
         'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, os hashes SHA-256 dos scripts inline (os mesmos da CSP), o scan aos cabeçalhos ao vivo e os workflows que correm a cada push.',
       evidenceCta: 'Ver a página Provas →',
+      // ----- Projeto (narrativa) -----
+      projectBody:
+        'A segurança aqui é uma faceta do projeto que serve este site — o modelo de ameaça e as decisões de arquitetura por trás dela estão contados na página do projeto.',
+      projectCta: 'Ver o projeto Este site →',
     },
     evidence: {
       metaTitle: 'Provas — transparência verificável',
@@ -460,6 +464,10 @@ export const ui = {
       evidenceBody:
         "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the SHA-256 hashes of the inline scripts (the same ones in the CSP), the live header scan, and the workflows that run on every push.",
       evidenceCta: 'See the Evidence page →',
+      // ----- Project (narrative) -----
+      projectBody:
+        'The security here is one facet of the project that serves this site — the threat model and the architecture decisions behind it are told on the project page.',
+      projectCta: 'See the This site project →',
     },
     evidence: {
       metaTitle: 'Evidence — verifiable transparency',

@@ -4,7 +4,7 @@ import SelfScan from '../tools/SelfScan.astro';
 import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
+import { routes, projectUrl } from '../../i18n/routes';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -32,6 +32,10 @@ const scanners = [
       <h2 id="h-threat">{sec.threatTitle}</h2>
     </div>
     <p>{sec.threatBody}</p>
+    <p class="intro">{sec.projectBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={projectUrl(lang, 'este-site')}>{sec.projectCta}</a></li>
+    </ul>
   </section>
 
   <section aria-labelledby="h-headers">
