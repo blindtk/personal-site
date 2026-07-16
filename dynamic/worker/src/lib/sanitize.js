@@ -11,6 +11,39 @@ export function clampInt(value, min, max, dflt) {
   return Math.min(max, Math.max(min, n));
 }
 
+/**
+ * Normaliza um código de país ISO-3166-1 alpha-2 (ex.: cf-ipcountry).
+ * Só aceita exatamente duas letras A-Z; qualquer outra coisa (incluindo
+ * 'T1' do Tor, cabeçalhos forjados, ou valores vazios) vira 'XX'. É
+ * defesa em profundidade: mesmo que o cabeçalho chegasse manipulado (só
+ * possível fora da Cloudflare), nunca entra lixo nos buckets.
+ */
+export function normalizeCountry(input) {
+  return typeof input === 'string' && /^[A-Za-z]{2}$/.test(input) ? input.toUpperCase() : 'XX';
+}
+
+/**
+ * Normaliza um ASN para inteiro positivo dentro do espaço válido
+ * (1..4_294_967_294, 32-bit) ou null. request.cf.asn já é numérico, mas
+ * validamos na mesma antes de persistir.
+ */
+export function normalizeAsn(input) {
+  if (typeof input !== 'number' || !Number.isInteger(input)) return null;
+  return input >= 1 && input <= 4_294_967_294 ? input : null;
+}
+
+/**
+ * Arredonda um timestamp (epoch ms) para o início da sua janela de
+ * `windowMs`. Usado para anonimizar os eventos do honeypot: guardar o
+ * instante exato permitiria correlacionar ASN+path+timestamp preciso com
+ * logs de terceiros; uma granularidade de 5 min corta essa correlação
+ * mantendo os buckets horários/diários corretos. Puro e determinístico.
+ */
+export function floorToWindow(ms, windowMs) {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || windowMs <= 0) return ms;
+  return Math.floor(ms / windowMs) * windowMs;
+}
+
 /** Escapa os cinco caracteres perigosos em contexto HTML. */
 export function escapeHtml(str) {
   return String(str)

@@ -21,12 +21,32 @@ Worker + um namespace KV.
 
 ## Privacidade (honeypot)
 
-**Nenhum IP é armazenado.** Os eventos guardam apenas país (`cf-ipcountry`),
-ASN (`request.cf.asn`), path e timestamp. A única coisa derivada do IP é a
-chave de rate limit: um hash SHA-256 truncado com salt que roda ao dia
-(`RATE_SALT` + data UTC), guardado só durante a janela do limite e nunca
-associado aos eventos. Verificável em `src/lib/ratelimit.js` e
-`src/index.js` (`recordHoneypot`).
+**Nenhum IP é armazenado.** Os eventos guardam apenas país (`cf-ipcountry`,
+validado a 2 letras — resto vira `XX`), ASN (`request.cf.asn`, validado no
+espaço 32-bit), path (só os iscos conhecidos) e um **timestamp arredondado
+a 5 min**. O arredondamento é anonimização: sem o instante preciso não dá
+para correlacionar ASN+path+timestamp com logs de terceiros. A única coisa
+derivada do IP é a chave de rate limit: um hash SHA-256 truncado com salt
+que roda ao dia (`RATE_SALT` + data UTC), guardado só durante a janela do
+limite e nunca associado aos eventos. `recordHoneypot` nem sequer lê o IP.
+Coberto por teste (`test/logic.test.mjs`): o IP nunca aparece em nenhum
+valor do KV nem em nenhuma linha de log do Worker.
+
+### Erros e logs
+
+As respostas de erro ao cliente são sempre genéricas (`upstream_error`,
+`rate_limited`, …) — nunca stack traces, paths internos ou detalhes do KV.
+O detalhe (stack) fica só nos logs do Worker (server-side) via
+`console.error`, e esses logs nunca incluem o IP.
+
+### Cap de escritas ao KV
+
+Cada tentativa nos iscos faz várias escritas. Para limitar custo/abuso se
+alguém martelar os paths-isco, há um **cap global de escritas por janela**
+(`HONEYPOT_WRITE_CAP` em `src/index.js`, por omissão 500 eventos/hora):
+passado o teto, os eventos extra são descartados e o pedido devolve na
+mesma o 404 indistinguível. Ver `src/lib/kvcap.js` (best-effort — o KV é
+eventualmente consistente, o objetivo é limitar a ordem de grandeza).
 
 ## Desenvolvimento
 
@@ -84,7 +104,7 @@ fica **same-origin**, o frontend chama `/api/...` e a CSP `connect-src
 | Nome | Tipo | Onde | Para quê |
 | --- | --- | --- | --- |
 | `KV` | binding | wrangler.toml | namespace único (eventos, buckets, caches, rate limit) |
-| `RATE_SALT` | secret | `wrangler secret put` | rotação do hash de rate limit |
+| `RATE_SALT` | secret | `wrangler secret put` | hash de rate limit; rodar SEMANALMENTE (invalida limites acumulados de propósito) |
 | `NVD_API_KEY` | secret | `wrangler secret put` | opcional, rate limit do NVD |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (só no modo 2b) |
 | `SCAN_TARGET` | var | wrangler.toml | URL que o self-scan inspeciona |

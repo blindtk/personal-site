@@ -25,8 +25,14 @@ SCAN_TARGET = "https://danielmala.co/"
 DEPLOY_TS = ""
 
 # Secrets (NÃO ficam aqui — o gitleaks do CI apanha qualquer deslize):
-#   npx wrangler secret put RATE_SALT   # segredo p/ rotação do hash de rate limit
+#   npx wrangler secret put RATE_SALT   # segredo p/ o hash de rate limit
 #   npx wrangler secret put NVD_API_KEY # opcional, sobe o rate limit do NVD
+#
+# Rotação do RATE_SALT: rodar SEMANALMENTE. Trocar o segredo invalida de
+# imediato TODOS os rate-limits acumulados (o hash deixa de bater) — é
+# intencional, o botão de pânico contra abuso. A rotação diária do hash é
+# automática (salt = RATE_SALT + data UTC); esta é a rotação do próprio
+# segredo. Ver src/lib/ratelimit.js.
 
 # --- Rotas no domínio (descomentar quando o domínio estiver na Cloudflare) ---
 # Faz o Worker interceptar os paths-isco e a API no próprio site, mantendo
