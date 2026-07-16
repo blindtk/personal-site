@@ -41,7 +41,7 @@ const { Content } = await render(project);
       {project.data.demo && <a href={project.data.demo} rel="noopener">[{dict.projects.demo}]</a>}
     </div>
   )}
-  <hr />
+  <hr class="project-hr" />
   <a href={routes.projects[lang]} class="mono">{dict.projects.back}</a>
 </BaseLayout>
 
@@ -56,5 +56,10 @@ const { Content } = await render(project);
     display: flex;
     gap: 1.2rem;
     margin-top: 1.5rem;
+  }
+  /* Projetos curtos não precisam do respiro de 2rem+2rem do <hr> global —
+     essa folga é o que sobrava vazio abaixo do fold. */
+  .project-hr {
+    margin: 1.6rem 0 1.3rem;
   }
 </style>

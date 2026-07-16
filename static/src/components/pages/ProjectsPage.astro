@@ -31,7 +31,7 @@ function excerpt(text: string, max = 100): string {
     <p class="intro">{dict.projects.intro}</p>
   </div>
 
-  <div class="grid grid-2">
+  <div class="grid grid-3">
     {entries.map((entry) => (
       <div class="card">
         <h3><a href={projectUrl(lang, entry.id.slice(3))}>{entry.data.title}</a></h3>

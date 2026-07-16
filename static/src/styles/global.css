@@ -1226,6 +1226,69 @@ select {
 .map-legend .mk.a { background: var(--accent-2); }
 .map-legend .map-totals { margin-left: auto; }
 
+/* ---------- Diagrama do homelab (projeto /projetos/homelab) ---------- */
+
+.diagram-homelab {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.4rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raise);
+}
+.diagram-homelab .diagram-boundary {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 4;
+}
+.diagram-homelab .diagram-label {
+  fill: var(--faint);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.diagram-homelab .diagram-node {
+  fill: var(--bg-raise-2);
+  stroke: var(--accent);
+  stroke-width: 1.4;
+}
+.diagram-homelab .diagram-node--prod {
+  stroke: var(--muted);
+  stroke-dasharray: 3 3;
+}
+.diagram-homelab .diagram-node-title {
+  fill: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.diagram-homelab .diagram-node-sub {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+.diagram-homelab .diagram-edge {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+}
+.diagram-homelab .diagram-edge--dashed {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  marker-end: url(#homelab-arrow);
+}
+.diagram-homelab .diagram-arrowhead { fill: var(--muted); }
+.diagram-homelab .diagram-caption {
+  fill: var(--faint);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
 /* ---------- Self-scan (página Segurança) ---------- */
 
 .self-scan {
