@@ -50,7 +50,9 @@ const { Content } = await render(project);
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin: 1.2rem 0;
+    /* Sem margem de topo: o .page-head já dá 2rem de respiro até à intro,
+       o mesmo ritmo das restantes páginas (índice de Projetos, ATT&CK). */
+    margin: 0 0 1.2rem;
   }
   .project-links {
     display: flex;

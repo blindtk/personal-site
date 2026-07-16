@@ -45,6 +45,10 @@ export function createTerminal(ctx) {
       '  encode <fmt> <texto>       — base64 | url | hex',
       '  decode <fmt> <texto>       — base64 | url | hex',
       '  stars [categoria]          ' + (pt ? '— catálogo de estrelas do GitHub' : '— GitHub stars catalog'),
+      '  attack [--list]            ' + (pt ? '— cobertura MITRE ATT&CK' : '— MITRE ATT&CK coverage'),
+      '  projetos                   ' + (pt ? '— listar projetos do site' : '— list the site projects'),
+      '  honeypot                   ' + (pt ? '— o que o honeypot apanha' : '— what the honeypot catches'),
+      '  provas                     ' + (pt ? '— transparência verificável' : '— verifiable transparency'),
       `  open <${APPS.join('|')}>`,
       '  clear · help',
     ],
@@ -64,8 +68,14 @@ export function createTerminal(ctx) {
         return { lines: ctx.bio };
 
       case 'ls': {
+        // `ls projetos` (ou projects) lista os slugs dos projetos reais.
+        const target = rest.find((a) => !a.startsWith('-'));
+        if (target === 'projetos' || target === 'projetos/' || target === 'projects' || target === 'projects/') {
+          const slugs = (ctx.projects ?? []).map((p) => p.slug);
+          return { lines: [slugs.length ? slugs.join('  ') : '—'] };
+        }
         const all = rest.includes('-la') || rest.includes('-a') || rest.includes('-al');
-        const files = [pt ? 'sobre.md' : 'about.md', 'roadmap.txt', 'ferramentas/'];
+        const files = [pt ? 'sobre.md' : 'about.md', 'roadmap.txt', 'projetos/', 'ferramentas/'];
         if (all) files.unshift('.flag');
         return { lines: [files.join('  ')] };
       }
@@ -143,6 +153,65 @@ export function createTerminal(ctx) {
           .map((r) => `  ★ ${String(r.stars).padStart(6)}  ${r.name}  ${r.url}`);
         if (cat.repos.length > 25) lines.push(`  … +${cat.repos.length - 25}`);
         return { lines: [`${cat.name} (${cat.count}):`, ...lines] };
+      }
+
+      // Comandos que espelham secções reais do site (assinatura do terminal
+      // como interface unificadora). Todos os dados são estáticos e reais —
+      // nada aqui inventa números que dependam de um backend ainda por ligar.
+      case 'attack': {
+        const a = ctx.attack;
+        if (!a || !a.techniques?.length) return { lines: [pt ? 'sem dados ATT&CK.' : 'no ATT&CK data.'] };
+        const head = pt
+          ? `cobertura MITRE ATT&CK — ${a.prod} em produção, ${a.exp} em lab (${a.total} técnicas):`
+          : `MITRE ATT&CK coverage — ${a.prod} in production, ${a.exp} in lab (${a.total} techniques):`;
+        const rows = a.techniques.map(
+          (te) => `  ${te.level === 'prod' ? '●' : '○'} ${te.id.padEnd(7)} ${te.name}  [${te.tactic}]`,
+        );
+        return { lines: [head, ...rows, pt ? '● produção · ○ lab — heatmap completo em /attack' : '● production · ○ lab — full heatmap at /attack'] };
+      }
+
+      case 'projetos':
+      case 'projects': {
+        const list = ctx.projects ?? [];
+        if (!list.length) return { lines: [pt ? 'sem projetos.' : 'no projects.'] };
+        const rows = list.map((p) => `  ${p.title}  →  ${p.url}`);
+        return {
+          lines: [pt ? `${list.length} projetos:` : `${list.length} projects:`, ...rows],
+        };
+      }
+
+      case 'honeypot': {
+        return {
+          lines: pt
+            ? [
+                'honeypot — endpoints-isco que registam scan automático (só metadados:',
+                'país, ASN e path; nenhum IP é armazenado).',
+                'o painel ao vivo precisa do Worker publicado — código e garantia de',
+                'privacidade no repositório. detalhes em /honeypot',
+              ]
+            : [
+                'honeypot — decoy endpoints that log automated scanning (metadata',
+                'only: country, ASN and path; no IP is ever stored).',
+                'the live panel needs the Worker published — code and privacy',
+                'guarantee in the repo. details at /honeypot',
+              ],
+        };
+      }
+
+      case 'provas':
+      case 'evidence': {
+        const e = ctx.evidence;
+        const lines = [];
+        if (e?.commitShort) {
+          lines.push(pt ? `último commit: ${e.commitShort}` : `latest commit: ${e.commitShort}`);
+          if (e.commitUrl) lines.push(`  ${e.commitUrl}`);
+        }
+        lines.push(
+          pt
+            ? 'hashes dos scripts inline, cabeçalhos ao vivo e workflows em /provas'
+            : 'inline-script hashes, live headers and workflows at /evidence',
+        );
+        return { lines };
       }
 
       case 'open': {

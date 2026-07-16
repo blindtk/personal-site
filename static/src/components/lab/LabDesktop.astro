@@ -1,14 +1,17 @@
 ---
-import { getEntry, render } from 'astro:content';
+import { execSync } from 'node:child_process';
+import { getEntry, getCollection, render } from 'astro:content';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
+import { routes, projectUrl } from '../../i18n/routes';
 import { getCatalog } from '../../lib/catalog';
 import SubnetCalc from '../tools/SubnetCalc.astro';
 import HashTool from '../tools/HashTool.astro';
 import EncoderTool from '../tools/EncoderTool.astro';
 import PasswordGen from '../tools/PasswordGen.astro';
 import { SITE } from '../../config';
+// content/ é a fonte de verdade; JSON importado diretamente (ver CLAUDE.md).
+import attackData from '../../../../content/attack.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -30,6 +33,41 @@ const slimCatalog = {
   })),
 };
 
+// Projetos reais para o comando `projetos` / `ls projetos` do terminal.
+const projectEntries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
+  .sort((a, b) => a.data.order - b.data.order);
+const projects = projectEntries.map((e) => ({
+  slug: e.id.slice(3),
+  title: e.data.title,
+  url: projectUrl(lang, e.id.slice(3)),
+}));
+
+// Cobertura ATT&CK (só as técnicas acesas) para o comando `attack`.
+const coveredTechniques = attackData.tactics.flatMap((tac) =>
+  tac.techniques
+    .filter((te) => te.level)
+    .map((te) => ({ id: te.id, name: te.name, tactic: tac.name, level: te.level })),
+);
+const attackSummary = {
+  prod: coveredTechniques.filter((te) => te.level === 'prod').length,
+  exp: coveredTechniques.filter((te) => te.level === 'exp').length,
+  total: coveredTechniques.length,
+  techniques: coveredTechniques,
+};
+
+// Último commit (build-time, best-effort) para o comando `provas` — o mesmo
+// facto verificável servido na página /provas. Sem clone git, fica null.
+let evidence: { commitShort: string; commitUrl: string } | null = null;
+try {
+  const full = execSync('git rev-parse HEAD', {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'ignore'],
+  }).trim();
+  if (full) evidence = { commitShort: full.slice(0, 7), commitUrl: `${SITE.repo}/commit/${full}` };
+} catch {
+  evidence = null;
+}
+
 const termCtx = {
   lang,
   bio: [
@@ -40,6 +78,9 @@ const termCtx = {
   aboutMd: aboutEntry.body ?? '',
   roadmap: lab.roadmapBody,
   welcome: lab.termWelcome,
+  projects,
+  attack: attackSummary,
+  evidence,
 };
 
 const windows = [

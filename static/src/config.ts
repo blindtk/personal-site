@@ -26,6 +26,9 @@ export const SITE = {
   // e podes rodar o alias se começar a receber spam.
   email: 'daniel_malaco@hotmail.com',
   github: 'https://github.com/blindtk',
+  /** Repositório deste site — usado para deep-links verificáveis (commit,
+   *  workflows) na página Provas. Troca se moveres o repo. */
+  repo: 'https://github.com/blindtk/personal-site',
   linkedin: 'https://www.linkedin.com/in/danielmalaco',
   /** Página de contactos: estado atual e chave PGP. */
   contact: {

@@ -1402,7 +1402,9 @@ select {
   font-family: var(--mono);
   font-size: 0.78rem;
   color: var(--muted);
-  margin: 0.4rem 0 1rem;
+  /* Sem margem de topo: o respiro até ao título vem já do .page-head
+     (margin-bottom: 2rem), como nas outras páginas de índice. */
+  margin: 0 0 1rem;
 }
 .atk-legend .sw {
   display: inline-block;
