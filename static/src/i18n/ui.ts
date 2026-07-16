@@ -213,14 +213,14 @@ export const ui = {
       // Variante C: 'Da arquitetura à operação: segurança de redes em infraestrutura crítica, com ferramentas próprias para o trabalho do dia a dia. Foco em threat intelligence, forense digital e resposta a incidentes.'
       bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
-      chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Fortinet NSE 4/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
       // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
       // exclui Portugal/Ascendi que é a base atual, não um destacamento
       // internacional).
       statsStatic: [
         { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
-        { n: '9', d: 'certificações NSE/SANS', tone: 'amber' },
+        { n: '13', d: 'certificações de segurança', tone: 'amber' },
         { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
         { n: '1.º', d: "lugar no CTF · SANS SEC504, Lisboa '22", tone: 'green' },
       ],
@@ -629,14 +629,14 @@ export const ui = {
       // Variant C: 'From architecture to operations: network security for critical infrastructure, with my own tools for the day-to-day work. Focused on threat intelligence, digital forensics, and incident response.'
       bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
-      chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Fortinet NSE 4/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Competence signals (not consumption). Country count matches the "4"
       // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
       // excludes Portugal/Ascendi, which is the current home base, not an
       // international posting).
       statsStatic: [
         { n: '6+', d: 'years in security & networking', tone: 'green' },
-        { n: '9', d: 'NSE/SANS certifications', tone: 'amber' },
+        { n: '13', d: 'security certifications', tone: 'amber' },
         { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
         { n: '1st', d: "place · SANS SEC504 CTF, Lisbon '22", tone: 'green' },
       ],
