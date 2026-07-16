@@ -32,16 +32,16 @@ const jsStrings = {
     data-strings={JSON.stringify(jsStrings)}
     aria-label={h.title}
   >
-    <p class="hp-fallback" id="hp-fallback" hidden>{h.unavailable}</p>
+    <p class="hp-fallback" id="hp-fallback">{h.unavailable}</p>
 
-    <div class="stats-grid" id="hp-stats">
+    <div class="stats-grid" id="hp-stats" hidden>
       <div class="stat"><div class="n" id="hp-attempts">—</div><div class="l">{h.statAttempts}</div></div>
       <div class="stat amber"><div class="n mono" id="hp-toppath">—</div><div class="l">{h.statTopPath}</div></div>
       <div class="stat blue"><div class="n" id="hp-countries">—</div><div class="l">{h.statCountries}</div></div>
       <div class="stat"><div class="n" id="hp-firstscan">—</div><div class="l">{h.statFirstScan}</div></div>
     </div>
 
-    <div class="table-scroll">
+    <div class="table-scroll" hidden>
       <table class="result-table hp-table">
         <thead>
           <tr>
@@ -128,11 +128,13 @@ const jsStrings = {
       setText('hp-countries', String(data.countryCount ?? 0));
       setText('hp-firstscan', fmtDuration(data.timeToFirstScanSec));
       renderRows(data.recent ?? []);
+      fallbackEl.hidden = true;
+      document.getElementById('hp-stats')!.hidden = false;
+      rowsEl.closest('.table-scroll')!.hidden = false;
     } catch {
-      // Sem Worker publicado: mostra a nota explicativa e esconde a tabela.
-      fallbackEl.hidden = false;
-      document.getElementById('hp-stats')!.hidden = true;
-      rowsEl.closest('.table-scroll')!.setAttribute('hidden', '');
+      // Sem Worker publicado, o HTML já nasce neste estado (fallback visível,
+      // stats/tabela escondidos) — não há nada a mudar, e assim evita-se o
+      // salto de layout (CLS) de esconder conteúdo já pintado.
     }
   }
 

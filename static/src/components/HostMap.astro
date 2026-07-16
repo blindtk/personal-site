@@ -23,9 +23,9 @@ const jsStrings = {
   </div>
   <p class="intro">{m.intro}</p>
 
-  <p class="hp-fallback" id="map-fallback" hidden>{m.unavailable}</p>
+  <p class="hp-fallback" id="map-fallback">{m.unavailable}</p>
 
-  <div class="map-frame" id="map-frame">
+  <div class="map-frame" id="map-frame" hidden>
     <svg viewBox="0 0 800 340" role="img" aria-label={m.title} class="map-svg">
       <defs>
         <pattern id="map-dots" width="14" height="14" patternUnits="userSpaceOnUse">
@@ -90,9 +90,12 @@ const jsStrings = {
       const ctype = res.headers.get('content-type') ?? '';
       if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
       draw(await res.json());
+      document.getElementById('map-fallback')!.hidden = true;
+      document.getElementById('map-frame')!.hidden = false;
     } catch {
-      document.getElementById('map-fallback')!.hidden = false;
-      document.getElementById('map-frame')!.setAttribute('hidden', '');
+      // Sem Worker publicado, o HTML já nasce neste estado (fallback
+      // visível, mapa escondido) — evita o salto de layout ao esconder
+      // um frame já pintado.
     }
   })();
 </script>

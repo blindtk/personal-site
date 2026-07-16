@@ -151,6 +151,7 @@ export const ui = {
       // sistemas; o emoji nativo variava com o OS).
       journey: {
         title: 'Percurso · redes & segurança em 4 países',
+        scrollHint: '← scroll para ver as 5 paragens →',
         items: [
           { years: '2017–18', flag: 'qa', name: 'Metro de Doha', place: 'Doha, Qatar', note: 'Redes IP e WiFi móvel (BBRS) · Thales/Altran' },
           { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brasil', note: 'Redes IP em ferrovia ligeira · Thales/Altran' },
@@ -488,6 +489,7 @@ export const ui = {
       // systems; native emoji varied with the OS).
       journey: {
         title: 'Journey · networking & security across 4 countries',
+        scrollHint: '← scroll to see all 5 stops →',
         items: [
           { years: '2017–18', flag: 'qa', name: 'Doha Metro', place: 'Doha, Qatar', note: 'IP networks & mobile WiFi (BBRS) · Thales/Altran' },
           { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brazil', note: 'IP networks in light rail · Thales/Altran' },

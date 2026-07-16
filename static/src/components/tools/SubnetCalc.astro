@@ -1,6 +1,7 @@
 ---
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
+import { calcSubnet, intToIp } from '../../scripts/subnet.js';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -18,6 +19,13 @@ const jsStrings = {
   p2p: s.p2p,
   single: s.single,
 };
+
+// Calculado no build (função pura, sem DOM) para a tabela já nascer
+// preenchida e visível — evita o salto de layout de a revelar via JS
+// depois do primeiro paint.
+const defaultInput = '192.168.1.10/24';
+const initial = calcSubnet(defaultInput)!;
+const initialType = s[initial.kind] + (initial.special ? ` · ${s[initial.special]}` : '');
 ---
 
 <div class="tool-panel" id="subnet-tool" data-strings={JSON.stringify(jsStrings)}>
@@ -30,7 +38,7 @@ const jsStrings = {
         placeholder="192.168.1.10/24"
         autocomplete="off"
         spellcheck="false"
-        value="192.168.1.10/24"
+        value={defaultInput}
       />
     </div>
     <div class="btn-row">
@@ -40,17 +48,17 @@ const jsStrings = {
   <p class="error-msg" id="subnet-error" hidden></p>
 
   <div class="table-scroll">
-    <table class="result-table" id="subnet-result" hidden>
+    <table class="result-table" id="subnet-result">
       <tbody>
-        <tr><th>{s.network}</th><td id="r-network"></td></tr>
-        <tr><th>{s.broadcast}</th><td id="r-broadcast"></td></tr>
-        <tr><th>{s.mask}</th><td id="r-mask"></td></tr>
-        <tr><th>{s.wildcard}</th><td id="r-wildcard"></td></tr>
-        <tr><th>{s.firstHost}</th><td id="r-first"></td></tr>
-        <tr><th>{s.lastHost}</th><td id="r-last"></td></tr>
-        <tr><th>{s.hosts}</th><td id="r-hosts"></td></tr>
-        <tr><th>{s.type}</th><td id="r-type"></td></tr>
-        <tr><th>{s.binary}</th><td id="r-binary"></td></tr>
+        <tr><th>{s.network}</th><td id="r-network">{intToIp(initial.network)}/{initial.prefix}</td></tr>
+        <tr><th>{s.broadcast}</th><td id="r-broadcast">{intToIp(initial.broadcast)}</td></tr>
+        <tr><th>{s.mask}</th><td id="r-mask">{intToIp(initial.mask)}</td></tr>
+        <tr><th>{s.wildcard}</th><td id="r-wildcard">{intToIp(initial.wildcard)}</td></tr>
+        <tr><th>{s.firstHost}</th><td id="r-first">{intToIp(initial.firstHost)}</td></tr>
+        <tr><th>{s.lastHost}</th><td id="r-last">{intToIp(initial.lastHost)}</td></tr>
+        <tr><th>{s.hosts}</th><td id="r-hosts">{initial.hosts.toLocaleString()}</td></tr>
+        <tr><th>{s.type}</th><td id="r-type">{initialType}</td></tr>
+        <tr><th>{s.binary}</th><td id="r-binary"><span class="hl">{initial.binary.network}</span>{initial.binary.hosts}</td></tr>
       </tbody>
     </table>
   </div>
@@ -96,5 +104,4 @@ const jsStrings = {
     e.preventDefault();
     run();
   });
-  run();
 </script>
