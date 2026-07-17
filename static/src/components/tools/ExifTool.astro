@@ -1,0 +1,349 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.exif;
+
+const jsStrings = {
+  noExif: s.noExif,
+  gpsPresent: s.gpsPresent,
+  noGps: s.noGps,
+  openMapBase: 'https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}',
+  filenameDemo: s.filenameDemo,
+  invalidFile: s.invalidFile,
+  rowMake: s.rowMake,
+  rowModel: s.rowModel,
+  rowLens: s.rowLens,
+  rowSoftware: s.rowSoftware,
+  rowCapturedAt: s.rowCapturedAt,
+  rowExposure: s.rowExposure,
+  rowAperture: s.rowAperture,
+  rowIso: s.rowIso,
+  rowFocalLength: s.rowFocalLength,
+  rowFocalLengthEquiv: s.rowFocalLengthEquiv,
+  rowDimensions: s.rowDimensions,
+  rowOrientation: s.rowOrientation,
+  orientations: s.orientations,
+};
+---
+
+<div class="tool-panel exif" id="exif-tool" data-strings={JSON.stringify(jsStrings)}>
+  <div class="exif-dropzone" id="exif-dropzone">
+    <span class="dz-icon" aria-hidden="true">📷</span>
+    <p class="dz-text">{s.dropHint}</p>
+    <div class="dz-actions">
+      <input type="file" id="exif-file" accept="image/jpeg" class="sr-only" />
+      <label for="exif-file" class="btn ghost small">{s.chooseFile}</label>
+      <button type="button" class="btn ghost small" id="exif-demo">{s.loadDemo}</button>
+    </div>
+    <p class="dz-sub">{s.acceptNote}</p>
+  </div>
+
+  <p class="error-msg" id="exif-error" hidden></p>
+
+  <div id="exif-result" hidden>
+    <div class="exif-summary">
+      <img class="exif-thumb" id="exif-thumb" alt="" />
+      <div class="exif-meta-col">
+        <p class="exif-filename mono" id="exif-filename"></p>
+        <div class="badge-row" id="exif-badges"></div>
+      </div>
+    </div>
+
+    <div class="exif-gps-alert" id="exif-gps-alert" hidden>
+      <p class="gps-head">📍 {s.gpsAlertTitle}</p>
+      <p class="gps-coords mono" id="exif-gps-coords"></p>
+      <a id="exif-map-link" href="#" target="_blank" rel="noopener noreferrer">{s.openMap}</a>
+    </div>
+
+    <h3>{s.metadataTitle}</h3>
+    <div class="table-scroll">
+      <table class="result-table">
+        <tbody id="exif-tags-body"></tbody>
+      </table>
+    </div>
+
+    <div class="btn-row">
+      <button type="button" class="btn small exif-clean-btn" id="exif-clean">{s.cleanBtn}</button>
+    </div>
+  </div>
+
+  <p class="note">🔒 {s.privacyNote}</p>
+  <p class="note warn">⚠ {s.warning}</p>
+</div>
+
+<script>
+  import { parseExif, gpsToDecimal, formatExposure, ORIENTATION_LABELS } from '../../scripts/exif.js';
+
+  const DEMO_URL = '/ferramentas/exif-demo.jpg';
+
+  const root = document.getElementById('exif-tool')!;
+  const S = JSON.parse(root.dataset.strings!);
+  const dropzone = document.getElementById('exif-dropzone')!;
+  const fileInput = document.getElementById('exif-file') as HTMLInputElement;
+  const demoBtn = document.getElementById('exif-demo') as HTMLButtonElement;
+  const errorEl = document.getElementById('exif-error')!;
+  const resultEl = document.getElementById('exif-result')!;
+  const thumb = document.getElementById('exif-thumb') as HTMLImageElement;
+  const filenameEl = document.getElementById('exif-filename')!;
+  const badgesEl = document.getElementById('exif-badges')!;
+  const tagsBody = document.getElementById('exif-tags-body')!;
+  const gpsAlert = document.getElementById('exif-gps-alert')!;
+  const gpsCoords = document.getElementById('exif-gps-coords')!;
+  const mapLink = document.getElementById('exif-map-link') as HTMLAnchorElement;
+  const cleanBtn = document.getElementById('exif-clean') as HTMLButtonElement;
+
+  let currentObjectUrl: string | null = null;
+
+  function badge(text: string, cls?: string) {
+    const span = document.createElement('span');
+    span.className = cls ? `badge ${cls}` : 'badge';
+    span.textContent = text;
+    return span;
+  }
+
+  function row(label: string, value: string | number | null | undefined) {
+    if (value === null || value === undefined || value === '') return;
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.textContent = label;
+    const td = document.createElement('td');
+    td.textContent = String(value);
+    tr.append(th, td);
+    tagsBody.append(tr);
+  }
+
+  function render(name: string, bytes: Uint8Array, objectUrl: string) {
+    errorEl.hidden = true;
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = objectUrl;
+
+    thumb.src = objectUrl;
+    filenameEl.textContent = name;
+    badgesEl.replaceChildren();
+    tagsBody.replaceChildren();
+    gpsAlert.hidden = true;
+
+    const tags = parseExif(bytes);
+    if (!tags) {
+      badgesEl.append(badge(S.noExif, 'amber'));
+      resultEl.hidden = false;
+      return;
+    }
+
+    const makeModel = [tags.make, tags.model].filter(Boolean).join(' ');
+    if (makeModel) badgesEl.append(badge(makeModel));
+    if (tags.dateTimeOriginal) {
+      const day = tags.dateTimeOriginal.replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3');
+      badgesEl.append(badge(day));
+    }
+    const dec = gpsToDecimal(tags.gps);
+    badgesEl.append(dec ? badge(S.gpsPresent, 'amber') : badge(S.noGps));
+
+    row(S.rowMake, tags.make);
+    row(S.rowModel, tags.model);
+    row(S.rowLens, tags.lensModel);
+    row(S.rowSoftware, tags.software);
+    row(S.rowCapturedAt, tags.dateTimeOriginal);
+    row(S.rowExposure, formatExposure(tags.exposureTime));
+    row(S.rowAperture, tags.fNumber ? `f/${tags.fNumber}` : null);
+    row(S.rowIso, tags.iso ? `ISO ${tags.iso}` : null);
+    row(
+      S.rowFocalLength,
+      tags.focalLength
+        ? `${tags.focalLength}mm${tags.focalLengthIn35mm ? ` (${S.rowFocalLengthEquiv} ${tags.focalLengthIn35mm}mm)` : ''}`
+        : null,
+    );
+    row(
+      S.rowDimensions,
+      tags.pixelXDimension && tags.pixelYDimension ? `${tags.pixelXDimension} × ${tags.pixelYDimension}px` : null,
+    );
+    const orientKey = tags.orientation ? ORIENTATION_LABELS[tags.orientation as keyof typeof ORIENTATION_LABELS] : null;
+    row(S.rowOrientation, orientKey ? S.orientations[orientKey] ?? tags.orientation : null);
+
+    if (dec) {
+      const alt = typeof dec.altitude === 'number' ? `  ·  ${Math.round(dec.altitude)}m` : '';
+      gpsCoords.textContent = `${dec.lat.toFixed(5)}, ${dec.lon.toFixed(5)}${alt}`;
+      mapLink.href = S.openMapBase
+        .replaceAll('{lat}', String(dec.lat))
+        .replaceAll('{lon}', String(dec.lon));
+      gpsAlert.hidden = false;
+    }
+
+    resultEl.hidden = false;
+  }
+
+  async function loadBlob(blob: Blob, name: string) {
+    try {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const url = URL.createObjectURL(blob);
+      render(name, bytes, url);
+    } catch {
+      errorEl.textContent = S.invalidFile;
+      errorEl.hidden = false;
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (file) loadBlob(file, file.name);
+  });
+
+  demoBtn.addEventListener('click', async () => {
+    const res = await fetch(DEMO_URL);
+    const blob = await res.blob();
+    await loadBlob(blob, S.filenameDemo);
+  });
+
+  ['dragenter', 'dragover'].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('drag');
+    }),
+  );
+  ['dragleave', 'drop'].forEach((ev) =>
+    dropzone.addEventListener(ev, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('drag');
+    }),
+  );
+  dropzone.addEventListener('drop', (e) => {
+    const file = (e as DragEvent).dataTransfer?.files?.[0];
+    if (file) loadBlob(file, file.name);
+  });
+
+  cleanBtn.addEventListener('click', () => {
+    if (!currentObjectUrl) return;
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'sem-metadados.jpg';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      }, 'image/jpeg', 0.92);
+    };
+    img.src = currentObjectUrl;
+  });
+</script>
+
+<style>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .exif-dropzone {
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--bg);
+    padding: 1.3rem 1.1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .exif-dropzone.drag {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .exif-dropzone .dz-icon {
+    font-size: 1.6rem;
+  }
+  .exif-dropzone .dz-text {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+  }
+  .exif-dropzone .dz-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .exif-dropzone .dz-sub {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  .exif-summary {
+    display: flex;
+    gap: 1.1rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin-top: 1.2rem;
+  }
+  .exif-thumb {
+    width: 10.5rem;
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    flex: none;
+  }
+  .exif-meta-col {
+    flex: 1 1 14rem;
+  }
+  .exif-filename {
+    font-size: 0.85rem;
+    color: var(--text);
+    word-break: break-all;
+    margin: 0 0 0.5rem;
+  }
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .exif-gps-alert {
+    border: 1px solid var(--accent-2);
+    border-left-width: 3px;
+    border-radius: var(--radius);
+    background: rgba(240, 180, 92, 0.07);
+    padding: 0.9rem 1.1rem;
+    margin-top: 1.2rem;
+    color: var(--accent-2);
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .exif-gps-alert .gps-head {
+    font-family: var(--mono);
+    font-weight: 700;
+    margin: 0 0 0.35rem;
+  }
+  .exif-gps-alert .gps-coords {
+    color: var(--text);
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+  .exif-gps-alert a {
+    color: var(--accent-3);
+  }
+
+  .exif-clean-btn {
+    background: var(--accent-2);
+    border-color: var(--accent-2);
+  }
+</style>

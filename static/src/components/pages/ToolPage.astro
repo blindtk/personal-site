@@ -5,11 +5,12 @@ import HashTool from '../tools/HashTool.astro';
 import EncoderTool from '../tools/EncoderTool.astro';
 import PasswordGen from '../tools/PasswordGen.astro';
 import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
+import ExifTool from '../tools/ExifTool.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { toolUrl } from '../../i18n/routes';
 
-type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers';
+type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif';
 
 interface Props {
   lang: Lang;
@@ -26,6 +27,7 @@ const components = {
   encoder: EncoderTool,
   passwords: PasswordGen,
   'email-headers': EmailHeaderTool,
+  exif: ExifTool,
 } as const;
 const ToolComponent = components[tool];
 ---
