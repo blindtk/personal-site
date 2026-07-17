@@ -19,7 +19,7 @@ O site é bilingue: PT em `/` e EN em `/en/`.
 
 ## Desenvolver localmente
 
-Precisas do [Node.js](https://nodejs.org) 20 ou superior (o site foi construído com Node 22).
+Precisas do [Node.js](https://nodejs.org) 22.12 ou superior (o site é construído com Node 24, a LTS atual).
 
 ```bash
 cd static
