@@ -1,0 +1,240 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools['email-headers'];
+
+// Strings que o JS precisa em runtime.
+const jsStrings = {
+  invalid: s.invalid,
+  noVerdict: s.noVerdict,
+  hopsEmpty: s.hopsEmpty,
+  flagsNone: s.flagsNone,
+  authservLabel: s.authservLabel,
+  flagMsgs: s.flagMsgs,
+};
+---
+
+<div class="tool-panel" id="emailh-tool" data-strings={JSON.stringify(jsStrings)}>
+  <form id="emailh-form">
+    <div class="field">
+      <label for="emailh-input">{s.inputLabel}</label>
+      <textarea
+        id="emailh-input"
+        rows="10"
+        spellcheck="false"
+        autocomplete="off"
+        placeholder="Received: from …&#10;Authentication-Results: …&#10;From: …"></textarea>
+    </div>
+    <p class="note emailh-howto">{s.howTo}</p>
+    <div class="btn-row">
+      <button type="submit" class="btn">{s.analyze}</button>
+      <button type="button" class="btn ghost" id="emailh-sample">{s.loadSample}</button>
+    </div>
+  </form>
+  <p class="error-msg" id="emailh-error" hidden></p>
+
+  <div id="emailh-results" hidden>
+    <h3>{s.authTitle}</h3>
+    <div class="emailh-auth">
+      <div class="emailh-auth-card">
+        <div class="emailh-auth-head">
+          <span class="emailh-method">SPF</span>
+          <span class="emailh-verdict" id="emailh-v-spf" data-v="none">—</span>
+        </div>
+        <p>{s.spfExplain}</p>
+        <p class="emailh-detail" id="emailh-d-spf"></p>
+      </div>
+      <div class="emailh-auth-card">
+        <div class="emailh-auth-head">
+          <span class="emailh-method">DKIM</span>
+          <span class="emailh-verdict" id="emailh-v-dkim" data-v="none">—</span>
+        </div>
+        <p>{s.dkimExplain}</p>
+        <p class="emailh-detail" id="emailh-d-dkim"></p>
+      </div>
+      <div class="emailh-auth-card">
+        <div class="emailh-auth-head">
+          <span class="emailh-method">DMARC</span>
+          <span class="emailh-verdict" id="emailh-v-dmarc" data-v="none">—</span>
+        </div>
+        <p>{s.dmarcExplain}</p>
+        <p class="emailh-detail" id="emailh-d-dmarc"></p>
+      </div>
+    </div>
+    <p class="note mono" id="emailh-authserv" hidden></p>
+
+    <h3>{s.flagsTitle}</h3>
+    <ul class="emailh-flags" id="emailh-flags"></ul>
+
+    <h3>{s.hopsTitle}</h3>
+    <div class="table-scroll" id="emailh-hops-wrap">
+      <table class="result-table emailh-hops">
+        <thead>
+          <tr>
+            <th>{s.colHop}</th>
+            <th>{s.colFrom}</th>
+            <th>{s.colBy}</th>
+            <th>{s.colProto}</th>
+            <th>{s.colTime}</th>
+            <th>{s.colDelta}</th>
+          </tr>
+        </thead>
+        <tbody id="emailh-hops"></tbody>
+      </table>
+    </div>
+    <p class="note" id="emailh-hops-empty" hidden>{s.hopsEmpty}</p>
+
+    <h3>{s.summaryTitle}</h3>
+    <div class="table-scroll">
+      <table class="result-table">
+        <tbody>
+          <tr><th>{s.sFrom}</th><td id="emailh-s-from">—</td></tr>
+          <tr><th>{s.sReturnPath}</th><td id="emailh-s-return">—</td></tr>
+          <tr><th>{s.sReplyTo}</th><td id="emailh-s-reply">—</td></tr>
+          <tr><th>{s.sTo}</th><td id="emailh-s-to">—</td></tr>
+          <tr><th>{s.sSubject}</th><td id="emailh-s-subject">—</td></tr>
+          <tr><th>{s.sDate}</th><td id="emailh-s-date">—</td></tr>
+          <tr><th>{s.sMsgId}</th><td id="emailh-s-msgid">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="note warn">⚠ {s.trustNote}</p>
+    <p class="note">{s.limitNote}</p>
+  </div>
+</div>
+
+<script>
+  import { analyze, formatDelay } from '../../scripts/email-headers.js';
+
+  // Exemplo sintético (domínios .example / IPs TEST-NET) — um email de
+  // newsletter legítimo enviado por um ESP: tudo "pass", mas com o clássico
+  // From ≠ Return-Path para a ferramenta ter algo para apontar.
+  const SAMPLE = [
+    'Delivered-To: you@example.net',
+    'Received: from mail-out.esp-example.net (mail-out.esp-example.net [203.0.113.41])',
+    '        by mx.example.net with ESMTPS id k7si123456',
+    '        for <you@example.net>;',
+    '        Tue, 15 Jul 2025 09:12:44 +0000',
+    'Received: from app-queue-3.internal.esp-example.net (unknown [10.20.4.17])',
+    '        by mail-out.esp-example.net (Postfix) with ESMTPA id 8F2C41;',
+    '        Tue, 15 Jul 2025 09:12:39 +0000',
+    'Authentication-Results: mx.example.net;',
+    '        spf=pass smtp.mailfrom=bounce@mailer.esp-example.net;',
+    '        dkim=pass header.d=acme-corp.example;',
+    '        dmarc=pass header.from=acme-corp.example',
+    'DKIM-Signature: v=1; a=rsa-sha256; d=acme-corp.example; s=news; h=from:to:subject;',
+    '        bh=frcCV1k9oG9oKj3dpUqdJg==; b=bm90LXVtYS1hc3NpbmF0dXJhLXJlYWw=',
+    'Message-ID: <20250715091237.1A2B3C@app-queue-3.internal.esp-example.net>',
+    'Date: Tue, 15 Jul 2025 09:12:37 +0000',
+    'From: "ACME Newsletter" <news@acme-corp.example>',
+    'To: you@example.net',
+    'Subject: Julho: novidades do lab',
+    'Return-Path: <bounce@mailer.esp-example.net>',
+  ].join('\n');
+
+  const root = document.getElementById('emailh-tool')!;
+  const S = JSON.parse(root.dataset.strings!);
+  const form = document.getElementById('emailh-form')!;
+  const input = document.getElementById('emailh-input') as HTMLTextAreaElement;
+  const errorEl = document.getElementById('emailh-error')!;
+  const results = document.getElementById('emailh-results')!;
+  const el = (id: string) => document.getElementById(id)!;
+
+  const fmt = (template: string, params: Record<string, unknown>) =>
+    template.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? '?'));
+
+  function setSummaryCell(id: string, value: string | null) {
+    el(id).textContent = value || '—';
+  }
+
+  function setVerdict(method: string, v: { result: string | null; class: string }, detail: string) {
+    const badge = el(`emailh-v-${method}`);
+    badge.textContent = v.result ?? S.noVerdict;
+    badge.dataset.v = v.class;
+    el(`emailh-d-${method}`).textContent = detail;
+  }
+
+  function run() {
+    const report = analyze(input.value);
+    if (!report) {
+      errorEl.textContent = S.invalid;
+      errorEl.hidden = false;
+      results.hidden = true;
+      return;
+    }
+    errorEl.hidden = true;
+
+    const sum = report.summary;
+    setSummaryCell('emailh-s-from', sum.fromRaw);
+    setSummaryCell('emailh-s-return', sum.returnPath);
+    setSummaryCell('emailh-s-reply', sum.replyTo);
+    setSummaryCell('emailh-s-to', sum.to);
+    setSummaryCell('emailh-s-subject', sum.subject);
+    setSummaryCell('emailh-s-date', sum.date ? sum.date.toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : null);
+    setSummaryCell('emailh-s-msgid', sum.messageId);
+
+    setVerdict('spf', report.auth.spf, report.auth.spf.source === 'received-spf' ? 'via Received-SPF' : '');
+    setVerdict('dkim', report.auth.dkim, report.auth.dkim.domain ? `d=${report.auth.dkim.domain}` : '');
+    setVerdict('dmarc', report.auth.dmarc, '');
+    const authservEl = el('emailh-authserv');
+    authservEl.hidden = !report.auth.authserv;
+    if (report.auth.authserv) authservEl.textContent = `${S.authservLabel} ${report.auth.authserv}`;
+
+    const tbody = el('emailh-hops');
+    tbody.replaceChildren();
+    for (let i = 0; i < report.hops.length; i++) {
+      const hop = report.hops[i];
+      const tr = document.createElement('tr');
+      const cells = [
+        String(i + 1),
+        (hop.from ?? '—') + (hop.fromIps[0] ? ` [${hop.fromIps[0]}]` : ''),
+        hop.by ?? '—',
+        (hop.proto ?? '—') + (hop.tls ? ' 🔒' : ''),
+        hop.date ? hop.date.toISOString().replace('T', ' ').slice(0, 19) : '—',
+        hop.delaySeconds === null ? '—' : formatDelay(hop.delaySeconds),
+      ];
+      for (const [j, text] of cells.entries()) {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (j === 5 && hop.delaySeconds !== null && (hop.delaySeconds < -60 || hop.delaySeconds > 3600)) {
+          td.classList.add('emailh-odd-delay');
+        }
+        tr.append(td);
+      }
+      tbody.append(tr);
+    }
+    el('emailh-hops-wrap').hidden = !report.hops.length;
+    el('emailh-hops-empty').hidden = report.hops.length > 0;
+
+    const flagsEl = el('emailh-flags');
+    flagsEl.replaceChildren();
+    if (report.flags.length) {
+      for (const f of report.flags) {
+        const li = document.createElement('li');
+        li.dataset.level = f.level;
+        li.textContent = fmt(S.flagMsgs[f.id] ?? f.id, f.params);
+        flagsEl.append(li);
+      }
+    } else {
+      const li = document.createElement('li');
+      li.dataset.level = 'ok';
+      li.textContent = S.flagsNone;
+      flagsEl.append(li);
+    }
+
+    results.hidden = false;
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    run();
+  });
+  document.getElementById('emailh-sample')!.addEventListener('click', () => {
+    input.value = SAMPLE;
+    run();
+  });
+</script>
