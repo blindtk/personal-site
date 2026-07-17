@@ -12,6 +12,7 @@ export const routes = {
   lab: { pt: '/lab/', en: '/en/lab/' },
   security: { pt: '/seguranca/', en: '/en/security/' },
   honeypot: { pt: '/honeypot/', en: '/en/honeypot/' },
+  detections: { pt: '/detecoes/', en: '/en/detections/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
   evidence: { pt: '/provas/', en: '/en/evidence/' },
   certifications: { pt: '/certificacoes/', en: '/en/certifications/' },

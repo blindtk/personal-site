@@ -81,6 +81,24 @@ test('attack-map sincroniza com content/honeypot-attack.json', () => {
   assert.deepEqual(PATH_TECHNIQUE, content.paths);
 });
 
+test('detections.json sincroniza com os paths-isco e as técnicas', () => {
+  // A página Deteções publica uma regra Sigma por path-isco — se um isco
+  // novo entrar no Worker sem regra (ou vice-versa), isto rebenta.
+  const url = new URL('../../../content/detections.json', import.meta.url);
+  const { rules } = JSON.parse(readFileSync(fileURLToPath(url), 'utf8'));
+  const byPath = Object.fromEntries(rules.map((r) => [r.path, r.technique]));
+  assert.deepEqual(byPath, PATH_TECHNIQUE);
+  for (const r of rules) {
+    const yamlText = r.sigma.join('\n');
+    // a tag ATT&CK da regra tem de bater com a técnica declarada
+    assert.ok(yamlText.includes(`attack.${r.technique.toLowerCase()}`), `${r.slug}: tag ATT&CK divergente`);
+    // campos essenciais de uma regra Sigma
+    for (const field of ['title:', 'id:', 'logsource:', 'detection:', 'condition:', 'level:']) {
+      assert.ok(yamlText.includes(field), `${r.slug}: falta ${field}`);
+    }
+  }
+});
+
 test('agregação: addEvent/mergeBuckets contam por país e path', () => {
   const b = emptyBucket();
   addEvent(b, { country: 'RU', path: '/.env' });
@@ -112,6 +130,12 @@ test('honeypotStats: 24h, top path, países 7d, tempo até 1.º scan', () => {
   assert.equal(stats.countryCount, 3); // RU, US, BR nos 7 dias
   assert.equal(stats.timeToFirstScanSec, 31);
   assert.equal(stats.recent.length, 1);
+  // paths7d: contagens da semana ordenadas por contagem decrescente
+  assert.deepEqual(stats.paths7d, [
+    { path: '/wp-login.php', count: 2 },
+    { path: '/.env', count: 1 },
+    { path: '/admin', count: 1 },
+  ]);
 });
 
 test('mapData ordena países por contagem', () => {
@@ -374,4 +398,62 @@ test('honeypot: abaixo do teto escreve normalmente', async () => {
   const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('wcap:'));
   assert.ok(capKey);
   assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+});
+
+// ---------- cabeçalhos de segurança das respostas do Worker ----------
+// O _headers do Pages não cobre as rotas do Worker — cada resposta tem de
+// trazer nosniff + CSP 'none' por si (API JSON e 404 dos iscos).
+
+test('respostas da API trazem nosniff e CSP none', async () => {
+  const env = { KV: fakeKV() };
+  const res = await runFetch(fakeRequest('/api/health'), env);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+});
+
+test('404 dos paths-isco traz nosniff e CSP none', async () => {
+  const env = { KV: fakeKV() };
+  const res = await runFetch(fakeRequest('/wp-login.php', { ip: '198.51.100.7', country: 'US', asn: 1 }), env);
+  assert.equal(res.status, 404);
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+});
+
+// ---------- cache: stale-while-revalidate ----------
+
+test('cache expirada serve o valor stale e renova em background', async () => {
+  const env = { KV: fakeKV() };
+  const now = Date.now();
+  // valor logicamente expirado, mas ainda presente no KV (janela stale)
+  env.KV.store.set('cache:honeypot', JSON.stringify({ data: { attempts24h: 42 }, exp: now - 1000 }));
+
+  const res = await runFetch(fakeRequest('/api/honeypot'), env);
+  const body = await res.json();
+  assert.equal(body.attempts24h, 42); // resposta imediata = stale
+
+  // depois do waitUntil, a cache foi renovada (exp no futuro, dados frescos)
+  const refreshed = JSON.parse(env.KV.store.get('cache:honeypot'));
+  assert.ok(refreshed.exp > now, 'refresh em background devia ter renovado o exp');
+  assert.equal(refreshed.data.attempts24h, 0); // buckets vazios → 0
+});
+
+// ---------- rate limit: pedido bloqueado não gasta escrita KV ----------
+
+test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
+  const kv = fakeKV();
+  let puts = 0;
+  const origPut = kv.put.bind(kv);
+  kv.put = async (...args) => { puts += 1; return origPut(...args); };
+  const env = { KV: kv };
+
+  // pré-carrega a janela do cliente no máximo (max=3 na rota scan)
+  const ip = '203.0.113.9';
+  const id = await clientHash(ip, dailySalt(undefined));
+  kv.store.set(`rl:scan:${id}`, JSON.stringify({ count: 3, windowStart: Date.now() }));
+
+  const res = await runFetch(fakeRequest('/api/scan?refresh=1', { ip }), env);
+  assert.equal(res.status, 429);
+  assert.ok(res.headers.get('retry-after'));
+  assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
 });
