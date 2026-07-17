@@ -261,6 +261,11 @@ export const ui = {
       demo: 'demo',
       back: '← Voltar aos projetos',
     },
+    awards: {
+      title: 'CTFs vencidos',
+      intro: '1.º lugar, com foto e coin como prova — nada escrito à mão.',
+      firstPlace: '1.º lugar',
+    },
     tools: {
       title: 'Ferramentas',
       intro: 'Utilitários de rede e segurança que corro no browser — tudo client-side, nada sai da tua máquina.',
@@ -678,6 +683,11 @@ export const ui = {
       repo: 'code',
       demo: 'demo',
       back: '← Back to projects',
+    },
+    awards: {
+      title: 'CTFs won',
+      intro: '1st place, with a photo and the coin as proof — nothing hand-typed.',
+      firstPlace: '1st place',
     },
     tools: {
       title: 'Tools',

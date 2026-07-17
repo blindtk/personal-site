@@ -1,0 +1,53 @@
+{
+  "_comment": "CTFs vencidos (1.º lugar), com foto/coin como prova. 'note' é bilingue; 'event' e 'org' ficam em inglês (nomes próprios do evento).",
+  "items": [
+    {
+      "event": "SEC504 — Hacker Tools, Techniques, and Incident Handling",
+      "org": "SANS Institute",
+      "year": 2022,
+      "image": "/awards/sec504-coin.jpg",
+      "width": 900,
+      "height": 1600,
+      "note": {
+        "pt": "1.º lugar no CTF da formação SEC504, em Lisboa.",
+        "en": "1st place in the SEC504 course CTF, in Lisbon."
+      }
+    },
+    {
+      "event": "Xperts Summit Portugal 2024 — Ultimate Fabric Challenge",
+      "org": "Fortinet",
+      "year": 2024,
+      "image": "/awards/xperts-summit-2024.jpg",
+      "width": 1400,
+      "height": 1867,
+      "note": {
+        "pt": "1.º lugar no CTF, em equipa com o Bernardo Sousa (2.º lugar individual).",
+        "en": "1st place in the CTF, teamed with Bernardo Sousa (2nd place individually)."
+      }
+    },
+    {
+      "event": "Fabric Challenge 2025",
+      "org": "Fortinet",
+      "year": 2025,
+      "image": "/awards/fabric-challenge-2025.jpg",
+      "width": 960,
+      "height": 1280,
+      "note": {
+        "pt": "1.º lugar no CTF, em equipa com o Bernardo Sousa.",
+        "en": "1st place in the CTF, teamed with Bernardo Sousa."
+      }
+    },
+    {
+      "event": "Flag the Hack",
+      "org": "Fortinet",
+      "year": 2026,
+      "image": "/awards/flag-the-hack.jpg",
+      "width": 1400,
+      "height": 1867,
+      "note": {
+        "pt": "1.º lugar no CTF do primeiro evento Flag the Hack em Portugal — cadeia de ataque completa, com fases de prompt injection e resposta com FortiSOAR.",
+        "en": "1st place in the CTF at the first Flag the Hack event in Portugal — a full attack chain, with prompt-injection stages and FortiSOAR-driven response."
+      }
+    }
+  ]
+}
