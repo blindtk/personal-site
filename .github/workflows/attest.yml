@@ -1,0 +1,66 @@
+# Proveniência do build (SLSA via Sigstore): a cada push para main, o site é
+# construído e o bundle resultante (dist/ em tarball) é atestado com GitHub
+# artifact attestations — uma prova criptográfica de QUE commit, QUE workflow
+# e QUE runner produziram o artefacto. Qualquer pessoa pode descarregar o
+# artefacto da run e verificar:
+#   gh attestation verify site-dist.tar.gz -R <owner>/<repo>
+# O índice público das attestations vive em <repo>/attestations.
+#
+# Actions pinadas por commit SHA, como o resto do repo (Renovate mantém).
+name: Attest
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  attest:
+    # O GitHub só publica attestations em repositórios públicos (ou com
+    # Enterprise): enquanto o repo estiver privado o job fica em skip — sem
+    # falhar CI nem gastar minutos — e ativa-se sozinho ao tornar o repo
+    # público. A página /provas explica isto na secção de proveniência.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC para assinar via Sigstore
+      attestations: write # publicar a attestation no repo
+    defaults:
+      run:
+        working-directory: static
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: static/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+
+      # O sujeito da attestation é o bundle completo do site (HTML + CSP nas
+      # <meta> + _headers gerado) — o que se verifica é exatamente o que se
+      # serviria.
+      - name: Empacotar o build
+        run: tar -czf site-dist.tar.gz -C dist .
+
+      - name: Atestar proveniência (SLSA / Sigstore)
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: static/site-dist.tar.gz
+
+      # Sem o artefacto guardado não haveria nada para o público verificar —
+      # a attestation refere-se ao digest deste tarball.
+      - name: Guardar o artefacto verificável
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site-dist
+          path: static/site-dist.tar.gz
+          retention-days: 90

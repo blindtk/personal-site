@@ -126,6 +126,15 @@ export const ui = {
       ],
       pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
       workflowsView: 'ver execuções →',
+      provenanceTitle: 'Proveniência do build',
+      provenanceIntro:
+        'A cada push para main, o workflow Attest constrói o site e assina o resultado: o bundle completo (o dist/ que se serve) recebe uma attestation de proveniência SLSA via Sigstore — a prova criptográfica de que commit, que workflow e que runner o produziram. Não é "confia no deploy": é verificável offline, com o CLI do GitHub.',
+      provenanceVerifyLead:
+        'Para verificar: descarrega o artefacto site-dist da execução mais recente do workflow Attest e corre:',
+      provenanceIndexLabel: 'índice público de attestations deste repositório',
+      provenanceRunsLabel: 'execuções do workflow Attest',
+      provenanceNote:
+        'O GitHub só publica attestations em repositórios públicos — enquanto o repo estiver privado, o workflow fica em skip e esta secção descreve o mecanismo já a bordo; ao tornar o repo público, cada push a main passa a ser atestado automaticamente, sem mais nenhum passo.',
       verifyTitle: 'Verifica tu mesmo',
       verifyIntro: 'Não fiques pela minha palavra:',
       verifyRepo: 'Código-fonte no GitHub',
@@ -205,6 +214,30 @@ export const ui = {
       unavailable: 'O painel ao vivo ainda não está ligado — o Worker do honeypot precisa de estar publicado nas rotas do domínio. O código e a garantia de privacidade estão no repositório.',
       loading: 'a carregar as tentativas…',
       secondsAgo: 'atualizado agora',
+      detectionsNote: 'Cada classe de ataque aqui registada tem a regra Sigma que a detetaria num SIEM — escritas a partir do que este honeypot vê.',
+      detectionsLink: 'Ver as Deteções →',
+    },
+    detections: {
+      metaTitle: 'Deteções — do honeypot às regras Sigma',
+      title: 'Deteções',
+      intro:
+        'O passo a seguir ao honeypot: cada classe de ataque que este site apanha vem acompanhada da regra Sigma que a detetaria num SIEM. Não é uma lista teórica — o contador ao lado de cada regra são os toques reais dos últimos 7 dias nos endpoints-isco deste site.',
+      pipelineTitle: 'O pipeline',
+      pipelineSteps: [
+        { t: 'O isco regista', d: 'Um scanner toca num endpoint-isco (/wp-login.php, /.env, …) e recebe um 404 seco. O Worker guarda só país, ASN e path — nunca o IP.' },
+        { t: 'Classificação ATT&CK', d: 'Cada path é mapeado à técnica MITRE ATT&CK que melhor o descreve — os mesmos IDs do heatmap /attack, verificados por um teste.' },
+        { t: 'Regra Sigma', d: 'Para cada classe, a regra vendor-neutral que a apanharia — pronta a converter para Splunk, Elastic ou Sentinel com o sigma-cli.' },
+      ],
+      hits7d: 'toques · 7 dias',
+      techLabel: 'técnica',
+      copy: 'copiar regra',
+      copied: 'copiada ✓',
+      liveNote:
+        'O contador carrega do mesmo /api/honeypot do painel. Se o Worker ainda não estiver publicado fica em “—” — as regras continuam válidas na mesma.',
+      convertLead: 'As regras seguem as convenções webserver do SigmaHQ (campos c-uri, cs-method, sc-status). Converte para a tua plataforma com o sigma-cli:',
+      convertCmd: 'sigma convert -t splunk detecao.yml',
+      seeHoneypot: 'Ver o honeypot que alimenta isto →',
+      seeAttack: 'Ver o heatmap ATT&CK →',
     },
     hostmap: {
       title: 'Mapa de tráfego hostil',
@@ -565,6 +598,15 @@ export const ui = {
       ],
       pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
       workflowsView: 'view runs →',
+      provenanceTitle: 'Build provenance',
+      provenanceIntro:
+        'On every push to main, the Attest workflow builds the site and signs the result: the full bundle (the dist/ that gets served) receives a SLSA provenance attestation via Sigstore — cryptographic proof of which commit, which workflow and which runner produced it. Not "trust the deploy": it is verifiable offline, with the GitHub CLI.',
+      provenanceVerifyLead:
+        'To verify: download the site-dist artifact from the latest run of the Attest workflow and run:',
+      provenanceIndexLabel: 'public attestation index for this repository',
+      provenanceRunsLabel: 'Attest workflow runs',
+      provenanceNote:
+        'GitHub only publishes attestations for public repositories — while the repo is private, the workflow stays skipped and this section documents the mechanism already on board; once the repo goes public, every push to main gets attested automatically, no further steps.',
       verifyTitle: 'Check for yourself',
       verifyIntro: "Don't take my word for it:",
       verifyRepo: 'Source code on GitHub',
@@ -644,6 +686,30 @@ export const ui = {
       unavailable: 'The live panel is not wired up yet — the honeypot Worker needs to be published on the domain routes. The code and the privacy guarantee are in the repository.',
       loading: 'loading attempts…',
       secondsAgo: 'updated just now',
+      detectionsNote: 'Every attack class logged here comes with the Sigma rule that would catch it in a SIEM — written from what this honeypot sees.',
+      detectionsLink: 'See the Detections →',
+    },
+    detections: {
+      metaTitle: 'Detections — from honeypot to Sigma rules',
+      title: 'Detections',
+      intro:
+        'The step after the honeypot: every attack class this site catches comes with the Sigma rule that would detect it in a SIEM. Not a theoretical list — the counter next to each rule shows the real hits on this site\'s decoy endpoints over the last 7 days.',
+      pipelineTitle: 'The pipeline',
+      pipelineSteps: [
+        { t: 'The decoy logs', d: 'A scanner touches a decoy endpoint (/wp-login.php, /.env, …) and gets a dry 404. The Worker stores only country, ASN and path — never the IP.' },
+        { t: 'ATT&CK classification', d: 'Each path is mapped to the MITRE ATT&CK technique that best describes it — the same IDs as the /attack heatmap, kept in sync by a test.' },
+        { t: 'Sigma rule', d: 'For each class, the vendor-neutral rule that would catch it — ready to convert to Splunk, Elastic or Sentinel with sigma-cli.' },
+      ],
+      hits7d: 'hits · 7 days',
+      techLabel: 'technique',
+      copy: 'copy rule',
+      copied: 'copied ✓',
+      liveNote:
+        'The counter loads from the same /api/honeypot as the panel. If the Worker is not published yet it stays at “—” — the rules remain just as valid.',
+      convertLead: 'The rules follow SigmaHQ webserver conventions (c-uri, cs-method, sc-status fields). Convert to your platform with sigma-cli:',
+      convertCmd: 'sigma convert -t splunk detection.yml',
+      seeHoneypot: 'See the honeypot feeding this →',
+      seeAttack: 'See the ATT&CK heatmap →',
     },
     hostmap: {
       title: 'Hostile-traffic map',
