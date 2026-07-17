@@ -24,4 +24,19 @@
   },
   prConcurrentLimit: 3,
   labels: ['dependencies'],
+  // O manager pre-commit vem desligado por omissão — ligá-lo para seguir o
+  // `rev:` dos hooks (ex.: gitleaks em .pre-commit-config.yaml), que de outra
+  // forma ficava por atualizar.
+  'pre-commit': { enabled: true },
+  // Versões cravadas em `run:` (pipx) não têm manager nativo: o semgrep e o
+  // zizmor pinados em .github/workflows/security.yml. Regex + datasource PyPI
+  // para as manter atualizadas como o resto.
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^\\.github/workflows/[^/]+\\.ya?ml$/'],
+      matchStrings: ['pipx install (?<depName>[a-z0-9._-]+)==(?<currentValue>\\S+)'],
+      datasourceTemplate: 'pypi',
+    },
+  ],
 }
