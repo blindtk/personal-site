@@ -64,6 +64,16 @@ const scanners = [
     <p>{sec.privacyBody}</p>
   </section>
 
+  <section aria-labelledby="h-ci">
+    <div class="section-title">
+      <h2 id="h-ci">{sec.ciTitle}</h2>
+    </div>
+    <p>{sec.ciBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={`${routes.evidence[lang]}#h-workflows`}>{sec.ciCta}</a></li>
+    </ul>
+  </section>
+
   <section aria-labelledby="h-report">
     <div class="section-title">
       <h2 id="h-report">{sec.reportTitle}</h2>

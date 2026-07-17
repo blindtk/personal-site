@@ -151,6 +151,26 @@ const hashStrings = {
       <h2 id="h-workflows">{ev.workflowsTitle}</h2>
     </div>
     <p>{ev.workflowsIntro}</p>
+    <p class="intro">{ev.pipelineIntro}</p>
+    <div class="table-scroll">
+      <table class="result-table ev-pipeline">
+        <thead>
+          <tr>
+            <th class="mono">{ev.pipelineToolCol}</th>
+            <th class="mono">{ev.pipelineCatchesCol}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ev.pipeline.map((p) => (
+            <tr>
+              <th class="mono">{p.tool}</th>
+              <td>{p.catches}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="note">{ev.pipelineNote}</p>
     <ul class="ev-links mono">
       {workflows.map((wf) => (
         <li>
@@ -264,6 +284,16 @@ const hashStrings = {
   }
   .ev-contract th[scope],
   .ev-contract thead th {
+    color: var(--muted);
+  }
+  /* A coluna "o que apanha" é prosa — quebra por palavra, não a meio (o
+     default .result-table td é break-all, pensado para hashes). O nome da
+     ferramenta na 1.ª coluna fica em mono. */
+  .ev-pipeline td {
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+  .ev-pipeline thead th {
     color: var(--muted);
   }
 </style>

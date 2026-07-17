@@ -54,6 +54,11 @@ export const ui = {
       // separada. Por agora esta secção descreve a prática real.
       privacyBody:
         'Não há cookies, analytics nem scripts de terceiros. As ferramentas (subnets, hashes, encoder, passwords) processam tudo no teu browser — nenhum dado sai da máquina, não há servidor a receber o que escreves.',
+      // ----- Cadeia de entrega (CI) -----
+      ciTitle: 'Cadeia de entrega',
+      ciBody:
+        'O código que chega ao teu browser passa por uma cadeia de verificações a cada push: as dependências são analisadas por vulnerabilidades conhecidas e por pacotes maliciosos, os segredos são travados antes de entrarem, os scripts do lado do cliente passam por SAST, e os próprios workflows são auditados. As GitHub Actions estão pinadas por digest SHA e as dependências mantidas pelo Renovate. O detalhe — que ferramenta apanha o quê — está nas Provas.',
+      ciCta: 'Ver a cadeia de CI nas Provas →',
       // ----- Como reportar -----
       reportTitle: 'Como reportar',
       reportBody:
@@ -109,6 +114,17 @@ export const ui = {
       workflowsTitle: 'Workflows',
       workflowsIntro:
         'A cada push para main, estes workflows correm no GitHub Actions. Verdes = build limpo, sem vulnerabilidades conhecidas, e segredos + SAST a passar.',
+      pipelineIntro: 'As camadas que correm — cada uma falha o CI se encontrar algo:',
+      pipelineToolCol: 'ferramenta',
+      pipelineCatchesCol: 'o que apanha',
+      pipeline: [
+        { tool: 'Renovate', catches: 'Mantém as dependências atualizadas e pina as GitHub Actions por digest SHA (proteção contra tags movidas). Corre numa janela semanal.' },
+        { tool: 'OSV-Scanner', catches: 'Dependências com vulnerabilidades conhecidas ou marcadas como maliciosas (base OSV.dev + advisories do GitHub), lidas do lockfile.' },
+        { tool: 'Gitleaks', catches: 'Segredos committados — tokens, chaves privadas — sobre a história completa do PR. Também como hook local antes de cada commit.' },
+        { tool: 'Semgrep', catches: 'SAST: sinks de DOM XSS (innerHTML, document.write) nos scripts do lado do cliente e no terminal do Lab.' },
+        { tool: 'zizmor', catches: 'Auditoria dos próprios workflows: pins em falta, permissões excessivas, injeção de template em run:.' },
+      ],
+      pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
       workflowsView: 'ver execuções →',
       verifyTitle: 'Verifica tu mesmo',
       verifyIntro: 'Não fiques pela minha palavra:',
@@ -490,6 +506,11 @@ export const ui = {
       attackTitle: 'Defensive coverage',
       attackBody: "From the defender's side: the MITRE ATT&CK techniques I cover in production, mapped to the tools and the experience.",
       attackCta: 'See the ATT&CK heatmap →',
+      // ----- Delivery chain (CI) -----
+      ciTitle: 'Delivery chain',
+      ciBody:
+        'The code that reaches your browser goes through a chain of checks on every push: dependencies are scanned for known vulnerabilities and for malicious packages, secrets are stopped before they land, client-side scripts go through SAST, and the workflows themselves are audited. The GitHub Actions are pinned by SHA digest and the dependencies kept up to date by Renovate. The detail — which tool catches what — is on the Evidence page.',
+      ciCta: 'See the CI chain on Evidence →',
       // ----- Evidence -----
       evidenceTitle: 'Verifiable transparency',
       evidenceBody:
@@ -532,6 +553,17 @@ export const ui = {
       workflowsTitle: 'Workflows',
       workflowsIntro:
         'On every push to main, these workflows run on GitHub Actions. Green = clean build, no known vulnerabilities, and secrets + SAST passing.',
+      pipelineIntro: 'The layers that run — each one fails CI if it finds something:',
+      pipelineToolCol: 'tool',
+      pipelineCatchesCol: 'what it catches',
+      pipeline: [
+        { tool: 'Renovate', catches: 'Keeps dependencies up to date and pins the GitHub Actions by SHA digest (protection against moved tags). Runs on a weekly window.' },
+        { tool: 'OSV-Scanner', catches: 'Dependencies with known vulnerabilities or flagged as malicious (OSV.dev database + GitHub advisories), read from the lockfile.' },
+        { tool: 'Gitleaks', catches: 'Committed secrets — tokens, private keys — across the full PR history. Also as a local hook before every commit.' },
+        { tool: 'Semgrep', catches: 'SAST: DOM XSS sinks (innerHTML, document.write) in the client-side scripts and the Lab terminal.' },
+        { tool: 'zizmor', catches: 'Audit of the workflows themselves: missing pins, excessive permissions, template injection in run:.' },
+      ],
+      pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
       workflowsView: 'view runs →',
       verifyTitle: 'Check for yourself',
       verifyIntro: "Don't take my word for it:",
