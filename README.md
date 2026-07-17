@@ -160,3 +160,17 @@ dynamic/               ← PLAN.md (roadmap da futura app com backend)
 ```
 
 Convenções de desenvolvimento: ver [CLAUDE.md](CLAUDE.md).
+
+## Segurança
+
+Para reportar uma vulnerabilidade, ver [SECURITY.md](.github/SECURITY.md) ou o
+[`security.txt`](static/public/.well-known/security.txt) do site
+([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)). Reporta sempre em
+privado, nunca numa Issue pública.
+
+## Licença
+
+O **código** deste repositório está sob a licença [MIT](LICENSE) — reutiliza à
+vontade, mantendo o aviso de copyright. O **conteúdo editorial** (textos do
+blog e das páginas em `content/`, bio e materiais pessoais) e os elementos de
+marca não estão cobertos pela MIT: continuam "todos os direitos reservados".
