@@ -40,11 +40,16 @@ export default defineConfig({
   //     constrói DOM via createElement + textContent (zero innerHTML/eval),
   //     logo nenhuma política de Trusted Types é precisa e proibimos criar
   //     uma — bloqueia sinks de injeção de script em runtime.
+  //   - img-src inclui blob: (a par de 'self'): o painel EXIF
+  //     (ferramentas/exif) pré-visualiza a imagem carregada via
+  //     URL.createObjectURL — sempre gerado pela própria página a partir de
+  //     um File/Blob local, nunca um URL remoto, por isso não abre a
+  //     política a imagens de terceiros.
   security: {
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self'",
+        "img-src 'self' blob:",
         "font-src 'self'",
         "connect-src 'self'",
         "object-src 'none'",
