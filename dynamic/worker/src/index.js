@@ -106,15 +106,27 @@ async function recordHoneypot(env, request, path, now) {
 
 // ---------- caching de leitura ----------
 
-async function cached(env, key, ttlSec, producer) {
+// Cache de leitura com stale-while-revalidate: um valor expirado ainda é
+// servido de imediato enquanto um único refresh corre em background
+// (ctx.waitUntil) — evita a debandada de N fetches concorrentes ao upstream
+// (NVD/KEV têm rate limit) quando a cache expira com tráfego. A cópia no KV
+// vive 10 min além do exp lógico para haver "stale" que servir.
+async function cached(env, ctx, key, ttlSec, producer) {
   const now = Date.now();
   const hit = await getJSON(env, key);
   if (hit && hit.exp > now) return hit.data;
-  const data = await producer();
-  await env.KV.put(key, JSON.stringify({ data, exp: now + ttlSec * 1000 }), {
-    expirationTtl: ttlSec + 60,
-  });
-  return data;
+  const refresh = async () => {
+    const data = await producer();
+    await env.KV.put(key, JSON.stringify({ data, exp: Date.now() + ttlSec * 1000 }), {
+      expirationTtl: ttlSec + 600,
+    });
+    return data;
+  };
+  if (hit && ctx) {
+    ctx.waitUntil(refresh().catch((err) => console.error('cache_refresh_failed', key, err?.message ?? String(err))));
+    return hit.data;
+  }
+  return refresh();
 }
 
 // ---------- self-scan ----------
@@ -144,11 +156,27 @@ async function rateLimit(env, request, route, { windowMs, max }) {
   const now = Date.now();
   const prev = await getJSON(env, key);
   const { allowed, state, retryAfterSec } = nextState(prev, { now, windowMs, max });
-  await env.KV.put(key, JSON.stringify(state), { expirationTtl: Math.ceil(windowMs / 1000) + 1 });
+  // Bloqueado ⇒ o estado não mudou (nextState devolve a mesma contagem) —
+  // não se gasta uma escrita KV por pedido recusado, senão martelar a rota
+  // transformava cada 429 num put pago. O put só acontece quando conta.
+  if (allowed) {
+    await env.KV.put(key, JSON.stringify(state), { expirationTtl: Math.ceil(windowMs / 1000) + 1 });
+  }
   return { allowed, retryAfterSec };
 }
 
 // ---------- respostas ----------
+
+// Cabeçalhos de segurança de TODAS as respostas do Worker. O _headers do
+// Pages só cobre o conteúdo estático — as rotas servidas pelo Worker (API e
+// paths-isco) respondem por si e, sem isto, saíam sem nosniff nem CSP (e o
+// workflow Headers, que verifica a raiz do site, nunca o apanharia). A CSP
+// 'none' é a prática padrão para endpoints JSON: mesmo com tudo sanitizado,
+// garante que nada executa se um browser renderizar a resposta diretamente.
+const RESPONSE_SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'content-security-policy': "default-src 'none'",
+};
 
 function corsHeaders(request, env) {
   const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -167,6 +195,7 @@ function json(data, request, env, { status = 200, maxAge = 0, extra = {} } = {})
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': maxAge > 0 ? `public, max-age=${maxAge}` : 'no-store',
+      ...RESPONSE_SECURITY_HEADERS,
       ...corsHeaders(request, env),
       ...extra,
     },
@@ -181,7 +210,10 @@ export default {
     const path = url.pathname;
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders(request, env) });
+      return new Response(null, {
+        status: 204,
+        headers: { ...RESPONSE_SECURITY_HEADERS, ...corsHeaders(request, env) },
+      });
     }
 
     // endpoints-isco: registar (em background) e devolver 404 seco
@@ -193,7 +225,10 @@ export default {
           console.error('honeypot_write_failed', path, err?.message ?? String(err)),
         ),
       );
-      return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
+      return new Response('Not found', {
+        status: 404,
+        headers: { 'content-type': 'text/plain', ...RESPONSE_SECURITY_HEADERS },
+      });
     }
 
     if (request.method !== 'GET') {
@@ -206,14 +241,14 @@ export default {
       }
 
       if (path === '/api/honeypot') {
-        const data = await cached(env, 'cache:honeypot', 60, async () =>
+        const data = await cached(env, ctx, 'cache:honeypot', 60, async () =>
           honeypotStats(await readBuckets(env, Date.now())),
         );
         return json(data, request, env, { maxAge: 60 });
       }
 
       if (path === '/api/map') {
-        const data = await cached(env, 'cache:map', 60, async () =>
+        const data = await cached(env, ctx, 'cache:map', 60, async () =>
           mapData(await readBuckets(env, Date.now())),
         );
         return json(data, request, env, { maxAge: 60 });
@@ -239,12 +274,12 @@ export default {
           });
           return json(data, request, env);
         }
-        const data = await cached(env, 'cache:scan', 6 * 3600, () => runScan(env));
+        const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
         return json(data, request, env, { maxAge: 1800 });
       }
 
       if (path === '/api/ticker') {
-        const data = await cached(env, 'cache:ticker', 3600, () => fetchTicker(env));
+        const data = await cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env));
         return json(data, request, env, { maxAge: 1800 });
       }
     } catch (err) {
@@ -264,8 +299,8 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
       Promise.all([
-        cached(env, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
-        cached(env, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
+        cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
+        cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
       ]),
     );
   },

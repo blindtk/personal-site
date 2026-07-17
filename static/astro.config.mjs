@@ -32,6 +32,8 @@ export default defineConfig({
   //
   // Endurecimentos:
   //   - object-src/base-uri 'none': sem plugins nem <base> injetável.
+  //   - frame-src/worker-src 'none': o site não embebe iframes nem cria
+  //     workers — fechado explicitamente em vez de herdar default-src 'self'.
   //   - form-action 'none': o único <form> (SubnetCalc) faz preventDefault e
   //     nunca submete — nada navega, por isso 'none' em vez de 'self'.
   //   - require-trusted-types-for 'script' + trusted-types 'none': todo o JS
@@ -46,6 +48,8 @@ export default defineConfig({
         "font-src 'self'",
         "connect-src 'self'",
         "object-src 'none'",
+        "frame-src 'none'",
+        "worker-src 'none'",
         "base-uri 'none'",
         "form-action 'none'",
         "require-trusted-types-for 'script'",

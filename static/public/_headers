@@ -33,9 +33,16 @@
 # As imagens Open Graph precisam de ser carregáveis por outras origens
 # (pré-visualizações de LinkedIn/Slack/etc.), por isso relaxa-se o CORP e
 # fixa-se um cache longo.
+# O "!" é obrigatório: quando várias regras coincidem, o Pages NÃO substitui
+# um header repetido — CONCATENA os valores com vírgula. Sem o detach, este
+# ficheiro servia "same-origin, cross-origin" (valor inválido, o browser
+# ignora o header por inteiro). O "!" remove primeiro o valor herdado do
+# bloco /* e só depois se define o novo.
 /og-image.png
+  ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
   Cache-Control: public, max-age=31536000, immutable
 /og-image-en.png
+  ! Cross-Origin-Resource-Policy
   Cross-Origin-Resource-Policy: cross-origin
   Cache-Control: public, max-age=31536000, immutable
