@@ -4,7 +4,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes, blogPostUrl, toolUrl } from '../../i18n/routes';
+import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -144,7 +144,7 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       </div>
       <div class="mini-list">
         {projects.map((project) => (
-          <a href={routes.projects[lang]}>
+          <a href={projectUrl(lang, project.id.slice(3))}>
             <span class="name">{project.data.title}</span>
             <span class="desc">{project.data.description}</span>
             <span class="go" aria-hidden="true">→</span>
