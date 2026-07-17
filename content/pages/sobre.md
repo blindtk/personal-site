@@ -45,6 +45,11 @@ O essencial está acima; o detalhe de cada função fica aqui, recolhido.
   aplicações através de políticas e procedimentos; deteção de ameaças e
   vulnerabilidades e implementação de controlos para as mitigar via
   monitorização e análise de eventos de segurança.
+- **Referência externa:** a infraestrutura de segurança que ajudei a
+  construir foi tema de um [Fortinet Customer Story sobre a
+  Ascendi](https://www.fortinet.com/customers/ascendi) — o artigo não me
+  nomeia (cita o Head of IT), mas fiz parte da equipa por trás do trabalho
+  descrito.
 
 </details>
 
@@ -118,16 +123,9 @@ O essencial está acima; o detalhe de cada função fica aqui, recolhido.
 
 ## Certificações
 
-- **Fortinet:** NSE 4 · NSE 5 (FortiSIEM, FortiClient EMS, FortiEDR) ·
-  NSE 6 (FortiMail, FortiWeb, FortiADC) · NSE 7 (Secure Access) ·
-  Xperts Summit 2022
-- **SANS:** SEC504 — Hacker Tools, Techniques and Incident Handling
-  (On-Demand 2023; Lisboa, nov 2022 — **vencedor do CTF**)
-- **Summits SANS:** Blockchain Security '22 · Digital Forensic Incident
-  Response '22 · Ransomware '22 · CloudSecNext '22 · Cyber Defense Forum '20
-- **Cybrary:** Advanced Penetration Testing
-- **Udemy:** Windows Privilege Escalation · Docker · Offensive Security
-  Engineering · Practical Ethical Hacking · Python Network Programming
+Fortinet (Credly), SANS SEC504 e os summits, Microsoft, CyberDefenders e mais
+— a lista completa, com o estado atual e verificação independente no Credly,
+vive numa página própria: **[Certificações](/certificacoes/)**.
 
 ## Competências
 

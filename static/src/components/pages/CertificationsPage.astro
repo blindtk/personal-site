@@ -1,0 +1,159 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+// content/ é a fonte de verdade (ver CLAUDE.md): os badges vêm daqui; o estado
+// (válido/expirado) é derivado no build a partir das datas, não escrito à mão.
+import certs from '../../../../content/certs.json';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const c = dict.certs;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+type Cert = { name: string; full?: string; issuer: string; group: string; expires?: string; issued?: string; url?: string; verified?: boolean };
+
+const monthFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-US', { month: 'short', year: 'numeric' });
+const fmt = (iso: string) => monthFmt.format(new Date(`${iso}T00:00:00Z`));
+const now = new Date();
+
+// Estado calculado no build: expira → compara com agora; só emissão → "emitido";
+// sem qualquer data (ex.: formação sem validade registada) → sem selo.
+function statusOf(item: Cert): { kind: 'valid' | 'expired' | 'issued'; label: string } | null {
+  if (item.expires) {
+    const expired = new Date(`${item.expires}T00:00:00Z`) < now;
+    return expired
+      ? { kind: 'expired', label: `${c.statusExpired} · ${fmt(item.expires)}` }
+      : { kind: 'valid', label: `${c.statusValid} · ${c.until} ${fmt(item.expires)}` };
+  }
+  if (item.issued) return { kind: 'issued', label: `${c.statusIssued} · ${fmt(item.issued)}` };
+  return null;
+}
+
+const items = certs.items as Cert[];
+const verified = items.filter((it) => it.verified !== false);
+const others = items.filter((it) => it.verified === false);
+
+const groupLabels = c.groups as Record<string, string>;
+const groups = certs.groups
+  .map((id) => ({ id, label: groupLabels[id], items: verified.filter((it) => it.group === id) }))
+  .filter((g) => g.items.length > 0);
+---
+
+<BaseLayout lang={lang} title={c.title} altUrl={routes.certifications[other]}>
+  <div class="page-head">
+    <h1>{c.title}</h1>
+    <p class="intro">{c.intro}</p>
+  </div>
+
+  {SITE.credly && (
+    <Fragment>
+      <p class="intro">{c.verifyLead}</p>
+      <ul class="cert-links mono">
+        <li><a href={SITE.credly} rel="noopener">{c.verifyCta}</a></li>
+      </ul>
+    </Fragment>
+  )}
+
+  {groups.map((g) => (
+    <section aria-label={g.label}>
+      <div class="section-title"><h2>{g.label}</h2></div>
+      <div class="table-scroll">
+        <table class="result-table certs-table">
+          <tbody>
+            {g.items.map((item) => {
+              const st = statusOf(item);
+              return (
+                <tr>
+                  <td>
+                    {item.url ? (
+                      <a class="cert-name" href={item.url} rel="noopener">{item.name}</a>
+                    ) : (
+                      <span class="cert-name">{item.name}</span>
+                    )}
+                    {item.full && item.full !== item.name && <span class="cert-full">{item.full}</span>}
+                  </td>
+                  <td class="mono cert-issuer">{item.issuer}</td>
+                  <td class="cert-status">{st && <span class={`badge cert-${st.kind}`}>{st.label}</span>}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ))}
+
+  {others.length > 0 && (
+    <section aria-label={c.othersTitle}>
+      <div class="section-title"><h2>{c.othersTitle}</h2></div>
+      <p class="note">{c.othersNote}</p>
+      <div class="table-scroll">
+        <table class="result-table certs-table">
+          <tbody>
+            {others.map((item) => {
+              const st = statusOf(item);
+              return (
+                <tr>
+                  <td>
+                    <span class="cert-name">{item.name}</span>
+                    {item.full && item.full !== item.name && <span class="cert-full">{item.full}</span>}
+                  </td>
+                  <td class="mono cert-issuer">{item.issuer}</td>
+                  <td class="cert-status">{st && <span class={`badge cert-${st.kind}`}>{st.label}</span>}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .cert-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 1.6rem;
+  }
+  .cert-links a { color: var(--accent); text-decoration: none; }
+  .cert-links a:hover { text-decoration: underline; }
+
+  /* Prosa (nomes de certs), não valores curtos: quebra por palavra. */
+  .certs-table td {
+    vertical-align: middle;
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+  .cert-name { display: block; font-weight: 600; }
+  a.cert-name { color: var(--accent); text-decoration: none; }
+  a.cert-name:hover { text-decoration: underline; }
+  .cert-full {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+  }
+  .cert-issuer { white-space: nowrap; color: var(--muted); }
+  .cert-status { white-space: nowrap; text-align: right; }
+
+  .badge.cert-valid { /* verde-terminal por omissão (.badge) — credencial ativa */ }
+  .badge.cert-expired {
+    color: var(--danger);
+    background: rgba(242, 109, 109, 0.08);
+    border-color: rgba(242, 109, 109, 0.3);
+  }
+  .badge.cert-issued {
+    color: var(--muted);
+    background: transparent;
+    border-color: var(--border-strong);
+  }
+
+  @media (max-width: 560px) {
+    .cert-full { font-size: 0.72rem; }
+    .cert-issuer { display: none; }
+  }
+</style>

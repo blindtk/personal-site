@@ -2,7 +2,7 @@
 title: 'Homelab'
 description: 'Cluster k3s em Raspberry Pi, em casa — o terreno onde testo tudo antes de chegar perto de produção.'
 tags: ['kubernetes', 'k3s', 'raspberry-pi', 'homelab']
-order: 3
+order: 4
 ---
 
 Em casa mantenho um cluster [k3s](https://k3s.io/) — a distribuição leve do

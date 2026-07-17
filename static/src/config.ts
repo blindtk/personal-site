@@ -30,6 +30,9 @@ export const SITE = {
    *  workflows) na página Provas. Troca se moveres o repo. */
   repo: 'https://github.com/blindtk/personal-site',
   linkedin: 'https://www.linkedin.com/in/danielmalaco',
+  /** Perfil Credly — usado na página Certificações e nos Contactos para
+   *  verificação independente dos badges. Deixa '' para esconder. */
+  credly: 'https://www.credly.com/users/daniel-malaco/badges/credly',
   /** Página de contactos: estado atual e chave PGP. */
   contact: {
     availability: {

@@ -22,6 +22,7 @@ export const ui = {
       rights: 'Estático, bilingue e sem trackers.',
       security: 'Segurança',
       evidence: 'Provas',
+      certs: 'Certificações',
     },
     security: {
       title: 'Segurança',
@@ -71,6 +72,10 @@ export const ui = {
       evidenceBody:
         'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, os hashes SHA-256 dos scripts inline (os mesmos da CSP), o scan aos cabeçalhos ao vivo e os workflows que correm a cada push.',
       evidenceCta: 'Ver a página Provas →',
+      // ----- Projeto (narrativa) -----
+      projectBody:
+        'A segurança aqui é uma faceta do projeto que serve este site — o modelo de ameaça e as decisões de arquitetura por trás dela estão contados na página do projeto.',
+      projectCta: 'Ver o projeto Este site →',
     },
     evidence: {
       metaTitle: 'Provas — transparência verificável',
@@ -110,6 +115,29 @@ export const ui = {
       verifyRepo: 'Código-fonte no GitHub',
       verifyHeadersScan: 'Scan em securityheaders.com',
       verifyObservatory: 'Scan no Mozilla Observatory',
+    },
+    certs: {
+      title: 'Certificações',
+      metaTitle: 'Certificações — verificáveis',
+      intro:
+        'As credenciais que detenho, com o estado atual e ligação para verificação independente. Como o resto do site: não acredites, verifica.',
+      verifyLead: 'Todos os badges abaixo (Fortinet e CyberDefenders) são verificáveis no meu perfil público Credly:',
+      verifyCta: 'Ver perfil no Credly →',
+      colCert: 'Certificação',
+      colIssuer: 'Emissor',
+      colStatus: 'Estado',
+      statusValid: 'válido',
+      statusExpired: 'expirado',
+      statusIssued: 'emitido',
+      until: 'até',
+      othersTitle: 'Outras certificações e formação',
+      othersNote: 'Sem badge Credly — listadas aqui para registo, não verificáveis nesta página.',
+      groups: {
+        track: 'Fortinet — tracks de certificação',
+        nse: 'Fortinet — NSE (formato legado)',
+        product: 'Fortinet — produto e administração',
+        blueteam: 'Blue team · prático',
+      },
     },
     attack: {
       metaTitle: 'Cobertura MITRE ATT&CK',
@@ -187,16 +215,16 @@ export const ui = {
       // Variante C: 'Da arquitetura à operação: segurança de redes em infraestrutura crítica, com ferramentas próprias para o trabalho do dia a dia. Foco em threat intelligence, forense digital e resposta a incidentes.'
       bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
-      chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
       // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
       // exclui Portugal/Ascendi que é a base atual, não um destacamento
       // internacional).
       statsStatic: [
         { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
-        { n: '9', d: 'certificações NSE/SANS', tone: 'amber' },
+        { n: '13', d: 'certificações de segurança', tone: 'amber' },
         { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
-        { n: '1.º', d: "lugar no CTF · SANS SEC504, Lisboa '22", tone: 'green' },
+        { n: '4', d: 'CTFs vencidos · 1.º lugar', tone: 'green' },
       ],
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
@@ -232,6 +260,11 @@ export const ui = {
       repo: 'código',
       demo: 'demo',
       back: '← Voltar aos projetos',
+    },
+    awards: {
+      title: 'CTFs vencidos',
+      intro: '1.º lugar, com foto e coin como prova — nada escrito à mão.',
+      firstPlace: '1.º lugar',
     },
     tools: {
       title: 'Ferramentas',
@@ -340,6 +373,7 @@ export const ui = {
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
+      credlyLabel: 'Credly',
       statusTitle: 'Estado',
       availabilityLabel: 'Disponibilidade',
       responseLabel: 'Tempo típico de resposta',
@@ -411,6 +445,7 @@ export const ui = {
       rights: 'Static, bilingual, and tracker-free.',
       security: 'Security',
       evidence: 'Evidence',
+      certs: 'Certifications',
     },
     security: {
       title: 'Security',
@@ -460,6 +495,10 @@ export const ui = {
       evidenceBody:
         "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the SHA-256 hashes of the inline scripts (the same ones in the CSP), the live header scan, and the workflows that run on every push.",
       evidenceCta: 'See the Evidence page →',
+      // ----- Project (narrative) -----
+      projectBody:
+        'The security here is one facet of the project that serves this site — the threat model and the architecture decisions behind it are told on the project page.',
+      projectCta: 'See the This site project →',
     },
     evidence: {
       metaTitle: 'Evidence — verifiable transparency',
@@ -499,6 +538,29 @@ export const ui = {
       verifyRepo: 'Source code on GitHub',
       verifyHeadersScan: 'Scan on securityheaders.com',
       verifyObservatory: 'Scan on Mozilla Observatory',
+    },
+    certs: {
+      title: 'Certifications',
+      metaTitle: 'Certifications — verifiable',
+      intro:
+        "The credentials I hold, with their current status and a link for independent verification. Like the rest of the site: don't trust, verify.",
+      verifyLead: 'Every badge below (Fortinet and CyberDefenders) is verifiable on my public Credly profile:',
+      verifyCta: 'See my Credly profile →',
+      colCert: 'Certification',
+      colIssuer: 'Issuer',
+      colStatus: 'Status',
+      statusValid: 'valid',
+      statusExpired: 'expired',
+      statusIssued: 'issued',
+      until: 'until',
+      othersTitle: 'Other certifications & training',
+      othersNote: 'No Credly badge — listed here for the record, not verifiable on this page.',
+      groups: {
+        track: 'Fortinet — certification tracks',
+        nse: 'Fortinet — NSE (legacy format)',
+        product: 'Fortinet — product & administration',
+        blueteam: 'Blue team · hands-on',
+      },
     },
     attack: {
       metaTitle: 'MITRE ATT&CK coverage',
@@ -576,16 +638,16 @@ export const ui = {
       // Variant C: 'From architecture to operations: network security for critical infrastructure, with my own tools for the day-to-day work. Focused on threat intelligence, digital forensics, and incident response.'
       bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
-      chips: ['Fortinet NSE 4', 'NSE 5–7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Competence signals (not consumption). Country count matches the "4"
       // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
       // excludes Portugal/Ascendi, which is the current home base, not an
       // international posting).
       statsStatic: [
         { n: '6+', d: 'years in security & networking', tone: 'green' },
-        { n: '9', d: 'NSE/SANS certifications', tone: 'amber' },
+        { n: '13', d: 'security certifications', tone: 'amber' },
         { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
-        { n: '1st', d: "place · SANS SEC504 CTF, Lisbon '22", tone: 'green' },
+        { n: '4', d: 'CTFs won · 1st place', tone: 'green' },
       ],
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).
@@ -621,6 +683,11 @@ export const ui = {
       repo: 'code',
       demo: 'demo',
       back: '← Back to projects',
+    },
+    awards: {
+      title: 'CTFs won',
+      intro: '1st place, with a photo and the coin as proof — nothing hand-typed.',
+      firstPlace: '1st place',
     },
     tools: {
       title: 'Tools',
@@ -729,6 +796,7 @@ export const ui = {
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
+      credlyLabel: 'Credly',
       statusTitle: 'Status',
       availabilityLabel: 'Availability',
       responseLabel: 'Typical response time',

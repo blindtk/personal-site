@@ -14,6 +14,7 @@ export const routes = {
   honeypot: { pt: '/honeypot/', en: '/en/honeypot/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
   evidence: { pt: '/provas/', en: '/en/evidence/' },
+  certifications: { pt: '/certificacoes/', en: '/en/certifications/' },
 } as const;
 
 export type RouteKey = keyof typeof routes;
