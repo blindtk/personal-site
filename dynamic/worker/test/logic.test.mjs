@@ -15,6 +15,7 @@ import { gradeFromHeaders } from '../src/lib/scan.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
 import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
+import { normalizePrefix, parseRanges } from '../src/lib/pwned.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
@@ -241,6 +242,85 @@ test('mergeFeeds intercala e remove duplicados', () => {
   const merged = mergeFeeds(kev, nvd, 16);
   const ids = merged.map((i) => i.id);
   assert.deepEqual(ids, ['CVE-2026-1042', 'CVE-2026-0891', 'CVE-2025-9977']);
+});
+
+// ---------- pwned: k-anonimato (validação de prefixo + parse dos ranges) ----------
+
+test('normalizePrefix: só 5 hex, em maiúsculas', () => {
+  assert.equal(normalizePrefix('5baa6'), '5BAA6');
+  assert.equal(normalizePrefix('ABCDE'), 'ABCDE');
+  assert.equal(normalizePrefix('5BAA'), ''); // 4 dígitos
+  assert.equal(normalizePrefix('5BAA61'), ''); // 6 dígitos
+  assert.equal(normalizePrefix('5BAAG'), ''); // G não é hex
+  assert.equal(normalizePrefix(''), '');
+  assert.equal(normalizePrefix(null), '');
+  assert.equal(normalizePrefix(12345), '');
+});
+
+test('parseRanges: parseia SUFIXO:CONTAGEM, mantém padding (0), descarta lixo', () => {
+  const A = 'A'.repeat(35);
+  const B = 'b'.repeat(35); // minúsculas → normaliza para maiúsculas
+  const body = [
+    `${A}:3`,
+    `${B}:0`, // padding do Add-Padding — mantém-se
+    'GGGG:1', // sufixo demasiado curto e não-hex → cai
+    `${'C'.repeat(35)}:-4`, // contagem negativa → cai
+    `${'D'.repeat(35)}:xx`, // contagem não numérica → cai
+    `${'E'.repeat(34)}:5`, // 34 chars (idx do ':' ≠ 35) → cai
+  ].join('\r\n');
+  const out = parseRanges(body);
+  assert.deepEqual(out, [[A, 3], ['B'.repeat(35), 0]]);
+});
+
+test('parseRanges: input inválido e respeito pelo limite', () => {
+  assert.deepEqual(parseRanges(42), []);
+  assert.deepEqual(parseRanges(''), []);
+  const many = Array.from({ length: 10 }, (_, i) => `${'F'.repeat(35)}:${i + 1}`).join('\n');
+  assert.equal(parseRanges(many, 3).length, 3);
+});
+
+test('pwned-range: prefixo válido relaia os sufixos parseados do HIBP', async () => {
+  const env = { KV: fakeKV() };
+  const A = 'A'.repeat(35);
+  const orig = globalThis.fetch;
+  let calledUrl = '';
+  globalThis.fetch = async (url) => {
+    calledUrl = String(url);
+    return { ok: true, status: 200, text: async () => `${A}:7\r\n${'B'.repeat(35)}:0\r\n` };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/pwned-range?prefix=5baa6'), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.deepEqual(data.suffixes, [[A, 7], ['B'.repeat(35), 0]]);
+    assert.match(calledUrl, /\/range\/5BAA6$/); // prefixo normalizado para maiúsculas
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('pwned-range: prefixo inválido → 400 sem tocar no upstream', async () => {
+  const env = { KV: fakeKV() };
+  const orig = globalThis.fetch;
+  let hit = false;
+  globalThis.fetch = async () => { hit = true; return { ok: true, status: 200, text: async () => '' }; };
+  try {
+    const res = await runFetch(fakeRequest('/api/pwned-range?prefix=nope'), env);
+    assert.equal(res.status, 400);
+    assert.equal(hit, false, 'prefixo inválido não pode chegar ao HIBP');
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('pwned-range: rate limit por cliente devolve 429', async () => {
+  const env = { KV: fakeKV() };
+  const ip = '203.0.113.60';
+  const id = await clientHash(ip, dailySalt(undefined));
+  env.KV.store.set(`rl:pwned:${id}`, JSON.stringify({ count: 20, windowStart: Date.now() }));
+  const res = await runFetch(fakeRequest('/api/pwned-range?prefix=5BAA6', { ip }), env);
+  assert.equal(res.status, 429);
+  assert.ok(res.headers.get('retry-after'));
 });
 
 // ---------- violações CSP: parse dos formatos reais dos browsers ----------
