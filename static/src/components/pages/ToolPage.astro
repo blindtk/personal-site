@@ -6,11 +6,26 @@ import EncoderTool from '../tools/EncoderTool.astro';
 import PasswordGen from '../tools/PasswordGen.astro';
 import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import ExifTool from '../tools/ExifTool.astro';
+import PwnedCheck from '../tools/PwnedCheck.astro';
+import SelfScan from '../tools/SelfScan.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { toolUrl } from '../../i18n/routes';
 
-type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif';
+type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'self-scan';
+
+// 'server': fala com o Worker (dynamic/) — mostra serverNote em vez de
+// clientSideNote no rodapé da página. Ver dynamic/PLAN.md.
+const KIND: Record<ToolSlug, 'client' | 'server'> = {
+  subnets: 'client',
+  hashes: 'client',
+  encoder: 'client',
+  passwords: 'client',
+  'email-headers': 'client',
+  exif: 'client',
+  pwned: 'server',
+  'self-scan': 'server',
+};
 
 interface Props {
   lang: Lang;
@@ -28,8 +43,11 @@ const components = {
   passwords: PasswordGen,
   'email-headers': EmailHeaderTool,
   exif: ExifTool,
+  pwned: PwnedCheck,
+  'self-scan': SelfScan,
 } as const;
 const ToolComponent = components[tool];
+const kind = KIND[tool];
 ---
 
 <BaseLayout
@@ -44,5 +62,5 @@ const ToolComponent = components[tool];
     <p class="intro">{meta.desc}</p>
   </div>
   <ToolComponent lang={lang} />
-  <p class="note">🔒 {dict.tools.clientSideNote}</p>
+  <p class="note">{kind === 'server' ? `🛰️ ${dict.tools.serverNote}` : `🔒 ${dict.tools.clientSideNote}`}</p>
 </BaseLayout>

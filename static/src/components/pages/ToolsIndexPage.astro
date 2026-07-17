@@ -10,13 +10,15 @@ const dict = t(lang);
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 const tools = [
-  { slug: 'subnets', ...dict.tools.subnets },
-  { slug: 'hashes', ...dict.tools.hashes },
-  { slug: 'encoder', ...dict.tools.encoder },
-  { slug: 'passwords', ...dict.tools.passwords },
-  { slug: 'email-headers', ...dict.tools['email-headers'] },
-  { slug: 'exif', ...dict.tools.exif },
-];
+  { slug: 'subnets', kind: 'client', ...dict.tools.subnets },
+  { slug: 'hashes', kind: 'client', ...dict.tools.hashes },
+  { slug: 'encoder', kind: 'client', ...dict.tools.encoder },
+  { slug: 'passwords', kind: 'client', ...dict.tools.passwords },
+  { slug: 'email-headers', kind: 'client', ...dict.tools['email-headers'] },
+  { slug: 'exif', kind: 'client', ...dict.tools.exif },
+  { slug: 'pwned', kind: 'server', ...dict.tools.pwned },
+  { slug: 'self-scan', kind: 'server', ...dict.tools['self-scan'] },
+] as const;
 ---
 
 <BaseLayout lang={lang} title={dict.tools.title} altUrl={routes.tools[other]} active="tools">
@@ -30,10 +32,14 @@ const tools = [
       <a class="card" href={toolUrl(lang, tool.slug)}>
         <h3>{tool.name}</h3>
         <p>{tool.desc}</p>
-        <div class="meta"><span class="badge">client-side</span></div>
+        <div class="meta">
+          <span class={`badge ${tool.kind === 'server' ? 'amber' : ''}`}>
+            {tool.kind === 'server' ? `🛰️ ${dict.tools.serverBadge}` : `🔒 ${dict.tools.clientBadge}`}
+          </span>
+        </div>
       </a>
     ))}
   </div>
 
-  <p class="note">🔒 {dict.tools.clientSideNote}</p>
+  <p class="note">{dict.tools.indexNote}</p>
 </BaseLayout>
