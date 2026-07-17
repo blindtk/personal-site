@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CspViolations from '../CspViolations.astro';
+import CtWatch from '../CtWatch.astro';
 import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -63,6 +64,14 @@ const scanners = [
     </div>
     <p class="intro">{dict.cspviolations.intro}</p>
     <CspViolations lang={lang} />
+  </section>
+
+  <section aria-labelledby="h-ct">
+    <div class="section-title">
+      <h2 id="h-ct">{dict.ctwatch.title}</h2>
+    </div>
+    <p class="intro">{dict.ctwatch.intro}</p>
+    <CtWatch lang={lang} />
   </section>
 
   <section aria-labelledby="h-privacy">

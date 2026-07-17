@@ -7,6 +7,7 @@
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
 //   · /api/csp-report (POST)   — recetor de violações CSP (report-uri/report-to)
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
+//   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/health
 // Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
 
@@ -20,6 +21,7 @@ import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
 import { normalizePrefix, fetchRange } from './lib/pwned.js';
+import { fetchCtWatch } from './lib/ct.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
 
@@ -405,6 +407,16 @@ export default {
         return json(data, request, env, { maxAge: 60 });
       }
 
+      // Vigia CT: emissões de certificados para o próprio domínio, dos logs
+      // públicos de Certificate Transparency (crt.sh). Sem input de
+      // visitantes (a query é fixa — não é reutilizável como proxy), por
+      // isso sem rate limit próprio: a cache de 6h com SWR já garante que
+      // o crt.sh só é consultado de longe em longe.
+      if (path === '/api/ct') {
+        const data = await cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env));
+        return json(data, request, env, { maxAge: 1800 });
+      }
+
       if (path === '/api/ticker') {
         const data = await cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env));
         return json(data, request, env, { maxAge: 1800 });
@@ -428,6 +440,7 @@ export default {
       Promise.all([
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
         cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
+        cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
       ]),
     );
   },

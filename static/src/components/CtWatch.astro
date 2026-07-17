@@ -1,0 +1,136 @@
+---
+/**
+ * Vigia CT — painel da página Segurança que mostra as emissões de
+ * certificados para o próprio domínio, vindas dos logs públicos de
+ * Certificate Transparency via GET /api/ct (Worker em dynamic/worker/).
+ * Mesmo padrão do CspViolations: fallback visível por omissão, painel só
+ * aparece quando a API responde; rendering sempre via textContent.
+ */
+import { API_BASE, type Lang } from '../config';
+import { t } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = t(lang).ctwatch;
+
+const jsStrings = {
+  okBanner: c.okBanner,
+  alertBanner: c.alertBanner,
+  badgeExpected: c.badgeExpected,
+  badgeUnexpected: c.badgeUnexpected,
+  lastCheck: c.lastCheck,
+  empty: c.empty,
+};
+---
+
+<div class="ctw" id="ctw" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+  <p class="hp-fallback" id="ctw-fallback">{c.unavailable}</p>
+
+  <div id="ctw-body" hidden>
+    <div class="stats-grid">
+      <div class="stat"><div class="n" id="ctw-total">—</div><div class="l">{c.statCerts}</div></div>
+      <div class="stat blue"><div class="n" id="ctw-issuers">—</div><div class="l">{c.statIssuers}</div></div>
+      <div class="stat" id="ctw-stat-unexpected"><div class="n" id="ctw-unexpected">—</div><div class="l">{c.statUnexpected}</div></div>
+      <div class="stat"><div class="n" id="ctw-names">—</div><div class="l">{c.statNames}</div></div>
+    </div>
+
+    <p class="ctw-banner" id="ctw-banner" role="status"></p>
+
+    <div class="table-scroll">
+      <table class="result-table ctw-table">
+        <thead>
+          <tr>
+            <th>{c.tableLogged}</th>
+            <th>{c.tableIssuer}</th>
+            <th>{c.tableNames}</th>
+            <th>{c.tableStatus}</th>
+          </tr>
+        </thead>
+        <tbody id="ctw-rows"></tbody>
+      </table>
+    </div>
+
+    <p class="note">🛰️ {c.privacyNote}</p>
+    <p class="scan-ts" id="ctw-ts"></p>
+  </div>
+</div>
+
+<script>
+  const root = document.getElementById('ctw')!;
+  const base = root.dataset.api ?? '';
+  const lang = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings!);
+
+  const setText = (id: string, value: string) => {
+    document.getElementById(id)!.textContent = value;
+  };
+
+  const isoDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+  function renderRows(certs: any[]) {
+    const rowsEl = document.getElementById('ctw-rows')!;
+    rowsEl.replaceChildren();
+    if (!certs || certs.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 4;
+      td.className = 'hp-loading';
+      td.textContent = S.empty;
+      tr.append(td);
+      rowsEl.append(tr);
+      return;
+    }
+    for (const { loggedAt, issuer, names, expected } of certs) {
+      const tr = document.createElement('tr');
+      const date = document.createElement('td');
+      date.className = 'mono ctw-date';
+      date.textContent = isoDate(loggedAt);
+      const iss = document.createElement('td');
+      iss.className = 'mono';
+      iss.textContent = issuer;
+      const nm = document.createElement('td');
+      nm.className = 'mono ctw-names';
+      nm.textContent = (names ?? []).join(', ');
+      const st = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = expected ? 'badge' : 'badge amber';
+      badge.textContent = expected ? S.badgeExpected : S.badgeUnexpected;
+      st.append(badge);
+      tr.append(date, iss, nm, st);
+      rowsEl.append(tr);
+    }
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`${base}/api/ct`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const s = data.summary ?? {};
+      setText('ctw-total', String(s.total ?? 0));
+      setText('ctw-issuers', String(s.issuerCount ?? 0));
+      setText('ctw-unexpected', String(s.unexpected ?? 0));
+      setText('ctw-names', String(s.nameCount ?? 0));
+
+      const alarmed = (s.unexpected ?? 0) > 0;
+      // stat e banner mudam para âmbar quando há emissões fora da allowlist
+      document.getElementById('ctw-stat-unexpected')!.classList.toggle('amber', alarmed);
+      const banner = document.getElementById('ctw-banner')!;
+      banner.classList.toggle('alert', alarmed);
+      banner.textContent = alarmed ? `▲ ${S.alertBanner}` : `✓ ${S.okBanner}`;
+
+      renderRows(data.certs ?? []);
+      if (data.fetchedAt) {
+        setText('ctw-ts', `${S.lastCheck}: ${new Date(data.fetchedAt).toLocaleString(lang)}`);
+      }
+      document.getElementById('ctw-fallback')!.hidden = true;
+      document.getElementById('ctw-body')!.hidden = false;
+    } catch {
+      // Sem Worker publicado, o HTML já nasce neste estado (fallback visível,
+      // painel escondido) — nada a mudar, evita o salto de layout.
+    }
+  }
+
+  load();
+</script>

@@ -19,6 +19,7 @@ CSP. Um só Cloudflare Worker + um namespace KV.
 | `GET /api/ticker` | CISA KEV + NVD críticos, sanitizados | 1 h | — |
 | `POST /api/csp-report` | Recetor de violações CSP (`report-uri`/Reporting API) | — | 10/min por cliente + cap global 300/h |
 | `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
+| `GET /api/ct` | Vigia CT: certificados emitidos p/ o domínio (logs de Certificate Transparency, 90 d) | 6 h | — |
 | `GET /api/health` | Liveness | — | — |
 
 ## Privacidade (honeypot)
@@ -52,6 +53,27 @@ que o `document-uri` é do próprio site (relatórios forjados "de outros
 sites" descartam-se com o mesmo 204 — indistinguível), cap de cardinalidade
 das chaves de agregação (`~other` a partir de 40 fontes distintas/bucket) e
 cap global de escritas por janela (`CSP_WRITE_CAP`).
+
+## Vigia CT (`/api/ct`)
+
+Qualquer certificado TLS emitido para o domínio fica registado em logs
+públicos de Certificate Transparency — incluindo um que um atacante
+conseguisse emitir após um takeover de DNS/registrar. O Worker consulta o
+crt.sh (duas queries: apex e `%.domínio`, porque um certificado emitido só
+para um subdomínio nunca apareceria na query do apex), deduplica
+pré-certificado/folha pelo serial, e compara cada emissão com a allowlist
+`CT_EXPECTED_ISSUERS` — o que não bater aparece como **inesperado** no
+painel da página Segurança.
+
+Sem input de visitantes (a query é fixa, derivada de `SCAN_TARGET`) — não
+é reutilizável como proxy nem precisa de rate limit próprio. O crt.sh é
+instável por natureza: a cache de 6 h com stale-while-revalidate serve o
+último snapshot bom enquanto o refresh corre em background, o cron aquece a
+cache, e se uma das duas queries falhar usa-se o resultado parcial da
+outra (as duas falharem ⇒ 502 e o painel mostra o fallback). Os dados são
+100 % públicos (estão nos logs CT); ainda assim tudo o que segue para o
+cliente passa por `sanitizeText`, e só nomes pertencentes ao domínio são
+persistidos (`src/lib/ct.js`, coberto por teste).
 
 ### Erros e logs
 
