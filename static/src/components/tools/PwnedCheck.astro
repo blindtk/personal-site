@@ -1,0 +1,205 @@
+---
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const p = t(lang).pwned;
+
+// Só as strings que o script usa em runtime (o resto é renderizado no HTML).
+const jsStrings = {
+  locale: lang === 'pt' ? 'pt-PT' : 'en-US',
+  empty: p.empty,
+  checking: p.checking,
+  check: p.check,
+  hashLabel: p.hashLabel,
+  kept: p.kept,
+  rangeQuery: p.rangeQuery,
+  bucketsNote: p.bucketsNote,
+  received: p.received,
+  pwned: p.pwned,
+  occurrences: p.occurrences,
+  safe: p.safe,
+  rateLimited: p.rateLimited,
+  unavailable: p.unavailable,
+  error: p.error,
+};
+---
+
+<div class="tool-panel pwned" id="pwned-tool" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)}>
+  <div class="field">
+    <label for="pwned-input">{p.inputLabel}</label>
+    <div class="pwned-row">
+      <input
+        type="password"
+        id="pwned-input"
+        placeholder={p.placeholder}
+        spellcheck="false"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+      />
+      <button type="button" class="btn ghost small" id="pwned-toggle" aria-pressed="false">{p.show}</button>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button type="button" class="btn" id="pwned-check">{p.check}</button>
+  </div>
+
+  <div class="pwned-log mono" id="pwned-log" hidden aria-live="polite"></div>
+
+  <p class="note">🔒 {p.privacyNote}</p>
+  <p class="note warn">⚠ {p.warning}</p>
+</div>
+
+<script>
+  import { sha1Hex, splitHash, matchCount } from '../../scripts/pwned.js';
+
+  const root = document.getElementById('pwned-tool')!;
+  const base = root.dataset.api ?? '';
+  const S = JSON.parse(root.dataset.strings!);
+  const input = document.getElementById('pwned-input') as HTMLInputElement;
+  const toggle = document.getElementById('pwned-toggle') as HTMLButtonElement;
+  const checkBtn = document.getElementById('pwned-check') as HTMLButtonElement;
+  const log = document.getElementById('pwned-log')!;
+
+  const fmt = (n: number) => n.toLocaleString(S.locale);
+
+  function reset() {
+    log.replaceChildren();
+    log.hidden = false;
+  }
+
+  // Uma linha do "log": prompt '>' + segmentos (texto normal / destacado / esbatido).
+  function line(...segments: Array<{ text: string; cls?: string }>) {
+    const row = document.createElement('div');
+    row.className = 'log-line';
+    const prompt = document.createElement('span');
+    prompt.className = 'log-prompt';
+    prompt.textContent = '> ';
+    row.append(prompt);
+    for (const seg of segments) {
+      const el = document.createElement('span');
+      if (seg.cls) el.className = seg.cls;
+      el.textContent = seg.text;
+      row.append(el);
+    }
+    log.append(row);
+    return row;
+  }
+
+  function verdict(text: string, tone: 'bad' | 'good') {
+    const row = document.createElement('div');
+    row.className = `log-verdict ${tone}`;
+    row.textContent = text;
+    log.append(row);
+  }
+
+  async function run() {
+    const pw = input.value;
+    reset();
+    if (!pw) { line({ text: S.empty }); return; }
+
+    // 1) SHA-1 local. Mostra o prefixo (o que sai) destacado e o sufixo
+    //    (o que fica) esbatido — a divisão é o coração do k-anonimato.
+    const hash = await sha1Hex(pw);
+    const parts = splitHash(hash);
+    if (!parts) { line({ text: S.error }); return; }
+    const { prefix, suffix } = parts;
+    line(
+      { text: `${S.hashLabel} = ` },
+      { text: prefix, cls: 'hl' },
+      { text: suffix, cls: 'dim' },
+    );
+
+    // 2) Só o prefixo (5 hex) sai para o Worker.
+    line({ text: `${S.rangeQuery} ` }, { text: prefix, cls: 'hl' });
+    line({ text: `  ${S.kept}`, cls: 'dim' });
+
+    let data: any;
+    try {
+      const res = await fetch(`${base}/api/pwned-range?prefix=${prefix}`, {
+        headers: { accept: 'application/json' },
+      });
+      if (res.status === 429) { verdict(S.rateLimited, 'bad'); return; }
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      data = await res.json();
+    } catch {
+      // Sem Worker publicado: degrada com graça (mesmo padrão do self-scan).
+      verdict(S.unavailable, 'bad');
+      return;
+    }
+
+    // 3) Sufixos recebidos + nota de k-anonimato; correspondência local.
+    const suffixes = Array.isArray(data?.suffixes) ? data.suffixes : [];
+    line({ text: `${fmt(suffixes.length)} ${S.received}` });
+    line({ text: `  ${S.bucketsNote}`, cls: 'dim' });
+
+    const count = matchCount(suffixes, suffix);
+    if (count > 0) {
+      verdict(`${S.pwned} — ${fmt(count)} ${S.occurrences}`, 'bad');
+    } else {
+      verdict(S.safe, 'good');
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    toggle.setAttribute('aria-pressed', String(show));
+    toggle.textContent = show ? S.hide : S.show;
+  });
+
+  checkBtn.addEventListener('click', async () => {
+    checkBtn.disabled = true;
+    const prev = checkBtn.textContent;
+    checkBtn.textContent = S.checking;
+    try {
+      await run();
+    } finally {
+      checkBtn.textContent = prev || S.check;
+      checkBtn.disabled = false;
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') checkBtn.click();
+  });
+</script>
+
+<style>
+  .pwned-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: stretch;
+  }
+  .pwned-row input { flex: 1 1 auto; }
+  .pwned-row .btn { flex: 0 0 auto; }
+
+  .pwned-log {
+    margin-top: 1.1rem;
+    padding: 0.9rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .log-line { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .log-prompt { color: var(--accent); }
+  .log-line .hl { color: var(--accent); font-weight: 600; }
+  .log-line .dim { color: var(--faint); }
+
+  .log-verdict {
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .log-verdict.bad { color: var(--danger); }
+  .log-verdict.good { color: var(--accent); }
+
+  .note + .note { margin-top: 0.4rem; }
+</style>

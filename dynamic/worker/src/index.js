@@ -3,6 +3,7 @@
 //   · endpoints-isco do honeypot (404 + só metadados, nunca IP)
 //   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
 //   · /api/scan                — self-scan de cabeçalhos (cache 6h)
+//   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
 //   · /api/csp-report (POST)   — recetor de violações CSP (report-uri/report-to)
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
@@ -18,6 +19,7 @@ import { gradeFromHeaders, SECURITY_HEADERS } from './lib/scan.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
+import { normalizePrefix, fetchRange } from './lib/pwned.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
 
@@ -368,6 +370,32 @@ export default {
         }
         const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
         return json(data, request, env, { maxAge: 1800 });
+      }
+
+      // Relay k-anónimo do HIBP: o cliente só manda os 5 primeiros hex do
+      // SHA-1 (a password nunca chega cá). Prefixo validado a ferro (5 hex) —
+      // não é reutilizável para pedir mais nada. Rate limit por cliente (é
+      // input do utilizador, não pode virar amplificador do HIBP) e cache 24h
+      // por prefixo (dataset público). Nunca se regista o prefixo.
+      if (path === '/api/pwned-range') {
+        const prefix = normalizePrefix(url.searchParams.get('prefix'));
+        if (!prefix) {
+          return json({ error: 'invalid_prefix' }, request, env, { status: 400 });
+        }
+        const { allowed, retryAfterSec } = await rateLimit(env, request, 'pwned', {
+          windowMs: 60_000,
+          max: 20,
+        });
+        if (!allowed) {
+          return json({ error: 'rate_limited' }, request, env, {
+            status: 429,
+            extra: { 'retry-after': String(retryAfterSec) },
+          });
+        }
+        const data = await cached(env, ctx, `cache:pwned:${prefix}`, 86400, async () => ({
+          suffixes: await fetchRange(prefix, { timeoutMs: UPSTREAM_TIMEOUT_MS }),
+        }));
+        return json(data, request, env, { maxAge: 3600 });
       }
 
       if (path === '/api/csp-violations') {

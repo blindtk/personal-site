@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
+import PwnedCheck from '../tools/PwnedCheck.astro';
 import CspViolations from '../CspViolations.astro';
 import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
@@ -71,6 +72,14 @@ const scanners = [
       <h2 id="h-privacy">{sec.privacyTitle}</h2>
     </div>
     <p>{sec.privacyBody}</p>
+  </section>
+
+  <section aria-labelledby="h-pwned">
+    <div class="section-title">
+      <h2 id="h-pwned">{sec.pwnedTitle}</h2>
+    </div>
+    <p class="intro">{sec.pwnedIntro}</p>
+    <PwnedCheck lang={lang} />
   </section>
 
   <section aria-labelledby="h-ci">

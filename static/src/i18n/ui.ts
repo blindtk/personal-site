@@ -55,6 +55,10 @@ export const ui = {
       // separada. Por agora esta secção descreve a prática real.
       privacyBody:
         'Não há cookies, analytics nem scripts de terceiros. As ferramentas (subnets, hashes, encoder, passwords, cabeçalhos de email) processam tudo no teu browser — nenhum dado sai da máquina, não há servidor a receber o que escreves.',
+      // ----- Password comprometida (k-anonimato) -----
+      pwnedTitle: 'A tua password já vazou?',
+      pwnedIntro:
+        'A mesma ideia — não guardar o que não é preciso — aplicada a uma consulta. Verifica se uma password aparece em fugas conhecidas sem que ela saia do teu browser: o SHA-1 é calculado localmente e só 5 caracteres do hash chegam ao servidor. Observa o protocolo a acontecer:',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -218,6 +222,30 @@ export const ui = {
       rateLimited: 'demasiados pedidos — tenta daqui a pouco.',
       unavailable: 'O scan ao vivo ainda não está ligado (o Worker precisa de estar publicado). Entretanto, corre os scanners públicos abaixo.',
       loading: 'a carregar o último scan…',
+    },
+    pwned: {
+      inputLabel: 'Password a verificar',
+      placeholder: 'escreve uma password',
+      show: 'mostrar',
+      hide: 'esconder',
+      check: 'verificar',
+      checking: 'a verificar…',
+      hashLabel: 'sha1(password)',
+      rangeQuery: 'GET /api/pwned-range?prefix=',
+      kept: 'só o prefixo (5 hex) sai; o resto do hash fica no browser',
+      received: 'sufixos recebidos · correspondência feita localmente',
+      bucketsNote: '1 de 1 048 576 buckets possíveis — o servidor não sabe qual é a password',
+      pwned: 'ENCONTRADA em fugas de dados',
+      occurrences: 'ocorrências conhecidas',
+      safe: 'não encontrada em nenhuma fuga conhecida',
+      empty: 'escreve uma password para verificar.',
+      rateLimited: 'demasiados pedidos — tenta daqui a pouco.',
+      unavailable: 'O verificador ao vivo ainda não está ligado (o Worker precisa de estar publicado).',
+      error: 'não foi possível calcular o hash neste browser.',
+      privacyNote:
+        'A password nunca sai do teu browser: o SHA-1 é calculado aqui e só os 5 primeiros caracteres do hash são enviados. O servidor devolve todos os hashes que partilham esse prefixo e a correspondência final é feita localmente (k-anonimato, via Have I Been Pwned).',
+      warning:
+        'Isto é sobretudo uma demonstração do protocolo. Na prática, um bom gestor de passwords já faz esta verificação por ti — e gera passwords longas e únicas que nunca aparecem em fugas.',
     },
     honeypot: {
       metaTitle: 'Honeypot — o que este site apanha',
@@ -605,6 +633,10 @@ export const ui = {
       // policy. For now this section describes actual practice.
       privacyBody:
         'There are no cookies, no analytics, no third-party scripts. The tools (subnets, hashes, encoder, passwords, email headers) process everything in your browser — no data leaves your machine, there is no server receiving what you type.',
+      // ----- Pwned password (k-anonymity) -----
+      pwnedTitle: 'Has your password leaked?',
+      pwnedIntro:
+        'The same idea — never keep what you don’t need — applied to a query. Check whether a password appears in known breaches without it ever leaving your browser: the SHA-1 is computed locally and only 5 characters of the hash reach the server. Watch the protocol happen:',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -768,6 +800,30 @@ export const ui = {
       rateLimited: 'too many requests — try again shortly.',
       unavailable: 'The live scan is not wired up yet (the Worker needs to be published). In the meantime, run the public scanners below.',
       loading: 'loading the last scan…',
+    },
+    pwned: {
+      inputLabel: 'Password to check',
+      placeholder: 'type a password',
+      show: 'show',
+      hide: 'hide',
+      check: 'check',
+      checking: 'checking…',
+      hashLabel: 'sha1(password)',
+      rangeQuery: 'GET /api/pwned-range?prefix=',
+      kept: 'only the prefix (5 hex) leaves; the rest of the hash stays in the browser',
+      received: 'suffixes received · match done locally',
+      bucketsNote: '1 of 1,048,576 possible buckets — the server never learns the password',
+      pwned: 'FOUND in data breaches',
+      occurrences: 'known occurrences',
+      safe: 'not found in any known breach',
+      empty: 'type a password to check.',
+      rateLimited: 'too many requests — try again shortly.',
+      unavailable: 'The live checker is not wired up yet (the Worker needs to be published).',
+      error: 'could not compute the hash in this browser.',
+      privacyNote:
+        'The password never leaves your browser: the SHA-1 is computed here and only the first 5 characters of the hash are sent. The server returns every hash sharing that prefix and the final match is done locally (k-anonymity, via Have I Been Pwned).',
+      warning:
+        'This is mostly a demonstration of the protocol. In practice a good password manager already does this check for you — and generates long, unique passwords that never show up in breaches.',
     },
     honeypot: {
       metaTitle: 'Honeypot — what this site catches',

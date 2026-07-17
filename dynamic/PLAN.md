@@ -9,6 +9,25 @@
 
 ## Decisões registadas
 
+- **2026-07 — Verificador de passwords comprometidas (k-anonimato)** (aprovado
+  pelo dono do repo): ferramenta educativa que verifica se uma password aparece
+  em fugas conhecidas via *range API* do Have I Been Pwned, **sem a password
+  alguma vez sair do browser**. O cliente calcula o SHA-1 localmente
+  (WebCrypto), envia só os 5 primeiros hex do hash ao Worker (`GET
+  /api/pwned-range?prefix=XXXXX`), recebe ~800 sufixos que partilham esse
+  prefixo e faz a correspondência localmente — o Worker (e o HIBP) nunca sabem
+  que password foi testada. O Worker atua como *relay* anonimizador (o HIBP vê o
+  IP de egress da Cloudflare, não o do visitante) e envia `Add-Padding: true`
+  para uniformizar o tamanho das respostas. Vive na página **Segurança**
+  (feature apoiada no Worker, como o self-scan — não no índice `/ferramentas/`,
+  cujo contrato é 100% client-side). Lógica pura em `dynamic/worker/src/lib/
+  pwned.js` (parse) e `static/src/scripts/pwned.js` (split/match), ambas
+  testadas com vetores conhecidos. Princípios: validação estrita do prefixo
+  (`^[0-9A-F]{5}$` — não é reutilizável como proxy aberto), rate limit desde o
+  dia 1, cache 24h por prefixo (dataset público), zero logs de prefixos. A UI,
+  em estilo de log de terminal, torna o protocolo de k-anonimato *visível* — é
+  esse o produto, não o resultado da consulta.
+
 - **2026-07 — Pipeline de violações CSP** (aprovado pelo dono do repo):
   `report-uri`/`report-to` na camada de header da CSP → `POST
   /api/csp-report` no Worker (validação estrita, rate limit, só agregados
