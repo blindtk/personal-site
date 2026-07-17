@@ -36,6 +36,23 @@
   observatório do ruído que uma CSP estrita apanha. Rodagem: calibrar os
   buckets de ruído com dados reais antes de dar destaque ao painel.
 
+- **2026-07 — Vigia CT (monitor de Certificate Transparency do próprio
+  domínio)** (aprovado pelo dono do repo): o Worker consulta os logs públicos
+  de CT via crt.sh (duas queries — apex e `%.domínio`, porque um certificado
+  emitido só para um subdomínio nunca apareceria na query do apex), deduplica
+  pré-certificado/folha pelo serial e compara cada emissão dos últimos 90
+  dias com a allowlist `CT_EXPECTED_ISSUERS` (por omissão Let's Encrypt +
+  Google Trust Services, o par primário/backup da Cloudflare). Emissões fora
+  da allowlist aparecem como "inesperado" — o primeiro sinal de um takeover
+  de DNS/registrar. Painel na página Segurança (padrão CspViolations:
+  fallback sem Worker, stats + banner + tabela), endpoint `GET /api/ct` com
+  cache 6 h + stale-while-revalidate e warm no cron. **Distinto da
+  "verificação de certificados TLS" do roadmap** (essa é para hosts
+  arbitrários com input do utilizador; isto é observabilidade defensiva do
+  próprio ativo, sem qualquer input de visitantes — não é reutilizável como
+  proxy nem precisa de rate limit próprio). Lógica pura em
+  `dynamic/worker/src/lib/ct.js`, testada com vetores realistas do crt.sh.
+
 - **2026-07 — Reversão: ferramentas com backend passam a viver em
   `/ferramentas/`** (decisão do dono do repo): as duas entradas acima diziam
   que o verificador de passwords e o self-scan viviam só na página Segurança
@@ -48,6 +65,28 @@
   em vez de a embeber — mesmo padrão já usado lá para o heatmap ATT&CK e as
   Provas. A página **Provas continua a embeber o self-scan diretamente**
   (é o próprio propósito dessa página: prova ao vivo, não um link).
+
+## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
+
+Propostas de 2026-07 que ficaram na gaveta por decisão do dono do repo —
+registadas para não se perderem, não para serem construídas sem nova decisão:
+
+- **Desmonta-Link (triagem de URLs de phishing)** — 100% client-side em
+  `static/`: cola-se um URL suspeito e a ferramenta desmonta-o *sem nunca o
+  visitar* — domínio registável verdadeiro vs. subdomínio-isco
+  (`paypal.com.conta-segura.xyz`), punycode/homóglifos, redirects embutidos
+  em parâmetros, truque do `@` no authority, TLDs de abuso frequente.
+  Veredicto por "sinais", nunca binário seguro/inseguro. Sem rede, sem
+  riscos de abuso; esforço pequeno-médio (heurísticas + subset da Public
+  Suffix List embebido).
+
+- **Sigma Playground** — client-side em `static/`: o visitante cola uma
+  linha de log nginx/apache e um mini-motor Sigma (subset declarado:
+  `selection`, `contains/startswith/endswith`, `condition` AND/OR/NOT) corre
+  as mesmas regras publicadas em /deteções, mostrando campo a campo o que
+  disparou, com link para a técnica ATT&CK. Fecha o ciclo "honeypot → regras
+  → experimenta tu"; regras partilhadas com /deteções via `content/` (single
+  source of truth). Logs nunca saem do browser; esforço médio.
 
 ## O que vai ser
 

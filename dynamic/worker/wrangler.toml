@@ -17,8 +17,14 @@ preview_id = "SET-ME-preview-namespace-id"
 # No deploy final (Worker em rotas do próprio domínio) fica vazio — as
 # chamadas são same-origin e a CSP connect-src 'self' basta.
 ALLOWED_ORIGINS = ""
-# Alvo do self-scan (o próprio site).
+# Alvo do self-scan (o próprio site). O vigia CT (/api/ct) deriva daqui o
+# domínio a vigiar nos logs de Certificate Transparency.
 SCAN_TARGET = "https://danielmala.co/"
+# Emissores esperados no vigia CT (CSV, match por substring). Vazio = a
+# lista por omissão em src/lib/ct.js (Let's Encrypt + Google Trust
+# Services, o par primário/backup que a Cloudflare usa). Qualquer
+# certificado de outro emissor aparece como "inesperado" no painel.
+CT_EXPECTED_ISSUERS = ""
 # Marca temporal do deploy (epoch ms) para "tempo até 1.º scan". Opcional:
 # se vazio, usa a 1.ª tentativa registada. Define no deploy, ex.:
 #   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)

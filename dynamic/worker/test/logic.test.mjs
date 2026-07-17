@@ -17,6 +17,10 @@ import { underCap } from '../src/lib/kvcap.js';
 import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
 import { normalizePrefix, parseRanges } from '../src/lib/pwned.js';
 import {
+  issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
+  DEFAULT_EXPECTED_ISSUERS,
+} from '../src/lib/ct.js';
+import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
 } from '../src/lib/csp-report.js';
@@ -796,4 +800,146 @@ test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
   assert.equal(res.status, 429);
   assert.ok(res.headers.get('retry-after'));
   assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
+});
+
+// ---------- vigia CT: parse do crt.sh e endpoint /api/ct ----------
+
+// Entrada realista do JSON do crt.sh (campos que a lib usa).
+function crtshEntry(over = {}) {
+  return {
+    issuer_ca_id: 295810,
+    issuer_name: "C=US, O=Let's Encrypt, CN=R11",
+    common_name: 'danielmala.co',
+    name_value: 'danielmala.co\n*.danielmala.co',
+    id: 130000001,
+    entry_timestamp: '2026-07-02T09:00:00.123',
+    not_before: '2026-07-02T08:00:00',
+    not_after: '2026-09-30T08:00:00',
+    serial_number: '04a1b2c3d4e5f60718293a4b5c6d7e8f9012',
+    ...over,
+  };
+}
+
+const CT_NOW = Date.parse('2026-07-17T12:00:00Z');
+const CT_OPTS = { domain: 'danielmala.co', now: CT_NOW };
+
+test('issuerLabel: DN do crt.sh → rótulo curto sanitizado', () => {
+  assert.equal(issuerLabel("C=US, O=Let's Encrypt, CN=R11"), "Let's Encrypt R11");
+  assert.equal(issuerLabel('C=US, O=Google Trust Services, CN=WE1'), 'Google Trust Services WE1');
+  assert.equal(issuerLabel('CN=Só CN'), 'Só CN');
+  assert.equal(issuerLabel('O=Mesmo, CN=Mesmo'.replace('Mesmo, CN=Mesmo', 'Igual, CN=Igual')), 'Igual');
+  assert.equal(issuerLabel('lixo sem DN <b>'), 'lixo sem DN b'); // sanitizado, nunca markup
+  assert.equal(issuerLabel(null), '');
+});
+
+test('isExpectedIssuer: substring sem caso, contra a allowlist', () => {
+  assert.equal(isExpectedIssuer("let's encrypt r11", DEFAULT_EXPECTED_ISSUERS), true);
+  assert.equal(isExpectedIssuer('Google Trust Services WE1', DEFAULT_EXPECTED_ISSUERS), true);
+  assert.equal(isExpectedIssuer('Encryption Everywhere DV', DEFAULT_EXPECTED_ISSUERS), false);
+});
+
+test('parseExpectedIssuers: CSV do env ou a lista por omissão', () => {
+  assert.deepEqual(parseExpectedIssuers("Let's Encrypt, ZeroSSL"), ["Let's Encrypt", 'ZeroSSL']);
+  assert.deepEqual(parseExpectedIssuers(''), DEFAULT_EXPECTED_ISSUERS);
+  assert.deepEqual(parseExpectedIssuers(undefined), DEFAULT_EXPECTED_ISSUERS);
+});
+
+test('normalizeCtEntry: só nomes do domínio, sanitizados; fora do domínio → null', () => {
+  const cert = normalizeCtEntry(
+    crtshEntry({ name_value: 'danielmala.co\n*.danielmala.co\nevil.com\nDANIELMALA.CO' }),
+    { domain: 'danielmala.co', expectedIssuers: DEFAULT_EXPECTED_ISSUERS },
+  );
+  assert.deepEqual(cert.names, ['*.danielmala.co', 'danielmala.co']); // evil.com fora, sem duplicados
+  assert.equal(cert.expected, true);
+  // "danielmala.co.evil.com" NÃO pertence ao domínio (o sufixo é evil.com)
+  const forged = normalizeCtEntry(
+    crtshEntry({ name_value: 'danielmala.co.evil.com' }),
+    { domain: 'danielmala.co', expectedIssuers: DEFAULT_EXPECTED_ISSUERS },
+  );
+  assert.equal(forged, null);
+});
+
+test('parseCtEntries: dedupe pré-cert/folha, janela de 90d, ordenação e classificação', () => {
+  const entries = [
+    crtshEntry(), // folha
+    crtshEntry({ id: 130000002 }), // pré-certificado: mesmo serial → dedupe
+    crtshEntry({
+      entry_timestamp: '2026-07-16T10:00:00', not_before: '2026-07-16T09:00:00',
+      serial_number: '0badc0ffee', issuer_name: 'C=US, O=DigiCert Inc, CN=Encryption Everywhere DV TLS CA',
+      name_value: 'webmail.danielmala.co', common_name: 'webmail.danielmala.co',
+    }),
+    crtshEntry({
+      entry_timestamp: '2026-01-02T09:00:00', not_before: '2026-01-02T08:00:00',
+      serial_number: '00ancient',
+    }), // fora da janela de 90 dias
+  ];
+  const certs = parseCtEntries(entries, CT_OPTS);
+  assert.equal(certs.length, 2);
+  // mais recente primeiro, e é o inesperado
+  assert.equal(certs[0].issuer, 'DigiCert Inc Encryption Everywhere DV TLS CA');
+  assert.equal(certs[0].expected, false);
+  assert.deepEqual(certs[0].names, ['webmail.danielmala.co']);
+  assert.equal(certs[1].expected, true);
+  assert.equal('serial' in certs[0], false); // o serial não segue para o cliente
+
+  const stats = ctStats(certs);
+  assert.deepEqual(stats, { total: 2, issuerCount: 2, nameCount: 3, unexpected: 1 });
+});
+
+test('parseCtEntries: datas sem timezone parseiam como UTC (determinístico)', () => {
+  const [cert] = parseCtEntries([crtshEntry()], CT_OPTS);
+  assert.equal(cert.notBefore, Date.parse('2026-07-02T08:00:00Z'));
+  assert.equal(cert.loggedAt, Date.parse('2026-07-02T09:00:00.123Z'));
+});
+
+test('/api/ct: junta as duas queries do crt.sh, deduplica e devolve o sumário', async () => {
+  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
+  const orig = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => {
+    urls.push(String(url));
+    // as duas queries devolvem o mesmo certificado — a dedupe trata da sobreposição
+    return { ok: true, status: 200, json: async () => [crtshEntry()] };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/ct'), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.domain, 'danielmala.co');
+    assert.equal(data.certs.length, 1);
+    assert.equal(data.summary.unexpected, 0);
+    assert.equal(urls.length, 2);
+    assert.ok(urls.some((u) => u.includes('q=danielmala.co')), 'query do apex');
+    assert.ok(urls.some((u) => u.includes(encodeURIComponent('%.danielmala.co'))), 'query dos subdomínios');
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/ct: uma query falhada degrada para a outra; as duas → 502', async () => {
+  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
+  const orig = globalThis.fetch;
+  let call = 0;
+  globalThis.fetch = async () => {
+    call += 1;
+    if (call === 1) throw new Error('timeout');
+    return { ok: true, status: 200, json: async () => [crtshEntry()] };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/ct'), env);
+    assert.equal(res.status, 200); // parcial vale mais do que nada
+    assert.equal((await res.json()).certs.length, 1);
+  } finally {
+    globalThis.fetch = orig;
+  }
+
+  const env2 = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
+  globalThis.fetch = async () => { throw new Error('down'); };
+  try {
+    const res = await runFetch(fakeRequest('/api/ct'), env2);
+    assert.equal(res.status, 502); // erro genérico, painel mostra fallback
+    assert.deepEqual(await res.json(), { error: 'upstream_error' });
+  } finally {
+    globalThis.fetch = orig;
+  }
 });
