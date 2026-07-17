@@ -22,6 +22,13 @@ configuração em qualquer servidor, para que migrar de Pages para VPS seja
 > efetiva por página continua a ser a estrita. O `X-Frame-Options: DENY`
 > mantém-se para browsers antigos.
 >
+> O header (e só o header — o browser ignora estas diretivas em `<meta>`)
+> acrescenta ainda o **reporting de violações**: `report-uri /api/csp-report`
+> (Firefox/Safari) e `report-to csp-endpoint` (Chrome, via o cabeçalho
+> `Reporting-Endpoints` do `_headers`). O recetor é o Worker
+> (`dynamic/worker/`, `POST /api/csp-report`), que agrega de forma anónima —
+> ver o painel na página Segurança.
+>
 > A presença destes cabeçalhos em produção é verificada automaticamente pelo
 > workflow `Headers` (`.github/workflows/headers.yml`) contra a lista
 > versionada em `.github/expected-headers.json` — após cada deploy e num cron
@@ -38,10 +45,16 @@ X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+Reporting-Endpoints: csp-endpoint="/api/csp-report"
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Resource-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
+
+> **Reporting-Endpoints:** o URL é relativo — resolve contra a própria origem,
+> onde o Worker interceta `/api/*`. Enquanto o Worker não estiver publicado
+> nas rotas do domínio, os POSTs dos browsers caem em 404 do Pages, sem
+> qualquer efeito visível para o visitante.
 
 > **COEP `require-corp`:** todo o site é same-origin (CSS/JS/fontes/imagens),
 > por isso não quebra nada; a par do COOP ativa *cross-origin isolation*. As
@@ -87,6 +100,7 @@ server {
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()" always;
+    add_header Reporting-Endpoints "csp-endpoint=\"/api/csp-report\"" always;
     add_header Cross-Origin-Opener-Policy "same-origin" always;
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
@@ -131,6 +145,7 @@ danielmala.co {
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
+        Reporting-Endpoints "csp-endpoint=\"/api/csp-report\""
         Cross-Origin-Opener-Policy "same-origin"
         Cross-Origin-Resource-Policy "same-origin"
         Cross-Origin-Embedder-Policy "require-corp"

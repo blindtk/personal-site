@@ -1,8 +1,8 @@
 # personal-site-worker
 
 Backend das features de segurança do site (Bloco 3): honeypot, mapa de
-tráfego hostil, self-scan de cabeçalhos e ticker SOC. Um só Cloudflare
-Worker + um namespace KV.
+tráfego hostil, self-scan de cabeçalhos, ticker SOC e recetor de violações
+CSP. Um só Cloudflare Worker + um namespace KV.
 
 > **Porque vive aqui e não em `static/`:** a regra do monorepo é que o
 > `static/` é 100% cliente, sem backend. Tudo o que precisa de servidor
@@ -17,6 +17,8 @@ Worker + um namespace KV.
 | `GET /api/map` | Origens por país (24 h / 7 d) | 60 s | — |
 | `GET /api/scan` | Nota + checklist dos cabeçalhos do próprio site | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/ticker` | CISA KEV + NVD críticos, sanitizados | 1 h | — |
+| `POST /api/csp-report` | Recetor de violações CSP (`report-uri`/Reporting API) | — | 10/min por cliente + cap global 300/h |
+| `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
 | `GET /api/health` | Liveness | — | — |
 
 ## Privacidade (honeypot)
@@ -31,6 +33,25 @@ que roda ao dia (`RATE_SALT` + data UTC), guardado só durante a janela do
 limite e nunca associado aos eventos. `recordHoneypot` nem sequer lê o IP.
 Coberto por teste (`test/logic.test.mjs`): o IP nunca aparece em nenhum
 valor do KV nem em nenhuma linha de log do Worker.
+
+## Privacidade (violações CSP)
+
+Os relatórios que os browsers enviam para `POST /api/csp-report` podem
+trazer URLs completos (com paths e query strings, onde vivem tokens). O
+Worker **nunca persiste o URL**: do `blocked-uri` guarda-se só a **origem**
+(scheme + host), e extensões de browser bucketizam por scheme
+(`chrome-extension://`), nunca pelo ID da extensão — que identificaria o
+utilizador pelo que tem instalado. Sem IP, sem User-Agent, e ao contrário
+do honeypot nem sequer há lista de eventos recentes: só contadores diários
+por diretiva/categoria/origem (`src/lib/csp-report.js`, coberto por teste —
+path e query nunca aparecem em nenhum valor do KV).
+
+Defesas do endpoint (é o único POST do Worker, público por natureza):
+`Content-Type` estrito, corpo ≤ 16 KB, rate limit por cliente, validação de
+que o `document-uri` é do próprio site (relatórios forjados "de outros
+sites" descartam-se com o mesmo 204 — indistinguível), cap de cardinalidade
+das chaves de agregação (`~other` a partir de 40 fontes distintas/bucket) e
+cap global de escritas por janela (`CSP_WRITE_CAP`).
 
 ### Erros e logs
 

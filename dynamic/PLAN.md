@@ -2,9 +2,20 @@
 
 > **Estado: primeiro código a bordo.** `dynamic/worker/` já contém o Worker
 > das features de segurança do site (honeypot, mapa de tráfego hostil,
-> self-scan de cabeçalhos e ticker SOC) — ver `dynamic/worker/README.md`.
+> self-scan de cabeçalhos, ticker SOC e pipeline de violações CSP) — ver
+> `dynamic/worker/README.md`.
 > As ferramentas de rede abaixo (DNS/whois/…) continuam por fazer; a página
 > `/lab/` ("em construção") apontará para elas quando existirem.
+
+## Decisões registadas
+
+- **2026-07 — Pipeline de violações CSP** (aprovado pelo dono do repo):
+  `report-uri`/`report-to` na camada de header da CSP → `POST
+  /api/csp-report` no Worker (validação estrita, rate limit, só agregados
+  anónimos — nunca o URL completo) → painel "Violações CSP" na página
+  Segurança. Papel duplo: canário de regressão da CSP por hashes +
+  observatório do ruído que uma CSP estrita apanha. Rodagem: calibrar os
+  buckets de ruído com dados reais antes de dar destaque ao painel.
 
 ## O que vai ser
 

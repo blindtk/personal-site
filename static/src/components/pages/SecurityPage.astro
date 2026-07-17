@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
+import CspViolations from '../CspViolations.astro';
 import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -55,6 +56,14 @@ const scanners = [
         </tbody>
       </table>
     </div>
+  </section>
+
+  <section aria-labelledby="h-cspv">
+    <div class="section-title">
+      <h2 id="h-cspv">{dict.cspviolations.title}</h2>
+    </div>
+    <p class="intro">{dict.cspviolations.intro}</p>
+    <CspViolations lang={lang} />
   </section>
 
   <section aria-labelledby="h-privacy">

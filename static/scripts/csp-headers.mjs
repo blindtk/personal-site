@@ -51,10 +51,18 @@ if (pages === 0) {
 // do X-Frame-Options que já vai no _headers para browsers antigos.
 directives.set('frame-ancestors', new Set(["'none'"]));
 
+// Reporting de violações — também header-only (o browser ignora estas
+// diretivas numa <meta>). report-uri é o mecanismo legado (Firefox/Safari);
+// report-to aponta para o nome declarado em Reporting-Endpoints no
+// public/_headers (Chrome). O recetor é o Worker (dynamic/worker/).
+directives.set('report-uri', new Set(['/api/csp-report']));
+directives.set('report-to', new Set(['csp-endpoint']));
+
 const ORDER = [
   'default-src', 'script-src', 'style-src', 'img-src', 'font-src',
   'connect-src', 'object-src', 'frame-src', 'worker-src', 'base-uri',
   'form-action', 'frame-ancestors', 'require-trusted-types-for', 'trusted-types',
+  'report-uri', 'report-to',
 ];
 const names = [
   ...ORDER.filter((n) => directives.has(n)),
