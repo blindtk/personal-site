@@ -1,0 +1,281 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+// content/ é a fonte de verdade: as regras Sigma por path-isco vivem em
+// detections.json e os nomes das técnicas vêm de attack.json — um teste no
+// worker garante que paths/técnicas não divergem dos DECOYS reais.
+import attack from '../../../../content/attack.json';
+import detections from '../../../../content/detections.json';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const d = dict.detections;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// Índice id → nome da técnica (1.ª ocorrência), como na página Honeypot.
+const techName = new Map<string, string>();
+for (const tactic of attack.tactics) {
+  for (const tech of tactic.techniques) {
+    if (!techName.has(tech.id)) techName.set(tech.id, tech.name);
+  }
+}
+
+const attackBase = routes.attack[lang];
+const rules = detections.rules.map((r) => ({
+  path: r.path,
+  slug: r.slug,
+  technique: r.technique,
+  techniqueName: techName.get(r.technique) ?? r.technique,
+  title: r.title[lang],
+  summary: r.summary[lang],
+  sigma: r.sigma.join('\n'),
+}));
+
+const jsStrings = { copy: d.copy, copied: d.copied };
+---
+
+<BaseLayout lang={lang} title={d.metaTitle} altUrl={routes.detections[other]}>
+  <div class="page-head">
+    <h1>{d.title}</h1>
+    <p class="intro">{d.intro}</p>
+  </div>
+
+  <section aria-labelledby="h-pipeline">
+    <div class="section-title">
+      <h2 id="h-pipeline">{d.pipelineTitle}</h2>
+    </div>
+    <ol class="det-pipeline">
+      {d.pipelineSteps.map((step, i) => (
+        <li class="det-step">
+          <span class="det-step-n mono" aria-hidden="true">{i + 1}</span>
+          <div>
+            <h3>{step.t}</h3>
+            <p>{step.d}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+    <p class="note">{d.liveNote}</p>
+  </section>
+
+  <section id="detections" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)} aria-label={d.title}>
+    {rules.map((r) => (
+      <article class="det-card" id={r.slug}>
+        <header class="det-head">
+          <h2 class="det-title">{r.title}</h2>
+          <div class="det-meta mono">
+            <span class="det-path">{r.path}</span>
+            <a class="det-tech" href={`${attackBase}#${r.technique}`} title={`${r.technique} · ${r.techniqueName}`}>
+              {r.technique}
+            </a>
+            <span class="det-hits" data-path={r.path}>
+              <span class="det-hits-n">—</span> {d.hits7d}
+            </span>
+          </div>
+        </header>
+        <p class="det-summary">{r.summary}</p>
+        <div class="det-rule">
+          <pre class="det-sigma"><code>{r.sigma}</code></pre>
+          <button class="det-copy mono" type="button" data-slug={r.slug}>{d.copy}</button>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <section aria-label="sigma-cli">
+    <p class="intro">{d.convertLead}</p>
+    <pre class="det-cmd mono"><code>{d.convertCmd}</code></pre>
+    <ul class="det-links mono">
+      <li><a href={routes.honeypot[lang]}>→ {d.seeHoneypot}</a></li>
+      <li><a href={attackBase}>→ {d.seeAttack}</a></li>
+    </ul>
+  </section>
+</BaseLayout>
+
+<script>
+  // Contagens ao vivo + botões de copiar. Mesmo padrão do painel Honeypot:
+  // a página nasce completa (contador em "—"); o fetch só preenche números,
+  // sem esconder/mostrar blocos — zero salto de layout se o Worker faltar.
+  // DOM via textContent (nunca innerHTML) — compatível com Trusted Types.
+  const root = document.getElementById('detections')!;
+  const base = root.dataset.api ?? '';
+  const S = JSON.parse(root.dataset.strings!);
+
+  (async () => {
+    try {
+      const res = await fetch(`${base}/api/honeypot`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) return;
+      const data = await res.json();
+      const counts = new Map<string, number>(
+        (Array.isArray(data.paths7d) ? data.paths7d : []).map((p: any) => [String(p.path), Number(p.count) || 0]),
+      );
+      for (const el of root.querySelectorAll<HTMLElement>('.det-hits')) {
+        const n = el.querySelector('.det-hits-n');
+        if (n) n.textContent = String(counts.get(el.dataset.path ?? '') ?? 0);
+      }
+    } catch {
+      // Sem Worker publicado, os contadores ficam em "—" — estado de origem.
+    }
+  })();
+
+  for (const btn of root.querySelectorAll<HTMLButtonElement>('.det-copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.det-rule')?.querySelector('code');
+      if (!code) return;
+      try {
+        await navigator.clipboard.writeText(code.textContent ?? '');
+        btn.textContent = S.copied;
+        setTimeout(() => { btn.textContent = S.copy; }, 1600);
+      } catch {
+        // clipboard indisponível (permissões/contexto) — o texto continua
+        // selecionável à mão no <pre>.
+      }
+    });
+  }
+</script>
+
+<style>
+  .det-pipeline {
+    list-style: none;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  @media (min-width: 720px) {
+    .det-pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  .det-step {
+    display: flex;
+    gap: 0.8rem;
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+  }
+  .det-step-n {
+    color: var(--accent);
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+  .det-step h3 {
+    margin: 0 0 0.3rem;
+    font-size: 0.95rem;
+  }
+  .det-step p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .det-card {
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.2rem;
+    margin: 1.2rem 0 0;
+  }
+  .det-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+  }
+  .det-title {
+    margin: 0;
+    font-size: 1.05rem;
+    flex: 1 1 16rem;
+  }
+  .det-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .det-path {
+    color: var(--accent-2);
+    overflow-wrap: anywhere;
+  }
+  .det-tech {
+    color: var(--accent-3);
+    text-decoration: none;
+  }
+  .det-tech:hover { text-decoration: underline; }
+  .det-hits {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .det-hits-n { color: var(--accent); }
+  .det-summary {
+    color: var(--muted);
+    margin: 0.7rem 0 0.9rem;
+    font-size: 0.9rem;
+  }
+  .det-rule { position: relative; }
+  .det-sigma {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    margin: 0;
+  }
+  .det-sigma code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: pre;
+  }
+  .det-copy {
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+  }
+  .det-copy:hover { border-color: var(--accent); }
+
+  .det-cmd {
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.9rem;
+    overflow-x: auto;
+    margin: 0.6rem 0 0.8rem;
+  }
+  .det-cmd code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: pre;
+  }
+  .det-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .det-links a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .det-links a:hover { text-decoration: underline; }
+</style>

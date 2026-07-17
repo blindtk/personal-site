@@ -53,9 +53,18 @@ precisam de ser carregáveis por outras origens (pré-visualizações de
 LinkedIn/Slack/etc.):
 
 ```
+! Cross-Origin-Resource-Policy
 Cross-Origin-Resource-Policy: cross-origin
 Cache-Control: public, max-age=31536000, immutable
 ```
+
+> **Cuidado (Cloudflare Pages):** quando várias regras do `_headers` coincidem
+> com o mesmo path, o Pages **não substitui** um header repetido — **concatena**
+> os valores com vírgula (`same-origin, cross-origin`), que é inválido e faz o
+> browser ignorar o header por inteiro. A linha `! Cross-Origin-Resource-Policy`
+> remove primeiro o valor herdado do bloco `/*`; só depois se define o novo.
+> (No nginx o problema é o inverso — ver o cuidado abaixo; no Caddy o override
+> por matcher já substitui corretamente.)
 
 ---
 

@@ -1,0 +1,214 @@
+{
+  "_comment": "Pipeline honeypot → deteção: para cada path-isco do Worker (dynamic/worker/src/index.js, DECOYS), a regra Sigma que apanharia a mesma atividade num SIEM. Os paths e as técnicas TÊM de coincidir com content/honeypot-attack.json (há um teste no worker que verifica a sincronização). O YAML vive como array de linhas (join com \\n) para ser legível em JSON; campos de field mapping seguem as convenções webserver do SigmaHQ (c-uri, cs-method, sc-status). Texto PT em português europeu.",
+  "rules": [
+    {
+      "path": "/wp-login.php",
+      "technique": "T1110",
+      "slug": "wordpress-login-probe",
+      "title": {
+        "pt": "Força bruta / probing de /wp-login.php",
+        "en": "Brute force / probing of /wp-login.php"
+      },
+      "summary": {
+        "pt": "O path mais tentado da Internet: botnets à procura de logins WordPress para força bruta de credenciais. Em infraestrutura que não serve WordPress, qualquer pedido a este path é hostil por definição — a regra dispara ao primeiro toque, sem thresholds.",
+        "en": "The most-tried path on the Internet: botnets hunting WordPress logins to brute-force credentials. On infrastructure that does not serve WordPress, any request for this path is hostile by definition — the rule fires on first touch, no thresholds."
+      },
+      "sigma": [
+        "title: WordPress Login Probe On Non-WordPress Infrastructure",
+        "id: 6fb96bda-5eb4-45e8-92ec-2144fcae2c27",
+        "status: stable",
+        "description: |",
+        "    Detects requests to /wp-login.php on infrastructure that does not run",
+        "    WordPress. Automated botnets probe this path to brute-force credentials",
+        "    (observed continuously by the honeypot at danielmala.co/honeypot). On a",
+        "    non-WordPress estate this is high-fidelity: there is no legitimate reason",
+        "    to request the path.",
+        "references:",
+        "    - https://attack.mitre.org/techniques/T1110/",
+        "    - https://danielmala.co/honeypot/",
+        "author: Daniel Assis Malaco",
+        "date: 2026-07-17",
+        "tags:",
+        "    - attack.credential-access",
+        "    - attack.t1110",
+        "logsource:",
+        "    category: webserver",
+        "detection:",
+        "    selection:",
+        "        c-uri|contains: '/wp-login.php'",
+        "    condition: selection",
+        "falsepositives:",
+        "    - Estates that actually run WordPress — there, scope to failed logins",
+        "      (cs-method POST + sc-status 200 burst) or add per-source thresholds",
+        "level: medium"
+      ]
+    },
+    {
+      "path": "/.env",
+      "technique": "T1592",
+      "slug": "dotenv-file-probe",
+      "title": {
+        "pt": "Tentativa de leitura de /.env",
+        "en": "Attempted read of /.env"
+      },
+      "summary": {
+        "pt": "Ficheiros dotenv guardam segredos (chaves de API, credenciais de BD) e ficam expostos por deploys descuidados. Os scanners pedem-nos a todos os hosts que encontram. Um pedido a /.env nunca é tráfego legítimo — é reconhecimento à procura de segredos.",
+        "en": "Dotenv files hold secrets (API keys, DB credentials) and get exposed by careless deploys. Scanners request them from every host they find. A request for /.env is never legitimate traffic — it is reconnaissance hunting for secrets."
+      },
+      "sigma": [
+        "title: Environment File Requested Over HTTP (.env)",
+        "id: f7d8a519-e2bf-4430-bfbb-b54740de6015",
+        "status: stable",
+        "description: |",
+        "    Detects HTTP requests for .env files. Dotenv files hold credentials and",
+        "    API keys; scanners probe every discovered host for them after years of",
+        "    accidental exposures. There is no legitimate reason for a client to",
+        "    request /.env (observed daily by the honeypot at danielmala.co/honeypot).",
+        "references:",
+        "    - https://attack.mitre.org/techniques/T1592/",
+        "    - https://danielmala.co/honeypot/",
+        "author: Daniel Assis Malaco",
+        "date: 2026-07-17",
+        "tags:",
+        "    - attack.reconnaissance",
+        "    - attack.t1592",
+        "logsource:",
+        "    category: webserver",
+        "detection:",
+        "    selection:",
+        "        c-uri|endswith: '/.env'",
+        "    condition: selection",
+        "falsepositives:",
+        "    - Unlikely — internal tooling that legitimately fetches dotenv files over",
+        "      HTTP would itself be a finding",
+        "level: high"
+      ]
+    },
+    {
+      "path": "/.git/config",
+      "technique": "T1592",
+      "slug": "exposed-git-probe",
+      "title": {
+        "pt": "Probing de repositório Git exposto (/.git/config)",
+        "en": "Exposed Git repository probe (/.git/config)"
+      },
+      "summary": {
+        "pt": "Um /.git/ acessível permite reconstruir o código-fonte inteiro do site (e os segredos committados por engano). Os scanners começam pelo /.git/config porque confirma a exposição com um único pedido. Deteção de primeiro toque, como o /.env.",
+        "en": "An accessible /.git/ lets an attacker reconstruct the site's entire source (and any secrets committed by mistake). Scanners start with /.git/config because it confirms the exposure with a single request. First-touch detection, like /.env."
+      },
+      "sigma": [
+        "title: Exposed Git Repository Probe (.git/config)",
+        "id: e8c1f8c8-afed-49d5-abe9-f4b9d67bb657",
+        "status: stable",
+        "description: |",
+        "    Detects HTTP requests for /.git/config. A web-accessible .git directory",
+        "    allows full source (and committed-secret) reconstruction with public",
+        "    tooling; scanners request the config file first because it confirms the",
+        "    exposure in one hit (observed by the honeypot at danielmala.co/honeypot).",
+        "references:",
+        "    - https://attack.mitre.org/techniques/T1592/",
+        "    - https://danielmala.co/honeypot/",
+        "author: Daniel Assis Malaco",
+        "date: 2026-07-17",
+        "tags:",
+        "    - attack.reconnaissance",
+        "    - attack.t1592",
+        "logsource:",
+        "    category: webserver",
+        "detection:",
+        "    selection:",
+        "        c-uri|endswith: '/.git/config'",
+        "    condition: selection",
+        "falsepositives:",
+        "    - None expected — legitimate git traffic uses the smart HTTP endpoints",
+        "      (info/refs, git-upload-pack), not raw config fetches",
+        "level: high"
+      ]
+    },
+    {
+      "path": "/admin",
+      "technique": "T1595",
+      "slug": "admin-panel-discovery",
+      "title": {
+        "pt": "Descoberta de painéis de administração (/admin)",
+        "en": "Admin panel discovery (/admin)"
+      },
+      "summary": {
+        "pt": "Enumeração clássica de superfície: os scanners percorrem listas de paths de administração conhecidos à procura de consolas esquecidas. Num host sem painel /admin é sinal inequívoco de scanning ativo — mas em estates com aplicações reais o path pode existir, daí o nível mais baixo e a nota de tuning.",
+        "en": "Classic surface enumeration: scanners walk lists of well-known admin paths hunting for forgotten consoles. On a host with no /admin panel it is an unambiguous sign of active scanning — but real estates may serve the path legitimately, hence the lower level and the tuning note."
+      },
+      "sigma": [
+        "title: Admin Panel Discovery Scan (/admin)",
+        "id: e583b903-36c2-4446-befe-bf05f22ece11",
+        "status: stable",
+        "description: |",
+        "    Detects requests to /admin on hosts that do not serve an admin panel.",
+        "    Part of automated active-scanning wordlists that enumerate well-known",
+        "    administrative paths (observed by the honeypot at",
+        "    danielmala.co/honeypot). Scope the rule to hosts where the path does",
+        "    not exist, or correlate bursts across many 404s from one source.",
+        "references:",
+        "    - https://attack.mitre.org/techniques/T1595/",
+        "    - https://danielmala.co/honeypot/",
+        "author: Daniel Assis Malaco",
+        "date: 2026-07-17",
+        "tags:",
+        "    - attack.reconnaissance",
+        "    - attack.t1595",
+        "logsource:",
+        "    category: webserver",
+        "detection:",
+        "    selection:",
+        "        c-uri: '/admin'",
+        "        sc-status: 404",
+        "    condition: selection",
+        "falsepositives:",
+        "    - Applications that really serve /admin — exclude those hosts or drop",
+        "      the rule where the panel is expected",
+        "level: low"
+      ]
+    },
+    {
+      "path": "/phpmyadmin/",
+      "technique": "T1190",
+      "slug": "phpmyadmin-probe",
+      "title": {
+        "pt": "Probing de phpMyAdmin (/phpmyadmin/)",
+        "en": "phpMyAdmin probe (/phpmyadmin/)"
+      },
+      "summary": {
+        "pt": "O phpMyAdmin exposto é um alvo perene de exploits públicos e credenciais por omissão — dá acesso direto à base de dados. Os scanners tentam o path para encontrar instalações esquecidas e explorá-las como ponto de entrada. Sem phpMyAdmin no estate, primeiro toque = deteção.",
+        "en": "Exposed phpMyAdmin is a perennial target of public exploits and default credentials — it hands over direct database access. Scanners try the path to find forgotten installs and exploit them as an entry point. With no phpMyAdmin in the estate, first touch = detection."
+      },
+      "sigma": [
+        "title: phpMyAdmin Probe On Estate Without phpMyAdmin",
+        "id: 122ba74d-fee8-449a-a593-b529c79ad8da",
+        "status: stable",
+        "description: |",
+        "    Detects requests to /phpmyadmin/ paths. Exposed phpMyAdmin installs are",
+        "    a long-standing initial-access vector (public exploits, default",
+        "    credentials, direct DB access); automated scanners probe the path on",
+        "    every host (observed by the honeypot at danielmala.co/honeypot). On an",
+        "    estate that does not run phpMyAdmin this is high-fidelity.",
+        "references:",
+        "    - https://attack.mitre.org/techniques/T1190/",
+        "    - https://danielmala.co/honeypot/",
+        "author: Daniel Assis Malaco",
+        "date: 2026-07-17",
+        "tags:",
+        "    - attack.initial-access",
+        "    - attack.t1190",
+        "logsource:",
+        "    category: webserver",
+        "detection:",
+        "    selection:",
+        "        c-uri|contains: '/phpmyadmin'",
+        "    condition: selection",
+        "falsepositives:",
+        "    - Estates that legitimately run phpMyAdmin — there, scope to",
+        "      authentication failures and unusual source networks instead",
+        "level: medium"
+      ]
+    }
+  ]
+}

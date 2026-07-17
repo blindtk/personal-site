@@ -4,8 +4,10 @@ Monorepo do site pessoal. Três áreas com papéis rígidos:
 
 - `content/` — markdown/JSON de conteúdo. **Nunca** pôr código aqui.
 - `static/` — site estático Astro. Lê `content/` via loaders (`glob`, import JSON).
-- `dynamic/` — ainda não existe código; só `PLAN.md`. Não criar código aqui
-  sem decisão explícita do dono do repo.
+- `dynamic/` — backend (Cloudflare Worker em `dynamic/worker/`: honeypot,
+  mapa de tráfego, self-scan, ticker). Lógica pura em `src/lib/*` testada com
+  `node --test` (correr antes de qualquer PR que toque aqui). Ferramentas
+  novas só com decisão explícita do dono do repo (ver `dynamic/PLAN.md`).
 
 ## Comandos
 
