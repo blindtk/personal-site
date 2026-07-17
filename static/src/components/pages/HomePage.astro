@@ -15,11 +15,8 @@ const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) &&
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
   .slice(0, 3);
 
-// A home é pitch: 2 projetos e 3 ferramentas em destaque, com link para as
-// páginas dedicadas — é lá que vive a lista completa e o detalhe.
 const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
-  .sort((a, b) => a.data.order - b.data.order)
-  .slice(0, 2);
+  .sort((a, b) => a.data.order - b.data.order);
 
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
@@ -27,7 +24,6 @@ const tools = [
   { slug: 'encoder', ...dict.tools.encoder },
   { slug: 'passwords', ...dict.tools.passwords },
 ];
-const featuredTools = tools.slice(0, 3);
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
@@ -120,22 +116,6 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     </section>
   )}
 
-  <section aria-labelledby="h-tools">
-    <div class="section-title">
-      <h2 id="h-tools">{dict.home.featuredTools}</h2>
-      <a class="more" href={routes.tools[lang]}>{dict.home.allTools} →</a>
-    </div>
-    <div class="mini-list">
-      {featuredTools.map((tool) => (
-        <a href={toolUrl(lang, tool.slug)}>
-          <span class="name">{tool.name}</span>
-          <span class="desc">{tool.desc}</span>
-          <span class="go" aria-hidden="true">→</span>
-        </a>
-      ))}
-    </div>
-  </section>
-
   {projects.length > 0 && (
     <section aria-labelledby="h-projects">
       <div class="section-title">
@@ -153,6 +133,22 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       </div>
     </section>
   )}
+
+  <section aria-labelledby="h-tools">
+    <div class="section-title">
+      <h2 id="h-tools">{dict.home.featuredTools}</h2>
+      <a class="more" href={routes.tools[lang]}>{dict.home.allTools} →</a>
+    </div>
+    <div class="mini-list">
+      {tools.map((tool) => (
+        <a href={toolUrl(lang, tool.slug)}>
+          <span class="name">{tool.name}</span>
+          <span class="desc">{tool.desc}</span>
+          <span class="go" aria-hidden="true">→</span>
+        </a>
+      ))}
+    </div>
+  </section>
 </BaseLayout>
 
 <script>
