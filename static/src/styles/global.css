@@ -837,6 +837,99 @@ select {
   margin-top: 0.7rem;
 }
 
+/* Analisador de cabeçalhos de email */
+.tool-panel h3 {
+  margin: 1.8rem 0 0.6rem;
+}
+.emailh-howto {
+  margin-top: -0.4rem;
+  margin-bottom: 1rem;
+}
+.emailh-auth {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.7rem;
+}
+@media (min-width: 700px) {
+  .emailh-auth { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.emailh-auth-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 0.9rem;
+}
+.emailh-auth-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--mono);
+}
+.emailh-method {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.emailh-verdict {
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+}
+.emailh-verdict[data-v='pass'] { color: var(--accent); }
+.emailh-verdict[data-v='soft'] { color: var(--accent-2); }
+.emailh-verdict[data-v='fail'] { color: var(--danger); }
+.emailh-verdict[data-v='none'] { color: var(--faint); }
+.emailh-auth-card p {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.emailh-auth-card .emailh-detail {
+  font-family: var(--mono);
+  color: var(--faint);
+  word-break: break-all;
+}
+/* Na tabela de hops o th de 11rem da .result-table não faz sentido. */
+.emailh-hops th {
+  width: auto;
+}
+.emailh-hops td {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+.emailh-hops td:nth-child(2),
+.emailh-hops td:nth-child(3) {
+  white-space: normal;
+}
+.emailh-hops .emailh-odd-delay {
+  color: var(--accent-2);
+}
+.emailh-flags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.emailh-flags li {
+  position: relative;
+  padding: 0.4rem 0 0.4rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.emailh-flags li:last-child { border-bottom: 0; }
+.emailh-flags li::before {
+  position: absolute;
+  left: 0;
+  font-family: var(--mono);
+}
+.emailh-flags li[data-level='bad']::before { content: '✗'; color: var(--danger); }
+.emailh-flags li[data-level='warn']::before { content: '▲'; color: var(--accent-2); }
+.emailh-flags li[data-level='info']::before { content: '·'; color: var(--faint); }
+.emailh-flags li[data-level='ok']::before { content: '✓'; color: var(--accent); }
+
 /* Medidor de entropia */
 .meter {
   height: 8px;

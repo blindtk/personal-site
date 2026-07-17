@@ -14,7 +14,7 @@ import { codecs } from './encoding.js';
 // Flag de CTF: não aparece no help; descobre-se com `ls -la` + `cat .flag`.
 const FLAG = 'flag{wh04m1_l4b_pwn3d}';
 
-const APPS = ['subnets', 'hashes', 'encoder', 'passwords', 'sobre', 'roadmap'];
+const APPS = ['subnets', 'hashes', 'encoder', 'passwords', 'email-headers', 'sobre', 'roadmap'];
 
 async function sha(alg, text) {
   const bytes = new TextEncoder().encode(text);

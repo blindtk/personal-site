@@ -4,11 +4,12 @@ import SubnetCalc from '../tools/SubnetCalc.astro';
 import HashTool from '../tools/HashTool.astro';
 import EncoderTool from '../tools/EncoderTool.astro';
 import PasswordGen from '../tools/PasswordGen.astro';
+import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { toolUrl } from '../../i18n/routes';
 
-type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords';
+type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers';
 
 interface Props {
   lang: Lang;
@@ -24,6 +25,7 @@ const components = {
   hashes: HashTool,
   encoder: EncoderTool,
   passwords: PasswordGen,
+  'email-headers': EmailHeaderTool,
 } as const;
 const ToolComponent = components[tool];
 ---

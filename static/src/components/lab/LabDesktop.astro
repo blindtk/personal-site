@@ -9,6 +9,7 @@ import SubnetCalc from '../tools/SubnetCalc.astro';
 import HashTool from '../tools/HashTool.astro';
 import EncoderTool from '../tools/EncoderTool.astro';
 import PasswordGen from '../tools/PasswordGen.astro';
+import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import { SITE } from '../../config';
 // content/ é a fonte de verdade; JSON importado diretamente (ver CLAUDE.md).
 import attackData from '../../../../content/attack.json';
@@ -89,6 +90,7 @@ const windows = [
   { id: 'hashes', title: dict.tools.hashes.name, icon: '#' },
   { id: 'encoder', title: dict.tools.encoder.name, icon: '⇄' },
   { id: 'passwords', title: dict.tools.passwords.name, icon: '⚿' },
+  { id: 'email-headers', title: dict.tools['email-headers'].name, icon: '@' },
   { id: 'sobre', title: lab.windowAbout, icon: '☰' },
   { id: 'roadmap', title: lab.windowRoadmap, icon: '⚑' },
 ];
@@ -164,6 +166,14 @@ const windows = [
         <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
       </div>
       <div class="win-body"><PasswordGen lang={lang} /></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="email-headers">
+      <div class="win-bar"><span class="wt">@ {dict.tools['email-headers'].name}</span>
+        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+      </div>
+      <div class="win-body"><EmailHeaderTool lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
@@ -286,6 +296,7 @@ const windows = [
   .win[data-win="hashes"]    { width: 600px; height: 560px; left: 160px; top: 72px; }
   .win[data-win="encoder"]   { width: 560px; height: 560px; left: 200px; top: 96px; }
   .win[data-win="passwords"] { width: 520px; height: 560px; left: 240px; top: 120px; }
+  .win[data-win="email-headers"] { width: 680px; height: 620px; left: 160px; top: 40px; }
   .win[data-win="sobre"]     { width: 640px; height: 540px; left: 280px; top: 40px; }
   .win[data-win="roadmap"]   { width: 520px; height: 320px; left: 320px; top: 140px; }
   .win.maxed {
