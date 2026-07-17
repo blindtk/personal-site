@@ -4,10 +4,16 @@
 //   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
 //   · /api/scan                — self-scan de cabeçalhos (cache 6h)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
+//   · /api/csp-report (POST)   — recetor de violações CSP (report-uri/report-to)
+//   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/health
 // Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
 
 import { emptyBucket, addEvent, honeypotStats, mapData } from './lib/aggregate.js';
+import {
+  parseReports, normalizeViolation, emptyCspBucket, addCspEvent, cspStats,
+  REPORT_CONTENT_TYPES, MAX_REPORTS_PER_REQUEST,
+} from './lib/csp-report.js';
 import { gradeFromHeaders, SECURITY_HEADERS } from './lib/scan.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
@@ -35,6 +41,13 @@ const HONEYPOT_WRITE_CAP = { windowMs: HOUR_MS, max: 500 };
 // Timeout para fetches a montante (self-scan) — não deixar um alvo lento
 // pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
+
+// Violações CSP: corpo máximo aceite num POST (um batch reports+json legítimo
+// anda nos poucos KB) e cap global de escritas por janela — uma regressão real
+// gera 1 relatório × N visitantes, o teto limita o custo dessa rajada (e de
+// spam deliberado) sem perder o sinal: os agregados já contados ficam.
+const CSP_REPORT_MAX_BODY = 16 * 1024;
+const CSP_WRITE_CAP = { windowMs: HOUR_MS, max: 300 };
 
 // ---------- helpers de tempo/KV ----------
 
@@ -102,6 +115,42 @@ async function recordHoneypot(env, request, path, now) {
     env.KV.put('meta', JSON.stringify(nextMeta)),
     env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(HONEYPOT_WRITE_CAP.windowMs / 1000) + 60 }),
   ]);
+}
+
+// ---------- violações CSP: escrita ----------
+
+const cspDayKey = (ms) => `cspd:${new Date(ms).toISOString().slice(0, 10)}`; // cspd:2026-07-17
+
+/**
+ * Agrega violações CSP já normalizadas no bucket diário. Só agregados — ao
+ * contrário do honeypot nem sequer há lista "recent": nenhum evento
+ * individual é persistido, só contadores por diretiva/categoria/origem.
+ */
+async function recordCspViolations(env, violations, now) {
+  if (violations.length === 0) return;
+  const capKey = `cspcap:${hourKey(now)}`;
+  const dayK = cspDayKey(now);
+  const [bucket, capPrev] = await Promise.all([
+    getJSON(env, dayK, emptyCspBucket()),
+    getJSON(env, capKey),
+  ]);
+
+  // Cap global de escritas por janela (mesmo padrão do honeypot): acima do
+  // teto os relatórios extra descartam-se — o browser recebe 204 na mesma.
+  const { allowed, state: capState } = underCap(capPrev, { now, ...CSP_WRITE_CAP });
+  if (!allowed) return;
+
+  for (const v of violations) addCspEvent(bucket, v);
+  await Promise.all([
+    env.KV.put(dayK, JSON.stringify(bucket), { expirationTtl: 9 * 86400 }),
+    env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(CSP_WRITE_CAP.windowMs / 1000) + 60 }),
+  ]);
+}
+
+/** Lê os 7 buckets diários de violações CSP (hoje primeiro). */
+async function readCspBuckets(env, now) {
+  const keys = Array.from({ length: 7 }, (_, i) => cspDayKey(now - i * DAY_MS));
+  return Promise.all(keys.map((k) => getJSON(env, k)));
 }
 
 // ---------- caching de leitura ----------
@@ -231,6 +280,49 @@ export default {
       });
     }
 
+    // Recetor de relatórios CSP (report-uri / Reporting API). É o único POST
+    // do Worker: endpoint público por natureza (os browsers têm de lhe chegar
+    // sem credenciais), por isso cada camada é defensiva — Content-Type
+    // estrito, corpo limitado, rate limit por cliente, validação da origem do
+    // documento na lib, e cap global de escritas. A resposta é sempre 204 nos
+    // casos "aceite" e "descartado": um forjador não distingue os dois.
+    if (path === '/api/csp-report' && request.method === 'POST') {
+      const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+      if (!REPORT_CONTENT_TYPES.includes(ctype)) {
+        return json({ error: 'unsupported_media_type' }, request, env, { status: 415 });
+      }
+      const { allowed, retryAfterSec } = await rateLimit(env, request, 'cspr', {
+        windowMs: 60_000,
+        max: 10, // o batching nativo do browser raramente passa de 1-2/min
+      });
+      if (!allowed) {
+        return json({ error: 'rate_limited' }, request, env, {
+          status: 429,
+          extra: { 'retry-after': String(retryAfterSec) },
+        });
+      }
+      let text;
+      try {
+        text = await request.text();
+      } catch {
+        return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
+      }
+      if (text.length > CSP_REPORT_MAX_BODY) {
+        return json({ error: 'payload_too_large' }, request, env, { status: 413 });
+      }
+      const siteOrigin = new URL(env.SCAN_TARGET || 'https://danielmala.co/').origin;
+      const violations = parseReports(text, ctype)
+        .map((raw) => normalizeViolation(raw, siteOrigin))
+        .filter(Boolean)
+        .slice(0, MAX_REPORTS_PER_REQUEST);
+      ctx.waitUntil(
+        recordCspViolations(env, violations, Date.now()).catch((err) =>
+          console.error('csp_report_write_failed', err?.message ?? String(err)),
+        ),
+      );
+      return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
+    }
+
     if (request.method !== 'GET') {
       return json({ error: 'method_not_allowed' }, request, env, { status: 405 });
     }
@@ -276,6 +368,13 @@ export default {
         }
         const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
         return json(data, request, env, { maxAge: 1800 });
+      }
+
+      if (path === '/api/csp-violations') {
+        const data = await cached(env, ctx, 'cache:cspviolations', 60, async () =>
+          cspStats(await readCspBuckets(env, Date.now())),
+        );
+        return json(data, request, env, { maxAge: 60 });
       }
 
       if (path === '/api/ticker') {

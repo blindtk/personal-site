@@ -1,0 +1,150 @@
+---
+import { API_BASE, type Lang } from '../config';
+import { t } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const c = t(lang).cspviolations;
+
+const jsStrings = {
+  catExtension: c.catExtension,
+  catSelf: c.catSelf,
+  catExternal: c.catExternal,
+  catOther: c.catOther,
+  empty: c.empty,
+};
+---
+
+<div class="cspv" id="cspv" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)}>
+  <p class="hp-fallback" id="cspv-fallback">{c.unavailable}</p>
+
+  <div id="cspv-body" hidden>
+    <div class="stats-grid">
+      <div class="stat"><div class="n" id="cspv-total">—</div><div class="l">{c.statReports}</div></div>
+      <div class="stat blue"><div class="n mono" id="cspv-topdir">—</div><div class="l">{c.statTopDirective}</div></div>
+      <div class="stat amber"><div class="n" id="cspv-noise">—</div><div class="l">{c.statNoise}</div></div>
+      <div class="stat"><div class="n" id="cspv-sources">—</div><div class="l">{c.statSources}</div></div>
+    </div>
+
+    <div class="cspv-bar-label mono">{c.barLabel}</div>
+    <div class="cspv-bar" id="cspv-bar" aria-hidden="true">
+      <span class="seg ext" id="cspv-seg-ext"></span>
+      <span class="seg self" id="cspv-seg-self"></span>
+      <span class="seg external" id="cspv-seg-external"></span>
+      <span class="seg other" id="cspv-seg-other"></span>
+    </div>
+    <div class="cspv-legend mono">
+      <span><i class="mk ext" aria-hidden="true"></i>{c.legendExtension}</span>
+      <span><i class="mk self" aria-hidden="true"></i>{c.legendSelf}</span>
+      <span><i class="mk external" aria-hidden="true"></i>{c.legendExternal}</span>
+      <span><i class="mk other" aria-hidden="true"></i>{c.legendOther}</span>
+    </div>
+
+    <p class="cspv-self-alert" id="cspv-alert" role="status" hidden>⚠ {c.selfAlert}</p>
+
+    <div class="table-scroll">
+      <table class="result-table cspv-table">
+        <thead>
+          <tr>
+            <th>{c.tableDirective}</th>
+            <th>{c.tableSource}</th>
+            <th>{c.tableCategory}</th>
+            <th class="cspv-num">{c.tableCount}</th>
+          </tr>
+        </thead>
+        <tbody id="cspv-rows"></tbody>
+      </table>
+    </div>
+
+    <p class="note warn">🔒 {c.privacyNote}</p>
+  </div>
+</div>
+
+<script>
+  const root = document.getElementById('cspv')!;
+  const base = root.dataset.api ?? '';
+  const S = JSON.parse(root.dataset.strings!);
+
+  const CAT = {
+    extension: { label: S.catExtension, cls: 'ext' },
+    self: { label: S.catSelf, cls: 'self' },
+    external: { label: S.catExternal, cls: 'external' },
+    other: { label: S.catOther, cls: 'other' },
+  } as const;
+
+  const setText = (id: string, value: string) => {
+    document.getElementById(id)!.textContent = value;
+  };
+
+  // Larguras da barra por JS (CSSOM): a CSP por hashes bloqueia style=""
+  // no HTML, mas a manipulação via .style não é abrangida pela style-src.
+  function drawBar(byCategory: Record<string, number>, total: number) {
+    const order: Array<keyof typeof CAT> = ['extension', 'self', 'external', 'other'];
+    for (const cat of order) {
+      const seg = document.getElementById(`cspv-seg-${CAT[cat].cls}`)!;
+      const pct = total > 0 ? ((byCategory[cat] ?? 0) / total) * 100 : 0;
+      seg.style.width = `${pct}%`;
+    }
+  }
+
+  function renderRows(sources: any[]) {
+    const rowsEl = document.getElementById('cspv-rows')!;
+    rowsEl.replaceChildren();
+    if (!sources || sources.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 4;
+      td.className = 'hp-loading';
+      td.textContent = S.empty;
+      tr.append(td);
+      rowsEl.append(tr);
+      return;
+    }
+    for (const { directive, category, source, count } of sources) {
+      const tr = document.createElement('tr');
+      const dir = document.createElement('td');
+      dir.className = 'mono cspv-dir';
+      dir.textContent = directive;
+      const src = document.createElement('td');
+      src.className = 'mono';
+      src.textContent = source === '~other' ? '…' : source;
+      const cat = document.createElement('td');
+      const meta = CAT[category as keyof typeof CAT] ?? CAT.other;
+      const badge = document.createElement('span');
+      badge.className = `badge cspv-cat ${meta.cls}`;
+      badge.textContent = meta.label;
+      cat.append(badge);
+      const n = document.createElement('td');
+      n.className = 'mono cspv-num';
+      n.textContent = String(count);
+      tr.append(dir, src, cat, n);
+      rowsEl.append(tr);
+    }
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`${base}/api/csp-violations`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const total = data.reports7d ?? 0;
+      const byCategory = data.byCategory ?? {};
+      setText('cspv-total', String(total));
+      setText('cspv-topdir', data.topDirective ?? '—');
+      setText('cspv-noise', total > 0 ? `${Math.round(((byCategory.extension ?? 0) / total) * 100)}%` : '—');
+      setText('cspv-sources', String(data.sourceCount ?? 0));
+      drawBar(byCategory, total);
+      renderRows(data.sources ?? []);
+      // origem própria bloqueada = candidata a regressão da build → aviso
+      document.getElementById('cspv-alert')!.hidden = (byCategory.self ?? 0) === 0;
+      document.getElementById('cspv-fallback')!.hidden = true;
+      document.getElementById('cspv-body')!.hidden = false;
+    } catch {
+      // Sem Worker publicado, o HTML já nasce neste estado (fallback visível,
+      // painel escondido) — nada a mudar, evita o salto de layout.
+    }
+  }
+
+  load();
+</script>

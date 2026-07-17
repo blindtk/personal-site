@@ -17,7 +17,7 @@ const dist = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'static',
 
 // Diretivas válidas em header mas nunca em <meta> — o browser ignora-as na
 // <meta>, por isso o csp-headers.mjs só as põe no header. Não são divergência.
-const HEADER_ONLY = new Set(['frame-ancestors']);
+const HEADER_ONLY = new Set(['frame-ancestors', 'report-uri', 'report-to']);
 
 const META_RE = /<meta http-equiv="content-security-policy" content="([^"]*)"/i;
 const HEADER_RE = /^\s*Content-Security-Policy:\s*(.+)$/im;

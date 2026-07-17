@@ -20,6 +20,10 @@
   Referrer-Policy: strict-origin-when-cross-origin
   # Desliga APIs de browser que o site não usa.
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
+  # Endpoint da Reporting API para violações CSP (o report-to da CSP gerada
+  # no build aponta para este nome). URL relativo — resolve contra a própria
+  # origem, onde o Worker interceta /api/* (ver dynamic/worker/).
+  Reporting-Endpoints: csp-endpoint="/api/csp-report"
   # Isolamento de contexto de navegação e de recursos.
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin

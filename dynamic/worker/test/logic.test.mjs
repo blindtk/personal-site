@@ -15,6 +15,10 @@ import { gradeFromHeaders } from '../src/lib/scan.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
 import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
+import {
+  parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
+  MAX_SOURCES_PER_BUCKET,
+} from '../src/lib/csp-report.js';
 import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import worker from '../src/index.js';
 
@@ -239,6 +243,161 @@ test('mergeFeeds intercala e remove duplicados', () => {
   assert.deepEqual(ids, ['CVE-2026-1042', 'CVE-2026-0891', 'CVE-2025-9977']);
 });
 
+// ---------- violações CSP: parse dos formatos reais dos browsers ----------
+
+const SITE = 'https://danielmala.co';
+
+test('parseReports: formato legado do Chrome/Firefox (application/csp-report)', () => {
+  // vetor real (Chrome 126, report-uri) — campos kebab-case
+  const body = JSON.stringify({
+    'csp-report': {
+      'document-uri': 'https://danielmala.co/seguranca/',
+      referrer: '',
+      'violated-directive': 'script-src-elem',
+      'effective-directive': 'script-src-elem',
+      'original-policy': "default-src 'self'; script-src 'self'",
+      disposition: 'enforce',
+      'blocked-uri': 'https://evil.example/x.js?token=SECRET',
+      'line-number': 1,
+      'status-code': 200,
+    },
+  });
+  const out = parseReports(body, 'application/csp-report');
+  assert.equal(out.length, 1);
+  assert.equal(out[0].documentUri, 'https://danielmala.co/seguranca/');
+  assert.equal(out[0].directive, 'script-src-elem');
+  assert.equal(out[0].blockedUri, 'https://evil.example/x.js?token=SECRET');
+});
+
+test('parseReports: Reporting API do Chrome (application/reports+json, batch)', () => {
+  // vetor real (Chrome, report-to) — lista, campos camelCase dentro de body
+  const body = JSON.stringify([
+    {
+      age: 10,
+      type: 'csp-violation',
+      url: 'https://danielmala.co/',
+      user_agent: 'Mozilla/5.0 …',
+      body: {
+        blockedURL: 'chrome-extension://abcdefghijklmnop/inject.js',
+        disposition: 'enforce',
+        documentURL: 'https://danielmala.co/',
+        effectiveDirective: 'script-src-elem',
+        originalPolicy: "default-src 'self'",
+        statusCode: 200,
+      },
+    },
+    { age: 12, type: 'deprecation', url: 'https://danielmala.co/', body: {} },
+  ]);
+  const out = parseReports(body, 'application/reports+json; charset=utf-8');
+  assert.equal(out.length, 1); // o relatório que não é csp-violation cai
+  assert.equal(out[0].documentUri, 'https://danielmala.co/');
+  assert.equal(out[0].blockedUri, 'chrome-extension://abcdefghijklmnop/inject.js');
+});
+
+test('parseReports: Safari legado com diretiva com valores e blocked-uri "data"', () => {
+  const body = JSON.stringify({
+    'csp-report': {
+      'document-uri': 'https://danielmala.co/en/',
+      'violated-directive': "img-src 'self'",
+      'blocked-uri': 'data',
+    },
+  });
+  const out = parseReports(body, 'application/csp-report');
+  assert.equal(out.length, 1);
+  const v = normalizeViolation(out[0], SITE);
+  assert.deepEqual(v, { directive: 'img-src', category: 'other', source: 'data:' });
+});
+
+test('parseReports: corpo inválido ou formato errado devolve []', () => {
+  assert.deepEqual(parseReports('not json', 'application/csp-report'), []);
+  assert.deepEqual(parseReports('{"foo":1}', 'application/csp-report'), []);
+  assert.deepEqual(parseReports('{"csp-report":"str"}', 'application/csp-report'), []);
+  assert.deepEqual(parseReports('{}', 'application/reports+json'), []); // não é lista
+  assert.deepEqual(parseReports('[]', 'application/reports+json'), []);
+});
+
+test('normalizeViolation: rejeita documentos que não são do próprio site', () => {
+  const forged = { documentUri: 'https://outro-site.example/', directive: 'script-src', blockedUri: 'inline' };
+  assert.equal(normalizeViolation(forged, SITE), null);
+  const noDoc = { documentUri: '', directive: 'script-src', blockedUri: 'inline' };
+  assert.equal(normalizeViolation(noDoc, SITE), null);
+});
+
+test('normalizeViolation: rejeita diretivas malformadas (chave de agregação limpa)', () => {
+  const bad = (d) => normalizeViolation({ documentUri: `${SITE}/`, directive: d, blockedUri: 'inline' }, SITE);
+  assert.equal(bad('<script>alert(1)</script>'), null);
+  assert.equal(bad(''), null);
+  assert.equal(bad('x'.repeat(60)), null);
+  assert.ok(bad('script-src-elem')); // válida passa
+});
+
+test('normalizeViolation: extensões bucketizam por scheme, sem ID da extensão', () => {
+  const v = normalizeViolation(
+    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: 'moz-extension://uuid-que-identifica/user.js' },
+    SITE,
+  );
+  assert.deepEqual(v, { directive: 'script-src-elem', category: 'extension', source: 'moz-extension://' });
+});
+
+test('normalizeViolation: origem terceira guarda SÓ a origem — path/query nunca', () => {
+  const v = normalizeViolation(
+    { documentUri: `${SITE}/`, directive: 'connect-src', blockedUri: 'https://telemetry.example:8443/collect?token=SECRET#frag' },
+    SITE,
+  );
+  assert.deepEqual(v, { directive: 'connect-src', category: 'external', source: 'https://telemetry.example:8443' });
+  assert.equal(v.source.includes('SECRET'), false);
+  assert.equal(v.source.includes('/collect'), false);
+});
+
+test('normalizeViolation: inline/eval/vazio e origem própria são categoria self', () => {
+  const mk = (blockedUri) => normalizeViolation({ documentUri: `${SITE}/`, directive: 'script-src', blockedUri }, SITE);
+  assert.deepEqual(mk('inline'), { directive: 'script-src', category: 'self', source: 'inline' });
+  assert.deepEqual(mk('eval'), { directive: 'script-src', category: 'self', source: 'eval' });
+  assert.deepEqual(mk(''), { directive: 'script-src', category: 'self', source: 'inline' });
+  assert.deepEqual(mk(`${SITE}/js/x.js`), { directive: 'script-src', category: 'self', source: 'self' });
+});
+
+test('addCspEvent: cap de cardinalidade — fontes a mais caem em ~other', () => {
+  const b = emptyCspBucket();
+  for (let i = 0; i < MAX_SOURCES_PER_BUCKET + 10; i += 1) {
+    addCspEvent(b, { directive: 'connect-src', category: 'external', source: `https://forjado-${i}.example` });
+  }
+  assert.equal(b.total, MAX_SOURCES_PER_BUCKET + 10);
+  assert.equal(Object.keys(b.bySource).length, MAX_SOURCES_PER_BUCKET + 1); // as N + '~other'
+  assert.equal(b.bySource['~other'], 10);
+  // uma fonte já conhecida continua a incrementar a sua própria chave
+  addCspEvent(b, { directive: 'connect-src', category: 'external', source: 'https://forjado-0.example' });
+  assert.equal(b.bySource['connect-src|external|https://forjado-0.example'], 2);
+});
+
+test('cspStats: agrega 7 dias, top diretiva, categorias e série diária', () => {
+  const d0 = emptyCspBucket(); // hoje
+  addCspEvent(d0, { directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://' });
+  addCspEvent(d0, { directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://' });
+  addCspEvent(d0, { directive: 'script-src-elem', category: 'self', source: 'inline' });
+  const d1 = emptyCspBucket(); // ontem
+  addCspEvent(d1, { directive: 'style-src-elem', category: 'extension', source: 'moz-extension://' });
+  const stats = cspStats([d0, d1, null, null, null, null, null]);
+  assert.equal(stats.reports7d, 4);
+  assert.equal(stats.topDirective, 'script-src-elem');
+  assert.equal(stats.sourceCount, 3); // chrome-ext, inline, moz-ext
+  assert.deepEqual(stats.byCategory, { extension: 3, self: 1, external: 0, other: 0 });
+  assert.deepEqual(stats.daily, [0, 0, 0, 0, 0, 1, 3]); // mais antigo → hoje
+  assert.equal(stats.sources[0].count, 2);
+  assert.deepEqual(stats.sources[0], {
+    directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://', count: 2,
+  });
+});
+
+test('mergeCspBuckets ignora nulos e soma tudo', () => {
+  const a = emptyCspBucket();
+  addCspEvent(a, { directive: 'script-src', category: 'self', source: 'inline' });
+  const m = mergeCspBuckets([a, null, a]);
+  assert.equal(m.total, 2);
+  assert.equal(m.byDirective['script-src'], 2);
+  assert.equal(m.bySource['script-src|self|inline'], 2);
+});
+
 // ---------- validação de input (Sessão 6, tarefa 1/5) ----------
 
 test('normalizeCountry: só aceita 2 letras, resto vira XX', () => {
@@ -398,6 +557,107 @@ test('honeypot: abaixo do teto escreve normalmente', async () => {
   const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('wcap:'));
   assert.ok(capKey);
   assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+});
+
+// ---------- integração: POST /api/csp-report e GET /api/csp-violations ----------
+
+function fakeCspPost(body, { ip = '203.0.113.50', contentType = 'application/csp-report' } = {}) {
+  const h = new Map([
+    ['cf-connecting-ip', ip],
+    ['content-type', contentType],
+  ]);
+  return {
+    url: 'https://danielmala.co/api/csp-report',
+    method: 'POST',
+    headers: { get: (k) => h.get(String(k).toLowerCase()) ?? null },
+    cf: {},
+    text: async () => body,
+  };
+}
+
+const LEGACY_REPORT = JSON.stringify({
+  'csp-report': {
+    'document-uri': 'https://danielmala.co/seguranca/',
+    'effective-directive': 'script-src-elem',
+    'blocked-uri': 'https://evil.example/payload.js?tok=SECRET',
+  },
+});
+
+test('csp-report: POST válido devolve 204 e agrega só a origem no bucket diário', async () => {
+  const env = { KV: fakeKV() };
+  const res = await runFetch(fakeCspPost(LEGACY_REPORT), env);
+  assert.equal(res.status, 204);
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+
+  const dayK = [...env.KV.store.keys()].find((k) => k.startsWith('cspd:'));
+  assert.ok(dayK, 'devia ter escrito o bucket diário');
+  const bucket = JSON.parse(env.KV.store.get(dayK));
+  assert.equal(bucket.total, 1);
+  assert.equal(bucket.byDirective['script-src-elem'], 1);
+  assert.equal(bucket.byCategory.external, 1);
+  // do URL bloqueado só a origem — path e query nunca entram no KV
+  for (const v of env.KV.store.values()) {
+    assert.equal(v.includes('SECRET'), false, `query fugiu para o KV: ${v}`);
+    assert.equal(v.includes('payload.js'), false, `path fugiu para o KV: ${v}`);
+  }
+});
+
+test('csp-report: relatório forjado (documento de outro site) descarta-se com o mesmo 204', async () => {
+  const env = { KV: fakeKV() };
+  const forged = JSON.stringify({
+    'csp-report': {
+      'document-uri': 'https://site-de-terceiros.example/',
+      'effective-directive': 'script-src',
+      'blocked-uri': 'inline',
+    },
+  });
+  const res = await runFetch(fakeCspPost(forged), env);
+  assert.equal(res.status, 204); // indistinguível de um aceite
+  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('cspd:')), false);
+});
+
+test('csp-report: Content-Type errado → 415, corpo acima do teto → 413', async () => {
+  const env = { KV: fakeKV() };
+  const badType = await runFetch(fakeCspPost(LEGACY_REPORT, { contentType: 'text/plain' }), env);
+  assert.equal(badType.status, 415);
+  const tooBig = await runFetch(fakeCspPost('x'.repeat(17 * 1024)), env);
+  assert.equal(tooBig.status, 413);
+  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('cspd:')), false);
+});
+
+test('csp-report: cap global de escritas descarta acima do teto (204 na mesma)', async () => {
+  const env = { KV: fakeKV() };
+  const now = Date.now();
+  const capKey = `cspcap:h:${new Date(now).toISOString().slice(0, 13)}`;
+  env.KV.store.set(capKey, JSON.stringify({ count: 300, windowStart: now }));
+
+  const res = await runFetch(fakeCspPost(LEGACY_REPORT), env);
+  assert.equal(res.status, 204);
+  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('cspd:')), false);
+});
+
+test('csp-report: rate limit por cliente devolve 429', async () => {
+  const env = { KV: fakeKV() };
+  const ip = '203.0.113.51';
+  const id = await clientHash(ip, dailySalt(undefined));
+  env.KV.store.set(`rl:cspr:${id}`, JSON.stringify({ count: 10, windowStart: Date.now() }));
+  const res = await runFetch(fakeCspPost(LEGACY_REPORT, { ip }), env);
+  assert.equal(res.status, 429);
+  assert.ok(res.headers.get('retry-after'));
+});
+
+test('csp-violations: GET devolve os agregados dos buckets diários', async () => {
+  const env = { KV: fakeKV() };
+  await runFetch(fakeCspPost(LEGACY_REPORT), env);
+  const res = await runFetch(fakeRequest('/api/csp-violations'), env);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.reports7d, 1);
+  assert.equal(data.topDirective, 'script-src-elem');
+  assert.equal(data.byCategory.external, 1);
+  assert.equal(data.sources[0].source, 'https://evil.example');
+  assert.equal(data.daily.length, 7);
+  assert.equal(data.daily[6], 1); // hoje é o último da série
 });
 
 // ---------- cabeçalhos de segurança das respostas do Worker ----------
