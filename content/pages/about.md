@@ -46,6 +46,11 @@ The essentials are above; the detail of each role lives here, collapsed.
   applications through policies and procedures; identifying threats and
   vulnerabilities and implementing controls to mitigate them via monitoring
   and security-event analysis.
+- **External reference:** the security infrastructure I helped build was the
+  subject of a [Fortinet Customer Story about
+  Ascendi](https://www.fortinet.com/customers/ascendi) — the article doesn't
+  name me (it quotes the Head of IT), but I was part of the team behind the
+  work it describes.
 
 </details>
 

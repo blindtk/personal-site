@@ -224,7 +224,7 @@ export const ui = {
         { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
         { n: '13', d: 'certificações de segurança', tone: 'amber' },
         { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
-        { n: '1.º', d: "lugar no CTF · SANS SEC504, Lisboa '22", tone: 'green' },
+        { n: '4', d: 'CTFs vencidos · 1.º lugar', tone: 'green' },
       ],
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
@@ -647,7 +647,7 @@ export const ui = {
         { n: '6+', d: 'years in security & networking', tone: 'green' },
         { n: '13', d: 'security certifications', tone: 'amber' },
         { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
-        { n: '1st', d: "place · SANS SEC504 CTF, Lisbon '22", tone: 'green' },
+        { n: '4', d: 'CTFs won · 1st place', tone: 'green' },
       ],
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).

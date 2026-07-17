@@ -45,6 +45,11 @@ O essencial está acima; o detalhe de cada função fica aqui, recolhido.
   aplicações através de políticas e procedimentos; deteção de ameaças e
   vulnerabilidades e implementação de controlos para as mitigar via
   monitorização e análise de eventos de segurança.
+- **Referência externa:** a infraestrutura de segurança que ajudei a
+  construir foi tema de um [Fortinet Customer Story sobre a
+  Ascendi](https://www.fortinet.com/customers/ascendi) — o artigo não me
+  nomeia (cita o Head of IT), mas fiz parte da equipa por trás do trabalho
+  descrito.
 
 </details>
 
