@@ -18,15 +18,15 @@
   prefixo e faz a correspondência localmente — o Worker (e o HIBP) nunca sabem
   que password foi testada. O Worker atua como *relay* anonimizador (o HIBP vê o
   IP de egress da Cloudflare, não o do visitante) e envia `Add-Padding: true`
-  para uniformizar o tamanho das respostas. Vive na página **Segurança**
-  (feature apoiada no Worker, como o self-scan — não no índice `/ferramentas/`,
-  cujo contrato é 100% client-side). Lógica pura em `dynamic/worker/src/lib/
-  pwned.js` (parse) e `static/src/scripts/pwned.js` (split/match), ambas
-  testadas com vetores conhecidos. Princípios: validação estrita do prefixo
-  (`^[0-9A-F]{5}$` — não é reutilizável como proxy aberto), rate limit desde o
-  dia 1, cache 24h por prefixo (dataset público), zero logs de prefixos. A UI,
-  em estilo de log de terminal, torna o protocolo de k-anonimato *visível* — é
-  esse o produto, não o resultado da consulta.
+  para uniformizar o tamanho das respostas. Lógica pura em
+  `dynamic/worker/src/lib/pwned.js` (parse) e `static/src/scripts/pwned.js`
+  (split/match), ambas testadas com vetores conhecidos. Princípios: validação
+  estrita do prefixo (`^[0-9A-F]{5}$` — não é reutilizável como proxy aberto),
+  rate limit desde o dia 1, cache 24h por prefixo (dataset público), zero
+  logs de prefixos. A UI, em estilo de log de terminal, torna o protocolo de
+  k-anonimato *visível* — é esse o produto, não o resultado da consulta.
+  **Atualização 2026-07 (ver entrada abaixo): já não vive só na página
+  Segurança — tem página própria em `/ferramentas/pwned/`.**
 
 - **2026-07 — Pipeline de violações CSP** (aprovado pelo dono do repo):
   `report-uri`/`report-to` na camada de header da CSP → `POST
@@ -35,6 +35,19 @@
   Segurança. Papel duplo: canário de regressão da CSP por hashes +
   observatório do ruído que uma CSP estrita apanha. Rodagem: calibrar os
   buckets de ruído com dados reais antes de dar destaque ao painel.
+
+- **2026-07 — Reversão: ferramentas com backend passam a viver em
+  `/ferramentas/`** (decisão do dono do repo): as duas entradas acima diziam
+  que o verificador de passwords e o self-scan viviam só na página Segurança
+  "porque o índice `/ferramentas/` é 100% client-side". Deixou de ser assim —
+  ambos têm agora página própria (`/ferramentas/pwned/`,
+  `/ferramentas/self-scan/`) e aparecem no índice com um badge "requer
+  servidor" (verde "client-side" para as restantes), em vez de client-side
+  ser um contrato implícito e absoluto do índice. A página Segurança mantém a
+  narrativa (o porquê de cada ferramenta) e passa a linkar para a ferramenta
+  em vez de a embeber — mesmo padrão já usado lá para o heatmap ATT&CK e as
+  Provas. A página **Provas continua a embeber o self-scan diretamente**
+  (é o próprio propósito dessa página: prova ao vivo, não um link).
 
 ## O que vai ser
 

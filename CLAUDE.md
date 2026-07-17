@@ -34,14 +34,18 @@ npm run preview   # servir o build localmente
 5. **Dados pessoais/configuráveis** (nome, handle, email, domínio, redes)
    só em `static/src/config.ts`.
 
-## Ferramentas client-side
+## Ferramentas em `/ferramentas/`
 
 - A lógica pura (sem DOM) vive em `static/src/scripts/*.js` para poder ser
   testada em Node; as componentes em `src/components/tools/*.astro` só fazem
   a ligação ao DOM.
-- **Tudo client-side**: nenhuma ferramenta em `static/` pode fazer chamadas de
-  rede ou depender de backend. Ferramentas que precisem de servidor pertencem
-  ao futuro `dynamic/` (ver `dynamic/PLAN.md`).
+- A maioria é **100% client-side**: sem chamadas de rede, sem depender de
+  backend. As exceções (verificador de passwords k-anonimato, self-scan de
+  cabeçalhos) falam com o Worker em `dynamic/worker/` — vivem no mesmo
+  índice, mas com o badge "requer servidor" (`ToolsIndexPage.astro`/
+  `ToolPage.astro`, chave `kind` por ferramenta), nunca escondidas como se
+  fossem client-side. Novas ferramentas que precisem de servidor seguem o
+  mesmo padrão — decisão registada em `dynamic/PLAN.md`.
 - Ao alterar lógica, validar com vetores conhecidos (ex.: MD5 de RFC 1321,
   redes /24 e /31) — correr com
   `node --input-type=module -e "import(...)"` ou similar.

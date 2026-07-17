@@ -54,11 +54,12 @@ export const ui = {
       // TODO(daniel): decidir se queres uma política de privacidade formal
       // separada. Por agora esta secção descreve a prática real.
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas (subnets, hashes, encoder, passwords, cabeçalhos de email) processam tudo no teu browser — nenhum dado sai da máquina, não há servidor a receber o que escreves.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, self-scan) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas.',
       // ----- Password comprometida (k-anonimato) -----
       pwnedTitle: 'A tua password já vazou?',
       pwnedIntro:
-        'A mesma ideia — não guardar o que não é preciso — aplicada a uma consulta. Verifica se uma password aparece em fugas conhecidas sem que ela saia do teu browser: o SHA-1 é calculado localmente e só 5 caracteres do hash chegam ao servidor. Observa o protocolo a acontecer:',
+        'A mesma ideia — não guardar o que não é preciso — aplicada a uma consulta. Verifica se uma password aparece em fugas conhecidas sem que ela saia do teu browser: o SHA-1 é calculado localmente e só 5 caracteres do hash chegam ao servidor.',
+      pwnedCta: 'Experimentar o verificador →',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -71,7 +72,8 @@ export const ui = {
       securityTxtLabel: 'security.txt (RFC 9116)',
       // ----- Scans públicos -----
       verifyTitle: 'Verifica tu mesmo',
-      verifyIntro: 'Não fiques pela minha palavra — corre os scanners públicos:',
+      verifyIntro: 'Não fiques pela minha palavra:',
+      selfScanCta: 'Correr o self-scan deste site →',
       headersScanLabel: 'Scan em securityheaders.com',
       observatoryLabel: 'Scan no Mozilla Observatory',
       attackTitle: 'Cobertura defensiva',
@@ -375,9 +377,21 @@ export const ui = {
     },
     tools: {
       title: 'Ferramentas',
-      intro: 'Utilitários de rede e segurança que corro no browser — tudo client-side, nada sai da tua máquina.',
+      intro: 'Utilitários de rede e segurança. A maioria corre inteiramente no browser; duas falam com o Worker (dynamic/) — o badge de cada cartão diz qual é qual.',
       openTool: 'abrir',
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
+      clientBadge: 'client-side',
+      serverBadge: 'requer servidor',
+      serverNote: 'Esta ferramenta fala com o Worker (dynamic/) — o que é enviado e porquê está explicado acima; o código do Worker é público.',
+      indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o Worker (dynamic/) — cada uma explica, na sua página, exatamente o que envia.',
+      pwned: {
+        name: 'Password comprometida?',
+        desc: 'Verifica se uma password aparece em fugas de dados conhecidas, sem que ela alguma vez saia do teu browser (k-anonimato via Have I Been Pwned).',
+      },
+      'self-scan': {
+        name: 'Self-scan de cabeçalhos',
+        desc: 'Verifica ao vivo os cabeçalhos de segurança HTTP que este site serve agora, via o Worker.',
+      },
       subnets: {
         name: 'Calculadora de subnets',
         desc: 'CIDR, máscaras, broadcast, hosts utilizáveis e representação binária.',
@@ -673,11 +687,12 @@ export const ui = {
       // TODO(daniel): decide whether you want a separate formal privacy
       // policy. For now this section describes actual practice.
       privacyBody:
-        'There are no cookies, no analytics, no third-party scripts. The tools (subnets, hashes, encoder, passwords, email headers) process everything in your browser — no data leaves your machine, there is no server receiving what you type.',
+        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, self-scan) say so explicitly and are flagged with a badge on the tools index.',
       // ----- Pwned password (k-anonymity) -----
       pwnedTitle: 'Has your password leaked?',
       pwnedIntro:
-        'The same idea — never keep what you don’t need — applied to a query. Check whether a password appears in known breaches without it ever leaving your browser: the SHA-1 is computed locally and only 5 characters of the hash reach the server. Watch the protocol happen:',
+        'The same idea — never keep what you don’t need — applied to a query. Check whether a password appears in known breaches without it ever leaving your browser: the SHA-1 is computed locally and only 5 characters of the hash reach the server.',
+      pwnedCta: 'Try the checker →',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -685,7 +700,8 @@ export const ui = {
       securityTxtLabel: 'security.txt (RFC 9116)',
       // ----- Public scans -----
       verifyTitle: 'Check for yourself',
-      verifyIntro: 'Don’t take my word for it — run the public scanners:',
+      verifyIntro: 'Don’t take my word for it:',
+      selfScanCta: 'Run this site\'s self-scan →',
       headersScanLabel: 'Scan on securityheaders.com',
       observatoryLabel: 'Scan on Mozilla Observatory',
       attackTitle: 'Defensive coverage',
@@ -994,9 +1010,21 @@ export const ui = {
     },
     tools: {
       title: 'Tools',
-      intro: 'Networking and security utilities that run in your browser — fully client-side, nothing leaves your machine.',
+      intro: 'Networking and security utilities. Most run entirely in your browser; two talk to the Worker (dynamic/) — each card\'s badge says which is which.',
       openTool: 'open',
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
+      clientBadge: 'client-side',
+      serverBadge: 'needs server',
+      serverNote: 'This tool talks to the Worker (dynamic/) — what is sent and why is explained above; the Worker\'s code is public.',
+      indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the Worker (dynamic/) — each one explains, on its own page, exactly what it sends.',
+      pwned: {
+        name: 'Has your password leaked?',
+        desc: 'Checks if a password appears in known data breaches, without it ever leaving your browser (k-anonymity via Have I Been Pwned).',
+      },
+      'self-scan': {
+        name: 'Header self-scan',
+        desc: 'Live check of the HTTP security headers this site serves right now, via the Worker.',
+      },
       subnets: {
         name: 'Subnet calculator',
         desc: 'CIDR, masks, broadcast, usable hosts, and binary representation.',

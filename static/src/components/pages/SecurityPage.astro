@@ -1,12 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SelfScan from '../tools/SelfScan.astro';
-import PwnedCheck from '../tools/PwnedCheck.astro';
 import CspViolations from '../CspViolations.astro';
 import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes, projectUrl } from '../../i18n/routes';
+import { routes, projectUrl, toolUrl } from '../../i18n/routes';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -79,7 +77,9 @@ const scanners = [
       <h2 id="h-pwned">{sec.pwnedTitle}</h2>
     </div>
     <p class="intro">{sec.pwnedIntro}</p>
-    <PwnedCheck lang={lang} />
+    <ul class="sec-links mono">
+      <li><a href={toolUrl(lang, 'pwned')}>{sec.pwnedCta}</a></li>
+    </ul>
   </section>
 
   <section aria-labelledby="h-ci">
@@ -107,9 +107,9 @@ const scanners = [
       <h2 id="h-verify">{sec.verifyTitle}</h2>
     </div>
     <p class="intro">{dict.selfscan.intro}</p>
-    <SelfScan lang={lang} />
     <p class="intro scan-links-intro">{sec.verifyIntro}</p>
     <ul class="sec-links mono">
+      <li><a href={toolUrl(lang, 'self-scan')}>{sec.selfScanCta}</a></li>
       {scanners.map((l) => (
         <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
       ))}
