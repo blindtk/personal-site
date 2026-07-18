@@ -7,7 +7,8 @@ order: 1
 ---
 
 Bilingual personal site built with Astro: subnet calculator, hash generator
-and more — all running in the browser, no backend.
+and more — the tools run in the browser, and the little that genuinely needs
+a server lives in an isolated Worker, kept apart.
 
 Bilingual by construction: content (markdown/JSON) lives separate from the
 code and feeds both versions (PT/EN) from the same shared components — no

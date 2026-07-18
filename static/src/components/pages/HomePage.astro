@@ -5,6 +5,9 @@ import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
+// content/ é a fonte de verdade: o nº de badges do painel stats vem daqui,
+// com o mesmo critério (verified !== false) da página Certificações.
+import certs from '../../../../content/certs.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -18,19 +21,28 @@ const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) &&
 const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order);
 
+// As 6 ferramentas client-side — a lista completa, para o título
+// "Ferramentas · client-side" não prometer mais nem menos do que mostra.
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
   { slug: 'hashes', ...dict.tools.hashes },
   { slug: 'encoder', ...dict.tools.encoder },
   { slug: 'passwords', ...dict.tools.passwords },
   { slug: 'email-headers', ...dict.tools['email-headers'] },
+  { slug: 'exif', ...dict.tools.exif },
 ];
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
 // Stats: sinais de competência, não de consumo (os 550 repos do catálogo
-// GitHub vivem na página Links, não aqui).
-const stats = dict.home.statsStatic;
+// GitHub vivem na página Links, não aqui). O nº de badges é calculado do
+// certs.json para nunca divergir da página Certificações.
+const verifiedBadges = (certs.items as { verified?: boolean }[]).filter(
+  (item) => item.verified !== false,
+).length;
+const stats = dict.home.statsStatic.map((stat) =>
+  'key' in stat && stat.key === 'certs' ? { ...stat, n: String(verifiedBadges) } : stat,
+);
 
 const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
