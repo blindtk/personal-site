@@ -2,7 +2,6 @@
 title: 'star-organizer'
 description: 'Organiza as estrelas do GitHub num catálogo navegável por categorias — markdown e JSON, atualizado automaticamente.'
 tags: ['github', 'automação', 'curadoria']
-repo: 'https://github.com/blindtk/github-stars'
 order: 3
 ---
 

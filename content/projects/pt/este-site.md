@@ -7,7 +7,8 @@ order: 1
 ---
 
 Site pessoal bilingue construído com Astro: calculadora de subnets, gerador
-de hashes e mais — tudo a correr no browser, sem backend.
+de hashes e mais — as ferramentas correm no browser, e o pouco que precisa
+mesmo de servidor vive num Worker isolado, à parte.
 
 Bilingue por construção: o conteúdo (markdown/JSON) vive separado do código
 e alimenta as duas versões (PT/EN) a partir das mesmas componentes — sem
