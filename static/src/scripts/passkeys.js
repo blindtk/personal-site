@@ -44,19 +44,23 @@ export function formatAaguid(hex) {
 
 // Subconjunto de AAGUIDs conhecidos (os gestores/plataformas mais comuns). A
 // lista oficial é grande; aqui só o suficiente para dar nome ao caso típico.
+// São identificadores PÚBLICOS (metadata service da FIDO Alliance), não
+// segredos — mas por serem UUIDs aleatórios, a entropia de alguns cruza por
+// acaso o limiar da regra generic-api-key do gitleaks (falso positivo).
+// `gitleaks:allow` neutraliza cada linha independentemente da regra.
 const AAGUIDS = {
-  '00000000-0000-0000-0000-000000000000': 'Sem AAGUID (não atestado)',
-  'fbfc3007-154e-4ecc-8c0b-6e020557d7bd': 'iCloud Keychain',
-  'ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4': 'Google Password Manager',
-  'adce0002-35bc-c60a-648b-0b25f1f05503': 'Chrome on Mac',
-  '08987058-cadc-4b81-b6e1-30de50dcbe96': 'Windows Hello',
-  '9ddd1817-af5a-4672-a2b9-3e3dd95000a9': 'Windows Hello',
-  'd548826e-79b4-db40-a3d8-11116f7e8349': 'Bitwarden',
-  '531126d6-e717-415c-9320-3d9aa6981239': 'Dashlane',
-  'bada5566-a7aa-401f-bd96-45619a55120d': '1Password',
-  'b84e4048-15dc-4dd0-8640-f4f60813c8af': 'NordPass',
-  'f8a011f3-8c0a-4d15-8006-17111f9edc7d': 'Security Key (Yubico)',
-  'ee882879-721c-4913-9775-3dfcce97072a': 'YubiKey 5',
+  '00000000-0000-0000-0000-000000000000': 'Sem AAGUID (não atestado)', // gitleaks:allow
+  'fbfc3007-154e-4ecc-8c0b-6e020557d7bd': 'iCloud Keychain', // gitleaks:allow
+  'ea9b8d66-4d01-1d21-3ce4-b6b48cb575d4': 'Google Password Manager', // gitleaks:allow
+  'adce0002-35bc-c60a-648b-0b25f1f05503': 'Chrome on Mac', // gitleaks:allow
+  '08987058-cadc-4b81-b6e1-30de50dcbe96': 'Windows Hello', // gitleaks:allow
+  '9ddd1817-af5a-4672-a2b9-3e3dd95000a9': 'Windows Hello', // gitleaks:allow
+  'd548826e-79b4-db40-a3d8-11116f7e8349': 'Bitwarden', // gitleaks:allow
+  '531126d6-e717-415c-9320-3d9aa6981239': 'Dashlane', // gitleaks:allow
+  'bada5566-a7aa-401f-bd96-45619a55120d': '1Password', // gitleaks:allow
+  'b84e4048-15dc-4dd0-8640-f4f60813c8af': 'NordPass', // gitleaks:allow
+  'f8a011f3-8c0a-4d15-8006-17111f9edc7d': 'Security Key (Yubico)', // gitleaks:allow
+  'ee882879-721c-4913-9775-3dfcce97072a': 'YubiKey 5', // gitleaks:allow
 };
 
 /** Nome legível de um AAGUID (canónico) ou null se desconhecido. */
