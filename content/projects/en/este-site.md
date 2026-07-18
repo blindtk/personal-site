@@ -16,7 +16,9 @@ duplicated logic between languages.
 
 Security was treated as part of the design, not an afterthought: strict
 Content-Security-Policy with no 'unsafe-inline', security headers, and a
-published responsible-disclosure policy. Details at [Security](/en/security/).
+published responsible-disclosure policy. The why behind each layer is on
+[Security](/en/security/); the proof — commit, CSP hashes, workflows — is
+verifiable on [Evidence](/en/evidence/).
 
 ## Architecture decisions
 

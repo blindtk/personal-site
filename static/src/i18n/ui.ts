@@ -125,7 +125,7 @@ export const ui = {
       hashesLink: 'abrir evidence.json →',
       headersTitle: 'Cabeçalhos, ao vivo',
       headersIntro:
-        'O mesmo self-scan da página Segurança: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
+        'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
       contractTitle: 'Contrato de cabeçalhos',
       contractIntro:
         'A lista versionada de cabeçalhos que a produção tem de servir — o workflow Headers falha se algum faltar:',
@@ -250,7 +250,6 @@ export const ui = {
     },
     selfscan: {
       title: 'Self-scan ao vivo',
-      intro: 'Não acredites em mim — verifica. A nota abaixo mostra o resultado de um scan aos cabeçalhos que este site serve, feito por um Worker (com cache).',
       gradeLabel: 'cabeçalhos de segurança',
       headersTitle: 'Cabeçalhos presentes',
       lastScan: 'último scan',
@@ -417,6 +416,7 @@ export const ui = {
       title: 'Ferramentas',
       intro: 'Utilitários de rede e segurança. A maioria corre inteiramente no browser; duas falam com o Worker (dynamic/) — o badge de cada cartão diz qual é qual.',
       openTool: 'abrir',
+      back: '← Voltar às ferramentas',
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
       clientBadge: 'client-side',
       serverBadge: 'requer servidor',
@@ -799,7 +799,7 @@ export const ui = {
       hashesLink: 'open evidence.json →',
       headersTitle: 'Headers, live',
       headersIntro:
-        'The same self-scan as the Security page: a grade for the headers production serves right now, with a timestamp.',
+        'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
       contractTitle: 'Header contract',
       contractIntro:
         'The versioned list of headers production must serve — the Headers workflow fails if any is missing:',
@@ -924,7 +924,6 @@ export const ui = {
     },
     selfscan: {
       title: 'Live self-scan',
-      intro: "Don't take my word for it — check. The grade below shows the result of a scan of the headers this site serves, run by a Worker (cached).",
       gradeLabel: 'security headers',
       headersTitle: 'Headers present',
       lastScan: 'last scan',
@@ -1091,6 +1090,7 @@ export const ui = {
       title: 'Tools',
       intro: 'Networking and security utilities. Most run entirely in your browser; two talk to the Worker (dynamic/) — each card\'s badge says which is which.',
       openTool: 'open',
+      back: '← Back to tools',
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
       clientBadge: 'client-side',
       serverBadge: 'needs server',

@@ -299,7 +299,9 @@ main {
 .section-title h2, .section-title h1 {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--faint);
+  /* --muted e não --faint: são títulos reais (não decoração) e --faint
+     fica abaixo de 4.5:1 sobre --bg. O '//' antes deles continua faint. */
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 600;
@@ -1503,7 +1505,6 @@ select {
   margin-top: 0.9rem;
 }
 .scan-ts { font-size: 0.72rem; color: var(--faint); }
-.scan-links-intro { margin-top: 1.4rem; }
 
 /* ---------- Violações CSP (página Segurança) ---------- */
 
