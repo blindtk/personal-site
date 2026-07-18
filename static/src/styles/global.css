@@ -130,6 +130,21 @@ img {
   left: 0;
 }
 
+/* Escondido visualmente mas legível por leitores de ecrã — usado quando uma
+   página precisa de um <h1> na estrutura sem o mostrar (ex.: o Lab, que é um
+   desktop imersivo sem cabeçalho visível). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- Nav ---------- */
 
 .site-nav {
@@ -287,7 +302,8 @@ main {
 .section-title {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.6rem;
   margin: 2.4rem 0 0.9rem;
 }
 .section-title::before {
@@ -603,6 +619,19 @@ a.card:hover {
 }
 .stat.amber .n { color: var(--accent-2); }
 .stat.blue .n { color: var(--accent-3); }
+/* Stat clicável (nº de badges → página Certificações): parece um cartão de
+   stat normal, mas com afordância de link no hover/foco. */
+.stat-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.stat-link:hover,
+.stat-link:focus-visible {
+  border-color: var(--accent-2);
+  background: var(--bg-raise);
+}
 .stat .l {
   font-size: 0.72rem;
   color: var(--muted);

@@ -4,7 +4,7 @@ import HostMap from '../HostMap.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
+import { routes, projectUrl } from '../../i18n/routes';
 // content/ é a fonte de verdade (ver CLAUDE.md): o mapa path-isco → técnica e
 // os nomes/táticas ATT&CK vêm daqui, os mesmos IDs que alimentam /attack.
 import attack from '../../../../content/attack.json';
@@ -90,6 +90,7 @@ const jsStrings = {
 
     <p class="note">🧭 {h.techNote} <a href={attackBase}>{h.techNoteLink}</a></p>
     <p class="note">🛡️ {h.detectionsNote} <a href={routes.detections[lang]}>{h.detectionsLink}</a></p>
+    <p class="note">📐 {h.projectNote} <a href={projectUrl(lang, 'honeypot')}>{h.projectLink}</a></p>
     <p class="note warn">🔒 {h.privacyNote}</p>
   </section>
 
