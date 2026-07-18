@@ -8,9 +8,9 @@ import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import ExifTool from '../tools/ExifTool.astro';
 import PwnedCheck from '../tools/PwnedCheck.astro';
 import SelfScan from '../tools/SelfScan.astro';
-import type { Lang } from '../../config';
+import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { toolUrl } from '../../i18n/routes';
+import { routes, toolUrl } from '../../i18n/routes';
 
 type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'self-scan';
 
@@ -48,6 +48,17 @@ const components = {
 } as const;
 const ToolComponent = components[tool];
 const kind = KIND[tool];
+
+// O texto de fallback do self-scan ("corre os scanners públicos abaixo")
+// exige que os scanners estejam mesmo abaixo — os mesmos links da Segurança.
+const host = new URL(SITE_URL).host;
+const scanners =
+  tool === 'self-scan'
+    ? [
+        { label: dict.security.headersScanLabel, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
+        { label: dict.security.observatoryLabel, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
+      ]
+    : [];
 ---
 
 <BaseLayout
@@ -62,5 +73,29 @@ const kind = KIND[tool];
     <p class="intro">{meta.desc}</p>
   </div>
   <ToolComponent lang={lang} />
+  {scanners.length > 0 && (
+    <ul class="tool-scanners mono">
+      {scanners.map((l) => (
+        <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
+      ))}
+    </ul>
+  )}
   <p class="note">{kind === 'server' ? `🛰️ ${dict.tools.serverNote}` : `🔒 ${dict.tools.clientSideNote}`}</p>
+  <hr class="tool-hr" />
+  <a href={routes.tools[lang]} class="mono">{dict.tools.back}</a>
 </BaseLayout>
+
+<style>
+  .tool-scanners {
+    list-style: none;
+    padding: 0;
+    margin: 1.2rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  /* Mesmo ritmo do <hr> + retorno das páginas de projeto. */
+  .tool-hr {
+    margin: 1.6rem 0 1.3rem;
+  }
+</style>

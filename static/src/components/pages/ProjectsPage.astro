@@ -38,9 +38,17 @@ function excerpt(text: string, max = 100): string {
         <p>{excerpt(entry.data.description)}</p>
         <div class="meta">
           {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-          {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
+          {entry.data.repo && <a class="repo-link" href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
         </div>
       </div>
     ))}
   </div>
 </BaseLayout>
+
+<style>
+  /* O link [código] alinha à direita da linha de badges — separado das
+     tags, em vez de colado ao fim da última. */
+  .meta .repo-link {
+    margin-left: auto;
+  }
+</style>

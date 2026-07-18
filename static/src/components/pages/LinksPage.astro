@@ -13,7 +13,10 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 const catalog = getCatalog();
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
-const CAP = 10;
+// 6 e não 10: com ~20 categorias, este cap é o que domina a altura inicial
+// da página — o resto fica atrás do "ver todos" de cada secção. Tem de
+// bater com o CAP do <script> abaixo.
+const CAP = 6;
 
 const slug = (name: string) =>
   name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-');
@@ -137,7 +140,7 @@ const slug = (name: string) =>
   // data-search).
   const root = document.getElementById('catalog');
   if (root) {
-    const CAP = 10;
+    const CAP = 6; // tem de bater com o CAP do frontmatter
     const search = document.getElementById('catalog-search') as HTMLInputElement;
     const catChips = [...root.querySelectorAll<HTMLButtonElement>('.filter-chip[data-cat]')];
     const sortChips = [...root.querySelectorAll<HTMLButtonElement>('.filter-chip[data-sort]')];

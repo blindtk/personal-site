@@ -16,7 +16,9 @@ duplicar lógica entre idiomas.
 
 A segurança foi tratada como parte do design, não um extra: Content-Security-Policy
 estrita sem 'unsafe-inline', cabeçalhos de segurança e uma política de
-divulgação responsável publicada. Detalhes em [Segurança](/seguranca/).
+divulgação responsável publicada. O porquê de cada camada está em
+[Segurança](/seguranca/); as provas — commit, hashes da CSP, workflows —
+são verificáveis em [Provas](/provas/).
 
 ## Decisões de arquitetura
 
