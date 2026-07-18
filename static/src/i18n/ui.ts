@@ -35,6 +35,8 @@ export const ui = {
       rights: 'Estático, bilingue e sem trackers.',
       security: 'Segurança',
       evidence: 'Provas',
+      detections: 'Deteções',
+      attack: 'ATT&CK',
       certs: 'Certificações',
     },
     security: {
@@ -110,6 +112,7 @@ export const ui = {
       commitTitle: 'Último commit',
       commitIntro:
         'Este site é servido a partir de main. O código que estás a ler corresponde a este commit:',
+      commitHashLabel: 'commit',
       commitSubjectLabel: 'mensagem',
       commitDateLabel: 'data',
       commitViewLabel: 'ver commit no GitHub →',
@@ -709,6 +712,8 @@ export const ui = {
       rights: 'Static, bilingual, and tracker-free.',
       security: 'Security',
       evidence: 'Evidence',
+      detections: 'Detections',
+      attack: 'ATT&CK',
       certs: 'Certifications',
     },
     security: {
@@ -784,6 +789,7 @@ export const ui = {
       commitTitle: 'Latest commit',
       commitIntro:
         'This site is served from main. The code you are reading matches this commit:',
+      commitHashLabel: 'commit',
       commitSubjectLabel: 'message',
       commitDateLabel: 'date',
       commitViewLabel: 'view commit on GitHub →',
