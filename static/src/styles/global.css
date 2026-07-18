@@ -1182,9 +1182,6 @@ select {
 
 /* ---------- Prosa (markdown) ---------- */
 
-.prose {
-  max-width: 46rem;
-}
 .prose h2 {
   margin-top: 2.2rem;
 }
