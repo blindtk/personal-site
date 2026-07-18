@@ -1,0 +1,181 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { analyzeCsp, fillMessage } from '../../scripts/csp-lint.js';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.csp;
+
+// Strings que o JS precisa em runtime (mensagens + rótulos), passadas via
+// data-strings para não duplicar o dicionário no bundle.
+const jsStrings = {
+  findings: s.findings,
+  verdict: s.verdict,
+  missingValue: s.missingValue,
+  noValue: s.noValue,
+  recommendPrefix: s.recommendPrefix,
+  sumBadGrave: s.sumBadGrave,
+  sumWarn: s.sumWarn,
+  sumOk: s.sumOk,
+  sumDirs: s.sumDirs,
+  emptyHint: s.emptyHint,
+  exampleWeak: s.exampleWeak,
+  exampleStrong: s.exampleStrong,
+};
+
+// Render inicial no build (função pura, sem DOM) — a análise do exemplo já
+// nasce visível, sem salto de layout nem depender do primeiro paint do JS.
+const initial = analyzeCsp(s.exampleWeak);
+const tone = /^A/.test(initial.grade) ? 'good' : /^[BC]/.test(initial.grade) ? 'mid' : 'bad';
+const lines = initial.findings.map((f) => ({ level: f.level, text: fillMessage(f, s.findings) }));
+const tokClass = (flag: string | null) => (flag === 'bad' ? 'tok-bad' : flag === 'warn' ? 'tok-warn' : undefined);
+---
+
+<div class="tool-panel" id="csp-tool" data-strings={JSON.stringify(jsStrings)}>
+  <div class="field">
+    <label for="csp-in">{s.inputLabel}</label>
+    <textarea id="csp-in" spellcheck="false" autocomplete="off">{s.exampleWeak}</textarea>
+  </div>
+  <div class="btn-row">
+    <button type="button" class="btn" id="csp-run">{s.analyze}</button>
+    <button type="button" class="btn ghost small" id="csp-weak">{s.exWeak}</button>
+    <button type="button" class="btn ghost small" id="csp-strong">{s.exStrong}</button>
+  </div>
+
+  <section class="self-scan" id="csp-result" aria-live="polite">
+    <div class="scan-grade">
+      <div class="grade-badge" id="csp-grade" data-grade={tone}>{initial.grade}</div>
+      <div class="grade-cap" id="csp-gradecap">{initial.counts.bad} {s.sumBadGrave}</div>
+      <div class="grade-sub" id="csp-gradesub">
+        {initial.counts.warn} {s.sumWarn} · {initial.counts.ok} {s.sumOk}<br />{initial.counts.directives} {s.sumDirs}
+      </div>
+    </div>
+    <div class="scan-body">
+      <ul class="finding-list" id="csp-findings">
+        {lines.map((l) => <li data-level={l.level}>{l.text}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <div class="section-title"><h2>{s.tableTitle}</h2></div>
+  <div class="table-scroll">
+    <table class="result-table">
+      <thead>
+        <tr><th>{s.thDir}</th><th>{s.thValue}</th><th>{s.thRead}</th></tr>
+      </thead>
+      <tbody id="csp-rows">
+        {initial.rows.map((row) => (
+          <tr>
+            <td class="csp-dir">{row.name}</td>
+            <td>
+              {row.missing ? (
+                <span class="tok-miss">{s.missingValue}</span>
+              ) : (
+                row.tokens.map((tok, i) => (
+                  <>{i > 0 ? ' ' : ''}<span class={tokClass(tok.flag)}>{tok.t}</span></>
+                ))
+              )}
+            </td>
+            <td class={`verdict ${row.verdict}`}>
+              {row.missing ? `∅ ${s.recommendPrefix} ${row.recommend}` : s.verdict[row.verdict]}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">{s.methodNote}</p>
+</div>
+
+<script>
+  import { analyzeCsp, fillMessage } from '../../scripts/csp-lint.js';
+
+  const root = document.getElementById('csp-tool')!;
+  const S = JSON.parse(root.dataset.strings!);
+  const input = document.getElementById('csp-in') as HTMLTextAreaElement;
+  const gradeEl = document.getElementById('csp-grade')!;
+  const capEl = document.getElementById('csp-gradecap')!;
+  const subEl = document.getElementById('csp-gradesub')!;
+  const findingsEl = document.getElementById('csp-findings')!;
+  const rowsEl = document.getElementById('csp-rows')!;
+
+  const tone = (g: string) => (/^A/.test(g) ? 'good' : /^[BC]/.test(g) ? 'mid' : 'bad');
+  const tokClass = (flag: string | null) =>
+    flag === 'bad' ? 'tok-bad' : flag === 'warn' ? 'tok-warn' : '';
+
+  function makeSpan(text: string, cls: string) {
+    const span = document.createElement('span');
+    if (cls) span.className = cls;
+    span.textContent = text;
+    return span;
+  }
+
+  function render(result: any) {
+    gradeEl.textContent = result.grade;
+    gradeEl.dataset.grade = tone(result.grade);
+    if (result.empty) {
+      capEl.textContent = S.emptyHint;
+      subEl.replaceChildren();
+      findingsEl.replaceChildren();
+      rowsEl.replaceChildren();
+      return;
+    }
+    const c = result.counts;
+    capEl.textContent = `${c.bad} ${S.sumBadGrave}`;
+    subEl.replaceChildren(
+      document.createTextNode(`${c.warn} ${S.sumWarn} · ${c.ok} ${S.sumOk}`),
+      document.createElement('br'),
+      document.createTextNode(`${c.directives} ${S.sumDirs}`),
+    );
+
+    findingsEl.replaceChildren(
+      ...result.findings.map((f: any) => {
+        const li = document.createElement('li');
+        li.dataset.level = f.level;
+        li.textContent = fillMessage(f, S.findings);
+        return li;
+      }),
+    );
+
+    rowsEl.replaceChildren(
+      ...result.rows.map((row: any) => {
+        const tr = document.createElement('tr');
+        const dir = document.createElement('td');
+        dir.className = 'csp-dir';
+        dir.textContent = row.name;
+
+        const val = document.createElement('td');
+        if (row.missing) {
+          val.append(makeSpan(S.missingValue, 'tok-miss'));
+        } else {
+          row.tokens.forEach((tok: any, i: number) => {
+            if (i > 0) val.append(document.createTextNode(' '));
+            val.append(makeSpan(tok.t, tokClass(tok.flag)));
+          });
+        }
+
+        const verdict = document.createElement('td');
+        verdict.className = `verdict ${row.verdict}`;
+        verdict.textContent = row.missing
+          ? `∅ ${S.recommendPrefix} ${row.recommend}`
+          : S.verdict[row.verdict];
+
+        tr.append(dir, val, verdict);
+        return tr;
+      }),
+    );
+  }
+
+  const run = () => render(analyzeCsp(input.value));
+  document.getElementById('csp-run')!.addEventListener('click', run);
+  document.getElementById('csp-weak')!.addEventListener('click', () => {
+    input.value = S.exampleWeak;
+    run();
+  });
+  document.getElementById('csp-strong')!.addEventListener('click', () => {
+    input.value = S.exampleStrong;
+    run();
+  });
+</script>

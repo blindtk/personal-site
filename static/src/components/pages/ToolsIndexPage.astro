@@ -16,8 +16,11 @@ const tools = [
   { slug: 'passwords', kind: 'client', ...dict.tools.passwords },
   { slug: 'email-headers', kind: 'client', ...dict.tools['email-headers'] },
   { slug: 'exif', kind: 'client', ...dict.tools.exif },
+  { slug: 'csp', kind: 'client', ...dict.tools.csp },
+  { slug: 'passkeys', kind: 'client', ...dict.tools.passkeys },
   { slug: 'pwned', kind: 'server', ...dict.tools.pwned },
   { slug: 'self-scan', kind: 'server', ...dict.tools['self-scan'] },
+  { slug: 'mirror', kind: 'server', ...dict.tools.mirror },
 ] as const;
 ---
 

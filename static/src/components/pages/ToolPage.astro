@@ -8,11 +8,14 @@ import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import ExifTool from '../tools/ExifTool.astro';
 import PwnedCheck from '../tools/PwnedCheck.astro';
 import SelfScan from '../tools/SelfScan.astro';
+import CspLint from '../tools/CspLint.astro';
+import Mirror from '../tools/Mirror.astro';
+import PasskeyLab from '../tools/PasskeyLab.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, toolUrl } from '../../i18n/routes';
 
-type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'self-scan';
+type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'self-scan' | 'csp' | 'mirror' | 'passkeys';
 
 // 'server': fala com o Worker (dynamic/) — mostra serverNote em vez de
 // clientSideNote no rodapé da página. Ver dynamic/PLAN.md.
@@ -25,6 +28,9 @@ const KIND: Record<ToolSlug, 'client' | 'server'> = {
   exif: 'client',
   pwned: 'server',
   'self-scan': 'server',
+  csp: 'client',
+  mirror: 'server',
+  passkeys: 'client',
 };
 
 interface Props {
@@ -45,6 +51,9 @@ const components = {
   exif: ExifTool,
   pwned: PwnedCheck,
   'self-scan': SelfScan,
+  csp: CspLint,
+  mirror: Mirror,
+  passkeys: PasskeyLab,
 } as const;
 const ToolComponent = components[tool];
 const kind = KIND[tool];

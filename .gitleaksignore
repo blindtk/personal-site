@@ -1,0 +1,15 @@
+# Baseline de falsos positivos do gitleaks (ver .github/workflows/security.yml).
+#
+# gitleaks corre sobre o histórico de commits do PR (git log -p), por isso um
+# achado num commit antigo continua a aparecer mesmo que um commit posterior
+# corrija/anote a linha — o comentário inline `gitleaks:allow` só silencia o
+# diff do commit onde é adicionado, não retroage aos commits anteriores.
+# Este ficheiro é o baseline correto para isso: um fingerprint por linha.
+#
+# static/src/scripts/passkeys.js — mapa de AAGUIDs (identificadores PÚBLICOS
+# do metadata service da FIDO Alliance: iCloud Keychain, Google Password
+# Manager, 1Password). São UUIDs aleatórios; a entropia de alguns cruza por
+# acaso o limiar da regra generic-api-key. Nunca foram segredos.
+32f896250224bcace5c83db60e81a4d91c9da7eb:static/src/scripts/passkeys.js:generic-api-key:49
+32f896250224bcace5c83db60e81a4d91c9da7eb:static/src/scripts/passkeys.js:generic-api-key:50
+32f896250224bcace5c83db60e81a4d91c9da7eb:static/src/scripts/passkeys.js:generic-api-key:56

@@ -1824,6 +1824,236 @@ select {
   color: var(--accent-2);
 }
 
+/* ---------- Analisador de CSP (/ferramentas/csp) ---------- */
+
+/* Linha extra de contagens sob o selo de nota (avisos · ok · diretivas). */
+.grade-sub {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--faint);
+  margin-top: 0.5rem;
+  line-height: 1.5;
+}
+
+/* Lista de achados: marcador por nível via ::before (mesma linguagem visual
+   dos flags do analisador de email, mas com classe própria e neutra). */
+.finding-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.finding-list li {
+  position: relative;
+  padding: 0.45rem 0 0.45rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.finding-list li:last-child { border-bottom: 0; }
+.finding-list li::before { position: absolute; left: 0; font-family: var(--mono); }
+.finding-list li[data-level='bad']::before { content: '✗'; color: var(--danger); }
+.finding-list li[data-level='warn']::before { content: '▲'; color: var(--accent-2); }
+.finding-list li[data-level='ok']::before { content: '✓'; color: var(--accent); }
+.finding-list li[data-level='info']::before { content: '·'; color: var(--faint); }
+.finding-list b { color: var(--text); font-weight: 600; }
+
+/* Tabela diretiva-a-diretiva: realce de tokens e coluna de veredicto. */
+.csp-dir { color: var(--accent-3); white-space: nowrap; }
+.result-table td .tok-bad { color: var(--danger); font-weight: 600; }
+.result-table td .tok-warn { color: var(--accent-2); }
+.result-table td .tok-miss { color: var(--faint); font-style: italic; }
+.verdict { white-space: nowrap; font-size: 0.82rem; font-family: var(--mono); }
+.verdict.ok { color: var(--accent); }
+.verdict.warn { color: var(--accent-2); }
+.verdict.bad { color: var(--danger); }
+.verdict.miss { color: var(--faint); }
+
+/* ---------- Espelho (/ferramentas/mirror) ---------- */
+
+/* Log de terminal no topo (mesma linguagem do verificador k-anonimato). */
+.mirror-log {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  padding: 0.9rem 1.1rem;
+  margin: 0 0 1.4rem;
+  color: var(--muted);
+  overflow-x: auto;
+}
+.mirror-log .p { color: var(--faint); }
+.mirror-log .ok { color: var(--accent); }
+.mirror-log .warn { color: var(--accent-2); }
+
+.mirror-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 860px) {
+  .mirror-grid { grid-template-columns: 1fr 1fr; }
+}
+.mirror .phead .live { color: var(--accent); }
+.mirror .phead .local { color: var(--accent-3); }
+
+.mirror-kv { font-size: 0.82rem; }
+.mirror-kv[hidden] { display: none; }
+.mirror-kv > div {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.38rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.mirror-kv > div:last-child { border-bottom: 0; }
+.mirror-kv .k {
+  font-family: var(--mono);
+  color: var(--muted);
+  flex: none;
+  width: 9.5rem;
+  font-size: 0.78rem;
+}
+.mirror-kv .v { font-family: var(--mono); color: var(--text); word-break: break-word; }
+.mirror-kv .v.hl { color: var(--accent); }
+.mirror-kv .v.warn { color: var(--accent-2); }
+.mirror-kv .v.dim { color: var(--faint); }
+
+.mirror-foot {
+  margin-top: 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--faint);
+}
+.mirror-foot[hidden] { display: none; }
+
+.mirror-note {
+  border: 1px solid var(--accent-2);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: rgba(240, 180, 92, 0.06);
+  padding: 0.8rem 1rem;
+  margin-top: 1.2rem;
+  color: var(--accent-2);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.mirror-note b { font-weight: 600; }
+
+/* ---------- Laboratório de passkeys (/ferramentas/passkeys) ---------- */
+
+/* Stepper: sequência real (1 cria → 2 abre → 3 usa), por isso numerada. */
+.pk-steps { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.4rem; }
+.pk-step {
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem 1.3rem;
+}
+.pk-step.done { border-color: var(--accent); }
+.pk-step.active { border-color: var(--accent-2); }
+.pk-shead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  font-family: var(--mono);
+  margin-bottom: 0.7rem;
+  flex-wrap: wrap;
+}
+.pk-n {
+  font-size: 0.72rem;
+  color: var(--faint);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 0.05rem 0.5rem;
+}
+.pk-step.done .pk-n { color: var(--accent); border-color: var(--accent); }
+.pk-step.active .pk-n { color: var(--accent-2); border-color: var(--accent-2); }
+.pk-shead h2 { margin: 0; font-size: 0.95rem; }
+.pk-state { margin-left: auto; font-size: 0.75rem; color: var(--faint); }
+.pk-step.done .pk-state { color: var(--accent); }
+.pk-step.active .pk-state { color: var(--accent-2); }
+.pk-exp { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.88rem; max-width: 46rem; }
+.pk-step .btn[disabled] { opacity: 0.4; cursor: default; }
+
+/* Dissecação: hex à esquerda, significado à direita. */
+.pk-dissect {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  overflow-x: auto;
+}
+.pk-dissect > div {
+  display: flex;
+  gap: 1rem;
+  padding: 0.42rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.pk-dissect > div:last-child { border-bottom: 0; }
+.pk-hex { color: var(--accent-3); width: 15rem; flex: none; word-break: break-all; }
+.pk-lbl { color: var(--muted); }
+.pk-lbl b { color: var(--text); font-weight: 600; }
+.pk-lbl .ok { color: var(--accent); }
+.pk-lbl .amb { color: var(--accent-2); }
+
+.pk-flagchips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+.pk-fchip {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  border-radius: 5px;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--border-strong);
+  color: var(--faint);
+  background: var(--bg-raise-2);
+}
+.pk-fchip.on { color: var(--accent); border-color: rgba(61, 220, 132, 0.4); background: var(--accent-dim); }
+
+.pk-verify-log {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.75;
+  padding: 0.9rem 1.1rem;
+  color: var(--muted);
+  overflow-x: auto;
+}
+.pk-verify-log .p { color: var(--faint); }
+.pk-verify-log .ok { color: var(--accent); }
+.pk-verify-log .bad { color: var(--danger); }
+
+.pk-why {
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--accent-dim);
+  padding: 0.9rem 1.1rem;
+  margin-top: 1.4rem;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text);
+  max-width: 46rem;
+}
+.pk-why b { font-family: var(--mono); }
+.pk-why .bad { color: var(--danger); font-family: var(--mono); }
+
+.pk-cleanup {
+  border: 1px dashed var(--accent-2);
+  border-radius: var(--radius);
+  background: rgba(240, 180, 92, 0.05);
+  padding: 0.8rem 1rem;
+  margin-top: 1.2rem;
+  color: var(--accent-2);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
 /* ---------- reduced-motion — overrides tardios ----------
    Ficam no fim de propósito: as regras base de .net-bg e .map-svg são
    declaradas depois do bloco reduced-motion do topo, por isso o override
