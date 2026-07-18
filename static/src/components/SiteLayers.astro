@@ -1,0 +1,89 @@
+---
+import type { Lang } from '../config';
+import { t } from '../i18n/ui';
+import { routes, projectUrl } from '../i18n/routes';
+
+/**
+ * Cross-links entre as páginas do "sistema" do site (Segurança, Provas,
+ * Honeypot, Deteções, ATT&CK e o projeto este-site). O mesmo bloco em todas
+ * elas, com a página atual marcada — é o que liga a narrativa do projeto
+ * este-site à postura de segurança e à telemetria ao vivo.
+ */
+type LayerKey = 'security' | 'evidence' | 'honeypot' | 'detections' | 'attack' | 'project';
+
+interface Props {
+  lang: Lang;
+  current: LayerKey;
+}
+const { lang, current } = Astro.props;
+const dict = t(lang).layers;
+
+const items: { key: LayerKey; href: string; label: string }[] = [
+  { key: 'security', href: routes.security[lang], label: dict.security },
+  { key: 'evidence', href: routes.evidence[lang], label: dict.evidence },
+  { key: 'honeypot', href: routes.honeypot[lang], label: dict.honeypot },
+  { key: 'detections', href: routes.detections[lang], label: dict.detections },
+  { key: 'attack', href: routes.attack[lang], label: dict.attack },
+  { key: 'project', href: projectUrl(lang, 'este-site'), label: dict.project },
+];
+---
+
+<nav class="layers" aria-label={dict.title}>
+  <div class="section-title">
+    <h2>{dict.title}</h2>
+  </div>
+  <p class="layers-intro">{dict.intro}</p>
+  <ul class="layers-list mono">
+    {items.map((item) =>
+      item.key === current ? (
+        <li class="is-current" aria-current="page">
+          <span>{item.label}</span>
+        </li>
+      ) : (
+        <li>
+          <a href={item.href}>{item.label}</a>
+        </li>
+      ),
+    )}
+  </ul>
+</nav>
+
+<style>
+  .layers {
+    margin-top: 2.6rem;
+  }
+  .layers-intro {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin: 0 0 0.8rem;
+    max-width: 46rem;
+  }
+  .layers-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem 1.6rem;
+    font-size: 0.85rem;
+  }
+  @media (min-width: 720px) {
+    .layers-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .layers-list li::before {
+    content: '→ ';
+    color: var(--faint);
+  }
+  .layers-list a {
+    color: var(--accent);
+  }
+  .layers-list .is-current span {
+    color: var(--muted);
+  }
+  .layers-list .is-current::before {
+    content: '● ';
+    color: var(--accent);
+  }
+</style>

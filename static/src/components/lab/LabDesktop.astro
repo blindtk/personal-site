@@ -234,9 +234,15 @@ const windows = [
     position: absolute;
     top: 14px;
     left: 14px;
+    bottom: 14px;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    /* Em desks baixos (portáteis) os 8 ícones não cabem numa coluna —
+       com wrap passam para uma 2.ª coluna em vez de ficarem cortados
+       (o .desk tem overflow: hidden). */
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0.5rem 0.6rem;
     z-index: 1;
   }
   .dicon {
