@@ -25,6 +25,7 @@ import {
   MAX_SOURCES_PER_BUCKET,
 } from '../src/lib/csp-report.js';
 import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
+import { serverView } from '../src/lib/mirror.js';
 import worker from '../src/index.js';
 
 test('clampInt', () => {
@@ -942,4 +943,66 @@ test('/api/ct: uma query falhada degrada para a outra; as duas → 502', async (
   } finally {
     globalThis.fetch = orig;
   }
+});
+
+// ---------- Espelho (/api/mirror) ----------
+
+test('serverView: sanitiza, valida país/ASN e NUNCA inclui o IP', () => {
+  const headers = new Map([
+    ['user-agent', 'Mozilla/5.0 (X11; Linux) Chrome/126'],
+    ['accept-language', 'pt-PT,pt;q=0.9,en;q=0.8'],
+    ['referer', 'https://danielmala.co/ferramentas/'],
+    ['cf-connecting-ip', '203.0.113.9'],
+  ]);
+  const get = (k) => headers.get(String(k).toLowerCase()) ?? null;
+  const cf = {
+    tlsVersion: 'TLSv1.3', tlsCipher: 'AEAD-AES128-GCM-SHA256', httpProtocol: 'HTTP/3',
+    country: 'PT', asn: 3243, asOrganization: 'MEO', colo: 'LIS',
+  };
+  const v = serverView(get, cf);
+  assert.equal(v.tlsVersion, 'TLSv1.3');
+  assert.equal(v.httpProtocol, 'HTTP/3');
+  assert.equal(v.country, 'PT');
+  assert.equal(v.asn, 3243);
+  assert.equal(v.asOrganization, 'MEO');
+  assert.equal(v.refererPresent, true);
+  assert.equal(v.ipWithheld, true);
+  // Garantia dura: o IP não pode aparecer em lado nenhum do objeto.
+  assert.ok(!JSON.stringify(v).includes('203.0.113.9'));
+});
+
+test('serverView: país forjado vira XX; ASN inválido vira null; campos vazios null', () => {
+  const v = serverView(() => null, { country: 'ZZZ', asn: -1 });
+  assert.equal(v.country, 'XX');
+  assert.equal(v.asn, null);
+  assert.equal(v.userAgent, null);
+  assert.equal(v.refererPresent, false);
+});
+
+test('serverView: dnt e sec-gpc reconhecidos', () => {
+  assert.equal(serverView((k) => (k === 'dnt' ? '1' : null)).dnt, 'dnt');
+  assert.equal(serverView((k) => (k === 'sec-gpc' ? '1' : null)).dnt, 'gpc');
+  assert.equal(serverView(() => null).dnt, 'unset');
+});
+
+test('/api/mirror: 200 sem IP no corpo, no-store, e rate limit ao fim de 30/min', async () => {
+  const env = { KV: fakeKV(), RATE_SALT: 's' };
+  const mkReq = () => ({
+    url: 'https://danielmala.co/api/mirror',
+    method: 'GET',
+    headers: { get: (k) => (String(k).toLowerCase() === 'cf-connecting-ip' ? '198.51.100.7' : String(k).toLowerCase() === 'user-agent' ? 'UA/1.0' : null) },
+    cf: { tlsVersion: 'TLSv1.3', country: 'PT', asn: 3243 },
+  });
+  const res = await runFetch(mkReq(), env);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  const body = await res.json();
+  assert.equal(body.tlsVersion, 'TLSv1.3');
+  assert.equal(body.ipWithheld, true);
+  assert.ok(!JSON.stringify(body).includes('198.51.100.7'));
+
+  // Esgota o balde (já gastámos 1 de 30).
+  let last;
+  for (let i = 0; i < 40; i++) last = await runFetch(mkReq(), env);
+  assert.equal(last.status, 429);
 });

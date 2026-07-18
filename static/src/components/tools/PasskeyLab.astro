@@ -1,0 +1,283 @@
+---
+import { SITE_URL, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.passkeys;
+
+// Domínio para o render no build (o cliente re-interpola com location.hostname,
+// que em produção coincide com este). fake = subdomínio-isco de demonstração.
+const host = new URL(SITE_URL).hostname;
+const fake = `${host}.login-seguro.xyz`;
+const cleanupText = s.cleanup.replace('{rp}', host);
+const whyParts = s.whyText.split('{fake}');
+
+const jsStrings = { ...s, host, fake };
+---
+
+<div id="pk-lab" data-strings={JSON.stringify(jsStrings)}>
+  <ol class="pk-steps">
+    <li class="pk-step active" id="pk-step1">
+      <div class="pk-shead">
+        <span class="pk-n">1</span>
+        <h2>{s.step1Title}</h2>
+        <span class="pk-state" id="pk-state1"></span>
+      </div>
+      <p class="pk-exp">{s.step1Exp}</p>
+      <button type="button" class="btn" id="pk-create">{s.step1Btn}</button>
+    </li>
+
+    <li class="pk-step" id="pk-step2">
+      <div class="pk-shead">
+        <span class="pk-n">2</span>
+        <h2>{s.step2Title}</h2>
+        <span class="pk-state" id="pk-state2"></span>
+      </div>
+      <p class="pk-exp">{s.step2Exp}</p>
+      <p class="note" id="pk-wait">{s.step2Wait}</p>
+      <div class="pk-dissect" id="pk-dissect" hidden></div>
+      <div class="pk-flagchips" id="pk-chips" hidden></div>
+    </li>
+
+    <li class="pk-step" id="pk-step3">
+      <div class="pk-shead">
+        <span class="pk-n">3</span>
+        <h2>{s.step3Title}</h2>
+        <span class="pk-state" id="pk-state3"></span>
+      </div>
+      <p class="pk-exp">{s.step3Exp}</p>
+      <button type="button" class="btn" id="pk-auth" disabled>{s.step3Btn}</button>
+      <div class="pk-verify-log" id="pk-verifylog" hidden></div>
+    </li>
+  </ol>
+
+  <p class="error-msg" id="pk-msg" hidden></p>
+
+  <div class="pk-why">
+    <b>{s.whyLabel}:</b> {whyParts[0]}<span class="bad">{fake}</span>{whyParts[1]}
+  </div>
+
+  <div class="pk-cleanup" id="pk-cleanup">{cleanupText}</div>
+</div>
+
+<script>
+  import { parseAuthData, bytesToHex, coseAlgName, derEcdsaToRaw, concatSignedData } from '../../scripts/passkeys.js';
+
+  const root = document.getElementById('pk-lab')!;
+  const S = JSON.parse(root.dataset.strings!);
+  const rpId = location.hostname;
+  const fakeRpId = `${location.hostname}.login-seguro.xyz`;
+
+  const $ = (id: string) => document.getElementById(id)!;
+  const createBtn = $('pk-create') as HTMLButtonElement;
+  const authBtn = $('pk-auth') as HTMLButtonElement;
+  const dissectEl = $('pk-dissect');
+  const chipsEl = $('pk-chips');
+  const verifyLog = $('pk-verifylog');
+  const msgEl = $('pk-msg');
+
+  // Estado da credencial criada (só em memória, nunca persistido).
+  let stored: { rawId: Uint8Array; publicKey: ArrayBuffer | null; alg: number } | null = null;
+
+  const rand = (n: number) => crypto.getRandomValues(new Uint8Array(n));
+  const showMsg = (text: string) => { msgEl.textContent = text; msgEl.hidden = false; };
+  const clearMsg = () => { msgEl.hidden = true; };
+
+  if (!(window.PublicKeyCredential)) {
+    showMsg(S.unsupported);
+    createBtn.disabled = true;
+  }
+
+  // ---------- render da dissecação (passo 2) ----------
+  function bold(text: string) { const b = document.createElement('b'); b.textContent = text; return b; }
+  function span(text: string, cls: string) { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }
+
+  function drow(hexText: string, ...nodes: (Node | string)[]) {
+    const div = document.createElement('div');
+    div.append(span(hexText, 'pk-hex'));
+    const lbl = document.createElement('span');
+    lbl.className = 'pk-lbl';
+    for (const n of nodes) lbl.append(typeof n === 'string' ? document.createTextNode(n) : n);
+    div.append(lbl);
+    dissectEl.append(div);
+  }
+
+  function chip(text: string, on: boolean) {
+    const el = document.createElement('span');
+    el.className = on ? 'pk-fchip on' : 'pk-fchip';
+    el.textContent = text;
+    return el;
+  }
+
+  function renderDissection(authData: Uint8Array) {
+    const d = parseAuthData(authData);
+    dissectEl.replaceChildren();
+    chipsEl.replaceChildren();
+    if (!d) return;
+
+    // rpIdHash — o domínio realçado a verde deixa claro a que origem está preso.
+    const rpidNote = S.dRpidNote.split('{rp}');
+    drow(`${d.rpIdHash.slice(0, 32)}…`, bold(S.dRpid), ' — ', rpidNote[0], span(rpId, 'ok'), rpidNote[1] ?? '');
+
+    drow(`0x${d.flags.raw.toString(16).padStart(2, '0')}`, bold(S.dFlags), ' — ', S.dFlagsNote);
+    drow(`0x${d.signCount.toString(16).padStart(8, '0')}`, bold(S.dSign), ' — ', S.dSignNote);
+
+    if (d.aaguidCanonical) {
+      const nameNode = d.aaguidName ? span(d.aaguidName, 'amb') : document.createTextNode(S.dAaguidNote);
+      drow(d.aaguidCanonical, bold(S.dAaguid), ' — ', nameNode);
+    }
+
+    const alg = coseAlgName(stored?.alg ?? -7);
+    const pkHex = stored?.publicKey
+      ? `${bytesToHex(new Uint8Array(stored.publicKey)).slice(0, 24)}…`
+      : '(via getPublicKey)';
+    drow(pkHex, bold(S.dPubkey), ' — ', span(alg, 'ok'), ` · ${S.dPubkeyNote}`);
+
+    chipsEl.append(
+      chip(S.chipUP, d.flags.up),
+      chip(S.chipUV, d.flags.uv),
+      chip(S.chipBE, d.flags.be),
+      chip(S.chipBS, d.flags.bs),
+      chip(S.chipED, d.flags.ed),
+    );
+    dissectEl.hidden = false;
+    chipsEl.hidden = false;
+    $('pk-wait').hidden = true;
+  }
+
+  // ---------- passo 1: criar a passkey ----------
+  createBtn.addEventListener('click', async () => {
+    clearMsg();
+    createBtn.disabled = true;
+    const label = createBtn.textContent;
+    createBtn.textContent = S.creating;
+    try {
+      const cred = (await navigator.credentials.create({
+        publicKey: {
+          challenge: rand(32),
+          rp: { id: rpId, name: 'Passkey Lab (demo)' },
+          user: { id: rand(16), name: 'demo@lab', displayName: 'Demo' },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
+          timeout: 60000,
+          attestation: 'none',
+        },
+      })) as PublicKeyCredential;
+
+      const resp = cred.response as AuthenticatorAttestationResponse;
+      const authData = new Uint8Array(resp.getAuthenticatorData());
+      stored = {
+        rawId: new Uint8Array(cred.rawId),
+        publicKey: typeof resp.getPublicKey === 'function' ? resp.getPublicKey() : null,
+        alg: typeof resp.getPublicKeyAlgorithm === 'function' ? resp.getPublicKeyAlgorithm() : -7,
+      };
+
+      renderDissection(authData);
+      $('pk-step1').classList.replace('active', 'done');
+      $('pk-state1').textContent = S.stateDone;
+      $('pk-step2').classList.add('done');
+      $('pk-state2').textContent = S.stateDone;
+      $('pk-step3').classList.add('active');
+      authBtn.disabled = false;
+      createBtn.textContent = label;
+    } catch {
+      showMsg(S.createError);
+      createBtn.disabled = false;
+      createBtn.textContent = label;
+    }
+  });
+
+  // ---------- passo 3: autenticar + verificar a assinatura ----------
+  function logRow(...parts: ({ t: string; cls?: string } | string)[]) {
+    const div = document.createElement('div');
+    div.append(span('$ ', 'p'));
+    for (const p of parts) {
+      if (typeof p === 'string') div.append(document.createTextNode(p));
+      else div.append(p.cls ? span(p.t, p.cls) : document.createTextNode(p.t));
+    }
+    verifyLog.append(div);
+  }
+
+  async function verifyAssertion(assertion: PublicKeyCredential): Promise<boolean | null> {
+    const resp = assertion.response as AuthenticatorAssertionResponse;
+    const authData = new Uint8Array(resp.authenticatorData);
+    const clientHash = new Uint8Array(await crypto.subtle.digest('SHA-256', resp.clientDataJSON));
+    const signed = concatSignedData(authData, clientHash);
+    const sig = new Uint8Array(resp.signature);
+    if (!stored?.publicKey) return null;
+    try {
+      if (stored.alg === -7) {
+        const key = await crypto.subtle.importKey('spki', stored.publicKey, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+        return crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, derEcdsaToRaw(sig, 32), signed);
+      }
+      if (stored.alg === -257) {
+        const key = await crypto.subtle.importKey('spki', stored.publicKey, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+        return crypto.subtle.verify({ name: 'RSASSA-PKCS1-v1_5' }, key, sig, signed);
+      }
+    } catch {
+      return false;
+    }
+    return null; // algoritmo que o WebCrypto não verifica (ex.: EdDSA)
+  }
+
+  authBtn.addEventListener('click', async () => {
+    if (!stored) return;
+    clearMsg();
+    authBtn.disabled = true;
+    const label = authBtn.textContent;
+    authBtn.textContent = S.verifying;
+    $('pk-state3').textContent = S.stateActive;
+    verifyLog.replaceChildren();
+    verifyLog.hidden = false;
+    try {
+      const challenge = rand(32);
+      logRow(`${S.vChallenge} → `, `${bytesToHex(challenge).slice(0, 24)}… (32 B)`);
+
+      const assertion = (await navigator.credentials.get({
+        publicKey: {
+          challenge,
+          rpId,
+          allowCredentials: [{ type: 'public-key', id: stored.rawId }],
+          userVerification: 'preferred',
+          timeout: 60000,
+        },
+      })) as PublicKeyCredential;
+
+      const resp = assertion.response as AuthenticatorAssertionResponse;
+      const clientData = JSON.parse(new TextDecoder().decode(resp.clientDataJSON));
+      const originOk = clientData.origin === location.origin;
+      logRow(`${S.vOrigin} = ${clientData.origin} `, { t: S.vMatch, cls: originOk ? 'ok' : 'bad' });
+      logRow({ t: S.vRpFlags, cls: 'ok' });
+
+      const ok = await verifyAssertion(assertion);
+      logRow(`verify(${coseAlgName(stored.alg).split(' ')[0]}, pk, sig) → `,
+        { t: ok === false ? S.vSigBad : S.vSigOk, cls: ok === false ? 'bad' : 'ok' });
+
+      // Demonstração: repetir contra uma origem-isco. O browser recusa porque
+      // o rpId não é sufixo registável da origem — o ataque morre aqui.
+      try {
+        await navigator.credentials.get({
+          publicKey: {
+            challenge: rand(32),
+            rpId: fakeRpId,
+            allowCredentials: [{ type: 'public-key', id: stored.rawId }],
+            timeout: 8000,
+          },
+        });
+        logRow(S.vFake.replace('{fake}', fakeRpId) + ' → ', { t: S.vFakeUnexpected, cls: 'bad' });
+      } catch {
+        logRow(S.vFake.replace('{fake}', fakeRpId) + ' → ', { t: S.vFakeRefused, cls: 'bad' });
+      }
+
+      $('pk-step3').classList.replace('active', 'done');
+      $('pk-state3').textContent = S.stateDone;
+      authBtn.textContent = label;
+    } catch {
+      showMsg(S.getError);
+      $('pk-state3').textContent = '';
+      authBtn.disabled = false;
+      authBtn.textContent = label;
+    }
+  });
+</script>

@@ -22,6 +22,7 @@ import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
 import { normalizePrefix, fetchRange } from './lib/pwned.js';
 import { fetchCtWatch } from './lib/ct.js';
+import { serverView } from './lib/mirror.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
 
@@ -420,6 +421,27 @@ export default {
       if (path === '/api/ticker') {
         const data = await cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env));
         return json(data, request, env, { maxAge: 1800 });
+      }
+
+      // Espelho: a "vista do servidor" deste mesmo pedido. Sem input de
+      // visitante (não é proxy) e sem qualquer escrita de estado — só se lê
+      // o que o pedido já trouxe. O IP é visível ao Worker mas nunca é
+      // devolvido (serverView não o inclui). Rate limit leve na mesma, para
+      // não deixar a rota ser martelada; a resposta é per-request, logo
+      // no-store (nunca em cache partilhada).
+      if (path === '/api/mirror') {
+        const { allowed, retryAfterSec } = await rateLimit(env, request, 'mirror', {
+          windowMs: 60_000,
+          max: 30,
+        });
+        if (!allowed) {
+          return json({ error: 'rate_limited' }, request, env, {
+            status: 429,
+            extra: { 'retry-after': String(retryAfterSec) },
+          });
+        }
+        const get = (name) => request.headers.get(name);
+        return json(serverView(get, request.cf ?? {}), request, env);
       }
     } catch (err) {
       // Detalhe (stack) só nos logs do Worker — server-side. O cliente

@@ -66,6 +66,42 @@
   Provas. A página **Provas continua a embeber o self-scan diretamente**
   (é o próprio propósito dessa página: prova ao vivo, não um link).
 
+- **2026-07 — Três ferramentas novas** (aprovadas pelo dono do repo, após
+  proposta com mockups):
+
+  - **Analisador de CSP** (`/ferramentas/csp/`, **100% client-side**): cola-se
+    uma `Content-Security-Policy` e recebe-se uma leitura crítica, diretiva a
+    diretiva — `unsafe-inline`/`unsafe-eval`, wildcards contornáveis (host com
+    `*.`, JSONP/CDN), esquemas nus, e diretivas em falta (`base-uri`,
+    `object-src`, `frame-ancestors`, `form-action`). Nota por letra
+    determinística. Lógica pura em `static/src/scripts/csp-lint.js` (parse +
+    heurísticas CSP L3 + bypasses públicos conhecidos), testada com vetores
+    (`static/test/csp-lint.test.mjs`); as mensagens são IDs traduzidos no i18n.
+    Sem rede, sem abuso; complementa o self-scan (que diz *se* o header existe;
+    isto diz *se o valor presta*).
+
+  - **Espelho** (`/ferramentas/mirror/`, **requer servidor**): o simétrico do
+    honeypot — mostra ao próprio visitante o que qualquer servidor aprende dele
+    no handshake (TLS/cipher, HTTP, país/ASN, User-Agent, Accept-Language) num
+    painel, e o que o browser revela localmente (ecrã, fuso, núcleos, tema) no
+    outro. Endpoint `GET /api/mirror` **sem input de visitante** (não é proxy),
+    **sem qualquer escrita de estado** (só o rate limit toca no KV) e que
+    **nunca devolve o IP** (visível ao Worker, mas não ecoado nem guardado).
+    Lógica pura em `dynamic/worker/src/lib/mirror.js` (`serverView`), testada —
+    incluindo a garantia dura de que o IP não aparece no corpo. Rate limit
+    30/min por cliente; resposta per-request (`no-store`).
+
+  - **Laboratório de passkeys** (`/ferramentas/passkeys/`, **100%
+    client-side**): cria uma passkey de demonstração real (WebAuthn), disseca o
+    `authenticatorData` byte a byte (rpIdHash, flags UP/UV/BE/BS/ED, signCount,
+    AAGUID identificado, chave pública COSE via `getPublicKey`) e verifica a
+    assinatura da asserção com WebCrypto — mostrando, ao repetir contra um
+    domínio-isco, porque é que o browser recusa (resistência a phishing = o
+    autenticador assina a origem que o browser viu). Lógica pura em
+    `static/src/scripts/passkeys.js` (parse binário, flags, AAGUID, DER→raw da
+    assinatura ECDSA), testada com vetores. Sem rede, sem estado no servidor; a
+    passkey criada é real e fica no gestor do utilizador (aviso de limpeza).
+
 ## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
 
 Propostas de 2026-07 que ficaram na gaveta por decisão do dono do repo —
