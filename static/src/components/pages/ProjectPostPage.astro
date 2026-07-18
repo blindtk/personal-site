@@ -1,6 +1,7 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteLayers from '../SiteLayers.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -14,6 +15,9 @@ interface Props {
 const { lang, project, altUrl } = Astro.props;
 const dict = t(lang);
 const { Content } = await render(project);
+// O projeto "este-site" é a narrativa do sistema que as páginas Segurança/
+// Provas/Honeypot/… documentam — só ele leva o bloco de camadas.
+const isSiteProject = project.id.slice(3) === 'este-site';
 ---
 
 <BaseLayout
@@ -41,6 +45,7 @@ const { Content } = await render(project);
       {project.data.demo && <a href={project.data.demo} rel="noopener">[{dict.projects.demo}]</a>}
     </div>
   )}
+  {isSiteProject && <SiteLayers lang={lang} current="project" />}
   <hr class="project-hr" />
   <a href={routes.projects[lang]} class="mono">{dict.projects.back}</a>
 </BaseLayout>

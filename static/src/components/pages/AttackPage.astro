@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import SiteLayers from '../SiteLayers.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -73,6 +74,8 @@ const anchorFor = (id: string): string | undefined => {
     </div>
     <div class="atk-fade" aria-hidden="true"></div>
   </div>
+
+  <SiteLayers lang={lang} current="attack" />
 </BaseLayout>
 
 <script>
