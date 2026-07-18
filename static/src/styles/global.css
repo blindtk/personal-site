@@ -299,7 +299,9 @@ main {
 .section-title h2, .section-title h1 {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--faint);
+  /* --muted e não --faint: são títulos reais (não decoração) e --faint
+     fica abaixo de 4.5:1 sobre --bg. O '//' antes deles continua faint. */
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 600;
@@ -630,6 +632,7 @@ a.card:hover {
 
 input[type='text'],
 input[type='search'],
+input[type='password'],
 textarea,
 select {
   width: 100%;
@@ -793,6 +796,20 @@ select {
   overflow-x: auto;
 }
 
+/* Variante para tabelas cujo conteúdo é prosa (Contactos, Segurança):
+   o break-all por omissão da .result-table é pensado para hashes/binário
+   e parte palavras (e emails) a meio em ecrãs estreitos. */
+.result-table.wrap-normal td {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .result-table.wrap-normal th {
+    width: auto;
+    white-space: normal;
+  }
+}
+
 .hash-row {
   display: flex;
   align-items: baseline;
@@ -825,7 +842,9 @@ select {
 
 .note {
   font-size: 0.82rem;
-  color: var(--faint);
+  /* --muted e não --faint: as .note carregam conteúdo real (garantias de
+     privacidade, avisos) e --faint fica abaixo de 4.5:1 sobre --bg. */
+  color: var(--muted);
   font-family: var(--mono);
   margin-top: 1rem;
 }
@@ -963,7 +982,10 @@ select {
 .journey-hint {
   text-align: right;
 }
-@media (min-width: 901px) {
+/* 1100px e não 901px: as 5 paragens ocupam ~1040px, e entre 901–1100px o
+   scroll horizontal ainda existe — o hint tem de continuar visível aí
+   (abaixo disso, o JS esconde-o quando se chega ao fim do scroll). */
+@media (min-width: 1100px) {
   .journey-hint { display: none; }
 }
 
@@ -971,9 +993,9 @@ select {
   position: relative;
 }
 /* Sombra no bordo direito, só onde o scroll horizontal é mesmo preciso
-   (a mesma largura a partir da qual o Lab também muda de layout),
-   para sinalizar que há mais paragens fora do ecrã. */
-@media (max-width: 900px) {
+   (até ~1100px, a largura em que as 5 paragens deixam de caber no
+   container), para sinalizar que há mais paragens fora do ecrã. */
+@media (max-width: 1099px) {
   .journey-wrap::after {
     content: '';
     position: absolute;
@@ -1483,7 +1505,6 @@ select {
   margin-top: 0.9rem;
 }
 .scan-ts { font-size: 0.72rem; color: var(--faint); }
-.scan-links-intro { margin-top: 1.4rem; }
 
 /* ---------- Violações CSP (página Segurança) ---------- */
 
@@ -1656,9 +1677,9 @@ select {
 .atk-hint.hidden {
   opacity: 0;
 }
-@media (min-width: 1200px) {
-  .atk-hint { display: none; }
-}
+/* Sem display:none por media query: o heatmap tem ~2100px de conteúdo dentro
+   de um container de 68rem, por isso há sempre scroll horizontal — quem
+   esconde o hint é o JS, quando o utilizador chega ao fim do scroll. */
 
 /* .atk-wrap (não faz scroll) é a containing block do gradiente — se o fade
    fosse filho de .atk-scroll (o elemento com overflow-x), position:absolute

@@ -32,6 +32,7 @@ const navItems: { key: RouteKey; label: string }[] = [
   ...(hasBlog ? [{ key: 'blog' as const, label: dict.nav.blog }] : []),
   { key: 'projects', label: dict.nav.projects },
   { key: 'tools', label: dict.nav.tools },
+  { key: 'security', label: dict.nav.security },
   { key: 'honeypot', label: dict.nav.honeypot },
   { key: 'links', label: dict.nav.links },
   { key: 'contact', label: dict.nav.contact },
@@ -133,6 +134,8 @@ const personSchema = {
           © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a> ·{' '}
+          <a href={routes.detections[lang]}>{dict.footer.detections}</a> ·{' '}
+          <a href={routes.attack[lang]}>{dict.footer.attack}</a> ·{' '}
           <a href={routes.certifications[lang]}>{dict.footer.certs}</a>
         </span>
         <span>

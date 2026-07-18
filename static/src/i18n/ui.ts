@@ -11,17 +11,32 @@ export const ui = {
       blog: 'Blog',
       projects: 'Projetos',
       tools: 'Ferramentas',
+      security: 'Segurança',
       honeypot: 'Honeypot',
       links: 'Links',
       contact: 'Contactos',
       lab: 'Lab',
       menu: 'Menu',
     },
+    // Bloco de cross-links partilhado pelas páginas do "sistema" do site
+    // (Segurança, Provas, Honeypot, Deteções, ATT&CK e o projeto este-site).
+    layers: {
+      title: 'Este site, por camadas',
+      intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
+      security: 'Segurança — postura, cabeçalhos e porquê',
+      evidence: 'Provas — tudo verificável, gerado no build',
+      honeypot: 'Honeypot — o que a Internet tenta contra este site',
+      detections: 'Deteções — as regras Sigma que apanhariam cada ataque',
+      attack: 'ATT&CK — cobertura defensiva mapeada',
+      project: 'Projeto «Este site» — arquitetura e decisões',
+    },
     footer: {
       built: 'Construído com Astro. Código-fonte no',
       rights: 'Estático, bilingue e sem trackers.',
       security: 'Segurança',
       evidence: 'Provas',
+      detections: 'Deteções',
+      attack: 'ATT&CK',
       certs: 'Certificações',
     },
     security: {
@@ -35,7 +50,7 @@ export const ui = {
       // factos técnicos (estático, sem backend/BD, sem input server-side) são
       // verdade hoje; a leitura de "o que interessa proteger" é opinião.
       threatBody:
-        'Este site é estático: sem backend, sem base de dados, sem input de utilizador que chegue a um servidor. A superfície de ataque é mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
+        'O site que chega ao teu browser é estático: sem base de dados, sem contas, sem sessões. O pouco que precisa mesmo de servidor (honeypot, self-scan, verificador de passwords) vive num Worker isolado, sem estado pessoal — e o site continua inteiro sem ele. A superfície de ataque é mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
       // ----- Cabeçalhos e porquê -----
       headersTitle: 'Cabeçalhos e porquê',
       headersIntro: 'O que é enviado em cada resposta, e a razão de ser:',
@@ -46,7 +61,7 @@ export const ui = {
         { name: 'X-Content-Type-Options: nosniff', why: 'Impede o browser de adivinhar o tipo de um ficheiro e executá-lo como algo que não é.' },
         { name: 'Referrer-Policy', why: 'Não vaza o caminho completo desta página para sites externos ao seguir uma ligação.' },
         { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
-        { name: 'COOP / CORP', why: 'Isola o contexto de navegação e os recursos de outras origens.' },
+        { name: 'COOP / COEP / CORP', why: 'O trio cross-origin completo: isola o contexto de navegação e os recursos de outras origens — os mesmos três exigidos no contrato de cabeçalhos das Provas.' },
         { name: 'Reporting-Endpoints', why: 'Quando a CSP bloqueia algo, o browser reporta a violação a este site — agregada de forma anónima no painel abaixo. Uma CSP estrita sem reporting é um alarme sem sirene.' },
       ],
       // ----- Privacidade e dados -----
@@ -97,6 +112,7 @@ export const ui = {
       commitTitle: 'Último commit',
       commitIntro:
         'Este site é servido a partir de main. O código que estás a ler corresponde a este commit:',
+      commitHashLabel: 'commit',
       commitSubjectLabel: 'mensagem',
       commitDateLabel: 'data',
       commitViewLabel: 'ver commit no GitHub →',
@@ -112,7 +128,7 @@ export const ui = {
       hashesLink: 'abrir evidence.json →',
       headersTitle: 'Cabeçalhos, ao vivo',
       headersIntro:
-        'O mesmo self-scan da página Segurança: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
+        'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
       contractTitle: 'Contrato de cabeçalhos',
       contractIntro:
         'A lista versionada de cabeçalhos que a produção tem de servir — o workflow Headers falha se algum faltar:',
@@ -237,7 +253,6 @@ export const ui = {
     },
     selfscan: {
       title: 'Self-scan ao vivo',
-      intro: 'Não acredites em mim — verifica. A nota abaixo mostra o resultado de um scan aos cabeçalhos que este site serve, feito por um Worker (com cache).',
       gradeLabel: 'cabeçalhos de segurança',
       headersTitle: 'Cabeçalhos presentes',
       lastScan: 'último scan',
@@ -347,20 +362,23 @@ export const ui = {
       bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
       chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
-      // Sinais de competência (não de consumo). O nº de países é o mesmo "4"
-      // já usado no título do Percurso (Qatar/Brasil/Dinamarca/Noruega,
-      // exclui Portugal/Ascendi que é a base atual, não um destacamento
-      // internacional).
+      // Sinais de competência (não de consumo). Números consistentes com as
+      // páginas que os detalham: 9+ = redes desde 2017 (Sobre: "quase uma
+      // década"); o nº de badges é calculado em build a partir de
+      // content/certs.json (entrada key:'certs' — mesmo critério
+      // verified!==false da página Certificações); 5 países = as 5 paragens
+      // do Percurso, todas em infraestrutura crítica (incluindo a Ascendi);
+      // 4 CTFs = content/awards.json.
       statsStatic: [
-        { n: '6+', d: 'anos em segurança & redes', tone: 'green' },
-        { n: '13', d: 'certificações de segurança', tone: 'amber' },
-        { n: '4', d: 'países com infraestrutura crítica', tone: 'blue' },
+        { n: '9+', d: 'anos em redes & segurança', tone: 'green' },
+        { key: 'certs', n: '12', d: 'badges de segurança verificáveis', tone: 'amber' },
+        { n: '5', d: 'países com infraestrutura crítica', tone: 'blue' },
         { n: '4', d: 'CTFs vencidos · 1.º lugar', tone: 'green' },
       ],
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
       journey: {
-        title: 'Percurso · redes & segurança em 4 países',
+        title: 'Percurso · redes & segurança em 5 países',
         scrollHint: '← scroll para ver as 5 paragens →',
         items: [
           { years: '2017–18', flag: 'qa', name: 'Metro de Doha', place: 'Doha, Qatar', note: 'Redes IP e WiFi móvel (BBRS) · Thales/Altran' },
@@ -401,6 +419,7 @@ export const ui = {
       title: 'Ferramentas',
       intro: 'Utilitários de rede e segurança. A maioria corre inteiramente no browser; três falam com o Worker (dynamic/) — o badge de cada cartão diz qual é qual.',
       openTool: 'abrir',
+      back: '← Voltar às ferramentas',
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
       clientBadge: 'client-side',
       serverBadge: 'requer servidor',
@@ -741,7 +760,7 @@ export const ui = {
       emptyResults: 'Nada encontrado. Tenta outra pesquisa ou categoria.',
       updatedWord: 'atualizado',
       catalogTitle: 'Repos que sigo',
-      catalogNote: 'Gerado automaticamente a partir das minhas estrelas do GitHub, atualizado semanalmente.',
+      catalogNote: 'Gerado a partir das minhas estrelas do GitHub pelo star-organizer; este site serve um snapshot versionado — a data ao lado diz de quando.',
       catalogLink: 'como isto é gerado →',
       hubNote: 'Isto é um hub pessoal: organizo-o para o meu uso diário, e deixo-o aberto a quem quiser explorar.',
       sortLabel: 'ordenar',
@@ -792,10 +811,13 @@ export const ui = {
         'Depois, ferramentas com backend (ver dynamic/PLAN.md):',
         '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
         '  [ ] Whois de domínios e IPs',
-        '  [ ] Análise de headers de segurança HTTP',
+        '  [ ] Headers de segurança de sites terceiros (o self-scan',
+        '      deste site já existe: /ferramentas/self-scan/)',
         '  [ ] Verificação de blacklists de IP',
         '',
-        'Por agora, tudo aqui corre 100% no teu browser.',
+        'As ferramentas deste Lab correm 100% no teu browser; as duas',
+        'que falam com o Worker (pwned, self-scan) estão marcadas com',
+        '«requer servidor» nas Ferramentas.',
       ],
       termWelcome: [
         'daniel@lab — sessão iniciada.',
@@ -818,17 +840,32 @@ export const ui = {
       blog: 'Blog',
       projects: 'Projects',
       tools: 'Tools',
+      security: 'Security',
       honeypot: 'Honeypot',
       links: 'Links',
       contact: 'Contact',
       lab: 'Lab',
       menu: 'Menu',
     },
+    // Shared cross-link block for the site's "system" pages (Security,
+    // Evidence, Honeypot, Detections, ATT&CK and the este-site project).
+    layers: {
+      title: 'This site, layer by layer',
+      intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
+      security: 'Security — posture, headers and why',
+      evidence: 'Evidence — everything verifiable, generated at build',
+      honeypot: 'Honeypot — what the Internet tries against this site',
+      detections: 'Detections — the Sigma rules that would catch each attack',
+      attack: 'ATT&CK — defensive coverage, mapped',
+      project: '“This site” project — architecture and decisions',
+    },
     footer: {
       built: 'Built with Astro. Source code on',
       rights: 'Static, bilingual, and tracker-free.',
       security: 'Security',
       evidence: 'Evidence',
+      detections: 'Detections',
+      attack: 'ATT&CK',
       certs: 'Certifications',
     },
     security: {
@@ -842,7 +879,7 @@ export const ui = {
       // technical facts (static, no backend/DB, no server-side input) are
       // true today; the reading of "what's worth protecting" is opinion.
       threatBody:
-        'This site is static: no backend, no database, no user input that reaches a server. The attack surface is minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
+        'The site that reaches your browser is static: no database, no accounts, no sessions. The little that genuinely needs a server (honeypot, self-scan, password checker) lives in an isolated Worker with no personal state — and the site stays whole without it. The attack surface is minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
       // ----- Headers and why -----
       headersTitle: 'Headers and why',
       headersIntro: 'What is sent on every response, and the reason for it:',
@@ -853,7 +890,7 @@ export const ui = {
         { name: 'X-Content-Type-Options: nosniff', why: 'Stops the browser guessing a file’s type and running it as something it is not.' },
         { name: 'Referrer-Policy', why: 'Does not leak this page’s full path to external sites when following a link.' },
         { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
-        { name: 'COOP / CORP', why: 'Isolates the browsing context and resources from other origins.' },
+        { name: 'COOP / COEP / CORP', why: 'The full cross-origin trio: isolates the browsing context and resources from other origins — the same three required by the header contract on Evidence.' },
         { name: 'Reporting-Endpoints', why: 'When the CSP blocks something, the browser reports the violation back to this site — aggregated anonymously in the panel below. A strict CSP without reporting is an alarm without a siren.' },
       ],
       // ----- Privacy and data -----
@@ -904,6 +941,7 @@ export const ui = {
       commitTitle: 'Latest commit',
       commitIntro:
         'This site is served from main. The code you are reading matches this commit:',
+      commitHashLabel: 'commit',
       commitSubjectLabel: 'message',
       commitDateLabel: 'date',
       commitViewLabel: 'view commit on GitHub →',
@@ -919,7 +957,7 @@ export const ui = {
       hashesLink: 'open evidence.json →',
       headersTitle: 'Headers, live',
       headersIntro:
-        'The same self-scan as the Security page: a grade for the headers production serves right now, with a timestamp.',
+        'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
       contractTitle: 'Header contract',
       contractIntro:
         'The versioned list of headers production must serve — the Headers workflow fails if any is missing:',
@@ -1044,7 +1082,6 @@ export const ui = {
     },
     selfscan: {
       title: 'Live self-scan',
-      intro: "Don't take my word for it — check. The grade below shows the result of a scan of the headers this site serves, run by a Worker (cached).",
       gradeLabel: 'security headers',
       headersTitle: 'Headers present',
       lastScan: 'last scan',
@@ -1154,20 +1191,23 @@ export const ui = {
       bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
       chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
-      // Competence signals (not consumption). Country count matches the "4"
-      // already used in the Journey title (Qatar/Brazil/Denmark/Norway,
-      // excludes Portugal/Ascendi, which is the current home base, not an
-      // international posting).
+      // Competence signals (not consumption). Numbers kept consistent with
+      // the pages that detail them: 9+ = networking since 2017 (About:
+      // "almost a decade"); the badge count is computed at build from
+      // content/certs.json (key:'certs' entry — same verified!==false
+      // criterion as the Certifications page); 5 countries = the Journey's
+      // 5 stops, all in critical infrastructure (Ascendi included);
+      // 4 CTFs = content/awards.json.
       statsStatic: [
-        { n: '6+', d: 'years in security & networking', tone: 'green' },
-        { n: '13', d: 'security certifications', tone: 'amber' },
-        { n: '4', d: 'countries with critical infrastructure', tone: 'blue' },
+        { n: '9+', d: 'years in networking & security', tone: 'green' },
+        { key: 'certs', n: '12', d: 'verifiable security badges', tone: 'amber' },
+        { n: '5', d: 'countries with critical infrastructure', tone: 'blue' },
         { n: '4', d: 'CTFs won · 1st place', tone: 'green' },
       ],
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).
       journey: {
-        title: 'Journey · networking & security across 4 countries',
+        title: 'Journey · networking & security across 5 countries',
         scrollHint: '← scroll to see all 5 stops →',
         items: [
           { years: '2017–18', flag: 'qa', name: 'Doha Metro', place: 'Doha, Qatar', note: 'IP networks & mobile WiFi (BBRS) · Thales/Altran' },
@@ -1208,6 +1248,7 @@ export const ui = {
       title: 'Tools',
       intro: 'Networking and security utilities. Most run entirely in your browser; three talk to the Worker (dynamic/) — each card\'s badge says which is which.',
       openTool: 'open',
+      back: '← Back to tools',
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
       clientBadge: 'client-side',
       serverBadge: 'needs server',
@@ -1548,7 +1589,7 @@ export const ui = {
       emptyResults: 'Nothing found. Try another search or category.',
       updatedWord: 'updated',
       catalogTitle: 'Repos I follow',
-      catalogNote: 'Automatically generated from my GitHub stars, updated weekly.',
+      catalogNote: 'Generated from my GitHub stars by star-organizer; this site serves a versioned snapshot — the date next to it says from when.',
       catalogLink: 'how this is generated →',
       hubNote: 'This is a personal hub: I keep it organized for my own daily use, and leave it open for anyone who wants to explore.',
       sortLabel: 'sort',
@@ -1599,10 +1640,13 @@ export const ui = {
         'Then, backend tools (see dynamic/PLAN.md):',
         '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
         '  [ ] Domain and IP whois',
-        '  [ ] HTTP security-headers analysis',
+        '  [ ] Security headers of third-party sites (this site’s own',
+        '      self-scan already exists: /en/tools/self-scan/)',
         '  [ ] IP blacklist checks',
         '',
-        'For now, everything here runs 100% in your browser.',
+        'The tools in this Lab run 100% in your browser; the two that',
+        'talk to the Worker (pwned, self-scan) are flagged with',
+        '“requires server” on the Tools page.',
       ],
       termWelcome: [
         'daniel@lab — session started.',

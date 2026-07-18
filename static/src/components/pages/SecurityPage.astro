@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CspViolations from '../CspViolations.astro';
 import CtWatch from '../CtWatch.astro';
+import SiteLayers from '../SiteLayers.astro';
 import Ticker from '../Ticker.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -45,7 +46,7 @@ const scanners = [
     </div>
     <p class="intro">{sec.headersIntro}</p>
     <div class="table-scroll">
-      <table class="result-table">
+      <table class="result-table wrap-normal">
         <tbody>
           {sec.headers.map((h) => (
             <tr>
@@ -115,8 +116,7 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-verify">{sec.verifyTitle}</h2>
     </div>
-    <p class="intro">{dict.selfscan.intro}</p>
-    <p class="intro scan-links-intro">{sec.verifyIntro}</p>
+    <p class="intro">{sec.verifyIntro}</p>
     <ul class="sec-links mono">
       <li><a href={toolUrl(lang, 'self-scan')}>{sec.selfScanCta}</a></li>
       {scanners.map((l) => (
@@ -144,6 +144,8 @@ const scanners = [
       <li><a href={routes.evidence[lang]}>{sec.evidenceCta}</a></li>
     </ul>
   </section>
+
+  <SiteLayers lang={lang} current="security" />
 </BaseLayout>
 
 <style>
@@ -162,17 +164,6 @@ const scanners = [
   .sec-links a:hover {
     text-decoration: underline;
   }
-  /* .result-table td tem word-break: break-all para valores curtos sem
-     espaços (hash/binário noutras páginas) — aqui o conteúdo é prosa em
-     português e precisa de quebrar por palavra, não a meio. */
-  .result-table td {
-    word-break: normal;
-    overflow-wrap: anywhere;
-  }
-  @media (max-width: 480px) {
-    .result-table th {
-      width: auto;
-      white-space: normal;
-    }
-  }
+  /* (a quebra por palavra da tabela de cabeçalhos vem da variante global
+     .result-table.wrap-normal — a mesma usada nos Contactos) */
 </style>

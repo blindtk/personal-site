@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
+import SiteLayers from '../SiteLayers.astro';
 import { SITE, SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -83,7 +84,7 @@ const hashStrings = {
           <table class="result-table">
             <tbody>
               <tr>
-                <th class="mono">commit</th>
+                <th class="mono">{ev.commitHashLabel}</th>
                 <td><span class="hl">{commit.full}</span></td>
               </tr>
               <tr>
@@ -209,6 +210,8 @@ const hashStrings = {
       ))}
     </ul>
   </section>
+
+  <SiteLayers lang={lang} current="evidence" />
 </BaseLayout>
 
 <script>
@@ -277,10 +280,14 @@ const hashStrings = {
     flex-direction: column;
     gap: 0.35rem;
   }
-  .hash-list li {
+  /* :global() porque os <li>/<code> são criados por JS depois do build —
+     sem o atributo de scoping do Astro, os seletores scoped nunca lhes
+     tocavam (era isto que deixava os hashes sem quebra e a transbordar
+     o viewport em mobile). O .hash-list em si é estático, mantém o scope. */
+  .hash-list :global(li) {
     word-break: break-all;
   }
-  .hash-list code {
+  .hash-list :global(code) {
     background: none;
     border: none;
     padding: 0;

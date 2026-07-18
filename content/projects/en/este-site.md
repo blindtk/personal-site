@@ -7,7 +7,8 @@ order: 1
 ---
 
 Bilingual personal site built with Astro: subnet calculator, hash generator
-and more — all running in the browser, no backend.
+and more — the tools run in the browser, and the little that genuinely needs
+a server lives in an isolated Worker, kept apart.
 
 Bilingual by construction: content (markdown/JSON) lives separate from the
 code and feeds both versions (PT/EN) from the same shared components — no
@@ -15,7 +16,9 @@ duplicated logic between languages.
 
 Security was treated as part of the design, not an afterthought: strict
 Content-Security-Policy with no 'unsafe-inline', security headers, and a
-published responsible-disclosure policy. Details at [Security](/en/security/).
+published responsible-disclosure policy. The why behind each layer is on
+[Security](/en/security/); the proof — commit, CSP hashes, workflows — is
+verifiable on [Evidence](/en/evidence/).
 
 ## Architecture decisions
 
