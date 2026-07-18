@@ -313,6 +313,8 @@ export const ui = {
       secondsAgo: 'atualizado agora',
       detectionsNote: 'Cada classe de ataque aqui registada tem a regra Sigma que a detetaria num SIEM — escritas a partir do que este honeypot vê.',
       detectionsLink: 'Ver as Deteções →',
+      projectNote: 'O porquê de isto viver num Worker e não no site estático — e a garantia de privacidade por construção — está nas decisões do projeto.',
+      projectLink: 'Ver o projeto Honeypot →',
     },
     detections: {
       metaTitle: 'Deteções — do honeypot às regras Sigma',
@@ -1142,6 +1144,8 @@ export const ui = {
       secondsAgo: 'updated just now',
       detectionsNote: 'Every attack class logged here comes with the Sigma rule that would catch it in a SIEM — written from what this honeypot sees.',
       detectionsLink: 'See the Detections →',
+      projectNote: 'Why this lives in a Worker and not the static site — and the privacy-by-construction guarantee — is written up in the project decisions.',
+      projectLink: 'See the Honeypot project →',
     },
     detections: {
       metaTitle: 'Detections — from honeypot to Sigma rules',

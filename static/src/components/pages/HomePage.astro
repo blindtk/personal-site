@@ -75,12 +75,22 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
         <span>&#47;&#47; {dict.home.statsLabel}</span>
       </div>
       <div class="stats-grid">
-        {stats.map((stat) => (
-          <div class={`stat ${toneClass[stat.tone] ?? ''}`}>
-            <div class="n">{stat.n}</div>
-            <div class="l">{stat.d}</div>
-          </div>
-        ))}
+        {stats.map((stat) => {
+          const cls = `stat ${toneClass[stat.tone] ?? ''}`.trim();
+          // O nº de badges vem de certs.json — ligá-lo à página que os prova
+          // é o cruzamento natural (a mesma lógica "não acredites, verifica").
+          return 'key' in stat && stat.key === 'certs' ? (
+            <a class={`${cls} stat-link`} href={routes.certifications[lang]}>
+              <div class="n">{stat.n}</div>
+              <div class="l">{stat.d}</div>
+            </a>
+          ) : (
+            <div class={cls}>
+              <div class="n">{stat.n}</div>
+              <div class="l">{stat.d}</div>
+            </div>
+          );
+        })}
       </div>
     </section>
   </div>
