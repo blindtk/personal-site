@@ -35,20 +35,22 @@ const navItems: { key: RouteKey; label: string }[] = [
 ];
 
 const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
-  { key: 'honeypot', label: dict.nav.honeypot },
   { key: 'links', label: dict.nav.links },
   { key: 'contact', label: dict.nav.contact },
 ];
 
-// "Segurança" agrupa na nav as páginas do cluster de prova/telemetria
-// (routes.ts já as tinha em par PT/EN; só faltava torná-las descobríveis
-// fora do rodapé). Continuam também linkadas no rodapé e entre si.
+// "Segurança" agrupa na nav o cluster "este site, por camadas" (mesmas
+// páginas do bloco dict.layers em ui.ts: Segurança, Provas, Honeypot,
+// Deteções, ATT&CK — já linkadas entre si). Certificações fica de fora de
+// propósito: não é sobre a arquitetura deste site, é sobre credenciais
+// pessoais — o sítio natural é o Sobre (que já a linka em prosa), o stat da
+// home e o rodapé.
 const securityGroup: { key: RouteKey; label: string }[] = [
   { key: 'security', label: dict.nav.security },
   { key: 'evidence', label: dict.footer.evidence },
+  { key: 'honeypot', label: dict.nav.honeypot },
   { key: 'detections', label: dict.footer.detections },
   { key: 'attack', label: dict.footer.attack },
-  { key: 'certifications', label: dict.footer.certs },
 ];
 const securityActive = securityGroup.some((item) => item.key === active);
 
