@@ -3,6 +3,12 @@ name = "personal-site-worker"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
+# Sem subdomínio *.workers.dev nem preview URLs: o deploy final vive só nas
+# rotas do domínio (routes abaixo). Um *.workers.dev público contornava a
+# Access application e o WAF da zona, que só cobrem danielmala.co.
+workers_dev = false
+preview_urls = false
+
 # Um namespace KV. Cria-o e cola o id:
 #   npx wrangler kv namespace create HONEYPOT
 #   npx wrangler kv namespace create HONEYPOT --preview
