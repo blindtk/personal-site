@@ -122,9 +122,11 @@ const groups = certs.groups
   .cert-links a { color: var(--accent); text-decoration: none; }
   .cert-links a:hover { text-decoration: underline; }
 
-  /* Prosa (nomes de certs), não valores curtos: quebra por palavra. */
+  /* Prosa (nomes de certs), não valores curtos: quebra por palavra.
+     vertical-align: top (não middle) — em nomes com 2-3 linhas o selo de
+     estado ficava a flutuar a meio da célula em vez de alinhado ao nome. */
   .certs-table td {
-    vertical-align: middle;
+    vertical-align: top;
     word-break: normal;
     overflow-wrap: anywhere;
   }

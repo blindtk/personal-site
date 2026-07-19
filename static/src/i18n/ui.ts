@@ -411,6 +411,8 @@ export const ui = {
       intro: 'Coisas que construí ou mantenho — de scripts a infraestrutura.',
       repo: 'código',
       demo: 'demo',
+      live: 'painel ao vivo',
+      systemCta: 'como isto liga à segurança →',
       back: '← Voltar aos projetos',
     },
     awards: {
@@ -1243,6 +1245,8 @@ export const ui = {
       intro: 'Things I built or maintain — from scripts to infrastructure.',
       repo: 'code',
       demo: 'demo',
+      live: 'live panel',
+      systemCta: 'how this ties into security →',
       back: '← Back to projects',
     },
     awards: {
