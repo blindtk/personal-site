@@ -16,12 +16,13 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
 // Gancho compacto do índice: primeira frase da descrição, cortada a ~100
 // caracteres num limite de palavra. A escrita longa vive na página própria
 // de cada projeto (projectUrl), não aqui.
-function excerpt(text: string, max = 100): string {
+function excerpt(text: string, max = 90): string {
   const firstSentence = text.split(/(?<=[.!?])\s/)[0] ?? text;
   if (firstSentence.length <= max) return firstSentence;
   const cut = firstSentence.slice(0, max);
   const lastSpace = cut.lastIndexOf(' ');
-  return `${lastSpace > 0 ? cut.slice(0, lastSpace) : cut}…`;
+  const trimmed = (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[,;:—-]+$/, '');
+  return `${trimmed}…`;
 }
 ---
 
