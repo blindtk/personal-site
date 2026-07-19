@@ -33,23 +33,57 @@ function excerpt(text: string, max = 90): string {
   </div>
 
   <div class="grid grid-3">
-    {entries.map((entry) => (
-      <div class="card">
-        <h3><a href={projectUrl(lang, entry.id.slice(3))}>{entry.data.title}</a></h3>
-        <p>{excerpt(entry.data.description)}</p>
-        <div class="meta">
-          {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-          {entry.data.repo && <a class="repo-link" href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
+    {entries.map((entry) => {
+      const slug = entry.id.slice(3);
+      return (
+        <div class="card">
+          <h3><a href={projectUrl(lang, slug)}>{entry.data.title}</a></h3>
+          <p>{excerpt(entry.data.description)}</p>
+          <div class="meta">
+            {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+          </div>
+          {(entry.data.repo || slug === 'honeypot') && (
+            <div class="card-links mono">
+              {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
+              {/* O painel /honeypot/ (telemetria ao vivo) é um destino distinto
+                 desta página (o "porquê"/arquitetura) — evita confundir os dois
+                 sítios que partilham o nome "Honeypot" na nav. */}
+              {slug === 'honeypot' && <a href={routes.honeypot[lang]}>[{dict.projects.live}]</a>}
+            </div>
+          )}
+          {/* Único gancho, no índice, para a teia de cross-links "por camadas"
+             que já liga Segurança/Provas/Deteções/ATT&CK a este projeto — sem
+             isto, só se descobre a partir de dentro de uma dessas páginas. */}
+          {slug === 'este-site' && (
+            <p class="card-hint"><a href={routes.security[lang]}>{dict.projects.systemCta}</a></p>
+          )}
         </div>
-      </div>
-    ))}
+      );
+    })}
   </div>
 </BaseLayout>
 
 <style>
-  /* O link [código] alinha à direita da linha de badges — separado das
-     tags, em vez de colado ao fim da última. */
-  .meta .repo-link {
-    margin-left: auto;
+  /* Substitui o antigo .meta .repo-link (margin-left: auto): esse layout
+     ficava inconsistente entre cartões — órfão numa 2.ª linha quando as tags
+     enchiam a 1.ª (ex.: "Este site"), colado a meio quando não enchiam. Os
+     links de ação ficam agora sempre na sua própria linha, à esquerda. */
+  .card-links {
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+    margin-top: 0.7rem;
+    font-size: 0.78rem;
+  }
+  .card-links a {
+    color: var(--accent);
+  }
+  .card-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .card-hint a {
+    color: var(--accent);
   }
 </style>
