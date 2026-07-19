@@ -42,7 +42,7 @@ const groups = certs.groups
   .filter((g) => g.items.length > 0);
 ---
 
-<BaseLayout lang={lang} title={c.title} altUrl={routes.certifications[other]}>
+<BaseLayout lang={lang} title={c.title} altUrl={routes.certifications[other]} active="certifications">
   <div class="page-head">
     <h1>{c.title}</h1>
     <p class="intro">{c.intro}</p>

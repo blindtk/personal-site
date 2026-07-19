@@ -32,11 +32,25 @@ const navItems: { key: RouteKey; label: string }[] = [
   ...(hasBlog ? [{ key: 'blog' as const, label: dict.nav.blog }] : []),
   { key: 'projects', label: dict.nav.projects },
   { key: 'tools', label: dict.nav.tools },
-  { key: 'security', label: dict.nav.security },
+];
+
+const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
   { key: 'honeypot', label: dict.nav.honeypot },
   { key: 'links', label: dict.nav.links },
   { key: 'contact', label: dict.nav.contact },
 ];
+
+// "Segurança" agrupa na nav as páginas do cluster de prova/telemetria
+// (routes.ts já as tinha em par PT/EN; só faltava torná-las descobríveis
+// fora do rodapé). Continuam também linkadas no rodapé e entre si.
+const securityGroup: { key: RouteKey; label: string }[] = [
+  { key: 'security', label: dict.nav.security },
+  { key: 'evidence', label: dict.footer.evidence },
+  { key: 'detections', label: dict.footer.detections },
+  { key: 'attack', label: dict.footer.attack },
+  { key: 'certifications', label: dict.footer.certs },
+];
+const securityActive = securityGroup.some((item) => item.key === active);
 
 const currentPath = Astro.url.pathname;
 // Imagem de partilha (LinkedIn, Twitter/X, etc.) — uma por idioma, gerada
@@ -112,6 +126,33 @@ const personSchema = {
               </a>
             </li>
           ))}
+          <li class="nav-security">
+            <details open={securityActive}>
+              <summary aria-current={securityActive ? 'page' : undefined}>{dict.nav.security}</summary>
+              <ul class="sub-links">
+                {securityGroup.map((item) => (
+                  <li>
+                    <a
+                      href={routes[item.key][lang]}
+                      aria-current={active === item.key ? 'page' : undefined}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </li>
+          {navItemsAfterSecurity.map((item) => (
+            <li>
+              <a
+                href={routes[item.key][lang]}
+                aria-current={active === item.key ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
           <li>
             <a
               class="lab-link"
@@ -162,6 +203,14 @@ const personSchema = {
         toggle.setAttribute('aria-expanded', String(Boolean(open)));
         if (label) label.textContent = open ? toggle.dataset.labelClose! : toggle.dataset.labelOpen!;
         if (icon) icon.textContent = open ? '×' : '≡';
+      });
+
+      // Fecha o dropdown "Segurança" ao clicar fora dele (o <details> nativo
+      // só fecha ao clicar de novo no <summary>).
+      document.querySelectorAll<HTMLDetailsElement>('.nav-security details').forEach((d) => {
+        document.addEventListener('click', (e) => {
+          if (d.open && !d.contains(e.target as Node)) d.open = false;
+        });
       });
     </script>
   </body>
