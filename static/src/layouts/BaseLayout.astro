@@ -129,7 +129,12 @@ const personSchema = {
             </li>
           ))}
           <li class="nav-security">
-            <details open={securityActive}>
+            {/* Sem open={securityActive}: abrir por omissão punha o painel
+               flutuante (position: absolute) a tapar a intro da própria
+               página em /seguranca/, /provas/, /honeypot/ e /detecoes/ no
+               primeiro paint, sem precisar de nenhuma interação. A secção
+               ativa continua marcada — só no aria-current do summary. */}
+            <details>
               <summary aria-current={securityActive ? 'page' : undefined}>{dict.nav.security}</summary>
               <ul class="sub-links">
                 {securityGroup.map((item) => (
