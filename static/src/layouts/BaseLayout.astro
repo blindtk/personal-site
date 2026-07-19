@@ -92,8 +92,14 @@ const personSchema = {
           <span class="live-dot" aria-hidden="true"></span>
           <span class="cmd">{SITE.handle}</span>
         </a>
-        <button class="nav-toggle" aria-expanded="false" aria-controls="nav-links">
-          {dict.nav.menu} ≡
+        <button
+          class="nav-toggle"
+          aria-expanded="false"
+          aria-controls="nav-links"
+          data-label-open={dict.nav.menu}
+          data-label-close={dict.nav.menuClose}
+        >
+          <span class="nav-toggle-label">{dict.nav.menu}</span> <span class="nav-toggle-icon">≡</span>
         </button>
         <ul class="nav-links" id="nav-links">
           {navItems.map((item) => (
@@ -147,11 +153,15 @@ const personSchema = {
     </footer>
 
     <script>
-      const toggle = document.querySelector('.nav-toggle');
+      const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
       const links = document.getElementById('nav-links');
+      const label = toggle?.querySelector('.nav-toggle-label');
+      const icon = toggle?.querySelector('.nav-toggle-icon');
       toggle?.addEventListener('click', () => {
         const open = links?.classList.toggle('open');
         toggle.setAttribute('aria-expanded', String(Boolean(open)));
+        if (label) label.textContent = open ? toggle.dataset.labelClose! : toggle.dataset.labelOpen!;
+        if (icon) icon.textContent = open ? '×' : '≡';
       });
     </script>
   </body>

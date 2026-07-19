@@ -17,6 +17,7 @@ export const ui = {
       contact: 'Contactos',
       lab: 'Lab',
       menu: 'Menu',
+      menuClose: 'Fechar',
     },
     // Bloco de cross-links partilhado pelas páginas do "sistema" do site
     // (Segurança, Provas, Honeypot, Deteções, ATT&CK e o projeto este-site).
@@ -848,6 +849,7 @@ export const ui = {
       contact: 'Contact',
       lab: 'Lab',
       menu: 'Menu',
+      menuClose: 'Close',
     },
     // Shared cross-link block for the site's "system" pages (Security,
     // Evidence, Honeypot, Detections, ATT&CK and the este-site project).
