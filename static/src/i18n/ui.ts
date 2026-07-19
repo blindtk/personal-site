@@ -413,6 +413,7 @@ export const ui = {
       demo: 'demo',
       live: 'painel ao vivo',
       systemCta: 'como isto liga à segurança →',
+      systemBadge: 'sistema',
       back: '← Voltar aos projetos',
     },
     awards: {
@@ -1247,6 +1248,7 @@ export const ui = {
       demo: 'demo',
       live: 'live panel',
       systemCta: 'how this ties into security →',
+      systemBadge: 'system',
       back: '← Back to projects',
     },
     awards: {

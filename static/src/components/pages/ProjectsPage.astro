@@ -41,6 +41,13 @@ function excerpt(text: string, max = 90): string {
           <p>{excerpt(entry.data.description)}</p>
           <div class="meta">
             {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
+            {/* Sinal visual de que este-site e Honeypot fazem parte da teia
+               de cross-links "por camadas" (SiteLayers) com Segurança/Provas/
+               Deteções/ATT&CK — distingue-os, sem precisar de clicar, dos
+               projetos independentes (Homelab, star-organizer). */}
+            {(slug === 'este-site' || slug === 'honeypot') && (
+              <span class="badge amber">{dict.projects.systemBadge}</span>
+            )}
           </div>
           {(entry.data.repo || slug === 'honeypot') && (
             <div class="card-links mono">
