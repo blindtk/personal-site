@@ -8,8 +8,8 @@
 export const SITE_URL = 'https://danielmala.co';
 
 export const SITE = {
-  /** Handle mostrado na nav e no rodapé (ex.: "whoami"). */
-  handle: 'whoami',
+  /** Handle mostrado na nav e no rodapé (ex.: "danielmalaco"). */
+  handle: 'danielmalaco',
   /** Nome real, usado no "Sobre" e nos metadados. */
   name: 'Daniel Assis Malaco',
   role: {
