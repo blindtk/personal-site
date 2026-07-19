@@ -257,6 +257,72 @@ img {
   background: rgba(240, 180, 92, 0.08);
 }
 
+/* Dropdown "Segurança": agrupa o cluster Segurança/Provas/Deteções/ATT&CK/
+   Certificações — antes só descobrível pelo rodapé. <details> nativo, sem
+   dependências de JS para abrir/fechar (o script só fecha ao clicar fora). */
+.nav-security {
+  position: relative;
+}
+.nav-security summary {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+}
+.nav-security summary::-webkit-details-marker {
+  display: none;
+}
+.nav-security summary::after {
+  content: ' ▾';
+  font-size: 0.7em;
+}
+.nav-security summary:hover {
+  color: var(--text);
+  background: var(--bg-raise-2);
+}
+.nav-security summary[aria-current='page'] {
+  color: var(--accent);
+}
+.nav-security[open] summary {
+  color: var(--text);
+  background: var(--bg-raise-2);
+}
+.nav-security .sub-links {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0.3rem;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 190px;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 60;
+}
+.nav-security .sub-links a {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+}
+.nav-security .sub-links a:hover {
+  color: var(--text);
+  background: var(--bg-raise-2);
+  text-decoration: none;
+}
+.nav-security .sub-links a[aria-current='page'] {
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
 .lang-switch {
   font-family: var(--mono);
   font-size: 0.8rem;
@@ -289,6 +355,23 @@ img {
   .nav-links a {
     padding: 0.6rem 0.6rem;
     font-size: 0.95rem;
+  }
+  .nav-security summary {
+    padding: 0.6rem 0.6rem;
+    font-size: 0.95rem;
+  }
+  .nav-security .sub-links {
+    position: static;
+    margin: 0.2rem 0 0;
+    padding: 0 0 0 0.8rem;
+    background: none;
+    border: none;
+    box-shadow: none;
+    min-width: 0;
+  }
+  .nav-security .sub-links a {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.9rem;
   }
 }
 
