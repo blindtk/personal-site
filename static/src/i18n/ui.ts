@@ -47,9 +47,6 @@ export const ui = {
         'A segurança é o foco deste site — não só no que diz, mas na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
-      // TODO(daniel): este enquadramento é um juízo teu — confirma/afina. Os
-      // factos técnicos (estático, sem backend/BD, sem input server-side) são
-      // verdade hoje; a leitura de "o que interessa proteger" é opinião.
       threatBody:
         'O site que chega ao teu browser é estático: sem base de dados, sem contas, sem sessões. O pouco que precisa mesmo de servidor (honeypot, self-scan, verificador de passwords) vive num Worker isolado, sem estado pessoal — e o site continua inteiro sem ele. A superfície de ataque é mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
       // ----- Cabeçalhos e porquê -----
@@ -67,10 +64,8 @@ export const ui = {
       ],
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
-      // TODO(daniel): decidir se queres uma política de privacidade formal
-      // separada. Por agora esta secção descreve a prática real.
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, self-scan) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, self-scan) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
       // ----- Password comprometida (k-anonimato) -----
       pwnedTitle: 'A tua password já vazou?',
       pwnedIntro:
@@ -359,9 +354,6 @@ export const ui = {
       identity: 'identidade',
       statsLabel: 'stats',
       location: 'Porto, PT',
-      // TODO(validar): frase de posicionamento — escolhi a variante A.
-      // Variante B: 'Segurança de redes em infraestrutura crítica, na prática: desenho, opero, e construo as ferramentas que faltam. Foco em threat intelligence, forense digital e resposta a incidentes.'
-      // Variante C: 'Da arquitetura à operação: segurança de redes em infraestrutura crítica, com ferramentas próprias para o trabalho do dia a dia. Foco em threat intelligence, forense digital e resposta a incidentes.'
       bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
       chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
@@ -882,9 +874,6 @@ export const ui = {
         'Security is the focus of this site — not just in what it says, but in how it is served. Here is what is in place, for anyone who wants to check.',
       // ----- Threat model -----
       threatTitle: 'Threat model',
-      // TODO(daniel): this framing is your judgement — confirm/refine. The
-      // technical facts (static, no backend/DB, no server-side input) are
-      // true today; the reading of "what's worth protecting" is opinion.
       threatBody:
         'The site that reaches your browser is static: no database, no accounts, no sessions. The little that genuinely needs a server (honeypot, self-scan, password checker) lives in an isolated Worker with no personal state — and the site stays whole without it. The attack surface is minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
       // ----- Headers and why -----
@@ -902,10 +891,8 @@ export const ui = {
       ],
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
-      // TODO(daniel): decide whether you want a separate formal privacy
-      // policy. For now this section describes actual practice.
       privacyBody:
-        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, self-scan) say so explicitly and are flagged with a badge on the tools index.',
+        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, self-scan) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
       // ----- Pwned password (k-anonymity) -----
       pwnedTitle: 'Has your password leaked?',
       pwnedIntro:
@@ -1194,9 +1181,6 @@ export const ui = {
       identity: 'identity',
       statsLabel: 'stats',
       location: 'Porto, PT',
-      // TODO(validar): positioning line — variant A implemented.
-      // Variant B: 'Network security for critical infrastructure, hands-on: I design it, operate it, and build the tools that are missing. Focused on threat intelligence, digital forensics, and incident response.'
-      // Variant C: 'From architecture to operations: network security for critical infrastructure, with my own tools for the day-to-day work. Focused on threat intelligence, digital forensics, and incident response.'
       bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
       chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
