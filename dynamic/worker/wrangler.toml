@@ -8,8 +8,8 @@ compatibility_date = "2025-01-01"
 #   npx wrangler kv namespace create HONEYPOT --preview
 [[kv_namespaces]]
 binding = "KV"
-id = "SET-ME-production-namespace-id"
-preview_id = "SET-ME-preview-namespace-id"
+id = "d8c992d39f464bca85135f014d3ca37b"
+preview_id = "6ecf59e3f7a742748e4cc22c229543c3"
 
 [vars]
 # Origens autorizadas a chamar a API por CORS (só necessário quando o
@@ -40,17 +40,17 @@ DEPLOY_TS = ""
 # automática (salt = RATE_SALT + data UTC); esta é a rotação do próprio
 # segredo. Ver src/lib/ratelimit.js.
 
-# --- Rotas no domínio (descomentar quando o domínio estiver na Cloudflare) ---
+# --- Rotas no domínio ---
 # Faz o Worker interceptar os paths-isco e a API no próprio site, mantendo
 # a CSP connect-src 'self'. O resto do site continua servido pelo Pages.
-# routes = [
-#   { pattern = "danielmala.co/api/*", zone_name = "danielmala.co" },
-#   { pattern = "danielmala.co/wp-login.php", zone_name = "danielmala.co" },
-#   { pattern = "danielmala.co/.env", zone_name = "danielmala.co" },
-#   { pattern = "danielmala.co/admin", zone_name = "danielmala.co" },
-#   { pattern = "danielmala.co/phpmyadmin/*", zone_name = "danielmala.co" },
-#   { pattern = "danielmala.co/.git/config", zone_name = "danielmala.co" },
-# ]
+routes = [
+  { pattern = "danielmala.co/api/*", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/wp-login.php", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/.env", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/admin", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/phpmyadmin/*", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/.git/config", zone_name = "danielmala.co" },
+]
 
 # --- Cron opcional para aquecer caches (a agregação do honeypot é on-read) ---
 # [triggers]
