@@ -39,18 +39,18 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
   { key: 'contact', label: dict.nav.contact },
 ];
 
-// "Segurança" agrupa na nav o cluster "este site, por camadas" (mesmas
-// páginas do bloco dict.layers em ui.ts: Segurança, Provas, Honeypot,
-// Deteções, ATT&CK — já linkadas entre si). Certificações fica de fora de
-// propósito: não é sobre a arquitetura deste site, é sobre credenciais
-// pessoais — o sítio natural é o Sobre (que já a linka em prosa), o stat da
-// home e o rodapé.
+// "Segurança" agrupa na nav as páginas sobre a arquitetura e telemetria
+// DESTE site: Segurança, Provas, Honeypot, Deteções. ATT&CK e Certificações
+// ficam de fora de propósito — não são sobre o site, são sobre credenciais e
+// percurso pessoais (o próprio attack.json chama-lhe "heatmap pessoal", "o
+// meu CV"). O sítio natural para as duas é o Sobre, que já as linka em
+// prosa; continuam também acessíveis pelo rodapé e por cross-links a partir
+// do Honeypot/Deteções (que classificam com os IDs do heatmap).
 const securityGroup: { key: RouteKey; label: string }[] = [
   { key: 'security', label: dict.nav.security },
   { key: 'evidence', label: dict.footer.evidence },
   { key: 'honeypot', label: dict.nav.honeypot },
   { key: 'detections', label: dict.footer.detections },
-  { key: 'attack', label: dict.footer.attack },
 ];
 const securityActive = securityGroup.some((item) => item.key === active);
 

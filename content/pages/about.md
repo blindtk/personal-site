@@ -128,6 +128,12 @@ Fortinet (Credly), SANS SEC504 and the summits, Microsoft, CyberDefenders and
 more — the full list, with current status and independent verification on
 Credly, lives on its own page: **[Certifications](/en/certifications/)**.
 
+## ATT&CK coverage
+
+The MITRE ATT&CK techniques I cover defensively, tactic by tactic, with the
+tool or experience behind each one — the same résumé, in the industry's
+native language: **[ATT&CK heatmap](/en/attack/)**.
+
 ## Skills
 
 | Area | Detail |
