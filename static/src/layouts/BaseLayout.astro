@@ -56,7 +56,7 @@ const securityActive = securityGroup.some((item) => item.key === active);
 
 const currentPath = Astro.url.pathname;
 // Imagem de partilha (LinkedIn, Twitter/X, etc.) — uma por idioma, gerada
-// a partir do mesmo design system do site (ver design/README.md).
+// a partir do mesmo design system do site.
 const ogImage = lang === 'pt' ? '/og-image.png' : '/og-image-en.png';
 
 // Dados estruturados (schema.org Person) — ajuda motores de busca a associar

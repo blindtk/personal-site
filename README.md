@@ -11,7 +11,6 @@ Site pessoal de Daniel Malaco — monorepo com três partes:
 | `content/` | Todo o conteúdo em markdown (posts, sobre, projetos, links) — **a fonte única de verdade** | ✅ ativo |
 | `static/` | O site estático (Astro): blog, ferramentas client-side, páginas | ✅ ativo |
 | `dynamic/` | Backend em Cloudflare Worker: honeypot, mapa de tráfego hostil, self-scan e ticker SOC (`dynamic/worker/`); DNS/whois ainda planeados | ✅ em produção — ver [`dynamic/worker/README.md`](dynamic/worker/README.md) e [`dynamic/PLAN.md`](dynamic/PLAN.md) |
-| `design/` | Registo das 7 direções de design exploradas (a nº 4 foi a escolhida) | 🎨 referência histórica |
 
 O site é bilingue: PT em `/` e EN em `/en/`.
 
