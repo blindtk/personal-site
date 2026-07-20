@@ -9,6 +9,21 @@ compatibility_date = "2025-01-01"
 workers_dev = false
 preview_urls = false
 
+# --- Rotas no domínio ---
+# Faz o Worker interceptar os paths-isco e a API no próprio site, mantendo
+# a CSP connect-src 'self'. O resto do site continua servido pelo Pages.
+# Tem de ficar antes do [vars] abaixo: em TOML, uma chave solta depois de
+# abrir uma tabela ([vars]) pertence a essa tabela — foi assim que "routes"
+# acabou a ser lido como env.routes (variável), em vez da config de rotas.
+routes = [
+  { pattern = "danielmala.co/api/*", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/wp-login.php", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/.env", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/admin", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/phpmyadmin/*", zone_name = "danielmala.co" },
+  { pattern = "danielmala.co/.git/config", zone_name = "danielmala.co" },
+]
+
 # Um namespace KV. Cria-o e cola o id:
 #   npx wrangler kv namespace create HONEYPOT
 #   npx wrangler kv namespace create HONEYPOT --preview
@@ -45,18 +60,6 @@ DEPLOY_TS = ""
 # intencional, o botão de pânico contra abuso. A rotação diária do hash é
 # automática (salt = RATE_SALT + data UTC); esta é a rotação do próprio
 # segredo. Ver src/lib/ratelimit.js.
-
-# --- Rotas no domínio ---
-# Faz o Worker interceptar os paths-isco e a API no próprio site, mantendo
-# a CSP connect-src 'self'. O resto do site continua servido pelo Pages.
-routes = [
-  { pattern = "danielmala.co/api/*", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/wp-login.php", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/.env", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/admin", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/phpmyadmin/*", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/.git/config", zone_name = "danielmala.co" },
-]
 
 # --- Cron opcional para aquecer caches (a agregação do honeypot é on-read) ---
 # [triggers]
