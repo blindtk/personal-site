@@ -3,8 +3,8 @@
  * Tudo o que é "sobre ti" muda AQUI e reflete-se em todo o site.
  */
 
-// Quando comprares o domínio (danielmala.co ou danielassismala.co),
-// troca este valor. É usado para URLs canónicos e Open Graph.
+// Domínio em produção (Namecheap + DNS na Cloudflare — ver
+// docs/cloudflare-deploy.md). Usado para URLs canónicos e Open Graph.
 export const SITE_URL = 'https://danielmala.co';
 
 export const SITE = {

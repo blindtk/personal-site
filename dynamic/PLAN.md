@@ -1,9 +1,11 @@
 # dynamic/ — plano da app dinâmica ("Lab")
 
-> **Estado: primeiro código a bordo.** `dynamic/worker/` já contém o Worker
-> das features de segurança do site (honeypot, mapa de tráfego hostil,
-> self-scan de cabeçalhos, ticker SOC e pipeline de violações CSP) — ver
-> `dynamic/worker/README.md`.
+> **Estado: em produção.** `dynamic/worker/` (Worker das features de
+> segurança do site — honeypot, mapa de tráfego hostil, self-scan de
+> cabeçalhos, ticker SOC e pipeline de violações CSP) está deployado nas
+> rotas do domínio `danielmala.co`. Deploy, gotchas e infraestrutura
+> (Access, WAF) documentados em `dynamic/worker/README.md` e
+> `docs/cloudflare-deploy.md`.
 > As ferramentas de rede abaixo (DNS/whois/…) continuam por fazer; a página
 > `/lab/` ("em construção") apontará para elas quando existirem.
 

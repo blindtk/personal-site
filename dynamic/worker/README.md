@@ -107,6 +107,16 @@ com vetores conhecidos.
 
 ## Deploy
 
+> Esta secção descreve o fluxo manual via `wrangler` CLI. Em produção o
+> deploy corre automaticamente via **Workers Builds** (Git integration da
+> Cloudflare) a cada push para `main` — mesma ideia, comandos por trás são os
+> mesmos (`wrangler deploy`), mas configurado no dashboard em vez de correr à
+> mão. Ver [`docs/cloudflare-deploy.md`](../../docs/cloudflare-deploy.md)
+> para esse processo e os problemas reais resolvidos (rotas não colavam por
+> `routes` estar mal posicionado no `wrangler.toml`, `workers.dev` público
+> por omissão, etc.) — vale a pena ler antes de mexer neste ficheiro outra
+> vez.
+
 ### 1. Namespace KV + secrets
 
 ```bash
@@ -118,13 +128,14 @@ npx wrangler secret put RATE_SALT     # qualquer string longa aleatória
 npx wrangler secret put NVD_API_KEY   # opcional (sobe o rate limit do NVD)
 ```
 
-### 2a. Deploy no domínio próprio (recomendado, quando existir)
+### 2a. Deploy no domínio próprio (o que está em produção)
 
-Descomenta o bloco `routes` em `wrangler.toml` (paths-isco + `/api/*` no
-`danielmala.co`) e faz `npx wrangler deploy`. O Worker intercepta esses
-paths; o resto do site continua servido pelo Cloudflare Pages. Como a API
-fica **same-origin**, o frontend chama `/api/...` e a CSP `connect-src
-'self'` basta — nada a mudar.
+O bloco `routes` em `wrangler.toml` (paths-isco + `/api/*` no
+`danielmala.co`) já está ativo — `npx wrangler deploy` (ou o push para
+`main`, via Workers Builds) intercepta esses paths; o resto do site
+continua servido pelo Cloudflare Pages. Como a API fica **same-origin**, o
+frontend chama `/api/...` e a CSP `connect-src 'self'` basta — nada a
+mudar.
 
 ### 2b. Deploy em `*.workers.dev` (para testar já, sem domínio)
 

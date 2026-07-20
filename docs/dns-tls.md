@@ -1,8 +1,10 @@
-# DNS & TLS — checklist para quando o domínio estiver ativo
+# DNS & TLS — checklist de reforço do domínio
 
-> **Estado:** o domínio (`danielmala.co` em `static/src/config.ts`) ainda não
-> está ativo na Cloudflare. Este documento é a checklist a executar quando a
-> zona existir; nada disto se aplica ao `*.pages.dev` provisório.
+> **Estado:** o domínio (`danielmala.co`, em `static/src/config.ts`) já está
+> ativo na Cloudflare (nameservers trocados no Namecheap — ver
+> `docs/cloudflare-deploy.md`). Os itens abaixo são endurecimentos
+> adicionais, por executar/confirmar no dashboard — nenhum é automático só
+> por a zona existir.
 
 ## 1. CAA — restringir quem pode emitir certificados
 
@@ -42,7 +44,8 @@ danielmala.co.  IN  CAA  0 iodef "mailto:daniel_malaco@hotmail.com"
 ## 3. HSTS com preload
 
 O `_headers` já envia `max-age=63072000; includeSubDomains` (2 anos), **sem**
-`preload` — deliberado enquanto o domínio é provisório. Quando for definitivo:
+`preload` — deliberado até a família de subdomínios estar decidida (ver aviso
+abaixo). Quando estiver:
 
 1. Confirmar os pré-requisitos da preload list:
    - redirect HTTP→HTTPS no próprio domínio (passo 2);

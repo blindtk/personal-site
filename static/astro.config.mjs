@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import { SITE_URL } from './src/config.ts';
 
 export default defineConfig({
-  // Muda o domínio em src/config.ts (SITE_URL) quando comprares o teu.
+  // Domínio de produção: muda em src/config.ts (SITE_URL), não aqui.
   site: SITE_URL,
   markdown: {
     // O Shiki (highlighter por defeito) emite estilos inline nos blocos de
