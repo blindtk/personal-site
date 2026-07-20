@@ -26,6 +26,7 @@ import {
 } from '../src/lib/csp-report.js';
 import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import { serverView } from '../src/lib/mirror.js';
+import { renderNotFoundHtml, NOT_FOUND_CSP } from '../src/lib/notfound.js';
 import worker from '../src/index.js';
 
 test('clampInt', () => {
@@ -757,12 +758,23 @@ test('respostas da API trazem nosniff e CSP none', async () => {
   assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
 });
 
-test('404 dos paths-isco traz nosniff e CSP none', async () => {
+test('404 dos paths-isco traz nosniff, CSP restrita e HTML igual ao 404 real', async () => {
   const env = { KV: fakeKV() };
   const res = await runFetch(fakeRequest('/wp-login.php', { ip: '198.51.100.7', country: 'US', asn: 1 }), env);
   assert.equal(res.status, 404);
   assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
-  assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
+  assert.equal(res.headers.get('content-security-policy'), NOT_FOUND_CSP);
+  assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
+  const body = await res.text();
+  assert.equal(body, renderNotFoundHtml()); // sempre a mesma página, qualquer que seja o path-isco
+});
+
+test('renderNotFoundHtml: autocontido, sem script nem dados do pedido', () => {
+  const html = renderNotFoundHtml();
+  assert.ok(html.includes('<h1>404</h1>'));
+  assert.ok(html.includes('cd: /404: No such file or directory')); // mesma piada do 404 real
+  assert.equal(html.includes('<script'), false); // CSP da resposta não permite script-src
+  assert.equal(html, renderNotFoundHtml()); // determinístico, sem input
 });
 
 // ---------- cache: stale-while-revalidate ----------

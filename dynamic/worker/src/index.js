@@ -25,6 +25,7 @@ import { fetchCtWatch } from './lib/ct.js';
 import { serverView } from './lib/mirror.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
+import { renderNotFoundHtml, NOT_FOUND_CSP } from './lib/notfound.js';
 
 // Paths que só existem para apanhar scanners. Devolvem 404 como qualquer
 // path inexistente — a diferença é que registamos a tentativa.
@@ -270,7 +271,9 @@ export default {
       });
     }
 
-    // endpoints-isco: registar (em background) e devolver 404 seco
+    // endpoints-isco: registar (em background) e devolver um 404 visualmente
+    // igual ao 404 real do site (lib/notfound.js) — texto simples era um
+    // "tell" mais fácil de distinguir do resto do site, não mais difícil.
     if (DECOYS.has(path)) {
       ctx.waitUntil(
         // Falha de escrita loga-se server-side (sem IP: recordHoneypot não o
@@ -279,9 +282,13 @@ export default {
           console.error('honeypot_write_failed', path, err?.message ?? String(err)),
         ),
       );
-      return new Response('Not found', {
+      return new Response(renderNotFoundHtml(), {
         status: 404,
-        headers: { 'content-type': 'text/plain', ...RESPONSE_SECURITY_HEADERS },
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          'x-content-type-options': 'nosniff',
+          'content-security-policy': NOT_FOUND_CSP,
+        },
       });
     }
 
