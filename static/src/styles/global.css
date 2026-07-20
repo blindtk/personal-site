@@ -1439,6 +1439,10 @@ select {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
+@media (max-width: 480px) {
+  .ticker { padding: 0.35rem 0; }
+  .ticker .ti { margin: 0 1rem; font-size: 0.7rem; }
+}
 @media (prefers-reduced-motion: reduce) {
   .ticker { white-space: normal; }
   .ticker-track { animation: none; flex-wrap: wrap; }

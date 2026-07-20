@@ -45,6 +45,13 @@ const tk = t(lang).ticker;
         for (const item of items) track.append(itemNode(item));
       }
       root.hidden = false;
+      // Duração fixa (60s) fazia a velocidade variar com o nº de items —
+      // com muitos CVEs/KEV, o loop inteiro tinha de caber no mesmo tempo,
+      // ficando visivelmente mais rápido. Deriva a duração da largura real
+      // (metade do track, já com as duas cópias) para manter ~60px/s sempre.
+      const halfWidth = track.scrollWidth / 2;
+      const pxPerSecond = 60;
+      track.style.animationDuration = `${Math.max(20, halfWidth / pxPerSecond)}s`;
     } catch {
       // sem Worker: o ticker simplesmente não aparece
     }
