@@ -169,11 +169,12 @@ altera os cabeçalhos que nomeia, mantendo os restantes do bloco global.
 ## HSTS preload (decisão futura, deliberadamente adiada)
 
 O `max-age` é de 2 anos com `includeSubDomains`, mas **sem** a diretiva
-`preload` — de propósito, para manter a configuração reversível enquanto o
-domínio é provisório. Submeter a `preload` grava o domínio (e subdomínios) na
-lista *hard-coded* dos browsers e é difícil de reverter.
+`preload` — de propósito, para manter a configuração reversível até a família
+de subdomínios estar decidida (ver `docs/dns-tls.md`). Submeter a `preload`
+grava o domínio (e subdomínios) na lista *hard-coded* dos browsers e é
+difícil de reverter.
 
-Quando o domínio final estiver fixo e quiseres o preload:
+Quando a família de subdomínios estiver fechada e quiseres o preload:
 
 1. Acrescenta `; preload` ao valor (`max-age=63072000; includeSubDomains; preload`)
    em `static/public/_headers` **e** nos blocos nginx/Caddy acima.

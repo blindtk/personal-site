@@ -10,8 +10,8 @@ Site pessoal de Daniel Malaco — monorepo com três partes:
 | --- | --- | --- |
 | `content/` | Todo o conteúdo em markdown (posts, sobre, projetos, links) — **a fonte única de verdade** | ✅ ativo |
 | `static/` | O site estático (Astro): blog, ferramentas client-side, páginas | ✅ ativo |
-| `dynamic/` | Backend em Cloudflare Worker: honeypot, mapa de tráfego hostil, self-scan e ticker SOC (`dynamic/worker/`); DNS/whois ainda planeados | ⚙️ primeiro código a bordo — ver [`dynamic/worker/README.md`](dynamic/worker/README.md) e [`dynamic/PLAN.md`](dynamic/PLAN.md) |
-| `design/` | Mockups das 7 direções de design exploradas (a nº 4 foi a escolhida) | 🎨 referência |
+| `dynamic/` | Backend em Cloudflare Worker: honeypot, mapa de tráfego hostil, self-scan e ticker SOC (`dynamic/worker/`); DNS/whois ainda planeados | ✅ em produção — ver [`dynamic/worker/README.md`](dynamic/worker/README.md) e [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `design/` | Registo das 7 direções de design exploradas (a nº 4 foi a escolhida) | 🎨 referência histórica |
 
 O site é bilingue: PT em `/` e EN em `/en/`.
 
@@ -72,16 +72,13 @@ Passos exatos, do zero, para quem nunca fez deploy:
    para outros branches criam pré-visualizações com URL próprio (útil para
    rever PRs).
 
-### Ligar o domínio próprio (quando o comprares)
+### Domínio próprio
 
-1. Compra o domínio (ex.: `danielmala.co`). Podes comprá-lo na própria
-   Cloudflare (**Domain Registration → Register Domain**) — é o caminho mais
-   simples, sem configuração de DNS manual.
-2. No projeto Pages: **Custom domains → Set up a custom domain** → escreve o
-   domínio → segue o assistente (se o domínio estiver na Cloudflare, é um
-   clique; se estiver noutro registrar, ele diz-te que registos DNS criar).
-3. Atualiza `SITE_URL` em `static/src/config.ts` para o domínio novo e faz
-   push — isto corrige os URLs canónicos e o Open Graph.
+O site já corre em `danielmala.co` (comprado no Namecheap, DNS gerido pela
+Cloudflare — nameservers trocados no registrar). `SITE_URL` em
+`static/src/config.ts` já aponta para lá. Para o processo completo (troca de
+nameservers, ligar o Worker, Access durante o desenvolvimento, regras de
+WAF), ver [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
 ### Alternativa: servir a partir da tua VPS (Cloudflare como proxy)
 
@@ -94,8 +91,10 @@ Se preferires alojar na tua VPS com a Cloudflare à frente (DNS + proxy):
 3. Na Cloudflare: **DNS → Add record** → tipo `A`, nome `@`, IP da VPS, com o
    ícone da nuvem **laranja** (proxied) para teres CDN + TLS + ocultar o IP.
 
-A opção Pages é mais simples (zero manutenção); a VPS dá jeito quando o
-`dynamic/` existir e quiseres tudo na mesma máquina — decide-se nessa altura.
+A opção Pages é mais simples (zero manutenção) e é a que está em produção —
+o backend em `dynamic/` já corre num Worker à parte (não na mesma máquina do
+site estático), por isso a VPS continua a ser só uma alternativa possível,
+não uma necessidade.
 
 ## Segurança do pipeline
 
@@ -120,7 +119,9 @@ em duas camadas (`<meta>` estrita por página + header site-wide com
 a partir de um único array de diretivas; um teste no `ci.yml`
 (`check-csp-consistency.mjs`) falha se o header e a `<meta>` divergirem.
 O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
-[docs/dns-tls.md](docs/dns-tls.md).
+[docs/dns-tls.md](docs/dns-tls.md). O processo de deploy na Cloudflare
+(domínio, Pages, Worker, Access, WAF) e os problemas reais resolvidos estão
+em [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
 
 ## Features de segurança (tema do site)
 

@@ -1,8 +1,10 @@
 # design/ — direções de design exploradas
 
-Sete mockups estáticos (HTML auto-contido + screenshot) criados durante a
-fase de design do site. **A direção escolhida foi a nº 4 — Security
-Dashboard**, que está implementada em `static/`.
+Sete mockups estáticos (HTML auto-contido + screenshot) foram criados durante
+a fase de design do site para comparar direções lado a lado. **A direção
+escolhida foi a nº 4 — Security Dashboard**, implementada em `static/`; os
+ficheiros dos mockups foram removidos depois de a decisão estar tomada
+(ficam registados aqui só como memória do processo).
 
 | # | Nome | Ideia |
 | --- | --- | --- |
@@ -14,7 +16,6 @@ Dashboard**, que está implementada em `static/`.
 | 6 | Bento Grid | Mosaico de cartões (tendência 2025/26) |
 | 7 | Aurora Glass | Gradientes suaves + cartões de vidro |
 
-Cada `N-nome.html` abre diretamente no browser (sem build). Servem como
-referência caso um dia se queira mudar a "pele" do site — a estrutura
-(rotas, i18n, conteúdo) é independente do design, por isso a troca é barata:
-mexe-se sobretudo em `static/src/styles/global.css` e no `HomePage.astro`.
+A estrutura do site (rotas, i18n, conteúdo) é independente do design — trocar
+de "pele" mexe sobretudo em `static/src/styles/global.css` e no
+`HomePage.astro`, não seria preciso recomeçar do zero.
