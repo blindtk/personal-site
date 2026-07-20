@@ -1,7 +1,7 @@
 // Geometria do mapa de tráfego hostil (feature 3.2). Puro e testável em
 // Node: projeção equirectangular simples + geração de arcos. Sem dependências
 // de mapa pesadas — o "mapa" é um campo de pontos com nós projetados
-// geograficamente e arcos até ao Porto.
+// geograficamente e arcos até ao destino (este site).
 
 // Centróides aproximados (lon, lat) dos países mais prováveis de aparecer
 // no honeypot. Países fora desta lista contam nos totais mas não desenham
@@ -18,8 +18,12 @@ export const COUNTRY_COORDS = {
   FI: [26, 64], CZ: [15, 50], BG: [25, 43], CH: [8, 47], MD: [28, 47],
 };
 
-// Destino: Porto, Portugal.
-export const PORTO = [-8.6, 41.1];
+// Destino do mapa: não há "um sítio" físico real (Cloudflare Pages/Workers
+// correm numa rede global anycast — cada visitante é servido pelo edge mais
+// próximo dele, não por um datacenter fixo). O ponto fica perto da Europa
+// só por legibilidade do mapa; o rótulo (ver i18n) identifica o domínio, não
+// uma cidade — para não sugerir que o servidor "está" nalgum sítio.
+export const DESTINATION = [-8.6, 41.1];
 
 /** Projeção equirectangular de [lon,lat] para [x,y] numa tela w×h. */
 export function project([lon, lat], w = 800, h = 340) {
