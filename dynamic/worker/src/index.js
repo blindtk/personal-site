@@ -219,6 +219,11 @@ async function runScan(env) {
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
+  console.log(
+    'scan_response_headers',
+    JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2)
+  );
+
   const get = (name) => res.headers.get(name);
   const graded = gradeFromHeaders(get);
   return { target, scannedAt: Date.now(), ...graded };
