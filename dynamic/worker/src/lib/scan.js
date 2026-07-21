@@ -6,7 +6,7 @@
 
 /**
  * Cabeçalhos avaliados e o seu peso. Alinhado com o que o site serve
- * (ver static/public/_headers e a CSP gerada no build).
+ * (ver static/public/_headers).
  */
 export const SECURITY_HEADERS = [
   { name: 'content-security-policy', weight: 3 },

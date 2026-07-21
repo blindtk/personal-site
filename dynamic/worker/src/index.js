@@ -186,20 +186,6 @@ async function cached(env, ctx, key, ttlSec, producer) {
 
 // ---------- self-scan ----------
 
-// async function runScan(env) {
-  // Fetch direto ao próprio site + parsing dos seus cabeçalhos — sem
-  // scraping de terceiros (securityheaders.com), portanto imune a mudanças
-  // de HTML deles. Timeout para não pendurar o pedido se o alvo demorar.
-//  const target = env.SCAN_TARGET || 'https://danielmala.co/';
-//  const res = await fetch(target, {
-//    redirect: 'follow',
-//    headers: { 'user-agent': 'personal-site-worker (self-scan)' },
-//    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-//  });
-//  const get = (name) => res.headers.get(name);
-//  const graded = gradeFromHeaders(get);
-//  return { target, scannedAt: Date.now(), ...graded };
-// }
 async function runScan(env) {
   const target = env.SCAN_TARGET || 'https://danielmala.co/';
 
@@ -223,6 +209,7 @@ async function runScan(env) {
   return {
     status: res.status,
     url: res.url,
+    scannedAt: Date.now(),
     headers: allHeaders,
     ...gradeFromHeaders((name) => res.headers.get(name)),
   };
