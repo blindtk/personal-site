@@ -204,6 +204,14 @@ async function runScan(env) {
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
+  console.log("TARGET:", target);
+  console.log("FINAL URL:", res.url);
+
+  for (const [k, v] of res.headers.entries()) {
+    console.log(`${k}: ${v}`);
+  }
+
+
   const allHeaders = Object.fromEntries(res.headers.entries());
 
   return {
