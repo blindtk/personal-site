@@ -16,9 +16,19 @@ export default defineConfig({
   },
   // Content-Security-Policy: ficheiro estático em public/_headers, sem
   // 'unsafe-inline' em script-src/style-src. Zero <script>/<style> inline no
-  // site inteiro (ver build.inlineStylesheets abaixo e static/public/js/) —
-  // por isso 'self' já é tão restrito quanto uma lista de hashes, sem hashes
-  // para gerar nem para manter.
+  // site inteiro — por isso 'self' basta, sem hashes para gerar nem manter,
+  // e o header fica constante (~395 caracteres), sem teto que possa crescer
+  // com mais páginas ou ferramentas.
+  //
+  // O "zero inline" é garantido por DOIS levers, não é automático:
+  //   - build.inlineStylesheets: 'never' (abaixo) — todo o CSS vira
+  //     <link rel="stylesheet"> externo.
+  //   - vite.build.assetsInlineLimit: 0 (abaixo) — todo o <script> hoisted
+  //     vira <script src="/_astro/…"> externo. SEM isto, o Astro inlina
+  //     scripts pequenos num <script> sem src (o self-scan, o ticker, os
+  //     painéis da Segurança…), que ficariam BLOQUEADOS por script-src
+  //     'self' — foi esse o bug que partiu os painéis quando se tentou o
+  //     zero-inline sem este lever.
   //
   // Já usámos o security.csp do Astro (hashes SHA-256 por <script>/<style>
   // inline, um <meta> por página, header derivado no build). Abandonado:
@@ -27,8 +37,7 @@ export default defineConfig({
   // cresce com o nº de *combinações* página×script, não com o nº de scripts
   // reais. Ao fim de ~50 páginas a união ultrapassava os 2000 caracteres por
   // linha do _headers do Cloudflare Pages, e o Pages descartava o header
-  // inteiro (CSP ausente em produção). Eliminar o inline em vez de o
-  // catalogar resolve na raiz e não volta a crescer.
+  // inteiro (CSP ausente em produção). Externalizar tudo resolve na raiz.
   //
   // A fonte de verdade da CSP é agora só static/public/_headers.
   //
@@ -49,9 +58,16 @@ export default defineConfig({
     // 'auto' (omissão do Astro) inlina CSS pequeno num <style> por página —
     // cada combinação de componentes gera um bloco de conteúdo diferente.
     // 'never' força sempre um <link rel="stylesheet"> externo, coberto por
-    // 'self': sem isto, style-src precisava de um hash por combinação de
-    // página×componente, o mesmo problema de crescimento descrito acima.
+    // 'self' (ver a nota do lever acima).
     inlineStylesheets: 'never',
+  },
+  vite: {
+    // O par de inlineStylesheets: 'never' para JS. Sem isto o Astro inlina
+    // scripts hoisted pequenos (self-scan, ticker, painéis) num <script>
+    // sem src, que script-src 'self' bloquearia. Com 0, tudo vira ficheiro
+    // externo em /_astro/, coberto por 'self'. (Também externaliza pequenos
+    // assets que seriam data: URIs — irrelevante aqui, o site não os tem.)
+    build: { assetsInlineLimit: 0 },
   },
   i18n: {
     defaultLocale: 'pt',
