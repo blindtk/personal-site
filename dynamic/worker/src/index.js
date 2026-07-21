@@ -202,25 +202,28 @@ async function runScan(env) {
     redirect: 'follow',
     headers,
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-  });
-
-  console.log("TARGET:", target);
-  console.log("FINAL URL:", res.url);
-
-  for (const [k, v] of res.headers.entries()) {
-    console.log(`${k}: ${v}`);
-  }
-
+  })
 
   const allHeaders = Object.fromEntries(res.headers.entries());
 
+  // DEBUG TEMPORÁRIO
+
   return {
+    target,
+    finalUrl: res.url,
     status: res.status,
-    url: res.url,
-    scannedAt: Date.now(),
+    csp: res.headers.get('content-security-policy'),
+    hsts: res.headers.get('strict-transport-security'),
     headers: allHeaders,
-    ...gradeFromHeaders((name) => res.headers.get(name)),
   };
+    
+//  return {
+//    status: res.status,
+//    url: res.url,
+//   scannedAt: Date.now(),
+//    headers: allHeaders,
+//    ...gradeFromHeaders((name) => res.headers.get(name)),
+//  };
 }
 
 // ---------- rate limiting ----------
