@@ -207,7 +207,6 @@ async function runScan(env) {
     'user-agent': 'personal-site-worker (self-scan)',
   };
 
-  // Autenticação Cloudflare Access (opcional).
   if (env.ACCESS_CLIENT_ID && env.ACCESS_CLIENT_SECRET) {
     headers['CF-Access-Client-Id'] = env.ACCESS_CLIENT_ID;
     headers['CF-Access-Client-Secret'] = env.ACCESS_CLIENT_SECRET;
@@ -219,16 +218,15 @@ async function runScan(env) {
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
 
-  console.log(
-    'scan_response_headers',
-    JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2)
-  );
+  const allHeaders = Object.fromEntries(res.headers.entries());
 
-  const get = (name) => res.headers.get(name);
-  const graded = gradeFromHeaders(get);
-  return { target, scannedAt: Date.now(), ...graded };
+  return {
+    status: res.status,
+    url: res.url,
+    headers: allHeaders,
+    ...gradeFromHeaders((name) => res.headers.get(name)),
+  };
 }
-
 
 // ---------- rate limiting ----------
 
