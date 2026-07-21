@@ -60,11 +60,6 @@ const scanners = [
   { label: ev.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
   { label: ev.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
 ];
-
-const hashStrings = {
-  count: ev.hashesCount,
-  generatedAt: ev.hashesGeneratedAt,
-};
 ---
 
 <BaseLayout lang={lang} title={ev.metaTitle} altUrl={routes.evidence[other]} active="evidence">
@@ -105,21 +100,6 @@ const hashStrings = {
     ) : (
       <p class="note warn">{ev.commitPending}</p>
     )}
-  </section>
-
-  <section aria-labelledby="h-hashes">
-    <div class="section-title">
-      <h2 id="h-hashes">{ev.hashesTitle}</h2>
-    </div>
-    <p class="intro">{ev.hashesIntro}</p>
-    <div id="evidence-hashes" data-strings={JSON.stringify(hashStrings)}>
-      <p class="scan-status mono" id="ev-hash-status">{ev.hashesPending}</p>
-      <ol class="hash-list mono" id="ev-hash-list" hidden></ol>
-      <p class="ev-hash-meta mono" id="ev-hash-meta" hidden></p>
-      <ul class="ev-links mono">
-        <li><a href="/evidence.json" rel="noopener">→ {ev.hashesLink}</a></li>
-      </ul>
-    </div>
   </section>
 
   <section aria-labelledby="h-headers">
@@ -214,49 +194,6 @@ const hashStrings = {
   <SiteLayers lang={lang} current="evidence" />
 </BaseLayout>
 
-<script>
-  // Enche a lista de hashes a partir de /evidence.json (gerado no build).
-  // Same-origin, permitido pela CSP connect-src 'self'. DOM via createElement
-  // + textContent (sem innerHTML) — compatível com Trusted Types e Semgrep.
-  const root = document.getElementById('evidence-hashes');
-  if (root) {
-    const S = JSON.parse(root.dataset.strings!);
-    const statusEl = document.getElementById('ev-hash-status')!;
-    const listEl = document.getElementById('ev-hash-list') as HTMLOListElement;
-    const metaEl = document.getElementById('ev-hash-meta')!;
-
-    (async () => {
-      try {
-        const res = await fetch('/evidence.json', { headers: { accept: 'application/json' } });
-        if (!res.ok) throw new Error('no evidence.json');
-        const data = await res.json();
-        const hashes: string[] = Array.isArray(data.scriptHashes) ? data.scriptHashes : [];
-        if (hashes.length === 0) throw new Error('empty');
-
-        listEl.replaceChildren();
-        for (const h of hashes) {
-          const li = document.createElement('li');
-          const code = document.createElement('code');
-          code.textContent = h;
-          li.append(code);
-          listEl.append(li);
-        }
-        listEl.hidden = false;
-
-        statusEl.hidden = true;
-        const parts = [`${hashes.length} ${S.count}`];
-        if (data.generatedAt) {
-          parts.push(`${S.generatedAt}: ${new Date(data.generatedAt).toLocaleString()}`);
-        }
-        metaEl.textContent = parts.join(' · ');
-        metaEl.hidden = false;
-      } catch {
-        // Mantém o texto de fallback (com o link para /evidence.json).
-      }
-    })();
-  }
-</script>
-
 <style>
   .ev-links {
     list-style: none;
@@ -272,32 +209,6 @@ const hashStrings = {
   }
   .ev-links a:hover {
     text-decoration: underline;
-  }
-  .hash-list {
-    margin: 0.4rem 0 0;
-    padding-left: 1.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-  /* :global() porque os <li>/<code> são criados por JS depois do build —
-     sem o atributo de scoping do Astro, os seletores scoped nunca lhes
-     tocavam (era isto que deixava os hashes sem quebra e a transbordar
-     o viewport em mobile). O .hash-list em si é estático, mantém o scope. */
-  .hash-list :global(li) {
-    word-break: break-all;
-  }
-  .hash-list :global(code) {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 0.82rem;
-    color: var(--accent);
-  }
-  .ev-hash-meta {
-    font-size: 0.75rem;
-    color: var(--faint);
-    margin: 0.8rem 0 0;
   }
   .ev-cmd {
     background: var(--bg-raise);

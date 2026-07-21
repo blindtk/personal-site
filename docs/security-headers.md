@@ -7,27 +7,39 @@ configuração em qualquer servidor, para que migrar de Pages para VPS seja
 
 ## Como a segurança está dividida
 
-| Camada | Onde vive | Portável? |
-| --- | --- | --- |
-| **CSP em `<meta>`** (por página) | `<meta http-equiv>` gerado pelo Astro em cada página (hashes SHA-256 por script/estilo) — ver `static/astro.config.mjs` | ✅ Automática — está dentro do HTML, independente do servidor. Nada a configurar na VPS. |
-| **CSP em header** (site-wide) | Gerada no build por `static/scripts/csp-headers.mjs`: união dos hashes de todas as páginas + `frame-ancestors 'none'`, escrita em `dist/_headers` | ⚠️ Na VPS, copiar o valor gerado em `dist/_headers` para a config do servidor (regenera a cada build). |
-| **Restantes cabeçalhos** (HSTS, nosniff, anti-clickjacking, Referrer-Policy, Permissions-Policy, COOP/CORP/COEP) | `static/public/_headers` (lido nativamente pelo Cloudflare Pages) | ⚠️ Precisa de ser replicado na config do servidor na VPS — ver abaixo. |
+Todos os cabeçalhos de segurança, incluindo a CSP, vivem numa única linha
+estática em `static/public/_headers` (lido nativamente pelo Cloudflare
+Pages) — sem geração no build, sem `<meta>` por página.
 
-> **Nota de design:** a CSP tem duas camadas deliberadas. A `<meta>` por página
-> é a mais estrita (só os hashes daquela página) e viaja no HTML — imune a
-> migrações. O header é a união de todas as páginas e acrescenta
-> `frame-ancestors 'none'` (inválido em `<meta>`); é a única camada que
-> scanners externos (securityheaders.com, Mozilla Observatory) conseguem
-> avaliar. O browser aplica a **interseção** das duas, por isso a política
-> efetiva por página continua a ser a estrita. O `X-Frame-Options: DENY`
-> mantém-se para browsers antigos.
+> **Nota de design (e porque não há duas camadas):** até 2026-07 a CSP tinha
+> hashes SHA-256 por `<script>`/`<style>` inline (feature `security.csp` do
+> Astro), com uma `<meta>` estrita por página e um header derivado dela no
+> build (união dos hashes de todas as páginas). Abandonado: o Astro combina
+> o script/estilo partilhado de cada página com o específico dela num único
+> bloco inline por página — o nº de hashes cresce com o nº de *combinações*
+> página×script, não com o nº de scripts reais. Ao fim de ~50 páginas a linha
+> ultrapassava os **2000 caracteres máximos por header do Cloudflare Pages**,
+> e o Pages descartava o header CSP inteiro em produção, sem aviso — CSP
+> ausente, só detetado pelo self-scan.
 >
-> O header (e só o header — o browser ignora estas diretivas em `<meta>`)
-> acrescenta ainda o **reporting de violações**: `report-uri /api/csp-report`
-> (Firefox/Safari) e `report-to csp-endpoint` (Chrome, via o cabeçalho
-> `Reporting-Endpoints` do `_headers`). O recetor é o Worker
+> A correção foi eliminar o inline em vez de o catalogar: zero
+> `<script>`/`<style>` inline no site inteiro (`build.inlineStylesheets:
+> 'never'` em `astro.config.mjs`; o único script partilhado por todas as
+> páginas vive em `static/public/js/nav.js`, servido tal-e-qual, fora do
+> bundler). Com isso, `script-src 'self'` e `style-src 'self'` já são tão
+> restritos quanto uma lista de hashes — nenhum script/estilo fora do próprio
+> domínio executa — mas com uma linha de tamanho fixo, que não volta a
+> crescer com mais páginas ou ferramentas. O `<script type="application/ld+json">`
+> (dados estruturados) continua inline em todas as páginas: não é executado
+> como script pelo parser HTML, por isso `script-src` não o restringe.
+>
+> A CSP acrescenta ainda o **reporting de violações**: `report-uri
+> /api/csp-report` (Firefox/Safari) e `report-to csp-endpoint` (Chrome, via o
+> cabeçalho `Reporting-Endpoints` do `_headers`). O recetor é o Worker
 > (`dynamic/worker/`, `POST /api/csp-report`), que agrega de forma anónima —
-> ver o painel na página Segurança.
+> ver o painel na página Segurança. Sem inline nenhum, uma violação de
+> `script-src`/`style-src` só pode significar uma coisa: uma tentativa de
+> injeção real — deixou de haver ruído de hash desatualizado a filtrar.
 >
 > A presença destes cabeçalhos em produção é verificada automaticamente pelo
 > workflow `Headers` (`.github/workflows/headers.yml`) contra a lista
@@ -40,6 +52,7 @@ atualiza os blocos abaixo em espelho.
 ## Valores atuais (espelho de `_headers`)
 
 ```
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
 Strict-Transport-Security: max-age=63072000; includeSubDomains
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
@@ -95,6 +108,7 @@ server {
     index index.html;
 
     # --- Cabeçalhos de segurança (espelho de static/public/_headers) ---
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
@@ -140,6 +154,7 @@ danielmala.co {
     file_server
 
     header {
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint"
         Strict-Transport-Security "max-age=63072000; includeSubDomains"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
@@ -180,22 +195,10 @@ Quando a família de subdomínios estiver fechada e quiseres o preload:
    em `static/public/_headers` **e** nos blocos nginx/Caddy acima.
 2. Submete o domínio em <https://hstspreload.org>.
 
-## Opcional: promover o anti-clickjacking a `frame-ancestors`
-
-`X-Frame-Options: DENY` cobre o essencial. Numa VPS, se quiseres a variante
-moderna equivalente (que também restringe `<embed>`/`<object>`), acrescenta um
-cabeçalho CSP mínimo *só* com a diretiva de frames — sem duplicar a CSP completa,
-que continua a vir do `<meta>`:
-
-- nginx: `add_header Content-Security-Policy "frame-ancestors 'none'" always;`
-- Caddy: `Content-Security-Policy "frame-ancestors 'none'"`
-
-Mantém o `X-Frame-Options: DENY` a par para browsers antigos.
-
 ## Verificar depois do deploy
 
 ```bash
-curl -sI https://danielmala.co | grep -iE 'strict-transport|content-type-options|frame-options|referrer|permissions|cross-origin'
+curl -sI https://danielmala.co | grep -iE 'content-security-policy|strict-transport|content-type-options|frame-options|referrer|permissions|cross-origin'
 curl -s  https://danielmala.co/.well-known/security.txt
 ```
 

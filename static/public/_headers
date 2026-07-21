@@ -1,27 +1,36 @@
 # Cabeçalhos de segurança (Cloudflare Pages lê este ficheiro).
-# A Content-Security-Policy tem duas camadas:
-#   1) <meta> por página com hashes (security.csp em astro.config.mjs) —
-#      estrita e portável, viaja no próprio HTML;
-#   2) header real (união dos hashes + frame-ancestors), escrito em
-#      dist/_headers no build por scripts/csp-headers.mjs — é o que os
-#      scanners externos veem. NÃO acrescentar CSP aqui à mão: o build
-#      falha se já existir uma.
-# Aqui ficam os restantes cabeçalhos, estáticos.
+#
+# A Content-Security-Policy é uma linha estática escrita à mão aqui — não é
+# gerada no build. Já foi: hashes SHA-256 por <script>/<style> inline,
+# calculados no build (Astro security.csp) e unidos numa única linha no
+# header. Abandonado porque o nº de hashes crescia com o nº de *combinações*
+# página×script/estilo (cada página combina o script partilhado com o seu
+# próprio num só bloco inline, hash diferente por combinação) — ao fim de
+# ~50 páginas a linha ultrapassava os 2000 caracteres máximos por header do
+# Cloudflare Pages, e o Pages descartava o header CSP inteiro em produção
+# (CSP ausente, sem aviso). A correção foi eliminar o inline em vez de o
+# catalogar: zero <script>/<style> inline no site (ver
+# static/astro.config.mjs e static/public/js/), por isso 'self' já é tão
+# restrito quanto uma lista de hashes — mas com tamanho fixo, que não volta
+# a crescer com mais páginas ou ferramentas.
 /*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
   # Força HTTPS por 2 anos (sem "preload" para manter reversível enquanto o
   # domínio é provisório; acrescenta "; preload" e submete em hstspreload.org
   # quando o domínio final estiver fixo).
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   # Impede MIME sniffing.
   X-Content-Type-Options: nosniff
-  # Anti-clickjacking (frame-ancestors não é válido em CSP via <meta>).
+  # Anti-clickjacking (frame-ancestors não é válido em CSP via <meta>, mas
+  # já não usamos <meta> para CSP — mantido a par pelo mesmo motivo:
+  # browsers antigos que não suportem frame-ancestors).
   X-Frame-Options: DENY
   # Não vaza o path completo como referer para outros sites.
   Referrer-Policy: strict-origin-when-cross-origin
   # Desliga APIs de browser que o site não usa.
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
-  # Endpoint da Reporting API para violações CSP (o report-to da CSP gerada
-  # no build aponta para este nome). URL relativo — resolve contra a própria
+  # Endpoint da Reporting API para violações CSP (o report-to da CSP acima
+  # aponta para este nome). URL relativo — resolve contra a própria
   # origem, onde o Worker interceta /api/* (ver dynamic/worker/).
   Reporting-Endpoints: csp-endpoint="/api/csp-report"
   # Isolamento de contexto de navegação e de recursos.

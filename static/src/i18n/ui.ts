@@ -53,9 +53,9 @@ export const ui = {
       headersTitle: 'Cabeçalhos e porquê',
       headersIntro: 'O que é enviado em cada resposta, e a razão de ser:',
       headers: [
-        { name: 'Content-Security-Policy', why: "Hash SHA-256 por cada script inline, gerado no build. Sem 'unsafe-inline' — JavaScript injetado não executa. É a defesa real contra XSS." },
+        { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline': zero JavaScript ou CSS inline no site inteiro, só código do próprio domínio executa. JavaScript injetado não executa. É a defesa real contra XSS." },
         { name: 'Strict-Transport-Security', why: 'Força HTTPS no browser durante 2 anos, mesmo que alguém tente rebaixar para HTTP.' },
-        { name: 'X-Frame-Options: DENY', why: 'Impede que o site seja embebido noutro (anti-clickjacking) — a parte que a CSP em <meta> não cobre.' },
+        { name: 'X-Frame-Options: DENY', why: 'Impede que o site seja embebido noutro (anti-clickjacking), a par de frame-ancestors na CSP — para browsers antigos que não suportem a diretiva.' },
         { name: 'X-Content-Type-Options: nosniff', why: 'Impede o browser de adivinhar o tipo de um ficheiro e executá-lo como algo que não é.' },
         { name: 'Referrer-Policy', why: 'Não vaza o caminho completo desta página para sites externos ao seguir uma ligação.' },
         { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
@@ -93,7 +93,7 @@ export const ui = {
       // ----- Provas -----
       evidenceTitle: 'Transparência verificável',
       evidenceBody:
-        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, os hashes SHA-256 dos scripts inline (os mesmos da CSP), o scan aos cabeçalhos ao vivo e os workflows que correm a cada push.',
+        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o scan aos cabeçalhos ao vivo (CSP incluída) e os workflows que correm a cada push.',
       evidenceCta: 'Ver a página Provas →',
       // ----- Projeto (narrativa) -----
       projectBody:
@@ -114,14 +114,6 @@ export const ui = {
       commitViewLabel: 'ver commit no GitHub →',
       commitPending:
         'Hash do commit indisponível neste build (fora de um clone git). Consulta o histórico no repositório.',
-      hashesTitle: 'Hashes dos scripts inline',
-      hashesIntro:
-        'Cada script inline do site tem o seu SHA-256 na Content-Security-Policy — JavaScript que não corresponda a um destes hashes não executa. Estes são os hashes deste build, lidos do output, não escritos à mão:',
-      hashesCount: 'hashes ativos',
-      hashesGeneratedAt: 'gerado no build',
-      hashesPending:
-        'A lista carrega de /evidence.json (gerado no build). Com o JavaScript desligado, abre o ficheiro diretamente ou inspeciona o cabeçalho Content-Security-Policy.',
-      hashesLink: 'abrir evidence.json →',
       headersTitle: 'Cabeçalhos, ao vivo',
       headersIntro:
         'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
@@ -210,7 +202,7 @@ export const ui = {
       legendExternal: 'origens externas',
       legendOther: 'outro (data:, blob:, …)',
       selfAlert:
-        'Há violações com origem no próprio site — com uma CSP por hashes, isto é ou uma regressão da build ou uma tentativa de injeção. Vale a pena investigar.',
+        'Há violações com origem no próprio site — sem JavaScript nem CSS inline em lado nenhum, isto é ou uma regressão da build ou uma tentativa de injeção. Vale a pena investigar.',
       tableDirective: 'Diretiva',
       tableSource: 'Origem bloqueada',
       tableCategory: 'Categoria',
@@ -880,9 +872,9 @@ export const ui = {
       headersTitle: 'Headers and why',
       headersIntro: 'What is sent on every response, and the reason for it:',
       headers: [
-        { name: 'Content-Security-Policy', why: "A SHA-256 hash per inline script, generated at build. No 'unsafe-inline' — injected JavaScript does not run. The real defence against XSS." },
+        { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline': zero inline JavaScript or CSS anywhere on the site, only code from the site's own origin runs. Injected JavaScript does not run. The real defence against XSS." },
         { name: 'Strict-Transport-Security', why: 'Forces HTTPS in the browser for 2 years, even if someone tries to downgrade to HTTP.' },
-        { name: 'X-Frame-Options: DENY', why: 'Stops the site being embedded in another (anti-clickjacking) — the part a <meta> CSP cannot cover.' },
+        { name: 'X-Frame-Options: DENY', why: 'Stops the site being embedded in another (anti-clickjacking), alongside frame-ancestors in the CSP — for older browsers that do not support the directive.' },
         { name: 'X-Content-Type-Options: nosniff', why: 'Stops the browser guessing a file’s type and running it as something it is not.' },
         { name: 'Referrer-Policy', why: 'Does not leak this page’s full path to external sites when following a link.' },
         { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
@@ -920,7 +912,7 @@ export const ui = {
       // ----- Evidence -----
       evidenceTitle: 'Verifiable transparency',
       evidenceBody:
-        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the SHA-256 hashes of the inline scripts (the same ones in the CSP), the live header scan, and the workflows that run on every push.",
+        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the live header scan (CSP included), and the workflows that run on every push.",
       evidenceCta: 'See the Evidence page →',
       // ----- Project (narrative) -----
       projectBody:
@@ -941,14 +933,6 @@ export const ui = {
       commitViewLabel: 'view commit on GitHub →',
       commitPending:
         'Commit hash unavailable in this build (outside a git clone). Check the history in the repository.',
-      hashesTitle: 'Inline-script hashes',
-      hashesIntro:
-        'Every inline script on the site has its SHA-256 in the Content-Security-Policy — JavaScript that does not match one of these hashes does not run. These are this build\'s hashes, read from the output, not hand-typed:',
-      hashesCount: 'active hashes',
-      hashesGeneratedAt: 'generated at build',
-      hashesPending:
-        'The list loads from /evidence.json (generated at build). With JavaScript off, open the file directly or inspect the Content-Security-Policy header.',
-      hashesLink: 'open evidence.json →',
       headersTitle: 'Headers, live',
       headersIntro:
         'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
@@ -1037,7 +1021,7 @@ export const ui = {
       legendExternal: 'external origins',
       legendOther: 'other (data:, blob:, …)',
       selfAlert:
-        'There are violations originating from the site itself — with a hash-based CSP, that is either a build regression or an injection attempt. Worth investigating.',
+        'There are violations originating from the site itself — with no inline JavaScript or CSS anywhere, that is either a build regression or an injection attempt. Worth investigating.',
       tableDirective: 'Directive',
       tableSource: 'Blocked origin',
       tableCategory: 'Category',

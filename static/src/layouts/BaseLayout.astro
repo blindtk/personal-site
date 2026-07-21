@@ -200,25 +200,8 @@ const personSchema = {
       </div>
     </footer>
 
-    <script>
-      const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
-      const links = document.getElementById('nav-links');
-      const label = toggle?.querySelector('.nav-toggle-label');
-      const icon = toggle?.querySelector('.nav-toggle-icon');
-      toggle?.addEventListener('click', () => {
-        const open = links?.classList.toggle('open');
-        toggle.setAttribute('aria-expanded', String(Boolean(open)));
-        if (label) label.textContent = open ? toggle.dataset.labelClose! : toggle.dataset.labelOpen!;
-        if (icon) icon.textContent = open ? '×' : '≡';
-      });
-
-      // Fecha o dropdown "Segurança" ao clicar fora dele (o <details> nativo
-      // só fecha ao clicar de novo no <summary>).
-      document.querySelectorAll<HTMLDetailsElement>('.nav-security details').forEach((d) => {
-        document.addEventListener('click', (e) => {
-          if (d.open && !d.contains(e.target as Node)) d.open = false;
-        });
-      });
-    </script>
+    <!-- Ficheiro estático em public/js/ (não hoisted pelo Astro): fica
+         fora do bundler para nunca ser inlinado no HTML — ver astro.config.mjs. -->
+    <script src="/js/nav.js" defer></script>
   </body>
 </html>

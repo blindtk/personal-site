@@ -208,8 +208,8 @@ export function createTerminal(ctx) {
         }
         lines.push(
           pt
-            ? 'hashes dos scripts inline, cabeçalhos ao vivo e workflows em /provas'
-            : 'inline-script hashes, live headers and workflows at /evidence',
+            ? 'scan aos cabeçalhos ao vivo e workflows em /provas'
+            : 'live header scan and workflows at /evidence',
         );
         return { lines };
       }

@@ -112,11 +112,9 @@ Cada push/PR passa por:
 Práticas transversais: todas as actions **pinadas por commit SHA** (o
 [Renovate](renovate.json5) mantém os digests e agrupa atualizações num PR
 semanal), `permissions: {}` por omissão com o mínimo por job, e
-`persist-credentials: false` em todos os checkouts. A CSP é gerada no build
-em duas camadas (`<meta>` estrita por página + header site-wide com
-`frame-ancestors` — ver [docs/security-headers.md](docs/security-headers.md)),
-a partir de um único array de diretivas; um teste no `ci.yml`
-(`check-csp-consistency.mjs`) falha se o header e a `<meta>` divergirem.
+`persist-credentials: false` em todos os checkouts. A CSP é uma linha
+estática em `static/public/_headers` (sem hashes: zero `<script>`/`<style>`
+inline no site — ver [docs/security-headers.md](docs/security-headers.md)).
 O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
 [docs/dns-tls.md](docs/dns-tls.md). O processo de deploy na Cloudflare
 (domínio, Pages, Worker, Access, WAF) e os problemas reais resolvidos estão

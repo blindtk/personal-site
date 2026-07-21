@@ -36,11 +36,6 @@ jobs:
 
       - run: npm run build
 
-      # A CSP servida no header (dist/_headers) e a que viaja em cada <meta>
-      # têm de coincidir — falha se alguém editar uma camada e não a outra.
-      - name: CSP header vs <meta> consistency
-        run: node ../.github/scripts/check-csp-consistency.mjs
-
       # Falha em advisories high/critical (o que nos apanhou desatualizados
       # da última vez); moderate/low com fix indisponível não bloqueiam CI.
       - run: npm audit --audit-level=high
