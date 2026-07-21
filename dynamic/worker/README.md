@@ -147,7 +147,7 @@ mudar.
 2. Autoriza a origem do site no Worker: `ALLOWED_ORIGINS` (var) com o URL
    `*.pages.dev`.
 3. Acrescenta essa origem ao `connect-src` da CSP em
-   `static/astro.config.mjs` — é a **única** exceção à CSP `'self'`, e só
+   `static/public/_headers` — é a **única** exceção à CSP `'self'`, e só
    é precisa neste modo de teste. No modo 2a não é necessária.
 
 > Nota: os paths-isco só apanham scanners reais quando o Worker está nas

@@ -34,8 +34,9 @@
   `report-uri`/`report-to` na camada de header da CSP → `POST
   /api/csp-report` no Worker (validação estrita, rate limit, só agregados
   anónimos — nunca o URL completo) → painel "Violações CSP" na página
-  Segurança. Papel duplo: canário de regressão da CSP por hashes +
-  observatório do ruído que uma CSP estrita apanha. Rodagem: calibrar os
+  Segurança. Papel duplo: canário de regressão da CSP (zero inline,
+  script-src/style-src 'self') + observatório do ruído que uma CSP estrita
+  apanha. Rodagem: calibrar os
   buckets de ruído com dados reais antes de dar destaque ao painel.
 
 - **2026-07 — Vigia CT (monitor de Certificate Transparency do próprio

@@ -17,8 +17,8 @@ duplicar lógica entre idiomas.
 A segurança foi tratada como parte do design, não um extra: Content-Security-Policy
 estrita sem 'unsafe-inline', cabeçalhos de segurança e uma política de
 divulgação responsável publicada. O porquê de cada camada está em
-[Segurança](/seguranca/); as provas — commit, hashes da CSP, workflows —
-são verificáveis em [Provas](/provas/).
+[Segurança](/seguranca/); as provas — commit, scan aos cabeçalhos ao vivo,
+workflows — são verificáveis em [Provas](/provas/).
 
 ## Decisões de arquitetura
 
@@ -28,8 +28,13 @@ interatividade (as ferramentas de rede, o Lab) não carregam runtime de
 hidratação nenhum. Isto não é só uma escolha de performance: torna a CSP
 estrita sem `'unsafe-inline'` fácil de manter, porque não há um framework a
 injetar estilo ou script inline em tempo de execução por trás das costas —
-só os `<script>` que eu próprio escrevo, cada um com o seu hash SHA-256
-calculado no build.
+e porque escrevo os meus próprios `<script>` como ficheiros externos, nunca
+inline, `script-src 'self'` e `style-src 'self'` chegam sem precisar de uma
+única hash. (Já tentei o caminho inverso — hashes SHA-256 por script/estilo
+inline — mas o número de hashes cresce com o número de páginas, e ao fim de
+umas dezenas a Content-Security-Policy passa dos 2000 caracteres que o
+Cloudflare Pages aceita por linha de cabeçalho; eliminar o inline em vez de
+o catalogar resolve na raiz.)
 
 **Porquê monorepo com o Worker separado do estático.** O `static/` (este
 site) mantém o modelo de ameaça descrito na página de

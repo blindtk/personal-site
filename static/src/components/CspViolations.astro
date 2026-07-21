@@ -76,7 +76,7 @@ const jsStrings = {
     document.getElementById(id)!.textContent = value;
   };
 
-  // Larguras da barra por JS (CSSOM): a CSP por hashes bloqueia style=""
+  // Larguras da barra por JS (CSSOM): style-src 'self' bloqueia style=""
   // no HTML, mas a manipulação via .style não é abrangida pela style-src.
   function drawBar(byCategory: Record<string, number>, total: number) {
     const order: Array<keyof typeof CAT> = ['extension', 'self', 'external', 'other'];

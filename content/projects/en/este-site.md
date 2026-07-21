@@ -17,8 +17,8 @@ duplicated logic between languages.
 Security was treated as part of the design, not an afterthought: strict
 Content-Security-Policy with no 'unsafe-inline', security headers, and a
 published responsible-disclosure policy. The why behind each layer is on
-[Security](/en/security/); the proof — commit, CSP hashes, workflows — is
-verifiable on [Evidence](/en/evidence/).
+[Security](/en/security/); the proof — commit, live header scan, workflows —
+is verifiable on [Evidence](/en/evidence/).
 
 ## Architecture decisions
 
@@ -27,8 +27,13 @@ default — pages ship with zero JavaScript, and the islands that need
 interactivity (the networking tools, the Lab) load no hydration runtime at
 all. That's not only a performance choice: it keeps the strict CSP with no
 `'unsafe-inline'` easy to maintain, because there's no framework injecting
-inline style or script at runtime behind the scenes — only the `<script>`
-tags I write myself, each with its own SHA-256 hash computed at build time.
+inline style or script at runtime behind the scenes — and because I write my
+own `<script>` tags as external files, never inline, `script-src 'self'` and
+`style-src 'self'` cost nothing, no hash needed. (I tried the reverse first —
+SHA-256 hashes per inline script/style — but the hash count grows with the
+page count, and after a few dozen pages the Content-Security-Policy blows
+past the 2000 characters Cloudflare Pages allows per header line; removing
+the inline code instead of cataloguing it fixes the root cause.)
 
 **Why the Worker is separate from the static site in the monorepo.** The
 `static/` site (this one) keeps the threat model described on the

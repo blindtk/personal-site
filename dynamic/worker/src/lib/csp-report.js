@@ -34,8 +34,9 @@ const EXTENSION_SCHEMES = new Set([
 ]);
 
 // Valores-palavra do blocked-uri (sem URL): código bloqueado dentro da
-// própria página — com uma CSP por hashes, um "inline" é ou regressão da
-// build ou injeção real. Ambos interessam; ambos são categoria "self".
+// própria página — sem JS/CSS inline em lado nenhum, um "inline" é ou
+// regressão da build ou injeção real. Ambos interessam; ambos são categoria
+// "self".
 const KEYWORD_BLOCKED = new Set(['inline', 'eval', 'wasm-eval', 'self', 'unsafe-eval']);
 
 /** Primeiro valor string não-vazio entre várias chaves (os 3 browsers divergem nos nomes). */
