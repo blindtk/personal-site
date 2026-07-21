@@ -206,24 +206,14 @@ async function runScan(env) {
 
   const allHeaders = Object.fromEntries(res.headers.entries());
 
-  // DEBUG TEMPORÁRIO
 
   return {
-    target,
-    finalUrl: res.url,
     status: res.status,
-    csp: res.headers.get('content-security-policy'),
-    hsts: res.headers.get('strict-transport-security'),
+    url: res.url,
+   scannedAt: Date.now(),
     headers: allHeaders,
+    ...gradeFromHeaders((name) => res.headers.get(name)),
   };
-    
-//  return {
-//    status: res.status,
-//    url: res.url,
-//   scannedAt: Date.now(),
-//    headers: allHeaders,
-//    ...gradeFromHeaders((name) => res.headers.get(name)),
-//  };
 }
 
 // ---------- rate limiting ----------
