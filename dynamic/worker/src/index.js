@@ -202,16 +202,10 @@ async function runScan(env) {
     redirect: 'follow',
     headers,
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-  })
-
-  const allHeaders = Object.fromEntries(res.headers.entries());
-
+  });
 
   return {
-    status: res.status,
-    url: res.url,
-   scannedAt: Date.now(),
-    headers: allHeaders,
+    scannedAt: Date.now(),
     ...gradeFromHeaders((name) => res.headers.get(name)),
   };
 }
