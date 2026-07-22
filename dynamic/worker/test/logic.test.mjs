@@ -1087,6 +1087,52 @@ test('/api/cf-stats: sem CF_API_TOKEN/IDs configurados → 502 (painel mostra o 
   assert.deepEqual(await res.json(), { error: 'upstream_error' });
 });
 
+test('/api/cf-stats?refresh=1: ignora a cache existente e escreve uma entrada nova', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  // cache antiga, ainda válida, sem o campo topCountries (shape pré-refresh)
+  env.KV.store.set('cache:cfstats', JSON.stringify({
+    data: { zone: { requests: 1 }, worker: {}, fetchedAt: 1 },
+    exp: Date.now() + 3600_000,
+  }));
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 99, threats: 5 } }] }),
+  });
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.10' }), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.zone.requests, 99); // veio do fetch novo, não da cache antiga
+    const stored = JSON.parse(env.KV.store.get('cache:cfstats'));
+    assert.equal(stored.data.zone.requests, 99); // a cache ficou atualizada
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan', async () => {
+  const kv = fakeKV();
+  let puts = 0;
+  const origPut = kv.put.bind(kv);
+  kv.put = async (...args) => { puts += 1; return origPut(...args); };
+  const env = {
+    KV: kv,
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const ip = '203.0.113.11';
+  const id = await clientHash(ip, dailySalt(undefined));
+  kv.store.set(`rl:cfstats:${id}`, JSON.stringify({ count: 3, windowStart: Date.now() }));
+
+  const res = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip }), env);
+  assert.equal(res.status, 429);
+  assert.ok(res.headers.get('retry-after'));
+  assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
+});
+
 // ---------- Espelho (/api/mirror) ----------
 
 test('serverView: sanitiza, valida país/ASN e NUNCA inclui o IP', () => {
