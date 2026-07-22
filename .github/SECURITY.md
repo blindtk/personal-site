@@ -18,11 +18,7 @@ que está em produção** — não há *releases* antigos a manter.
 Reporta em **privado**, nunca numa Issue pública (uma Issue expõe a falha a
 toda a gente antes de estar corrigida):
 
-- Preferencialmente, através da página de contactos:
-  <https://danielmala.co/contactos/>
-- Em alternativa, quando o repositório for público, pela função
-  **"Report a vulnerability"** do GitHub (Security → Advisories), que abre
-  um canal privado diretamente com o mantenedor.
+- Através da página de contactos: <https://danielmala.co/contactos/>
 
 Ver também o `security.txt` do site
 ([`/.well-known/security.txt`](https://danielmala.co/.well-known/security.txt)),
@@ -47,7 +43,6 @@ bibliotecas sem exploração prática) têm prioridade baixa.
 ## A postura de segurança deste repositório
 
 O próprio *pipeline* é tratado como superfície de ataque: OSV-Scanner,
-gitleaks, Semgrep e zizmor correm em cada PR, as GitHub Actions estão pinadas
-por *commit* SHA (mantidas pelo Renovate), e a proveniência do build é
-atestada (SLSA/Sigstore). Detalhes na secção **"Segurança do pipeline"** do
-[README](../README.md).
+gitleaks, Semgrep e zizmor correm em cada PR, e as GitHub Actions estão
+pinadas por *commit* SHA (mantidas pelo Renovate). Detalhes na secção
+**"Segurança do pipeline"** do [README](../README.md).
