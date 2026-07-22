@@ -2057,6 +2057,13 @@ select {
 
 /* Tabela diretiva-a-diretiva: realce de tokens e coluna de veredicto. */
 .csp-dir { color: var(--accent-3); white-space: nowrap; }
+/* Tentar forçar a quebra de .csp-dir (nomes de diretiva) ou usar
+   .wrap-normal aqui só produzia texto cortado a meio de forma pior —
+   as 3 colunas (diretiva/valor/leitura) não cabem lado a lado em ecrãs
+   estreitos de forma legível. Em vez disso, mesma solução já usada em
+   .hp-table/.cspv-table: nada quebra, a tabela cresce e o
+   .table-scroll (scroll horizontal) trata do excesso. */
+.csp-rows-table td { white-space: nowrap; }
 .result-table td .tok-bad { color: var(--danger); font-weight: 600; }
 .result-table td .tok-warn { color: var(--accent-2); }
 /* --muted e não --faint: é um achado real (diretiva CSP em falta), o
