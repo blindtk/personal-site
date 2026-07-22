@@ -946,6 +946,17 @@ select {
 }
 .result-table td .hl { color: var(--accent); }
 
+/* Em ecrãs estreitos os 11rem fixos do th não deixavam espaço nenhum à
+   coluna de valor — um IP de 13 caracteres partia-se a meio mesmo cabendo
+   de sobra na largura real do ecrã. O rótulo passa a ocupar só o que
+   precisa (mesma técnica já usada em .result-table.wrap-normal). */
+@media (max-width: 480px) {
+  .result-table th {
+    width: auto;
+    white-space: normal;
+  }
+}
+
 .table-scroll {
   overflow-x: auto;
 }
