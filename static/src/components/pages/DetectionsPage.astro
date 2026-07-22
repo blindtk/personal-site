@@ -80,7 +80,7 @@ const jsStrings = { copy: d.copy, copied: d.copied };
         <p class="det-summary">{r.summary}</p>
         <div class="det-rule">
           <pre class="det-sigma"><code>{r.sigma}</code></pre>
-          <button class="det-copy mono" type="button" data-slug={r.slug}>{d.copy}</button>
+          <button class="det-copy mono" type="button" data-slug={r.slug} aria-live="polite" aria-atomic="true">{d.copy}</button>
         </div>
       </article>
     ))}
@@ -257,6 +257,22 @@ const jsStrings = { copy: d.copy, copied: d.copied };
   }
   .det-copy:hover { border-color: var(--accent); }
 
+  /* Em mobile o .det-copy a 44px (alvo de toque) passava a tapar as
+     primeiras linhas do Sigma (title/id) em regras mais longas — o botão
+     sai do fluxo absoluto e desce para debaixo do código, sem alterar
+     nada no desktop. */
+  @media (max-width: 640px) {
+    .det-rule {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .det-copy {
+      position: static;
+      align-self: flex-end;
+    }
+  }
+
   .det-cmd {
     background: var(--bg-raise);
     border: 1px solid var(--border);
@@ -282,6 +298,11 @@ const jsStrings = { copy: d.copy, copied: d.copied };
     gap: 0.5rem;
   }
   .det-links a {
+    /* inline-flex + min-height: alvo de toque de 44px — mesma técnica do
+       .view-all e do .det-copy nesta página. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     color: var(--accent);
     text-decoration: none;
   }
