@@ -16,7 +16,7 @@ const { lang, project, altUrl } = Astro.props;
 const dict = t(lang);
 const { Content } = await render(project);
 // O projeto "este-site" é a narrativa do sistema que as páginas Segurança/
-// Provas/Honeypot/… documentam — só ele leva o bloco de camadas.
+// Provas/Perímetro/… documentam — só ele leva o bloco de camadas.
 const isSiteProject = project.id.slice(3) === 'este-site';
 ---
 

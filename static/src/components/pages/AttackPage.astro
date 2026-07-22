@@ -17,7 +17,7 @@ const techniques = attack.tactics.flatMap((tactic) => tactic.techniques);
 const prod = techniques.filter((tech) => tech.level === 'prod').length;
 const exp = techniques.filter((tech) => tech.level === 'exp').length;
 
-// Âncora por técnica para deep-links (ex.: vindos de /honeypot). Um mesmo ID
+// Âncora por técnica para deep-links (ex.: vindos de /perimetro). Um mesmo ID
 // pode surgir em duas táticas (ex.: T1078) — só a 1.ª ocorrência leva o id,
 // para não gerar IDs duplicados no DOM.
 const seenAnchors = new Set<string>();

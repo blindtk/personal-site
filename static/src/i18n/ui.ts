@@ -12,7 +12,8 @@ export const ui = {
       projects: 'Projetos',
       tools: 'Ferramentas',
       security: 'Segurança',
-      honeypot: 'Honeypot',
+      transparency: 'Transparência',
+      perimeter: 'Perímetro',
       links: 'Links',
       contact: 'Contactos',
       lab: 'Lab',
@@ -20,13 +21,13 @@ export const ui = {
       menuClose: 'Fechar',
     },
     // Bloco de cross-links partilhado pelas páginas do "sistema" do site
-    // (Segurança, Provas, Honeypot, Deteções, ATT&CK e o projeto este-site).
+    // (Segurança, Provas, Perímetro, Deteções, ATT&CK e o projeto este-site).
     layers: {
       title: 'Este site, por camadas',
       intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
       security: 'Segurança — postura, cabeçalhos e porquê',
       evidence: 'Provas — tudo verificável, gerado no build',
-      honeypot: 'Honeypot — o que a Internet tenta contra este site',
+      perimeter: 'Perímetro — honeypot + Cloudflare, o que a Internet tenta contra este site',
       detections: 'Deteções — as regras Sigma que apanhariam cada ataque',
       attack: 'ATT&CK — cobertura defensiva mapeada',
       project: 'Projeto «Este site» — arquitetura e decisões',
@@ -113,9 +114,6 @@ export const ui = {
       commitDateLabel: 'data',
       commitPending:
         'Hash do commit indisponível neste build (fora de um clone git).',
-      cfTitle: 'Estado da Cloudflare, ao vivo',
-      cfIntro:
-        'Pedidos, cache e ameaças bloqueadas nesta zona nos últimos 7 dias, mais as invocações deste Worker — dados reais da minha conta Cloudflare, via GraphQL Analytics API. Não é o Cloudflare Radar (esse é agregado global e anónimo, sem nada específico deste domínio).',
       headersTitle: 'Cabeçalhos, ao vivo',
       headersIntro:
         'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
@@ -281,10 +279,12 @@ export const ui = {
       warning:
         'Isto é sobretudo uma demonstração do protocolo. Na prática, um bom gestor de passwords já faz esta verificação por ti — e gera passwords longas e únicas que nunca aparecem em fugas.',
     },
-    honeypot: {
-      metaTitle: 'Honeypot — o que este site apanha',
-      title: 'Honeypot',
-      intro: 'Este site serve alguns endpoints-isco (páginas de login e ficheiros que só um scanner procura). Quem lhes toca fica registado aqui — só metadados, para mostrar quanto scan automático apanha até um site pessoal.',
+    perimeter: {
+      metaTitle: 'Perímetro — quem bate à porta',
+      title: 'Perímetro',
+      intro: 'Duas larguras do mesmo sinal: os endpoints-isco que só um scanner tocaria de propósito, e o que o WAF/edge da Cloudflare bloqueia na zona inteira. Só metadados e agregados — nunca IPs, em nenhuma das duas.',
+      honeypotTitle: 'Honeypot — os endpoints-isco',
+      honeypotIntro: 'Este site serve alguns endpoints-isco (páginas de login e ficheiros que só um scanner procura). Quem lhes toca fica registado aqui — só metadados, para mostrar quanto scan automático apanha até um site pessoal.',
       statAttempts: 'tentativas nas últimas 24h',
       statTopPath: 'path mais tentado',
       statCountries: 'países de origem (7d)',
@@ -310,6 +310,9 @@ export const ui = {
       detectionsLink: 'Ver as Deteções →',
       projectNote: 'O porquê de isto viver num Worker e não no site estático — e a garantia de privacidade por construção — está nas decisões do projeto.',
       projectLink: 'Ver o projeto Honeypot →',
+      cfTitle: 'Estado da Cloudflare, ao vivo',
+      cfIntro:
+        'Pedidos, cache e ameaças bloqueadas nesta zona nos últimos 7 dias, mais as invocações do Worker — dados reais da minha conta Cloudflare, via GraphQL Analytics API. Não é o Cloudflare Radar (esse é agregado global e anónimo, sem nada específico deste domínio): é o outro sinal, mais largo do que o honeypot — cobre o que a Cloudflare bloqueia na zona toda, não só quem cai nos endpoints-isco.',
     },
     detections: {
       metaTitle: 'Deteções — do honeypot às regras Sigma',
@@ -330,7 +333,7 @@ export const ui = {
         'O contador carrega do mesmo /api/honeypot do painel. Se o Worker ainda não estiver publicado fica em “—” — as regras continuam válidas na mesma.',
       convertLead: 'As regras seguem as convenções webserver do SigmaHQ (campos c-uri, cs-method, sc-status). Converte para a tua plataforma com o sigma-cli:',
       convertCmd: 'sigma convert -t splunk detecao.yml',
-      seeHoneypot: 'Ver o honeypot que alimenta isto →',
+      seePerimeter: 'Ver o Perímetro que alimenta isto →',
       seeAttack: 'Ver o heatmap ATT&CK →',
     },
     hostmap: {
@@ -838,7 +841,8 @@ export const ui = {
       projects: 'Projects',
       tools: 'Tools',
       security: 'Security',
-      honeypot: 'Honeypot',
+      transparency: 'Transparency',
+      perimeter: 'Perimeter',
       links: 'Links',
       contact: 'Contact',
       lab: 'Lab',
@@ -846,13 +850,13 @@ export const ui = {
       menuClose: 'Close',
     },
     // Shared cross-link block for the site's "system" pages (Security,
-    // Evidence, Honeypot, Detections, ATT&CK and the este-site project).
+    // Evidence, Perimeter, Detections, ATT&CK and the este-site project).
     layers: {
       title: 'This site, layer by layer',
       intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
       security: 'Security — posture, headers and why',
       evidence: 'Evidence — everything verifiable, generated at build',
-      honeypot: 'Honeypot — what the Internet tries against this site',
+      perimeter: 'Perimeter — honeypot + Cloudflare, what the Internet tries against this site',
       detections: 'Detections — the Sigma rules that would catch each attack',
       attack: 'ATT&CK — defensive coverage, mapped',
       project: '“This site” project — architecture and decisions',
@@ -939,9 +943,6 @@ export const ui = {
       commitDateLabel: 'date',
       commitPending:
         'Commit hash unavailable in this build (outside a git clone).',
-      cfTitle: 'Cloudflare status, live',
-      cfIntro:
-        'Requests, cache, and threats blocked on this zone over the last 7 days, plus this Worker’s invocations — real data from my Cloudflare account, via the GraphQL Analytics API. Not Cloudflare Radar (that one is a global, anonymous aggregate with nothing specific to this domain).',
       headersTitle: 'Headers, live',
       headersIntro:
         'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
@@ -1107,10 +1108,12 @@ export const ui = {
       warning:
         'This is mostly a demonstration of the protocol. In practice a good password manager already does this check for you — and generates long, unique passwords that never show up in breaches.',
     },
-    honeypot: {
-      metaTitle: 'Honeypot — what this site catches',
-      title: 'Honeypot',
-      intro: 'This site serves a few decoy endpoints (login pages and files only a scanner looks for). Whoever touches them is logged here — metadata only, to show how much automated scanning even a personal site attracts.',
+    perimeter: {
+      metaTitle: 'Perimeter — who knocks',
+      title: 'Perimeter',
+      intro: 'Two widths of the same signal: the decoy endpoints only a scanner would touch on purpose, and what Cloudflare’s WAF/edge blocks across the whole zone. Metadata and aggregates only — never IPs, in either.',
+      honeypotTitle: 'Honeypot — the decoy endpoints',
+      honeypotIntro: 'This site serves a few decoy endpoints (login pages and files only a scanner looks for). Whoever touches them is logged here — metadata only, to show how much automated scanning even a personal site attracts.',
       statAttempts: 'attempts in the last 24h',
       statTopPath: 'most-tried path',
       statCountries: 'origin countries (7d)',
@@ -1136,6 +1139,9 @@ export const ui = {
       detectionsLink: 'See the Detections →',
       projectNote: 'Why this lives in a Worker and not the static site — and the privacy-by-construction guarantee — is written up in the project decisions.',
       projectLink: 'See the Honeypot project →',
+      cfTitle: 'Cloudflare status, live',
+      cfIntro:
+        'Requests, cache, and threats blocked on this zone over the last 7 days, plus the Worker’s invocations — real data from my Cloudflare account, via the GraphQL Analytics API. Not Cloudflare Radar (that one is a global, anonymous aggregate with nothing specific to this domain): this is the other signal, wider than the honeypot — it covers what Cloudflare blocks across the whole zone, not just whoever falls for a decoy endpoint.',
     },
     detections: {
       metaTitle: 'Detections — from honeypot to Sigma rules',
@@ -1156,7 +1162,7 @@ export const ui = {
         'The counter loads from the same /api/honeypot as the panel. If the Worker is not published yet it stays at “—” — the rules remain just as valid.',
       convertLead: 'The rules follow SigmaHQ webserver conventions (c-uri, cs-method, sc-status fields). Convert to your platform with sigma-cli:',
       convertCmd: 'sigma convert -t splunk detection.yml',
-      seeHoneypot: 'See the honeypot feeding this →',
+      seePerimeter: 'See the Perimeter feeding this →',
       seeAttack: 'See the ATT&CK heatmap →',
     },
     hostmap: {

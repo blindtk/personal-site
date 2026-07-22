@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HostMap from '../HostMap.astro';
+import CfAnalytics from '../CfAnalytics.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -13,7 +14,7 @@ import hpAttack from '../../../../content/honeypot-attack.json';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const dict = t(lang);
-const h = dict.honeypot;
+const p = dict.perimeter;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 // Índice id → nome da técnica (1.ª ocorrência), a partir do heatmap ATT&CK.
@@ -36,67 +37,82 @@ for (const [path, id] of Object.entries(hpAttack.paths)) {
 }
 
 const jsStrings = {
-  verdict: h.verdict,
-  empty: h.empty,
-  unavailable: h.unavailable,
-  secondsAgo: h.secondsAgo,
-  corrTitle: h.corrTitle,
-  techNone: h.techNone,
+  verdict: p.verdict,
+  empty: p.empty,
+  unavailable: p.unavailable,
+  secondsAgo: p.secondsAgo,
+  corrTitle: p.corrTitle,
+  techNone: p.techNone,
 };
 ---
 
-<BaseLayout lang={lang} title={h.metaTitle} altUrl={routes.honeypot[other]} active="honeypot">
+<BaseLayout lang={lang} title={p.metaTitle} altUrl={routes.perimeter[other]} active="perimeter">
   <div class="page-head">
-    <h1>{h.title}</h1>
-    <p class="intro">{h.intro}</p>
+    <h1>{p.title}</h1>
+    <p class="intro">{p.intro}</p>
   </div>
 
-  <section
-    class="honeypot"
-    id="honeypot"
-    data-api={API_BASE}
-    data-strings={JSON.stringify(jsStrings)}
-    data-tech={JSON.stringify({ byPath, byId })}
-    aria-label={h.title}
-  >
-    <p class="hp-fallback" id="hp-fallback">{h.unavailable}</p>
-
-    <div class="stats-grid" id="hp-stats" hidden>
-      <div class="stat"><div class="n" id="hp-attempts">—</div><div class="l">{h.statAttempts}</div></div>
-      <div class="stat amber"><div class="n mono" id="hp-toppath">—</div><div class="l">{h.statTopPath}</div></div>
-      <div class="stat blue"><div class="n" id="hp-countries">—</div><div class="l">{h.statCountries}</div></div>
-      <div class="stat"><div class="n" id="hp-firstscan">—</div><div class="l">{h.statFirstScan}</div></div>
+  <section aria-labelledby="h-honeypot">
+    <div class="section-title">
+      <h2 id="h-honeypot">{p.honeypotTitle}</h2>
     </div>
+    <p class="intro">{p.honeypotIntro}</p>
 
-    <p class="hp-corr-banner" id="hp-corr" role="status" hidden><span class="hp-corr-spark" aria-hidden="true">⚡</span> {h.corrLead}</p>
+    <section
+      class="honeypot"
+      id="honeypot"
+      data-api={API_BASE}
+      data-strings={JSON.stringify(jsStrings)}
+      data-tech={JSON.stringify({ byPath, byId })}
+      aria-label={p.honeypotTitle}
+    >
+      <p class="hp-fallback" id="hp-fallback">{p.unavailable}</p>
 
-    <div class="table-scroll" hidden>
-      <table class="result-table hp-table">
-        <thead>
-          <tr>
-            <th>{h.tableWhen}</th>
-            <th>{h.tableOrigin}</th>
-            <th>{h.tableAsn}</th>
-            <th>{h.tablePath}</th>
-            <th>{h.tableTechnique}</th>
-            <th>{h.tableVerdict}</th>
-          </tr>
-        </thead>
-        <tbody id="hp-rows">
-          <tr><td colspan="6" class="hp-loading">{h.loading}</td></tr>
-        </tbody>
-      </table>
-    </div>
+      <div class="stats-grid" id="hp-stats" hidden>
+        <div class="stat"><div class="n" id="hp-attempts">—</div><div class="l">{p.statAttempts}</div></div>
+        <div class="stat amber"><div class="n mono" id="hp-toppath">—</div><div class="l">{p.statTopPath}</div></div>
+        <div class="stat blue"><div class="n" id="hp-countries">—</div><div class="l">{p.statCountries}</div></div>
+        <div class="stat"><div class="n" id="hp-firstscan">—</div><div class="l">{p.statFirstScan}</div></div>
+      </div>
 
-    <p class="note">🧭 {h.techNote} <a href={attackBase}>{h.techNoteLink}</a></p>
-    <p class="note">🛡️ {h.detectionsNote} <a href={routes.detections[lang]}>{h.detectionsLink}</a></p>
-    <p class="note">📐 {h.projectNote} <a href={projectUrl(lang, 'honeypot')}>{h.projectLink}</a></p>
-    <p class="note warn">🔒 {h.privacyNote}</p>
+      <p class="hp-corr-banner" id="hp-corr" role="status" hidden><span class="hp-corr-spark" aria-hidden="true">⚡</span> {p.corrLead}</p>
+
+      <div class="table-scroll" hidden>
+        <table class="result-table hp-table">
+          <thead>
+            <tr>
+              <th>{p.tableWhen}</th>
+              <th>{p.tableOrigin}</th>
+              <th>{p.tableAsn}</th>
+              <th>{p.tablePath}</th>
+              <th>{p.tableTechnique}</th>
+              <th>{p.tableVerdict}</th>
+            </tr>
+          </thead>
+          <tbody id="hp-rows">
+            <tr><td colspan="6" class="hp-loading">{p.loading}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="note">🧭 {p.techNote} <a href={attackBase}>{p.techNoteLink}</a></p>
+      <p class="note">🛡️ {p.detectionsNote} <a href={routes.detections[lang]}>{p.detectionsLink}</a></p>
+      <p class="note">📐 {p.projectNote} <a href={projectUrl(lang, 'honeypot')}>{p.projectLink}</a></p>
+      <p class="note warn">🔒 {p.privacyNote}</p>
+    </section>
+
+    <HostMap lang={lang} />
   </section>
 
-  <HostMap lang={lang} />
+  <section aria-labelledby="h-cf">
+    <div class="section-title">
+      <h2 id="h-cf">{p.cfTitle}</h2>
+    </div>
+    <p class="intro">{p.cfIntro}</p>
+    <CfAnalytics lang={lang} />
+  </section>
 
-  <SiteLayers lang={lang} current="honeypot" />
+  <SiteLayers lang={lang} current="perimeter" />
 </BaseLayout>
 
 <script>

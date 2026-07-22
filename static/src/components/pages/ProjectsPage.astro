@@ -52,10 +52,10 @@ function excerpt(text: string, max = 90): string {
           {(entry.data.repo || slug === 'honeypot') && (
             <div class="card-links mono">
               {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
-              {/* O painel /honeypot/ (telemetria ao vivo) é um destino distinto
-                 desta página (o "porquê"/arquitetura) — evita confundir os dois
-                 sítios que partilham o nome "Honeypot" na nav. */}
-              {slug === 'honeypot' && <a href={routes.honeypot[lang]}>[{dict.projects.live}]</a>}
+              {/* O painel /perimetro/ (telemetria ao vivo, honeypot + Cloudflare)
+                 é um destino distinto desta página (o "porquê"/arquitetura) —
+                 evita confundir os dois sítios. */}
+              {slug === 'honeypot' && <a href={routes.perimeter[lang]}>[{dict.projects.live}]</a>}
             </div>
           )}
           {/* Único gancho, no índice, para a teia de cross-links "por camadas"

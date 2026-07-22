@@ -10,7 +10,8 @@ A few paths no human visits on purpose — `/wp-login.php`, `/.env`,
 only: they're bait. Whoever touches them is, by definition, an automated
 scanner. A Cloudflare Worker logs the attempt (metadata only) and returns the
 same old 404, indistinguishable from a path that never existed. The live
-result is on the [Honeypot](/en/honeypot/) panel.
+result — alongside what Cloudflare blocks across the whole zone — is on the
+[Perimeter](/en/perimeter/) panel.
 
 ## Why it lives in the Worker, not the static site
 
