@@ -50,10 +50,22 @@ CT_EXPECTED_ISSUERS = ""
 # se vazio, usa a 1.ª tentativa registada. Define no deploy, ex.:
 #   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
 DEPLOY_TS = ""
+# IDs da zona/conta para o painel "Estado da Cloudflare" (/api/cf-stats,
+# GraphQL Analytics API — NÃO o Radar, ver src/lib/cf-analytics.js). Não
+# são segredos (identificam a zona/conta, não dão acesso sozinhos), mas sem
+# eles a rota fica desativada (502 → painel mostra o fallback). IDs em
+# dash.cloudflare.com → domínio → Visão geral, secção "API" no fundo da
+# página lateral direita.
+CF_ZONE_TAG = ""
+CF_ACCOUNT_ID = ""
+# Nome do script deste Worker na conta. Bate com `name` no topo deste
+# ficheiro — só precisa de mudar se um dos dois for renomeado.
+CF_WORKER_SCRIPT = "personal-site-worker"
 
 # Secrets (NÃO ficam aqui — o gitleaks do CI apanha qualquer deslize):
-#   npx wrangler secret put RATE_SALT   # segredo p/ o hash de rate limit
-#   npx wrangler secret put NVD_API_KEY # opcional, sobe o rate limit do NVD
+#   npx wrangler secret put RATE_SALT    # segredo p/ o hash de rate limit
+#   npx wrangler secret put NVD_API_KEY  # opcional, sobe o rate limit do NVD
+#   npx wrangler secret put CF_API_TOKEN # token com scope "Account Analytics:Read" + "Zone Analytics:Read", criado em dash.cloudflare.com → Meu perfil → Tokens de API
 #
 # Rotação do RATE_SALT: rodar SEMANALMENTE. Trocar o segredo invalida de
 # imediato TODOS os rate-limits acumulados (o hash deixa de bater) — é

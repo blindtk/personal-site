@@ -20,6 +20,7 @@ CSP. Um só Cloudflare Worker + um namespace KV.
 | `POST /api/csp-report` | Recetor de violações CSP (`report-uri`/Reporting API) | — | 10/min por cliente + cap global 300/h |
 | `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
 | `GET /api/ct` | Vigia CT: certificados emitidos p/ o domínio (logs de Certificate Transparency, 90 d) | 6 h | — |
+| `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | — |
 | `GET /api/mirror` | Espelho: a "vista do servidor" deste pedido (TLS/ASN/país/UA, **nunca o IP**) | — (per-request, `no-store`) | 30/min por cliente |
 | `GET /api/health` | Liveness | — | — |
 
@@ -75,6 +76,33 @@ outra (as duas falharem ⇒ 502 e o painel mostra o fallback). Os dados são
 100 % públicos (estão nos logs CT); ainda assim tudo o que segue para o
 cliente passa por `sanitizeText`, e só nomes pertencentes ao domínio são
 persistidos (`src/lib/ct.js`, coberto por teste).
+
+## Estado da Cloudflare (`/api/cf-stats`)
+
+Painel da página Provas com métricas reais desta zona/Worker — pedidos,
+taxa de cache, ameaças bloqueadas pelo edge da Cloudflare, invocações e
+erros do próprio Worker — via **GraphQL Analytics API**
+(`api.cloudflare.com/client/v4/graphql`).
+
+**Isto não é o Cloudflare Radar.** O Radar é agregado global e anónimo de
+todos os clientes Cloudflare — não sabe nada sobre este domínio em
+particular, só serve de contexto emprestado ("como está a internet lá
+fora"). A GraphQL Analytics API, pelo contrário, só devolve dados **desta**
+zona/conta, autenticados com `CF_API_TOKEN` — é a mesma fonte que alimenta
+o dashboard da Cloudflare quando lá entras. Só agregados diários; nunca IPs
+nem dados de visitantes individuais.
+
+Precisa de três vars (`CF_ZONE_TAG`, `CF_ACCOUNT_ID`, `CF_WORKER_SCRIPT`,
+ver `wrangler.toml`) e do secret `CF_API_TOKEN` (scope `Zone Analytics:Read`
++ `Account Analytics:Read`, criado em dash.cloudflare.com → Meu perfil →
+Tokens de API). Sem qualquer um destes, a rota devolve 502 e o painel
+mostra o fallback — mesmo padrão do vigia CT sem `SCAN_TARGET`.
+
+Sem input de visitantes (a query é fixa), por isso sem rate limit próprio;
+a cache de 6h já limita a frequência com que se bate na API da Cloudflare.
+Lógica pura em `src/lib/cf-analytics.js` (parse da resposta GraphQL, testado
+com vetores conhecidos — qualquer campo em falta ou schema que mude do lado
+da Cloudflare degrada para 0, nunca rebenta o painel).
 
 ### Erros e logs
 
@@ -161,6 +189,10 @@ mudar.
 | `KV` | binding | wrangler.toml | namespace único (eventos, buckets, caches, rate limit) |
 | `RATE_SALT` | secret | `wrangler secret put` | hash de rate limit; rodar SEMANALMENTE (invalida limites acumulados de propósito) |
 | `NVD_API_KEY` | secret | `wrangler secret put` | opcional, rate limit do NVD |
+| `CF_API_TOKEN` | secret | `wrangler secret put` | token Analytics:Read (zona + conta) p/ `/api/cf-stats` |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (só no modo 2b) |
 | `SCAN_TARGET` | var | wrangler.toml | URL que o self-scan inspeciona |
 | `DEPLOY_TS` | var | `--var` no deploy | "tempo até 1.º scan" (opcional) |
+| `CF_ZONE_TAG` | var | wrangler.toml | ID da zona, p/ `/api/cf-stats` |
+| `CF_ACCOUNT_ID` | var | wrangler.toml | ID da conta, p/ `/api/cf-stats` |
+| `CF_WORKER_SCRIPT` | var | wrangler.toml | nome deste Worker na conta, p/ `/api/cf-stats` |
