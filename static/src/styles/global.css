@@ -776,6 +776,15 @@ select {
   font-size: 0.92rem;
   padding: 0.6rem 0.75rem;
 }
+input[type='text'],
+input[type='search'],
+input[type='password'],
+select {
+  /* min-height 44px (alvo de toque) — medido com Playwright a renderizar
+     ~37.2px de altura real, abaixo do mínimo. A textarea já tem o seu
+     próprio min-height: 7rem mais abaixo, por isso fica fora desta regra. */
+  min-height: 44px;
+}
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
