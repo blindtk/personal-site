@@ -776,6 +776,15 @@ select {
   font-size: 0.92rem;
   padding: 0.6rem 0.75rem;
 }
+input[type='text'],
+input[type='search'],
+input[type='password'],
+select {
+  /* min-height 44px (alvo de toque) — medido com Playwright a renderizar
+     ~37.2px de altura real, abaixo do mínimo. A textarea já tem o seu
+     próprio min-height: 7rem mais abaixo, por isso fica fora desta regra. */
+  min-height: 44px;
+}
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
@@ -936,6 +945,17 @@ select {
   word-break: break-all;
 }
 .result-table td .hl { color: var(--accent); }
+
+/* Em ecrãs estreitos os 11rem fixos do th não deixavam espaço nenhum à
+   coluna de valor — um IP de 13 caracteres partia-se a meio mesmo cabendo
+   de sobra na largura real do ecrã. O rótulo passa a ocupar só o que
+   precisa (mesma técnica já usada em .result-table.wrap-normal). */
+@media (max-width: 480px) {
+  .result-table th {
+    width: auto;
+    white-space: normal;
+  }
+}
 
 .table-scroll {
   overflow-x: auto;
@@ -2037,6 +2057,13 @@ select {
 
 /* Tabela diretiva-a-diretiva: realce de tokens e coluna de veredicto. */
 .csp-dir { color: var(--accent-3); white-space: nowrap; }
+/* Tentar forçar a quebra de .csp-dir (nomes de diretiva) ou usar
+   .wrap-normal aqui só produzia texto cortado a meio de forma pior —
+   as 3 colunas (diretiva/valor/leitura) não cabem lado a lado em ecrãs
+   estreitos de forma legível. Em vez disso, mesma solução já usada em
+   .hp-table/.cspv-table: nada quebra, a tabela cresce e o
+   .table-scroll (scroll horizontal) trata do excesso. */
+.csp-rows-table td { white-space: nowrap; }
 .result-table td .tok-bad { color: var(--danger); font-weight: 600; }
 .result-table td .tok-warn { color: var(--accent-2); }
 /* --muted e não --faint: é um achado real (diretiva CSP em falta), o
