@@ -803,6 +803,10 @@ export const ui = {
       },
       windowAbout: 'sobre.md',
       windowRoadmap: 'roadmap.txt',
+      winMinimize: 'Minimizar janela',
+      winMaximize: 'Maximizar janela',
+      winRestore: 'Restaurar janela',
+      winClose: 'Fechar janela',
       roadmapBody: [
         'A seguir:',
         '  [ ] Catálogo de estrelas: sincronização automática via API do',
@@ -1633,6 +1637,10 @@ export const ui = {
       },
       windowAbout: 'about.md',
       windowRoadmap: 'roadmap.txt',
+      winMinimize: 'Minimize window',
+      winMaximize: 'Maximize window',
+      winRestore: 'Restore window',
+      winClose: 'Close window',
       roadmapBody: [
         'Up next:',
         '  [ ] Star catalog: automatic sync via an authenticated GitHub API',

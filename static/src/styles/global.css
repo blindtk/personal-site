@@ -564,7 +564,10 @@ a.card:hover {
   margin-top: 1.3rem;
 }
 @media (min-width: 860px) {
-  .top-grid { grid-template-columns: 1.6fr 1fr; }
+  /* 2fr e não 1.6fr: a identidade é a informação primária da home, mas
+     partilhava um .panel visualmente igual ao das stats — dar-lhe mais
+     largura reforça a hierarquia sem tocar em cor. */
+  .top-grid { grid-template-columns: 2fr 1fr; }
 }
 
 .panel {
@@ -858,7 +861,12 @@ select {
 }
 
 .btn {
-  display: inline-block;
+  /* inline-flex + min-height: alvo de toque de 44px — o padding sozinho
+     ficava a ~43px, marginalmente abaixo e, depois da ronda anterior,
+     mais baixo que o próprio .btn.small. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   background: var(--accent);
   color: #08120c;
   border: 1px solid var(--accent);

@@ -128,7 +128,7 @@ const windows = [
     {/* ---- janelas ---- */}
     <div class="win closed" data-win="terminal">
       <div class="win-bar"><span class="wt">>_ terminal</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body term">
         <div class="term-out" data-term-out></div>
@@ -142,7 +142,7 @@ const windows = [
 
     <div class="win closed" data-win="subnets">
       <div class="win-bar"><span class="wt">⌗ {dict.tools.subnets.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body"><SubnetCalc lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -150,7 +150,7 @@ const windows = [
 
     <div class="win closed" data-win="hashes">
       <div class="win-bar"><span class="wt"># {dict.tools.hashes.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body"><HashTool lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -158,7 +158,7 @@ const windows = [
 
     <div class="win closed" data-win="encoder">
       <div class="win-bar"><span class="wt">⇄ {dict.tools.encoder.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body"><EncoderTool lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -166,7 +166,7 @@ const windows = [
 
     <div class="win closed" data-win="passwords">
       <div class="win-bar"><span class="wt">⚿ {dict.tools.passwords.name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body"><PasswordGen lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -174,7 +174,7 @@ const windows = [
 
     <div class="win closed" data-win="email-headers">
       <div class="win-bar"><span class="wt">@ {dict.tools['email-headers'].name}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body"><EmailHeaderTool lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -182,7 +182,7 @@ const windows = [
 
     <div class="win closed" data-win="sobre">
       <div class="win-bar"><span class="wt">☰ {lab.windowAbout}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body prose-scroll"><div class="prose"><AboutContent /></div></div>
       <div class="win-resize" aria-hidden="true"></div>
@@ -190,7 +190,7 @@ const windows = [
 
     <div class="win closed" data-win="roadmap">
       <div class="win-bar"><span class="wt">⚑ {lab.windowRoadmap}</span>
-        <span class="wa"><button data-act="min">–</button><button data-act="max">□</button><button data-act="close">×</button></span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body">
         <pre class="roadmap-pre">{lab.roadmapBody.join('\n')}</pre>
@@ -502,6 +502,23 @@ const windows = [
       return tbItems.querySelector(`button[data-task="${id}"]`);
     }
 
+    // Ao abrir/reabrir uma janela, o foco de teclado tem de entrar nela —
+    // senão fica preso no ícone/botão da taskbar que a abriu. O terminal
+    // vai sempre para o input; as restantes vão para o 1.º controlo focável
+    // do corpo da janela (input/textarea/select/botão/link), com o botão
+    // fechar como último recurso (ex.: roadmap.txt não tem nada focável).
+    function focusWinContent(win: HTMLElement) {
+      if (win.dataset.win === 'terminal') {
+        termInput.focus();
+        return;
+      }
+      const body = win.querySelector<HTMLElement>('.win-body');
+      const focusable = body?.querySelector<HTMLElement>(
+        'input, textarea, select, button, a[href], [tabindex]:not([tabindex="-1"])',
+      );
+      (focusable ?? win.querySelector<HTMLButtonElement>('[data-act="close"]'))?.focus();
+    }
+
     function openWin(id: string) {
       const win = wins.get(id);
       if (!win) return;
@@ -515,6 +532,7 @@ const windows = [
           if (win.classList.contains('closed')) {
             win.classList.remove('closed');
             focusWin(win);
+            focusWinContent(win);
           } else if (win.classList.contains('focused')) {
             win.classList.add('closed'); // minimizar
             btn.classList.remove('active');
@@ -527,7 +545,7 @@ const windows = [
         tbItems.appendChild(btn);
       }
       syncTaskbar();
-      if (id === 'terminal') termInput.focus();
+      focusWinContent(win);
     }
 
     function syncTaskbar() {
@@ -553,6 +571,7 @@ const windows = [
       maxBtn.addEventListener('click', () => {
         const isMaxed = win.classList.toggle('maxed');
         maxBtn.textContent = isMaxed ? '❐' : '□';
+        maxBtn.setAttribute('aria-label', (isMaxed ? maxBtn.dataset.labelRestore : maxBtn.dataset.labelMaximize)!);
         focusWin(win);
       });
 
