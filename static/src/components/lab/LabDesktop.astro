@@ -58,13 +58,13 @@ const attackSummary = {
 
 // Último commit (build-time, best-effort) para o comando `provas` — o mesmo
 // facto verificável servido na página /provas. Sem clone git, fica null.
-let evidence: { commitShort: string; commitUrl: string } | null = null;
+let evidence: { commitShort: string } | null = null;
 try {
   const full = execSync('git rev-parse HEAD', {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],
   }).trim();
-  if (full) evidence = { commitShort: full.slice(0, 7), commitUrl: `${SITE.repo}/commit/${full}` };
+  if (full) evidence = { commitShort: full.slice(0, 7) };
 } catch {
   evidence = null;
 }

@@ -2,7 +2,6 @@
 title: 'This site'
 description: 'Monorepo with an Astro static site, markdown content, and client-side tools.'
 tags: ['astro', 'typescript', 'cloudflare']
-repo: 'https://github.com/blindtk/personal-site'
 order: 1
 ---
 

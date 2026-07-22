@@ -2,7 +2,6 @@
 title: 'Honeypot'
 description: 'Decoy endpoints that log automated Internet scanning — metadata only, no IPs, correlated with MITRE ATT&CK and CISA KEV.'
 tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
-repo: 'https://github.com/blindtk/personal-site/tree/main/dynamic/worker'
 order: 2
 ---
 
