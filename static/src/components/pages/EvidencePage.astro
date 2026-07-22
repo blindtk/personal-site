@@ -56,7 +56,6 @@ const workflows = readdirSync(workflowsDir)
 const repoSlug = new URL(SITE.repo).pathname.replace(/^\/+|\/+$/g, '');
 
 const scanners = [
-  { label: ev.verifyRepo, href: SITE.repo },
   { label: ev.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
   { label: ev.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
 ];
@@ -93,9 +92,6 @@ const scanners = [
             </tbody>
           </table>
         </div>
-        <ul class="ev-links mono">
-          <li><a href={`${SITE.repo}/commit/${commit.full}`} rel="noopener">→ {ev.commitViewLabel}</a></li>
-        </ul>
       </>
     ) : (
       <p class="note warn">{ev.commitPending}</p>
@@ -157,11 +153,7 @@ const scanners = [
     </div>
     <p class="note">{ev.pipelineNote}</p>
     <ul class="ev-links mono">
-      {workflows.map((wf) => (
-        <li>
-          <a href={`${SITE.repo}/actions/workflows/${wf}`} rel="noopener">→ {wf}</a>
-        </li>
-      ))}
+      {workflows.map((wf) => <li>{wf}</li>)}
     </ul>
   </section>
 
@@ -172,10 +164,6 @@ const scanners = [
     <p class="intro">{ev.provenanceIntro}</p>
     <p>{ev.provenanceVerifyLead}</p>
     <pre class="ev-cmd mono"><code>gh attestation verify site-dist.tar.gz -R {repoSlug}</code></pre>
-    <ul class="ev-links mono">
-      <li><a href={`${SITE.repo}/attestations`} rel="noopener">→ {ev.provenanceIndexLabel}</a></li>
-      <li><a href={`${SITE.repo}/actions/workflows/attest.yml`} rel="noopener">→ {ev.provenanceRunsLabel}</a></li>
-    </ul>
     <p class="note warn">{ev.provenanceNote}</p>
   </section>
 

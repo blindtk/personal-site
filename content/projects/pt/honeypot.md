@@ -2,7 +2,6 @@
 title: 'Honeypot'
 description: 'Endpoints-isco que registam o scan automático da Internet — só metadados, sem IPs, correlacionados com MITRE ATT&CK e CISA KEV.'
 tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
-repo: 'https://github.com/blindtk/personal-site/tree/main/dynamic/worker'
 order: 2
 ---
 

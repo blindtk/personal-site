@@ -186,14 +186,14 @@ export function createTerminal(ctx) {
             ? [
                 'honeypot — endpoints-isco que registam scan automático (só metadados:',
                 'país, ASN e path; nenhum IP é armazenado).',
-                'o painel ao vivo precisa do Worker publicado — código e garantia de',
-                'privacidade no repositório. detalhes em /honeypot',
+                'o painel ao vivo precisa do Worker publicado. a garantia de',
+                'privacidade (nenhum IP guardado) está coberta por testes. detalhes em /honeypot',
               ]
             : [
                 'honeypot — decoy endpoints that log automated scanning (metadata',
                 'only: country, ASN and path; no IP is ever stored).',
-                'the live panel needs the Worker published — code and privacy',
-                'guarantee in the repo. details at /honeypot',
+                'the live panel needs the Worker published. the privacy guarantee',
+                '(no IP ever stored) is covered by tests. details at /honeypot',
               ],
         };
       }
@@ -204,7 +204,6 @@ export function createTerminal(ctx) {
         const lines = [];
         if (e?.commitShort) {
           lines.push(pt ? `último commit: ${e.commitShort}` : `latest commit: ${e.commitShort}`);
-          if (e.commitUrl) lines.push(`  ${e.commitUrl}`);
         }
         lines.push(
           pt

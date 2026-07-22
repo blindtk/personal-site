@@ -111,9 +111,8 @@ export const ui = {
       commitHashLabel: 'commit',
       commitSubjectLabel: 'mensagem',
       commitDateLabel: 'data',
-      commitViewLabel: 'ver commit no GitHub →',
       commitPending:
-        'Hash do commit indisponível neste build (fora de um clone git). Consulta o histórico no repositório.',
+        'Hash do commit indisponível neste build (fora de um clone git).',
       headersTitle: 'Cabeçalhos, ao vivo',
       headersIntro:
         'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
@@ -136,19 +135,15 @@ export const ui = {
         { tool: 'zizmor', catches: 'Auditoria dos próprios workflows: pins em falta, permissões excessivas, injeção de template em run:.' },
       ],
       pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
-      workflowsView: 'ver execuções →',
       provenanceTitle: 'Proveniência do build',
       provenanceIntro:
-        'A cada push para main, o workflow Attest constrói o site e assina o resultado: o bundle completo (o dist/ que se serve) recebe uma attestation de proveniência SLSA via Sigstore — a prova criptográfica de que commit, que workflow e que runner o produziram. Não é "confia no deploy": é verificável offline, com o CLI do GitHub.',
+        'O workflow Attest constrói o site e assina o resultado: o bundle completo (o dist/ que se serve) recebe uma attestation de proveniência SLSA via Sigstore — a prova criptográfica de que commit, que workflow e que runner o produziram. Não é "confia no deploy": é verificável offline, com o CLI do GitHub.',
       provenanceVerifyLead:
-        'Para verificar: descarrega o artefacto site-dist da execução mais recente do workflow Attest e corre:',
-      provenanceIndexLabel: 'índice público de attestations deste repositório',
-      provenanceRunsLabel: 'execuções do workflow Attest',
+        'O bundle atestado (site-dist) verifica-se offline com o CLI do GitHub:',
       provenanceNote:
-        'O GitHub só publica attestations em repositórios públicos — enquanto o repo estiver privado, o workflow fica em skip e esta secção descreve o mecanismo já a bordo; ao tornar o repo público, cada push a main passa a ser atestado automaticamente, sem mais nenhum passo.',
+        'O repositório é privado por opção. Como o GitHub só publica attestations em repositórios públicos, o workflow Attest fica em skip — o que fica descrito aqui é o mecanismo já ligado ao build, não um artefacto público que possas descarregar.',
       verifyTitle: 'Verifica tu mesmo',
       verifyIntro: 'Não fiques pela minha palavra:',
-      verifyRepo: 'Código-fonte no GitHub',
       verifyHeadersScan: 'Scan em securityheaders.com',
       verifyObservatory: 'Scan no Mozilla Observatory',
     },
@@ -413,7 +408,7 @@ export const ui = {
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
       clientBadge: 'client-side',
       serverBadge: 'requer servidor',
-      serverNote: 'Esta ferramenta fala com o Worker (dynamic/) — o que é enviado e porquê está explicado acima; o código do Worker é público.',
+      serverNote: 'Esta ferramenta fala com o Worker (dynamic/) — o que é enviado e porquê está explicado acima.',
       indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o Worker (dynamic/) — cada uma explica, na sua página, exatamente o que envia.',
       pwned: {
         name: 'Password comprometida?',
@@ -930,9 +925,8 @@ export const ui = {
       commitHashLabel: 'commit',
       commitSubjectLabel: 'message',
       commitDateLabel: 'date',
-      commitViewLabel: 'view commit on GitHub →',
       commitPending:
-        'Commit hash unavailable in this build (outside a git clone). Check the history in the repository.',
+        'Commit hash unavailable in this build (outside a git clone).',
       headersTitle: 'Headers, live',
       headersIntro:
         'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
@@ -955,19 +949,15 @@ export const ui = {
         { tool: 'zizmor', catches: 'Audit of the workflows themselves: missing pins, excessive permissions, template injection in run:.' },
       ],
       pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
-      workflowsView: 'view runs →',
       provenanceTitle: 'Build provenance',
       provenanceIntro:
-        'On every push to main, the Attest workflow builds the site and signs the result: the full bundle (the dist/ that gets served) receives a SLSA provenance attestation via Sigstore — cryptographic proof of which commit, which workflow and which runner produced it. Not "trust the deploy": it is verifiable offline, with the GitHub CLI.',
+        'The Attest workflow builds the site and signs the result: the full bundle (the dist/ that gets served) receives a SLSA provenance attestation via Sigstore — cryptographic proof of which commit, which workflow and which runner produced it. Not "trust the deploy": it is verifiable offline, with the GitHub CLI.',
       provenanceVerifyLead:
-        'To verify: download the site-dist artifact from the latest run of the Attest workflow and run:',
-      provenanceIndexLabel: 'public attestation index for this repository',
-      provenanceRunsLabel: 'Attest workflow runs',
+        'The attested bundle (site-dist) is verified offline with the GitHub CLI:',
       provenanceNote:
-        'GitHub only publishes attestations for public repositories — while the repo is private, the workflow stays skipped and this section documents the mechanism already on board; once the repo goes public, every push to main gets attested automatically, no further steps.',
+        'The repository is private by choice. Since GitHub only publishes attestations for public repositories, the Attest workflow stays in skip — what is described here is the mechanism already wired into the build, not a public artifact you can download.',
       verifyTitle: 'Check for yourself',
       verifyIntro: "Don't take my word for it:",
-      verifyRepo: 'Source code on GitHub',
       verifyHeadersScan: 'Scan on securityheaders.com',
       verifyObservatory: 'Scan on Mozilla Observatory',
     },
@@ -1232,7 +1222,7 @@ export const ui = {
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
       clientBadge: 'client-side',
       serverBadge: 'needs server',
-      serverNote: 'This tool talks to the Worker (dynamic/) — what is sent and why is explained above; the Worker\'s code is public.',
+      serverNote: 'This tool talks to the Worker (dynamic/) — what is sent and why is explained above.',
       indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the Worker (dynamic/) — each one explains, on its own page, exactly what it sends.',
       pwned: {
         name: 'Has your password leaked?',

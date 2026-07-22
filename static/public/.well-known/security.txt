@@ -6,4 +6,4 @@ Contact: https://danielmala.co/contactos/
 Expires: 2027-07-17T00:00:00.000Z
 Preferred-Languages: pt, en
 Canonical: https://danielmala.co/.well-known/security.txt
-Policy: https://github.com/blindtk/personal-site/blob/main/.github/SECURITY.md
+Policy: https://danielmala.co/seguranca/
