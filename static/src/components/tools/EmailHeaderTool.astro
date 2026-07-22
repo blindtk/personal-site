@@ -70,7 +70,7 @@ const jsStrings = {
     <ul class="emailh-flags" id="emailh-flags"></ul>
 
     <h3>{s.hopsTitle}</h3>
-    <div class="table-scroll" id="emailh-hops-wrap">
+    <div class="table-scroll" id="emailh-hops-wrap" tabindex="0" role="region" aria-label={s.scrollLabel}>
       <table class="result-table emailh-hops">
         <thead>
           <tr>
@@ -88,7 +88,7 @@ const jsStrings = {
     <p class="note" id="emailh-hops-empty" hidden>{s.hopsEmpty}</p>
 
     <h3>{s.summaryTitle}</h3>
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" role="region" aria-label={s.scrollLabelSummary}>
       <table class="result-table wrap-normal">
         <tbody>
           <tr><th>{s.sFrom}</th><td id="emailh-s-from">—</td></tr>

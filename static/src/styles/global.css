@@ -789,7 +789,8 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 button:focus-visible,
-a:focus-visible {
+a:focus-visible,
+.table-scroll:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

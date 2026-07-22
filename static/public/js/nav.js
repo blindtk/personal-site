@@ -28,3 +28,18 @@ document.querySelectorAll('.nav-security details').forEach((d) => {
     }
   });
 });
+
+// Scroll horizontal por setas nos contentores .table-scroll (CSP Lint,
+// Violações CSP, Vigia CT, Cloudflare, cadeia de entrega/resumo de
+// cabeçalhos de email): têm tabindex="0" para serem alcançáveis por
+// tab, mas as setas do teclado não rolam overflow:auto por omissão em
+// todos os browsers — sem isto, ficam focáveis mas inúteis.
+document.querySelectorAll('.table-scroll[tabindex]').forEach((el) => {
+  el.addEventListener('keydown', (e) => {
+    const step = 80;
+    if (e.key === 'ArrowRight') { el.scrollLeft += step; e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { el.scrollLeft -= step; e.preventDefault(); }
+    else if (e.key === 'Home') { el.scrollLeft = 0; e.preventDefault(); }
+    else if (e.key === 'End') { el.scrollLeft = el.scrollWidth; e.preventDefault(); }
+  });
+});

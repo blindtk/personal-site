@@ -34,7 +34,7 @@ const jsStrings = {
     <p class="note">{c.workerNote} <span class="mono" id="cfa-worker-requests">—</span> {c.workerNoteSuffix}</p>
 
     <p class="cfa-countries-title mono">{c.topCountriesTitle}</p>
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabel}>
       <table class="result-table cfa-table">
         <thead>
           <tr>
