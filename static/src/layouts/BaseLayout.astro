@@ -39,17 +39,17 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
   { key: 'contact', label: dict.nav.contact },
 ];
 
-// "Segurança" agrupa na nav as páginas sobre a arquitetura e telemetria
-// DESTE site: Segurança, Provas, Honeypot, Deteções. ATT&CK e Certificações
+// "Transparência" agrupa na nav as páginas sobre a arquitetura e telemetria
+// DESTE site: Segurança, Provas, Perímetro, Deteções. ATT&CK e Certificações
 // ficam de fora de propósito — não são sobre o site, são sobre credenciais e
 // percurso pessoais (o próprio attack.json chama-lhe "heatmap pessoal", "o
 // meu CV"). O sítio natural para as duas é o Sobre, que já as linka em
 // prosa; continuam também acessíveis pelo rodapé e por cross-links a partir
-// do Honeypot/Deteções (que classificam com os IDs do heatmap).
+// do Perímetro/Deteções (que classificam com os IDs do heatmap).
 const securityGroup: { key: RouteKey; label: string }[] = [
   { key: 'security', label: dict.nav.security },
   { key: 'evidence', label: dict.footer.evidence },
-  { key: 'honeypot', label: dict.nav.honeypot },
+  { key: 'perimeter', label: dict.nav.perimeter },
   { key: 'detections', label: dict.footer.detections },
 ];
 const securityActive = securityGroup.some((item) => item.key === active);
@@ -131,11 +131,11 @@ const personSchema = {
           <li class="nav-security">
             {/* Sem open={securityActive}: abrir por omissão punha o painel
                flutuante (position: absolute) a tapar a intro da própria
-               página em /seguranca/, /provas/, /honeypot/ e /detecoes/ no
+               página em /seguranca/, /provas/, /perimetro/ e /detecoes/ no
                primeiro paint, sem precisar de nenhuma interação. A secção
                ativa continua marcada — só no aria-current do summary. */}
             <details>
-              <summary aria-current={securityActive ? 'page' : undefined}>{dict.nav.security}</summary>
+              <summary aria-current={securityActive ? 'page' : undefined}>{dict.nav.transparency}</summary>
               <ul class="sub-links">
                 {securityGroup.map((item) => (
                   <li>

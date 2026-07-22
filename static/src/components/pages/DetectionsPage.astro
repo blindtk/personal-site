@@ -16,7 +16,7 @@ const dict = t(lang);
 const d = dict.detections;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
-// Índice id → nome da técnica (1.ª ocorrência), como na página Honeypot.
+// Índice id → nome da técnica (1.ª ocorrência), como na página Perímetro.
 const techName = new Map<string, string>();
 for (const tactic of attack.tactics) {
   for (const tech of tactic.techniques) {
@@ -90,7 +90,7 @@ const jsStrings = { copy: d.copy, copied: d.copied };
     <p class="intro">{d.convertLead}</p>
     <pre class="det-cmd mono"><code>{d.convertCmd}</code></pre>
     <ul class="det-links mono">
-      <li><a href={routes.honeypot[lang]}>→ {d.seeHoneypot}</a></li>
+      <li><a href={routes.perimeter[lang]}>→ {d.seePerimeter}</a></li>
       <li><a href={attackBase}>→ {d.seeAttack}</a></li>
     </ul>
   </section>
@@ -99,7 +99,7 @@ const jsStrings = { copy: d.copy, copied: d.copied };
 </BaseLayout>
 
 <script>
-  // Contagens ao vivo + botões de copiar. Mesmo padrão do painel Honeypot:
+  // Contagens ao vivo + botões de copiar. Mesmo padrão do painel Perímetro:
   // a página nasce completa (contador em "—"); o fetch só preenche números,
   // sem esconder/mostrar blocos — zero salto de layout se o Worker faltar.
   // DOM via textContent (nunca innerHTML) — compatível com Trusted Types.

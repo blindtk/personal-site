@@ -11,7 +11,7 @@ export const routes = {
   contact: { pt: '/contactos/', en: '/en/contact/' },
   lab: { pt: '/lab/', en: '/en/lab/' },
   security: { pt: '/seguranca/', en: '/en/security/' },
-  honeypot: { pt: '/honeypot/', en: '/en/honeypot/' },
+  perimeter: { pt: '/perimetro/', en: '/en/perimeter/' },
   detections: { pt: '/detecoes/', en: '/en/detections/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
   evidence: { pt: '/provas/', en: '/en/evidence/' },

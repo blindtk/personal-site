@@ -1350,7 +1350,7 @@ select {
   margin-bottom: 2rem;
 }
 
-/* ---------- Honeypot (/honeypot) ---------- */
+/* ---------- Honeypot (/perimetro) ---------- */
 
 .honeypot .stats-grid { margin-bottom: 1.2rem; }
 /* o atributo hidden tem de vencer o display:grid/flex das classes */
@@ -1447,7 +1447,7 @@ select {
   .ticker-track { animation: none; flex-wrap: wrap; }
 }
 
-/* ---------- Mapa de tráfego hostil (/honeypot) ---------- */
+/* ---------- Mapa de tráfego hostil (/perimetro) ---------- */
 
 .hostmap { margin-top: 2rem; }
 .map-frame {
@@ -1871,7 +1871,7 @@ select {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* Deep-link vindo de /honeypot: destaca a técnica alvo da âncora. */
+/* Deep-link vindo de /perimetro: destaca a técnica alvo da âncora. */
 .atk-cell:target {
   outline: 2px solid var(--accent-2);
   outline-offset: 2px;

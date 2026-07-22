@@ -186,14 +186,16 @@ export function createTerminal(ctx) {
             ? [
                 'honeypot — endpoints-isco que registam scan automático (só metadados:',
                 'país, ASN e path; nenhum IP é armazenado).',
-                'o painel ao vivo precisa do Worker publicado. a garantia de',
-                'privacidade (nenhum IP guardado) está coberta por testes. detalhes em /honeypot',
+                'o painel ao vivo (honeypot + estado da Cloudflare) precisa do Worker',
+                'publicado. a garantia de privacidade está coberta por testes.',
+                'detalhes em /perimetro',
               ]
             : [
                 'honeypot — decoy endpoints that log automated scanning (metadata',
                 'only: country, ASN and path; no IP is ever stored).',
-                'the live panel needs the Worker published. the privacy guarantee',
-                '(no IP ever stored) is covered by tests. details at /honeypot',
+                'the live panel (honeypot + Cloudflare status) needs the Worker',
+                'published. the privacy guarantee is covered by tests.',
+                'details at /perimeter',
               ],
         };
       }

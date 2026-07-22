@@ -4,7 +4,8 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
-import CfAnalytics from '../CfAnalytics.astro';
+import CtWatch from '../CtWatch.astro';
+import CspViolations from '../CspViolations.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -95,14 +96,6 @@ const scanners = [
     )}
   </section>
 
-  <section aria-labelledby="h-cf">
-    <div class="section-title">
-      <h2 id="h-cf">{ev.cfTitle}</h2>
-    </div>
-    <p class="intro">{ev.cfIntro}</p>
-    <CfAnalytics lang={lang} />
-  </section>
-
   <section aria-labelledby="h-headers">
     <div class="section-title">
       <h2 id="h-headers">{ev.headersTitle}</h2>
@@ -130,6 +123,22 @@ const scanners = [
         </tbody>
       </table>
     </div>
+  </section>
+
+  <section aria-labelledby="h-cspv">
+    <div class="section-title">
+      <h2 id="h-cspv">{dict.cspviolations.title}</h2>
+    </div>
+    <p class="intro">{dict.cspviolations.intro}</p>
+    <CspViolations lang={lang} />
+  </section>
+
+  <section aria-labelledby="h-ct">
+    <div class="section-title">
+      <h2 id="h-ct">{dict.ctwatch.title}</h2>
+    </div>
+    <p class="intro">{dict.ctwatch.intro}</p>
+    <CtWatch lang={lang} />
   </section>
 
   <section aria-labelledby="h-workflows">
