@@ -216,6 +216,9 @@ img {
   color: var(--text);
   font-family: var(--mono);
   font-size: 0.85rem;
+  /* min-height 44px: único gatilho do menu em mobile — alvo de toque
+     mínimo (WCAG 2.5.5 / Apple HIG), não só o padding visual anterior. */
+  min-height: 44px;
   padding: 0.35rem 0.7rem;
   cursor: pointer;
 }
@@ -351,11 +354,19 @@ img {
   .nav-links.open {
     display: flex;
   }
+  /* display:flex + min-height: os itens do menu (não só o botão que o abre)
+     precisam de 44px de alvo de toque — o padding sozinho ficava a ~37px. */
   .nav-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     padding: 0.6rem 0.6rem;
     font-size: 0.95rem;
   }
   .nav-security summary {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     padding: 0.6rem 0.6rem;
     font-size: 0.95rem;
   }
@@ -369,6 +380,9 @@ img {
     min-width: 0;
   }
   .nav-security .sub-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     padding: 0.55rem 0.6rem;
     font-size: 0.9rem;
   }
@@ -478,7 +492,9 @@ a.card:hover {
   margin-top: 0.7rem;
   font-family: var(--mono);
   font-size: 0.75rem;
-  color: var(--faint);
+  /* --muted e não --faint: carrega conteúdo real (data, tags) e --faint
+     fica abaixo de 4.5:1 sobre --bg-raise. */
+  color: var(--muted);
 }
 
 /* Lista compacta da home: destaques em linha única, distintos dos cards
@@ -548,7 +564,10 @@ a.card:hover {
   margin-top: 1.3rem;
 }
 @media (min-width: 860px) {
-  .top-grid { grid-template-columns: 1.6fr 1fr; }
+  /* 2fr e não 1.6fr: a identidade é a informação primária da home, mas
+     partilhava um .panel visualmente igual ao das stats — dar-lhe mais
+     largura reforça a hierarquia sem tocar em cor. */
+  .top-grid { grid-template-columns: 2fr 1fr; }
 }
 
 .panel {
@@ -834,12 +853,20 @@ select {
   gap: 0.5rem;
   font-size: 0.9rem;
   color: var(--text);
-  margin-bottom: 0.45rem;
+  /* min-height 44px (alvo de toque) em vez de confiar só no checkbox de
+     1rem — o padding substitui a margem-bottom anterior como respiro. */
+  min-height: 44px;
+  padding: 0.3rem 0;
   font-family: var(--mono);
 }
 
 .btn {
-  display: inline-block;
+  /* inline-flex + min-height: alvo de toque de 44px — o padding sozinho
+     ficava a ~43px, marginalmente abaixo e, depois da ronda anterior,
+     mais baixo que o próprio .btn.small. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   background: var(--accent);
   color: #08120c;
   border: 1px solid var(--accent);
@@ -863,6 +890,11 @@ select {
   background: var(--accent-dim);
 }
 .btn.small {
+  /* inline-flex + min-height: alvo de toque de 44px sem inflacionar o
+     padding visual — o texto pequeno fica centrado numa caixa mais alta. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 0.75rem;
   padding: 0.3rem 0.7rem;
   font-weight: 600;
@@ -1155,7 +1187,9 @@ select {
 .journey .years {
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--faint);
+  /* --muted e não --faint: é a data real de cada paragem, não decoração —
+     --faint fica abaixo de 4.5:1 sobre o fundo. */
+  color: var(--muted);
 }
 .journey .name {
   font-family: var(--mono);
@@ -1207,6 +1241,11 @@ select {
   margin-bottom: 0.6rem;
 }
 .filter-chip {
+  /* inline-flex + min-height: mesma técnica do .btn.small — alvo de toque
+     de 44px sem alargar visualmente o chip. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-family: var(--mono);
   font-size: 0.75rem;
   color: var(--muted);
@@ -1250,9 +1289,13 @@ select {
   letter-spacing: 0.08em;
 }
 .view-all {
-  display: block;
+  /* inline-flex + min-height: alvo de toque de 44px (tinha padding: 0) —
+     mesma técnica do .btn.small/.filter-chip. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   margin: 0.6rem 0 0;
-  padding: 0;
+  padding: 0.3rem 0;
   background: transparent;
   border: none;
   font-family: var(--mono);
@@ -1836,7 +1879,9 @@ select {
   font-weight: 400;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--faint);
+  /* --muted e não --faint: é o nome real da tática (cabeçalho de coluna),
+     não decoração — --faint fica abaixo de 4.5:1 sobre o fundo. */
+  color: var(--muted);
   margin: 0 0 0.2rem;
   min-height: 2.4em;
   line-height: 1.3;
@@ -1847,7 +1892,10 @@ select {
   border-radius: 4px;
   padding: 5px 6px;
   background: var(--bg-raise-2);
-  color: #4a5768;
+  /* var(--muted) e não o cinzento literal anterior (~2.3:1 sobre este
+     fundo): as técnicas "não cobertas" continuam a ler-se, só com menos
+     ênfase que .prod/.exp — sem cair abaixo de 4.5:1. */
+  color: var(--muted);
   font-size: 0.68rem;
   line-height: 1.3;
 }

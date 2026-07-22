@@ -14,9 +14,17 @@ toggle?.addEventListener('click', () => {
 });
 
 // Fecha o dropdown "Segurança" ao clicar fora dele (o <details> nativo
-// só fecha ao clicar de novo no <summary>).
+// só fecha ao clicar de novo no <summary>) ou com Escape a partir de
+// dentro dele — o <details> nativo também não trata Escape sozinho, e sem
+// isto um utilizador de teclado só o fecha voltando a tab até ao summary.
 document.querySelectorAll('.nav-security details').forEach((d) => {
   document.addEventListener('click', (e) => {
     if (d.open && !d.contains(e.target)) d.open = false;
+  });
+  d.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && d.open) {
+      d.open = false;
+      d.querySelector('summary')?.focus();
+    }
   });
 });
