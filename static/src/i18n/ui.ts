@@ -135,13 +135,6 @@ export const ui = {
         { tool: 'zizmor', catches: 'Auditoria dos próprios workflows: pins em falta, permissões excessivas, injeção de template em run:.' },
       ],
       pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
-      provenanceTitle: 'Proveniência do build',
-      provenanceIntro:
-        'O workflow Attest constrói o site e assina o resultado: o bundle completo (o dist/ que se serve) recebe uma attestation de proveniência SLSA via Sigstore — a prova criptográfica de que commit, que workflow e que runner o produziram. Não é "confia no deploy": é verificável offline, com o CLI do GitHub.',
-      provenanceVerifyLead:
-        'O bundle atestado (site-dist) verifica-se offline com o CLI do GitHub:',
-      provenanceNote:
-        'O repositório é privado por opção. Como o GitHub só publica attestations em repositórios públicos, o workflow Attest fica em skip — o que fica descrito aqui é o mecanismo já ligado ao build, não um artefacto público que possas descarregar.',
       verifyTitle: 'Verifica tu mesmo',
       verifyIntro: 'Não fiques pela minha palavra:',
       verifyHeadersScan: 'Scan em securityheaders.com',
@@ -949,13 +942,6 @@ export const ui = {
         { tool: 'zizmor', catches: 'Audit of the workflows themselves: missing pins, excessive permissions, template injection in run:.' },
       ],
       pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
-      provenanceTitle: 'Build provenance',
-      provenanceIntro:
-        'The Attest workflow builds the site and signs the result: the full bundle (the dist/ that gets served) receives a SLSA provenance attestation via Sigstore — cryptographic proof of which commit, which workflow and which runner produced it. Not "trust the deploy": it is verifiable offline, with the GitHub CLI.',
-      provenanceVerifyLead:
-        'The attested bundle (site-dist) is verified offline with the GitHub CLI:',
-      provenanceNote:
-        'The repository is private by choice. Since GitHub only publishes attestations for public repositories, the Attest workflow stays in skip — what is described here is the mechanism already wired into the build, not a public artifact you can download.',
       verifyTitle: 'Check for yourself',
       verifyIntro: "Don't take my word for it:",
       verifyHeadersScan: 'Scan on securityheaders.com',

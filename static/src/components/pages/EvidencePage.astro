@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
 import SiteLayers from '../SiteLayers.astro';
-import { SITE, SITE_URL, type Lang } from '../../config';
+import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
 
@@ -50,10 +50,6 @@ const workflowsDir = fileURLToPath(new URL('../../../../.github/workflows', impo
 const workflows = readdirSync(workflowsDir)
   .filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'))
   .sort();
-
-// Slug owner/repo para o comando `gh attestation verify` (derivado de
-// config.ts — muda lá se o repo se mover).
-const repoSlug = new URL(SITE.repo).pathname.replace(/^\/+|\/+$/g, '');
 
 const scanners = [
   { label: ev.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
@@ -157,16 +153,6 @@ const scanners = [
     </ul>
   </section>
 
-  <section aria-labelledby="h-provenance">
-    <div class="section-title">
-      <h2 id="h-provenance">{ev.provenanceTitle}</h2>
-    </div>
-    <p class="intro">{ev.provenanceIntro}</p>
-    <p>{ev.provenanceVerifyLead}</p>
-    <pre class="ev-cmd mono"><code>gh attestation verify site-dist.tar.gz -R {repoSlug}</code></pre>
-    <p class="note warn">{ev.provenanceNote}</p>
-  </section>
-
   <section aria-labelledby="h-verify">
     <div class="section-title">
       <h2 id="h-verify">{ev.verifyTitle}</h2>
@@ -197,22 +183,6 @@ const scanners = [
   }
   .ev-links a:hover {
     text-decoration: underline;
-  }
-  .ev-cmd {
-    background: var(--bg-raise);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.7rem 0.9rem;
-    overflow-x: auto;
-    margin: 0.6rem 0 0.8rem;
-  }
-  .ev-cmd code {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 0.85rem;
-    color: var(--accent);
-    white-space: pre;
   }
   /* A coluna "exige" alinha os requisitos como chips; os valores são curtos
      e técnicos, por isso quebram por chip e não a meio da palavra. */
