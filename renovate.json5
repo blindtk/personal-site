@@ -17,6 +17,9 @@
   schedule: ['before 8am on monday'],
   // Respeita os ranges semver do package.json (não os reescreve).
   rangeStrategy: 'preserve',
+  // Espera 3 dias antes de propor uma versão nova — janela de segurança
+  // contra pacotes comprometidos publicados e retirados pouco depois.
+  minimumReleaseAge: '3 days',
   // Refresca o package-lock.json uma vez por mês (apanha transitivas).
   lockFileMaintenance: {
     enabled: true,
@@ -24,6 +27,35 @@
   },
   prConcurrentLimit: 3,
   labels: ['dependencies'],
+  // CVEs ignoram minimumReleaseAge e o schedule semanal por omissão
+  // (schedule vazio = "a qualquer hora") — só marcamos com label próprio
+  // para se distinguirem das atualizações de rotina.
+  vulnerabilityAlerts: {
+    labels: ['security'],
+  },
+  // Labels extra por manager/tipo, para triagem visual dos PRs.
+  packageRules: [
+    {
+      matchManagers: ['npm'],
+      addLabels: ['npm'],
+    },
+    {
+      matchManagers: ['github-actions'],
+      addLabels: ['github-actions'],
+    },
+    {
+      matchManagers: ['pre-commit'],
+      addLabels: ['pre-commit'],
+    },
+    {
+      matchManagers: ['custom.regex'],
+      addLabels: ['pypi'],
+    },
+    {
+      matchUpdateTypes: ['major'],
+      addLabels: ['major'],
+    },
+  ],
   // O manager pre-commit vem desligado por omissão — ligá-lo para seguir o
   // `rev:` dos hooks (ex.: gitleaks em .pre-commit-config.yaml), que de outra
   // forma ficava por atualizar.
