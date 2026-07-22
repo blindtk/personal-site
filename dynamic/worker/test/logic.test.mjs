@@ -20,6 +20,7 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
+import { parseCfStats } from '../src/lib/cf-analytics.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
@@ -955,6 +956,87 @@ test('/api/ct: uma query falhada degrada para a outra; as duas → 502', async (
   } finally {
     globalThis.fetch = orig;
   }
+});
+
+// ---------- Estado da Cloudflare (/api/cf-stats) ----------
+
+function graphqlFixture({ zoneRows = [], workerRows = [] } = {}) {
+  return {
+    data: {
+      viewer: {
+        zones: [{ httpRequests1dGroups: zoneRows }],
+        accounts: [{ workersInvocationsAdaptive: workerRows }],
+      },
+    },
+  };
+}
+
+test('parseCfStats: soma vários dias e calcula os rácios', () => {
+  const raw = graphqlFixture({
+    zoneRows: [
+      { sum: { requests: 100, cachedRequests: 60, bytes: 1_000_000, threats: 3 } },
+      { sum: { requests: 200, cachedRequests: 150, bytes: 2_000_000, threats: 1 } },
+    ],
+    workerRows: [
+      { sum: { requests: 50, errors: 2 } },
+      { sum: { requests: 30, errors: 0 } },
+    ],
+  });
+  const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
+  assert.deepEqual(stats.zone, {
+    requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
+  });
+  assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
+  assert.equal(stats.windowDays, 7);
+  assert.equal(stats.fetchedAt, 1_753_200_000_000);
+});
+
+test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
+  assert.deepEqual(parseCfStats({}).zone, { requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0 });
+  assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
+  assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
+  // campo `sum` em falta numa linha não rebenta a soma das outras
+  const partial = graphqlFixture({ zoneRows: [{ sum: { requests: 10 } }, {}] });
+  assert.equal(parseCfStats(partial).zone.requests, 10);
+});
+
+test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const orig = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, init) => {
+    captured = { url: String(url), body: JSON.parse(init.body), auth: init.headers.authorization };
+    return {
+      ok: true,
+      json: async () => graphqlFixture({
+        zoneRows: [{ sum: { requests: 10, cachedRequests: 5, bytes: 1000, threats: 0 } }],
+        workerRows: [{ sum: { requests: 4, errors: 0 } }],
+      }),
+    };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats'), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.zone.requests, 10);
+    assert.equal(data.worker.requests, 4);
+    assert.equal(captured.auth, 'Bearer tok');
+    assert.equal(captured.body.variables.zoneTag, 'zone123');
+    assert.equal(captured.body.variables.accountTag, 'acc456');
+    assert.equal(captured.body.variables.scriptName, 'personal-site-worker');
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats: sem CF_API_TOKEN/IDs configurados → 502 (painel mostra o fallback)', async () => {
+  const env = { KV: fakeKV() };
+  const res = await runFetch(fakeRequest('/api/cf-stats'), env);
+  assert.equal(res.status, 502);
+  assert.deepEqual(await res.json(), { error: 'upstream_error' });
 });
 
 // ---------- Espelho (/api/mirror) ----------

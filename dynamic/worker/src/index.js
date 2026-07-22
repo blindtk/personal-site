@@ -8,6 +8,7 @@
 //   · /api/csp-report (POST)   — recetor de violações CSP (report-uri/report-to)
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
+//   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
 //   · /api/health
 // Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
 
@@ -22,6 +23,7 @@ import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
 import { normalizePrefix, fetchRange } from './lib/pwned.js';
 import { fetchCtWatch } from './lib/ct.js';
+import { fetchCfStats } from './lib/cf-analytics.js';
 import { serverView } from './lib/mirror.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
@@ -434,6 +436,17 @@ export default {
         return json(data, request, env, { maxAge: 1800 });
       }
 
+      // Estado da zona Cloudflare: pedidos/cache/ameaças da zona e
+      // invocações/erros deste Worker, via GraphQL Analytics API (dados só
+      // desta zona/conta — não é o Radar, que é global e anónimo). Sem
+      // input de visitantes (a query é fixa), por isso sem rate limit
+      // próprio — a cache de 6h já limita a frequência com que se bate na
+      // API da Cloudflare.
+      if (path === '/api/cf-stats') {
+        const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
+        return json(data, request, env, { maxAge: 1800 });
+      }
+
       if (path === '/api/ticker') {
         const data = await cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env));
         return json(data, request, env, { maxAge: 1800 });
@@ -479,6 +492,7 @@ export default {
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
         cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
         cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
+        cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env)).catch(() => {}),
       ]),
     );
   },

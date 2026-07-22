@@ -113,6 +113,9 @@ export const ui = {
       commitDateLabel: 'data',
       commitPending:
         'Hash do commit indisponível neste build (fora de um clone git).',
+      cfTitle: 'Estado da Cloudflare, ao vivo',
+      cfIntro:
+        'Pedidos, cache e ameaças bloqueadas nesta zona nos últimos 7 dias, mais as invocações deste Worker — dados reais da minha conta Cloudflare, via GraphQL Analytics API. Não é o Cloudflare Radar (esse é agregado global e anónimo, sem nada específico deste domínio).',
       headersTitle: 'Cabeçalhos, ao vivo',
       headersIntro:
         'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
@@ -226,6 +229,18 @@ export const ui = {
       privacyNote:
         'Dados 100% públicos (logs CT, via crt.sh), com cache de 6 h no Worker. Sem input de visitantes — a query é fixa, derivada do próprio domínio: observabilidade, não é ferramenta de consulta.',
       unavailable: 'O vigia ao vivo ainda não está ligado — o Worker precisa de estar publicado nas rotas do domínio. A lógica e os testes estão em dynamic/worker/.',
+    },
+    cfanalytics: {
+      statRequests: 'pedidos · 7d',
+      statCache: 'servidos pela cache',
+      statThreats: 'ameaças bloqueadas (WAF/edge)',
+      statWorkerErrors: 'taxa de erro do Worker',
+      workerNote: 'O Worker recebeu',
+      workerNoteSuffix: 'pedidos na mesma janela.',
+      lastCheck: 'última consulta à API',
+      privacyNote:
+        'Agregados diários desta zona e conta, via GraphQL Analytics API da Cloudflare — não é o Radar (esse é global e anónimo). Sem IPs nem dados de visitantes individuais; cache de 6 h no Worker.',
+      unavailable: 'O painel ao vivo ainda não está ligado — precisa do Worker publicado e de um CF_API_TOKEN configurado. A lógica e os testes estão em dynamic/worker/.',
     },
     selfscan: {
       title: 'Self-scan ao vivo',
@@ -920,6 +935,9 @@ export const ui = {
       commitDateLabel: 'date',
       commitPending:
         'Commit hash unavailable in this build (outside a git clone).',
+      cfTitle: 'Cloudflare status, live',
+      cfIntro:
+        'Requests, cache, and threats blocked on this zone over the last 7 days, plus this Worker’s invocations — real data from my Cloudflare account, via the GraphQL Analytics API. Not Cloudflare Radar (that one is a global, anonymous aggregate with nothing specific to this domain).',
       headersTitle: 'Headers, live',
       headersIntro:
         'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
@@ -1033,6 +1051,18 @@ export const ui = {
       privacyNote:
         '100% public data (CT logs, via crt.sh), cached for 6 h in the Worker. No visitor input — the query is fixed, derived from the domain itself: observability, not a lookup tool.',
       unavailable: 'The live watch is not wired up yet — the Worker needs to be published on the domain routes. The logic and tests live in dynamic/worker/.',
+    },
+    cfanalytics: {
+      statRequests: 'requests · 7d',
+      statCache: 'served from cache',
+      statThreats: 'threats blocked (WAF/edge)',
+      statWorkerErrors: 'Worker error rate',
+      workerNote: 'The Worker received',
+      workerNoteSuffix: 'requests in the same window.',
+      lastCheck: 'last API check',
+      privacyNote:
+        'Daily aggregates for this zone and account, via the Cloudflare GraphQL Analytics API — not Radar (that one is global and anonymous). No IPs or individual visitor data; 6 h cache in the Worker.',
+      unavailable: 'The live panel is not wired up yet — it needs the Worker published and a CF_API_TOKEN configured. The logic and tests live in dynamic/worker/.',
     },
     selfscan: {
       title: 'Live self-scan',

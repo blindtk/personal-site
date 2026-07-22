@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SelfScan from '../tools/SelfScan.astro';
+import CfAnalytics from '../CfAnalytics.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -92,6 +93,14 @@ const scanners = [
     ) : (
       <p class="note warn">{ev.commitPending}</p>
     )}
+  </section>
+
+  <section aria-labelledby="h-cf">
+    <div class="section-title">
+      <h2 id="h-cf">{ev.cfTitle}</h2>
+    </div>
+    <p class="intro">{ev.cfIntro}</p>
+    <CfAnalytics lang={lang} />
   </section>
 
   <section aria-labelledby="h-headers">
