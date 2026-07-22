@@ -16,6 +16,7 @@ const c = t(lang).cfanalytics;
 
 const jsStrings = {
   lastCheck: c.lastCheck,
+  countriesEmpty: c.topCountriesEmpty,
 };
 ---
 
@@ -31,6 +32,20 @@ const jsStrings = {
     </div>
 
     <p class="note">{c.workerNote} <span class="mono" id="cfa-worker-requests">—</span> {c.workerNoteSuffix}</p>
+
+    <p class="cfa-countries-title mono">{c.topCountriesTitle}</p>
+    <div class="table-scroll">
+      <table class="result-table cfa-table">
+        <thead>
+          <tr>
+            <th>{c.tableCountry}</th>
+            <th>{c.tableThreats}</th>
+          </tr>
+        </thead>
+        <tbody id="cfa-country-rows"></tbody>
+      </table>
+    </div>
+
     <p class="note">🛰️ {c.privacyNote}</p>
     <p class="scan-ts" id="cfa-ts"></p>
   </div>
@@ -47,6 +62,31 @@ const jsStrings = {
   };
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
+  function renderCountries(topCountries: { country: string; threats: number }[]) {
+    const rowsEl = document.getElementById('cfa-country-rows')!;
+    rowsEl.replaceChildren();
+    if (!topCountries || topCountries.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 2;
+      td.className = 'hp-loading';
+      td.textContent = S.countriesEmpty;
+      tr.append(td);
+      rowsEl.append(tr);
+      return;
+    }
+    for (const { country, threats } of topCountries) {
+      const tr = document.createElement('tr');
+      const cty = document.createElement('td');
+      cty.className = 'mono';
+      cty.textContent = country;
+      const thr = document.createElement('td');
+      thr.textContent = String(threats);
+      tr.append(cty, thr);
+      rowsEl.append(tr);
+    }
+  }
+
   async function load() {
     try {
       const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
@@ -61,6 +101,7 @@ const jsStrings = {
       setText('cfa-threats', String(zone.threats ?? 0));
       setText('cfa-errors', pct(worker.errorRatio ?? 0));
       setText('cfa-worker-requests', (worker.requests ?? 0).toLocaleString(lang));
+      renderCountries(zone.topCountries ?? []);
 
       document.getElementById('cfa-stat-threats')!.classList.toggle('amber', (zone.threats ?? 0) > 0);
       document.getElementById('cfa-stat-errors')!.classList.toggle('amber', (worker.errorRatio ?? 0) > 0);
@@ -78,3 +119,11 @@ const jsStrings = {
 
   load();
 </script>
+
+<style>
+  .cfa-countries-title {
+    margin: 1rem 0 0.4rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+</style>

@@ -237,6 +237,10 @@ export const ui = {
       statWorkerErrors: 'taxa de erro do Worker',
       workerNote: 'O Worker recebeu',
       workerNoteSuffix: 'pedidos na mesma janela.',
+      topCountriesTitle: 'Top países por ameaças bloqueadas · 7d',
+      tableCountry: 'país',
+      tableThreats: 'ameaças bloqueadas',
+      topCountriesEmpty: 'Sem ameaças bloqueadas com país identificado na janela — boas notícias.',
       lastCheck: 'última consulta à API',
       privacyNote:
         'Agregados diários desta zona e conta, via GraphQL Analytics API da Cloudflare — não é o Radar (esse é global e anónimo). Sem IPs nem dados de visitantes individuais; cache de 6 h no Worker.',
@@ -1059,6 +1063,10 @@ export const ui = {
       statWorkerErrors: 'Worker error rate',
       workerNote: 'The Worker received',
       workerNoteSuffix: 'requests in the same window.',
+      topCountriesTitle: 'Top countries by threats blocked · 7d',
+      tableCountry: 'country',
+      tableThreats: 'threats blocked',
+      topCountriesEmpty: 'No blocked threats with an identified country in this window — good news.',
       lastCheck: 'last API check',
       privacyNote:
         'Daily aggregates for this zone and account, via the Cloudflare GraphQL Analytics API — not Radar (that one is global and anonymous). No IPs or individual visitor data; 6 h cache in the Worker.',

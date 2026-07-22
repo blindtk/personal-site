@@ -984,7 +984,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   });
   const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
   assert.deepEqual(stats.zone, {
-    requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
+    requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4, topCountries: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -992,12 +992,60 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
 });
 
 test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
-  assert.deepEqual(parseCfStats({}).zone, { requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0 });
+  assert.deepEqual(parseCfStats({}).zone, {
+    requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0, topCountries: [],
+  });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
   // campo `sum` em falta numa linha não rebenta a soma das outras
   const partial = graphqlFixture({ zoneRows: [{ sum: { requests: 10 } }, {}] });
   assert.equal(parseCfStats(partial).zone.requests, 10);
+});
+
+test('parseCfStats: topCountries soma ameaças através dos dias, ordena e filtra XX/zero', () => {
+  const raw = graphqlFixture({
+    zoneRows: [
+      {
+        sum: {
+          requests: 100, threats: 12,
+          countryMap: [
+            { clientCountryName: 'CN', requests: 40, threats: 5 },
+            { clientCountryName: 'ru', requests: 20, threats: 3 }, // minúsculas normalizam
+            { clientCountryName: 'PT', requests: 30, threats: 0 }, // sem ameaças → fora
+            { clientCountryName: '??', requests: 5, threats: 9 }, // país inválido → XX → fora
+          ],
+        },
+      },
+      {
+        sum: {
+          requests: 50, threats: 6,
+          countryMap: [
+            { clientCountryName: 'CN', requests: 10, threats: 2 }, // acumula com o dia anterior
+            { clientCountryName: 'US', requests: 40, threats: 4 },
+          ],
+        },
+      },
+    ],
+  });
+  const stats = parseCfStats(raw);
+  assert.deepEqual(stats.zone.topCountries, [
+    { country: 'CN', threats: 7 },
+    { country: 'RU', threats: 3 },
+    { country: 'US', threats: 4 },
+  ].sort((a, b) => b.threats - a.threats));
+});
+
+test('parseCfStats: topCountries corta no limite (mais países do que o topo pedido)', () => {
+  const countryMap = Array.from({ length: 15 }, (_, i) => ({
+    clientCountryName: String.fromCharCode(65 + i, 65 + i), // AA, BB, CC...
+    requests: 10,
+    threats: 15 - i, // decrescente, para a ordenação ser previsível
+  }));
+  const raw = graphqlFixture({ zoneRows: [{ sum: { requests: 150, threats: 120, countryMap } }] });
+  const stats = parseCfStats(raw);
+  assert.equal(stats.zone.topCountries.length, 10);
+  assert.equal(stats.zone.topCountries[0].country, 'AA');
+  assert.equal(stats.zone.topCountries[0].threats, 15);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
