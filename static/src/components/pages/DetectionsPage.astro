@@ -239,6 +239,11 @@ const jsStrings = { copy: d.copy, copied: d.copied };
     white-space: pre;
   }
   .det-copy {
+    /* inline-flex + min-height: alvo de toque de 44px, mesma técnica do
+       .btn.small global — esta classe é local e não herdava dessa correção. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     position: absolute;
     top: 0.55rem;
     right: 0.55rem;
