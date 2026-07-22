@@ -582,7 +582,9 @@ a.card:hover {
   gap: 1rem;
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--faint);
+  /* --muted e não --faint: são rótulos reais de secção (IDENTIDADE, STATS,
+     painéis do Espelho), não decoração — --faint fica abaixo de 4.5:1. */
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   margin-bottom: 0.8rem;
@@ -1210,7 +1212,8 @@ select {
 }
 .journey .note {
   font-size: 0.75rem;
-  color: var(--faint);
+  /* --muted e não --faint: é a nota real de cada paragem, não decoração. */
+  color: var(--muted);
   margin-top: 0.35rem;
   max-width: 15rem;
 }
@@ -1265,7 +1268,8 @@ select {
   border-color: var(--accent);
 }
 .filter-chip .count {
-  color: var(--faint);
+  /* --muted e não --faint: é a contagem real de repos por categoria. */
+  color: var(--muted);
   margin-left: 0.25rem;
 }
 .repo-card .stars {
@@ -1284,7 +1288,8 @@ select {
 }
 .sort-label {
   font-size: 0.72rem;
-  color: var(--faint);
+  /* --muted e não --faint: é o rótulo real "Ordenar:", não decoração. */
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -1389,7 +1394,8 @@ select {
 .post-meta {
   font-family: var(--mono);
   font-size: 0.8rem;
-  color: var(--faint);
+  /* --muted e não --faint: é a data/tags reais do post, não decoração. */
+  color: var(--muted);
   margin-bottom: 2rem;
 }
 
@@ -1531,7 +1537,10 @@ select {
   padding: 0.6rem 0.4rem 0.2rem;
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--faint);
+  /* --muted e não --faint: é o texto que explica o que as cores do mapa
+     significam — se ele próprio for ilegível, a regra "não só por cor"
+     deixa de valer. */
+  color: var(--muted);
 }
 .map-legend .mk { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
 .map-legend .mk.g { background: var(--accent); }
@@ -1659,7 +1668,8 @@ select {
   flex-wrap: wrap;
   margin-top: 0.9rem;
 }
-.scan-ts { font-size: 0.72rem; color: var(--faint); }
+/* --muted e não --faint: é o timestamp real do último scan. */
+.scan-ts { font-size: 0.72rem; color: var(--muted); }
 
 /* ---------- Violações CSP (página Segurança) ---------- */
 
@@ -1699,7 +1709,9 @@ select {
   flex-wrap: wrap;
   margin-top: 0.6rem;
   font-size: 0.72rem;
-  color: var(--faint);
+  /* --muted e não --faint: mesma razão do .map-legend — é o texto que
+     substitui a cor como sinal, tem de ser legível por si só. */
+  color: var(--muted);
 }
 .cspv-legend .mk {
   display: inline-block;
@@ -1789,7 +1801,8 @@ select {
   width: auto;
   white-space: nowrap;
 }
-.ctw-date { white-space: nowrap; color: var(--faint); }
+/* --muted e não --faint: é a data real de emissão do certificado. */
+.ctw-date { white-space: nowrap; color: var(--muted); }
 .ctw-names { color: var(--muted); }
 
 /* ---------- Heatmap ATT&CK ---------- */
@@ -1818,7 +1831,8 @@ select {
 .atk-legend .sw.prod { background: var(--accent-dim); border-color: var(--accent); }
 .atk-legend .sw.exp { background: rgba(120, 200, 90, 0.12); border-color: #5f9e46; }
 .atk-legend .sw.off { background: var(--bg-raise-2); }
-.atk-legend .atk-count { margin-left: auto; color: var(--faint); }
+/* --muted e não --faint: é a contagem real de técnicas cobertas. */
+.atk-legend .atk-count { margin-left: auto; color: var(--muted); }
 
 .atk-hint {
   font-family: var(--mono);
@@ -1958,7 +1972,9 @@ select {
 .site-footer {
   border-top: 1px solid var(--border);
   padding: 1.6rem 0 2.2rem;
-  color: var(--faint);
+  /* --muted e não --faint: é o copyright/rodapé real de todas as páginas,
+     não decoração — --faint fica abaixo de 4.5:1. */
+  color: var(--muted);
   font-family: var(--mono);
   font-size: 0.78rem;
 }
@@ -1990,7 +2006,8 @@ select {
 .grade-sub {
   font-family: var(--mono);
   font-size: 0.7rem;
-  color: var(--faint);
+  /* --muted e não --faint: é a contagem real de avisos/ok/diretivas. */
+  color: var(--muted);
   margin-top: 0.5rem;
   line-height: 1.5;
 }
@@ -2022,12 +2039,15 @@ select {
 .csp-dir { color: var(--accent-3); white-space: nowrap; }
 .result-table td .tok-bad { color: var(--danger); font-weight: 600; }
 .result-table td .tok-warn { color: var(--accent-2); }
-.result-table td .tok-miss { color: var(--faint); font-style: italic; }
+/* --muted e não --faint: é um achado real (diretiva CSP em falta), o
+   trabalho da ferramenta é mostrar isto de forma legível. */
+.result-table td .tok-miss { color: var(--muted); font-style: italic; }
 .verdict { white-space: nowrap; font-size: 0.82rem; font-family: var(--mono); }
 .verdict.ok { color: var(--accent); }
 .verdict.warn { color: var(--accent-2); }
 .verdict.bad { color: var(--danger); }
-.verdict.miss { color: var(--faint); }
+/* --muted e não --faint: mesma razão do .tok-miss acima. */
+.verdict.miss { color: var(--muted); }
 
 /* ---------- Espelho (/ferramentas/mirror) ---------- */
 
@@ -2079,13 +2099,15 @@ select {
 .mirror-kv .v { font-family: var(--mono); color: var(--text); word-break: break-word; }
 .mirror-kv .v.hl { color: var(--accent); }
 .mirror-kv .v.warn { color: var(--accent-2); }
-.mirror-kv .v.dim { color: var(--faint); }
+/* --muted e não --faint: é um valor real (ex. IP não mostrado), não
+   decoração — de-ênfase é do design, não deve ser ilegibilidade. */
+.mirror-kv .v.dim { color: var(--muted); }
 
 .mirror-foot {
   margin-top: 0.9rem;
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--faint);
+  color: var(--muted);
 }
 .mirror-foot[hidden] { display: none; }
 
@@ -2132,7 +2154,9 @@ select {
 .pk-step.done .pk-n { color: var(--accent); border-color: var(--accent); }
 .pk-step.active .pk-n { color: var(--accent-2); border-color: var(--accent-2); }
 .pk-shead h2 { margin: 0; font-size: 0.95rem; }
-.pk-state { margin-left: auto; font-size: 0.75rem; color: var(--faint); }
+/* --muted e não --faint: é o estado real do passo, não decoração (os
+   estados done/active já têm cor própria abaixo, esta é a base/pendente). */
+.pk-state { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
 .pk-step.done .pk-state { color: var(--accent); }
 .pk-step.active .pk-state { color: var(--accent-2); }
 .pk-exp { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.88rem; max-width: 46rem; }
@@ -2167,7 +2191,9 @@ select {
   border-radius: 5px;
   padding: 0.2rem 0.55rem;
   border: 1px solid var(--border-strong);
-  color: var(--faint);
+  /* --muted e não --faint: são as flags reais do autenticador (UP/UV/BE/
+     BS/ED), conteúdo educativo da ferramenta, não decoração. */
+  color: var(--muted);
   background: var(--bg-raise-2);
 }
 .pk-fchip.on { color: var(--accent); border-color: rgba(61, 220, 132, 0.4); background: var(--accent-dim); }
