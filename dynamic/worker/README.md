@@ -20,7 +20,7 @@ CSP. Um só Cloudflare Worker + um namespace KV.
 | `POST /api/csp-report` | Recetor de violações CSP (`report-uri`/Reporting API) | — | 10/min por cliente + cap global 300/h |
 | `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
 | `GET /api/ct` | Vigia CT: certificados emitidos p/ o domínio (logs de Certificate Transparency, 90 d) | 6 h | — |
-| `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | — |
+| `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona (+ top países por ameaças) + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | — |
 | `GET /api/mirror` | Espelho: a "vista do servidor" deste pedido (TLS/ASN/país/UA, **nunca o IP**) | — (per-request, `no-store`) | 30/min por cliente |
 | `GET /api/health` | Liveness | — | — |
 
@@ -80,9 +80,18 @@ persistidos (`src/lib/ct.js`, coberto por teste).
 ## Estado da Cloudflare (`/api/cf-stats`)
 
 Painel da página Provas com métricas reais desta zona/Worker — pedidos,
-taxa de cache, ameaças bloqueadas pelo edge da Cloudflare, invocações e
-erros do próprio Worker — via **GraphQL Analytics API**
+taxa de cache, ameaças bloqueadas pelo edge da Cloudflare (com uma tabela
+dos países de origem com mais ameaças bloqueadas nos últimos 7 dias),
+invocações e erros do próprio Worker — via **GraphQL Analytics API**
 (`api.cloudflare.com/client/v4/graphql`).
+
+A tabela de países soma o campo `countryMap` de cada dia da janela (é por
+dia, não por período — a agregação é feita aqui, em `topCountriesByThreats`
+em `src/lib/cf-analytics.js`), filtra países sem nenhuma ameaça e códigos
+inválidos, e mostra os 10 com mais ameaças bloqueadas. É um sinal mais
+largo do que o "mapa de tráfego hostil" do Honeypot (`/api/map`): esse só
+regista quem bateu nos paths-isco; isto cobre o que o WAF/edge da
+Cloudflare bloqueou na zona **inteira**.
 
 **Isto não é o Cloudflare Radar.** O Radar é agregado global e anónimo de
 todos os clientes Cloudflare — não sabe nada sobre este domínio em
