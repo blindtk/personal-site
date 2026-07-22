@@ -12,8 +12,11 @@
 //
 // Como em ct.js: parse (puro, testável) separado de fetch (rede).
 
+import { normalizeCountry } from './sanitize.js';
+
 const DAY_MS = 86400_000;
 export const CF_STATS_WINDOW_DAYS = 7;
+export const CF_STATS_TOP_COUNTRIES = 10;
 
 // NOTA: os nomes de campos abaixo (httpRequests1dGroups, workersInvocationsAdaptive,
 // etc.) seguem o schema documentado da GraphQL Analytics API da Cloudflare
@@ -27,7 +30,10 @@ const CF_STATS_QUERY = `
     viewer {
       zones(filter: { zoneTag: $zoneTag }) {
         httpRequests1dGroups(limit: 8, filter: { date_geq: $since, date_leq: $until }) {
-          sum { requests cachedRequests bytes threats }
+          sum {
+            requests cachedRequests bytes threats
+            countryMap { clientCountryName requests threats }
+          }
         }
       }
       accounts(filter: { accountTag: $accountTag }) {
@@ -47,6 +53,29 @@ function isoDate(ms) {
 function sumField(groups, field) {
   if (!Array.isArray(groups)) return 0;
   return groups.reduce((acc, g) => acc + (Number(g?.sum?.[field]) || 0), 0);
+}
+
+/**
+ * Soma as ameaças bloqueadas por país através de várias linhas diárias
+ * (cada dia traz o seu próprio `countryMap`) e devolve os `limit` países
+ * com mais ameaças, do maior para o menor. País inválido (não ISO-3166-1
+ * alpha-2) vira 'XX' via normalizeCountry — mas 'XX' e países sem nenhuma
+ * ameaça ficam de fora do ranking (não interessa ao painel).
+ */
+function topCountriesByThreats(groups, limit = CF_STATS_TOP_COUNTRIES) {
+  const byCountry = new Map();
+  for (const g of Array.isArray(groups) ? groups : []) {
+    for (const row of Array.isArray(g?.sum?.countryMap) ? g.sum.countryMap : []) {
+      const country = normalizeCountry(row?.clientCountryName);
+      const threats = Number(row?.threats) || 0;
+      if (country === 'XX' || threats <= 0) continue;
+      byCountry.set(country, (byCountry.get(country) ?? 0) + threats);
+    }
+  }
+  return [...byCountry.entries()]
+    .map(([country, threats]) => ({ country, threats }))
+    .sort((a, b) => b.threats - a.threats)
+    .slice(0, limit);
 }
 
 /**
@@ -77,6 +106,7 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       cacheRatio: requests > 0 ? cachedRequests / requests : 0,
       bytes,
       threats,
+      topCountries: topCountriesByThreats(zoneGroups),
     },
     worker: {
       requests: workerRequests,
