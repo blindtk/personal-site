@@ -438,11 +438,30 @@ export default {
 
       // Estado da zona Cloudflare: pedidos/cache/ameaças da zona e
       // invocações/erros deste Worker, via GraphQL Analytics API (dados só
-      // desta zona/conta — não é o Radar, que é global e anónimo). Sem
-      // input de visitantes (a query é fixa), por isso sem rate limit
-      // próprio — a cache de 6h já limita a frequência com que se bate na
-      // API da Cloudflare.
+      // desta zona/conta — não é o Radar, que é global e anónimo). A cache
+      // de 6h já limita a frequência com que se bate na API da Cloudflare;
+      // o ?refresh=1 (mesmo padrão do /api/scan) força um pedido novo antes
+      // disso — por aceitar input (o parâmetro), leva o mesmo rate limit
+      // apertado.
       if (path === '/api/cf-stats') {
+        const refresh = url.searchParams.get('refresh') === '1';
+        if (refresh) {
+          const { allowed, retryAfterSec } = await rateLimit(env, request, 'cfstats', {
+            windowMs: 10 * 60_000,
+            max: 3,
+          });
+          if (!allowed) {
+            return json({ error: 'rate_limited' }, request, env, {
+              status: 429,
+              extra: { 'retry-after': String(retryAfterSec) },
+            });
+          }
+          const data = await fetchCfStats(env);
+          await env.KV.put('cache:cfstats', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
+            expirationTtl: 6 * 3600 + 60,
+          });
+          return json(data, request, env);
+        }
         const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
         return json(data, request, env, { maxAge: 1800 });
       }

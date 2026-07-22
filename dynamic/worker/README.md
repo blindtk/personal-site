@@ -20,7 +20,7 @@ CSP. Um só Cloudflare Worker + um namespace KV.
 | `POST /api/csp-report` | Recetor de violações CSP (`report-uri`/Reporting API) | — | 10/min por cliente + cap global 300/h |
 | `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
 | `GET /api/ct` | Vigia CT: certificados emitidos p/ o domínio (logs de Certificate Transparency, 90 d) | 6 h | — |
-| `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona (+ top países por ameaças) + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | — |
+| `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona (+ top países por ameaças) + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Espelho: a "vista do servidor" deste pedido (TLS/ASN/país/UA, **nunca o IP**) | — (per-request, `no-store`) | 30/min por cliente |
 | `GET /api/health` | Liveness | — | — |
 
@@ -107,8 +107,13 @@ ver `wrangler.toml`) e do secret `CF_API_TOKEN` (scope `Zone Analytics:Read`
 Tokens de API). Sem qualquer um destes, a rota devolve 502 e o painel
 mostra o fallback — mesmo padrão do vigia CT sem `SCAN_TARGET`.
 
-Sem input de visitantes (a query é fixa), por isso sem rate limit próprio;
-a cache de 6h já limita a frequência com que se bate na API da Cloudflare.
+A cache de 6h já limita a frequência com que se bate na API da Cloudflare
+no caminho normal. `?refresh=1` força um pedido novo antes disso — útil
+para não esperar 6h depois de mudar o shape dos dados (ex.: ao adicionar o
+`topCountries`, entradas antigas na KV ficam sem esse campo até expirarem
+ou até um refresh manual as substituir) — e, por aceitar input (o próprio
+parâmetro), leva o mesmo rate limit apertado do `/api/scan` (3/10 min).
+
 Lógica pura em `src/lib/cf-analytics.js` (parse da resposta GraphQL, testado
 com vetores conhecidos — qualquer campo em falta ou schema que mude do lado
 da Cloudflare degrada para 0, nunca rebenta o painel).
