@@ -56,8 +56,8 @@ DEPLOY_TS = ""
 # eles a rota fica desativada (502 → painel mostra o fallback). IDs em
 # dash.cloudflare.com → domínio → Visão geral, secção "API" no fundo da
 # página lateral direita.
-CF_ZONE_TAG = ""
-CF_ACCOUNT_ID = ""
+CF_ZONE_TAG = "b06be445835cdfec46c6084badf84d5c"
+CF_ACCOUNT_ID = "336ca891b77258bead7b06fb0f9a28da"
 # Nome do script deste Worker na conta. Bate com `name` no topo deste
 # ficheiro — só precisa de mudar se um dos dois for renomeado.
 CF_WORKER_SCRIPT = "personal-site-worker"
