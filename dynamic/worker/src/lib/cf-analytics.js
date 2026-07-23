@@ -231,6 +231,9 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     until: isoDate(until),
     sinceDt: new Date(since).toISOString(),
     untilDt: new Date(until).toISOString(),
+    // Janela de 23h para os datasets adaptativos: no Free têm retenção de 24h
+    // e recusam intervalos > 1d ("cannot request a time range wider than 1d").
+    since24hDt: new Date(now - 23 * 3600_000).toISOString(),
   };
 
   const post = (query) => fetch('https://api.cloudflare.com/client/v4/graphql', {
@@ -285,20 +288,21 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     ),
     probeRaw(
       post,
-      `query($zoneTag: String!, $sinceDt: Time!, $untilDt: Time!) {
+      `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
         viewer { zones(filter: { zoneTag: $zoneTag }) {
-          firewallEventsAdaptiveGroups(limit: 3, filter: { datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
+          firewallEventsAdaptiveGroups(limit: 100, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
             count dimensions { action source }
           }
         } }
       }`,
-      (raw) => raw?.data?.viewer?.zones?.[0]?.firewallEventsAdaptiveGroups ?? null,
+      (raw) => (raw?.data?.viewer?.zones?.[0]?.firewallEventsAdaptiveGroups ?? [])
+        .map((r) => ({ action: r?.dimensions?.action, source: r?.dimensions?.source, count: r?.count })),
     ),
     probeRaw(
       post,
-      `query($zoneTag: String!, $sinceDt: Time!, $untilDt: Time!) {
+      `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
         viewer { zones(filter: { zoneTag: $zoneTag }) {
-          httpRequestsAdaptiveGroups(limit: 5, filter: { datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
+          httpRequestsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
             count dimensions { edgeResponseStatus }
           }
         } }
