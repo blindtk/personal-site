@@ -238,17 +238,28 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
   const stats = parseCfStats(raw, { now, windowDays });
 
   // Detalhe por origem/ação — best-effort, isolado do núcleo acima.
+  // NOTA (TEMPORÁRIO): enquanto o dataset de firewall não devolve linhas em
+  // produção, anexamos um `firewallDebug` à resposta para se ver, só de abrir
+  // o URL, o que a query devolveu (status HTTP, erros GraphQL, nº de linhas).
+  // Não expõe IPs nem dados de visitantes — só o diagnóstico da query. A
+  // remover assim que o painel estiver a mostrar os tipos.
+  const firewallDebug = { httpStatus: null, graphqlErrors: [], rows: null };
   try {
     const fwRes = await post(CF_FIREWALL_QUERY);
-    if (fwRes.ok) {
-      const fwRaw = await fwRes.json();
-      if (!(Array.isArray(fwRaw?.errors) && fwRaw.errors.length > 0)) {
-        Object.assign(stats.zone, firewallBreakdown(fwRaw));
-      }
+    firewallDebug.httpStatus = fwRes.status;
+    const fwRaw = fwRes.ok ? await fwRes.json() : null;
+    if (Array.isArray(fwRaw?.errors)) {
+      firewallDebug.graphqlErrors = fwRaw.errors.map((e) => String(e?.message ?? e)).slice(0, 5);
     }
-  } catch {
-    // Timeout/rede/permissão: fica com as quebras vazias de parseCfStats.
+    const groups = fwRaw?.data?.viewer?.zones?.[0]?.firewallEventsAdaptiveGroups;
+    firewallDebug.rows = Array.isArray(groups) ? groups.length : null;
+    if (fwRes.ok && firewallDebug.graphqlErrors.length === 0) {
+      Object.assign(stats.zone, firewallBreakdown(fwRaw));
+    }
+  } catch (e) {
+    firewallDebug.graphqlErrors = [String(e?.message ?? e)];
   }
+  stats.zone.firewallDebug = firewallDebug;
 
   return stats;
 }
