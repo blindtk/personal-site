@@ -1,4 +1,9 @@
-// Renovate (substitui o Dependabot — não correr os dois em simultâneo).
+// Renovate faz os *version updates* (rotina + majors). O Dependabot fica
+// ligado SÓ para *security updates* — é complementar, não concorrente: cobre
+// as vulnerabilidades em dependências transitivas (fundo do lock file), que o
+// Renovate por design não abre PR (só age nas diretas do package.json). Ex.:
+// sharp/libvips puxado pelo wrangler em dynamic/worker/. NÃO ligar o Dependabot
+// *version updates* — esses sim colidiriam com o Renovate. Ver dynamic/PLAN.md.
 // Requer a app "Renovate" (Mend) instalada no repositório:
 //   https://github.com/apps/renovate
 {

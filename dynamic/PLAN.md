@@ -11,6 +11,22 @@
 
 ## Decisões registadas
 
+- **2026-07 — Dependabot security-only a par do Renovate** (decisão do dono do
+  repo): o Renovate faz todos os *version updates* (rotina agrupada + majors),
+  mas fica ligado também o **Dependabot security updates** — só para
+  vulnerabilidades. Não é contradição com o "substitui o Dependabot" da config:
+  o Renovate, por design, só abre PRs de segurança para dependências **diretas**
+  (as do `package.json`); as **transitivas** (fundo do `package-lock.json`) não
+  são alcançadas por ele — nem com `osvVulnerabilityAlerts`. O Dependabot
+  security-only tapa esse buraco porque analisa o lock file inteiro. Caso que
+  motivou a decisão: `sharp`/`libvips` (High, CVE-2026-33327/33328/35590/35591),
+  transitiva puxada pelo `wrangler` (devDependency) em `dynamic/worker/` — o
+  Renovate nunca a listaria. O que **não** se liga: Dependabot *version updates*
+  (colidiria com o Renovate) e as *Dependabot rules* de auto-dismiss
+  (a "dismiss low-impact dev-scoped" dispensaria alertas como o do sharp e
+  anularia o próprio security update; malware nunca se auto-dispensa). Config do
+  Renovate marca os CVEs com label `security` (`vulnerabilityAlerts`).
+
 - **2026-07 — Verificador de passwords comprometidas (k-anonimato)** (aprovado
   pelo dono do repo): ferramenta educativa que verifica se uma password aparece
   em fugas conhecidas via *range API* do Have I Been Pwned, **sem a password
