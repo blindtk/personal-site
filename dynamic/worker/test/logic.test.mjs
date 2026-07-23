@@ -20,7 +20,7 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
-import { parseCfStats } from '../src/lib/cf-analytics.js';
+import { parseCfStats, firewallBreakdown } from '../src/lib/cf-analytics.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
@@ -1050,7 +1050,7 @@ test('parseCfStats: topCountries corta no limite (mais países do que o topo ped
   assert.equal(stats.zone.topCountries[0].threats, 15);
 });
 
-test('parseCfStats: threatsBySource/ByAction somam count, ordenam e excluem allow', () => {
+test('firewallBreakdown: threatsBySource/ByAction somam count, ordenam e excluem allow', () => {
   const raw = graphqlFixture({
     firewallRows: [
       { count: 400, dimensions: { action: 'block', source: 'firewallManaged' } },
@@ -1063,37 +1063,40 @@ test('parseCfStats: threatsBySource/ByAction somam count, ordenam e excluem allo
       { count: 0, dimensions: { action: 'block', source: 'uaBlock' } },
     ],
   });
-  const stats = parseCfStats(raw);
-  assert.deepEqual(stats.zone.threatsBySource, [
+  const fw = firewallBreakdown(raw);
+  assert.deepEqual(fw.threatsBySource, [
     { key: 'firewallManaged', count: 500 }, // 400 + 100 acumulam pela origem
     { key: 'rateLimit', count: 150 },
     { key: 'botManagement', count: 26 },
   ]);
-  assert.deepEqual(stats.zone.threatsByAction, [
+  assert.deepEqual(fw.threatsByAction, [
     { key: 'block', count: 550 }, // 400 + 150
     { key: 'managed_challenge', count: 100 },
     { key: 'jschallenge', count: 26 },
   ]);
 });
 
-test('parseCfStats: dimensão em falta vira "unknown", campo ausente degrada para []', () => {
+test('firewallBreakdown: dimensão em falta vira "unknown"; shape ausente/errors degrada para []', () => {
   const raw = graphqlFixture({
     firewallRows: [
       { count: 5, dimensions: { action: 'block' } }, // sem source → unknown
       { count: 3, dimensions: { source: 'rateLimit' } }, // sem action → conta (não é allow)
     ],
   });
-  const stats = parseCfStats(raw);
-  assert.deepEqual(stats.zone.threatsBySource, [
+  const fw = firewallBreakdown(raw);
+  assert.deepEqual(fw.threatsBySource, [
     { key: 'unknown', count: 5 },
     { key: 'rateLimit', count: 3 },
   ]);
-  assert.deepEqual(stats.zone.threatsByAction, [
+  assert.deepEqual(fw.threatsByAction, [
     { key: 'block', count: 5 },
     { key: 'unknown', count: 3 },
   ]);
-  // firewallEventsAdaptiveGroups ausente (schema antigo/deriva) não rebenta
-  assert.deepEqual(parseCfStats({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).zone.threatsBySource, []);
+  // firewallEventsAdaptiveGroups ausente (schema antigo/deriva) ou resposta
+  // vazia não rebenta — devolve listas vazias.
+  assert.deepEqual(firewallBreakdown({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).threatsBySource, []);
+  assert.deepEqual(firewallBreakdown({}).threatsByAction, []);
+  assert.deepEqual(firewallBreakdown(null).threatsBySource, []);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
@@ -1157,6 +1160,67 @@ test('/api/cf-stats?refresh=1: ignora a cache existente e escreve uma entrada no
     assert.equal(data.zone.requests, 99); // veio do fetch novo, não da cache antiga
     const stored = JSON.parse(env.KV.store.get('cache:cfstats'));
     assert.equal(stored.data.zone.requests, 99); // a cache ficou atualizada
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats: o detalhe de firewall (2.º pedido) preenche as quebras', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptiveGroups');
+    if (isFw) {
+      return {
+        ok: true,
+        json: async () => ({ data: { viewer: { zones: [{ firewallEventsAdaptiveGroups: [
+          { count: 500, dimensions: { action: 'block', source: 'firewallManaged' } },
+          { count: 176, dimensions: { action: 'managed_challenge', source: 'rateLimit' } },
+        ] }] } } }),
+      };
+    }
+    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 676 } }] }) };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats'), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.zone.threats, 676);
+    assert.deepEqual(data.zone.threatsBySource, [
+      { key: 'firewallManaged', count: 500 },
+      { key: 'rateLimit', count: 176 },
+    ]);
+    assert.deepEqual(data.zone.threatsByAction, [
+      { key: 'block', count: 500 },
+      { key: 'managed_challenge', count: 176 },
+    ]);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats: erro só no dataset de firewall mantém o núcleo (quebras vazias, sem 502)', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptiveGroups');
+    // Simula Logs:Read em falta: a GraphQL API devolve errors no 2.º pedido.
+    if (isFw) return { ok: true, json: async () => ({ errors: [{ message: 'authentication error [code: 10000]' }] }) };
+    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 5 } }] }) };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats'), env);
+    assert.equal(res.status, 200); // núcleo intacto — NÃO 502
+    const data = await res.json();
+    assert.equal(data.zone.threats, 5);
+    assert.deepEqual(data.zone.threatsBySource, []);
+    assert.deepEqual(data.zone.threatsByAction, []);
   } finally {
     globalThis.fetch = orig;
   }
