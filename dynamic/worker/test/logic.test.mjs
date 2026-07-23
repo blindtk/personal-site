@@ -960,11 +960,11 @@ test('/api/ct: uma query falhada degrada para a outra; as duas → 502', async (
 
 // ---------- Estado da Cloudflare (/api/cf-stats) ----------
 
-function graphqlFixture({ zoneRows = [], workerRows = [] } = {}) {
+function graphqlFixture({ zoneRows = [], workerRows = [], firewallRows = [] } = {}) {
   return {
     data: {
       viewer: {
-        zones: [{ httpRequests1dGroups: zoneRows }],
+        zones: [{ httpRequests1dGroups: zoneRows, firewallEventsAdaptiveGroups: firewallRows }],
         accounts: [{ workersInvocationsAdaptive: workerRows }],
       },
     },
@@ -984,7 +984,8 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   });
   const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
   assert.deepEqual(stats.zone, {
-    requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4, topCountries: [],
+    requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
+    topCountries: [], threatsBySource: [], threatsByAction: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -993,7 +994,8 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
 
 test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
   assert.deepEqual(parseCfStats({}).zone, {
-    requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0, topCountries: [],
+    requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
+    topCountries: [], threatsBySource: [], threatsByAction: [],
   });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
@@ -1046,6 +1048,52 @@ test('parseCfStats: topCountries corta no limite (mais países do que o topo ped
   assert.equal(stats.zone.topCountries.length, 10);
   assert.equal(stats.zone.topCountries[0].country, 'AA');
   assert.equal(stats.zone.topCountries[0].threats, 15);
+});
+
+test('parseCfStats: threatsBySource/ByAction somam count, ordenam e excluem allow', () => {
+  const raw = graphqlFixture({
+    firewallRows: [
+      { count: 400, dimensions: { action: 'block', source: 'firewallManaged' } },
+      { count: 100, dimensions: { action: 'managed_challenge', source: 'firewallManaged' } },
+      { count: 150, dimensions: { action: 'block', source: 'rateLimit' } },
+      { count: 26, dimensions: { action: 'jschallenge', source: 'botManagement' } },
+      // action=allow nunca conta (não é mitigação) — nem para source nem para action
+      { count: 9999, dimensions: { action: 'allow', source: 'firewallCustom' } },
+      // count 0 é ignorado
+      { count: 0, dimensions: { action: 'block', source: 'uaBlock' } },
+    ],
+  });
+  const stats = parseCfStats(raw);
+  assert.deepEqual(stats.zone.threatsBySource, [
+    { key: 'firewallManaged', count: 500 }, // 400 + 100 acumulam pela origem
+    { key: 'rateLimit', count: 150 },
+    { key: 'botManagement', count: 26 },
+  ]);
+  assert.deepEqual(stats.zone.threatsByAction, [
+    { key: 'block', count: 550 }, // 400 + 150
+    { key: 'managed_challenge', count: 100 },
+    { key: 'jschallenge', count: 26 },
+  ]);
+});
+
+test('parseCfStats: dimensão em falta vira "unknown", campo ausente degrada para []', () => {
+  const raw = graphqlFixture({
+    firewallRows: [
+      { count: 5, dimensions: { action: 'block' } }, // sem source → unknown
+      { count: 3, dimensions: { source: 'rateLimit' } }, // sem action → conta (não é allow)
+    ],
+  });
+  const stats = parseCfStats(raw);
+  assert.deepEqual(stats.zone.threatsBySource, [
+    { key: 'unknown', count: 5 },
+    { key: 'rateLimit', count: 3 },
+  ]);
+  assert.deepEqual(stats.zone.threatsByAction, [
+    { key: 'block', count: 5 },
+    { key: 'unknown', count: 3 },
+  ]);
+  // firewallEventsAdaptiveGroups ausente (schema antigo/deriva) não rebenta
+  assert.deepEqual(parseCfStats({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).zone.threatsBySource, []);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {

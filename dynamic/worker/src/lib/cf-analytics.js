@@ -17,6 +17,10 @@ import { normalizeCountry } from './sanitize.js';
 const DAY_MS = 86400_000;
 export const CF_STATS_WINDOW_DAYS = 7;
 export const CF_STATS_TOP_COUNTRIES = 10;
+// Quantas linhas por tipo mostrar no painel (origens/ações são poucas na
+// prática; este teto só evita uma lista infinita se a Cloudflare devolver
+// muitas combinações).
+export const CF_STATS_TOP_TYPES = 10;
 
 // NOTA: os nomes de campos abaixo (httpRequests1dGroups, workersInvocationsAdaptive,
 // etc.) seguem o schema documentado da GraphQL Analytics API da Cloudflare
@@ -34,6 +38,10 @@ const CF_STATS_QUERY = `
             requests cachedRequests bytes threats
             countryMap { clientCountryName requests threats }
           }
+        }
+        firewallEventsAdaptiveGroups(limit: 200, filter: { datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
+          count
+          dimensions { action source }
         }
       }
       accounts(filter: { accountTag: $accountTag }) {
@@ -79,6 +87,37 @@ function topCountriesByThreats(groups, limit = CF_STATS_TOP_COUNTRIES) {
 }
 
 /**
+ * Agrega os eventos de firewall (WAF/edge) por uma dimensão — `action` (o que
+ * a Cloudflare fez: block, managed_challenge, jschallenge…) ou `source` (que
+ * sistema apanhou: firewallManaged, rateLimit, botManagement…). É isto que
+ * dá o *tipo* de ameaça/proteção que o contador cego `threats` do
+ * httpRequests1dGroups não distingue.
+ *
+ * O `firewallEventsAdaptiveGroups` traz uma linha por combinação de dimensões
+ * (aqui pedimos `action` + `source` juntas), com `count` de eventos. Somamos
+ * esse `count` pela dimensão pedida. Ações `allow` ficam de fora — não são
+ * uma mitigação, e o painel é sobre o que foi *travado*. Chave em falta vira
+ * 'unknown' para os totais continuarem honestos. Devolve os `limit` tipos com
+ * mais eventos, do maior para o menor.
+ */
+function breakdownByDimension(groups, dimension, limit = CF_STATS_TOP_TYPES) {
+  const byKey = new Map();
+  for (const g of Array.isArray(groups) ? groups : []) {
+    const action = g?.dimensions?.action;
+    if (action === 'allow') continue;
+    const count = Number(g?.count) || 0;
+    if (count <= 0) continue;
+    const raw = g?.dimensions?.[dimension];
+    const key = typeof raw === 'string' && raw.length > 0 ? raw : 'unknown';
+    byKey.set(key, (byKey.get(key) ?? 0) + count);
+  }
+  return [...byKey.entries()]
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/**
  * Normaliza a resposta bruta da GraphQL Analytics API num resumo estável
  * para o painel. Qualquer coisa que não bata com o shape esperado vira 0 —
  * nunca lança, para o Worker poder responder mesmo que a Cloudflare mude o
@@ -88,7 +127,9 @@ function topCountriesByThreats(groups, limit = CF_STATS_TOP_COUNTRIES) {
 export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   const zones = raw?.data?.viewer?.zones;
   const accounts = raw?.data?.viewer?.accounts;
-  const zoneGroups = (Array.isArray(zones) ? zones[0] : null)?.httpRequests1dGroups ?? [];
+  const zone0 = Array.isArray(zones) ? zones[0] : null;
+  const zoneGroups = zone0?.httpRequests1dGroups ?? [];
+  const firewallGroups = zone0?.firewallEventsAdaptiveGroups ?? [];
   const workerGroups = (Array.isArray(accounts) ? accounts[0] : null)?.workersInvocationsAdaptive ?? [];
 
   const requests = sumField(zoneGroups, 'requests');
@@ -107,6 +148,8 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       bytes,
       threats,
       topCountries: topCountriesByThreats(zoneGroups),
+      threatsBySource: breakdownByDimension(firewallGroups, 'source'),
+      threatsByAction: breakdownByDimension(firewallGroups, 'action'),
     },
     worker: {
       requests: workerRequests,
