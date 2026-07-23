@@ -29,6 +29,7 @@ jobs:
       !startsWith(github.event.pull_request.user.login, 'renovate')
     runs-on: ubuntu-latest
     permissions:
+      contents: read         # gh pr diff --name-only lê o diff do PR
       pull-requests: write   # aplicar labels ao PR
     steps:
       - name: Aplicar labels por branch/área
