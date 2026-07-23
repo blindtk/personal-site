@@ -66,12 +66,11 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 #   npx wrangler secret put RATE_SALT    # segredo p/ o hash de rate limit
 #   npx wrangler secret put NVD_API_KEY  # opcional, sobe o rate limit do NVD
 #   npx wrangler secret put CF_API_TOKEN # token criado em dash.cloudflare.com → Meu perfil → Tokens de API
-#     · Scope mínimo (painel base: pedidos/cache/ameaças/Worker):
-#         "Account Analytics:Read" + "Zone Analytics:Read"
-#     · Para o detalhe por origem/ação (firewallEventsAdaptiveGroups) juntar
-#         também "Zone Logs:Read" — sem isto, o painel funciona na mesma, mas
-#         as tabelas "por origem/ação" ficam vazias (o sub-pedido é best-effort,
-#         ver src/lib/cf-analytics.js).
+#     · Scope necessário: "Account Analytics:Read" + "Zone Analytics:Read".
+#       Cobre TUDO, incluindo o detalhe por tipo de ameaça (threatPathingMap,
+#       que vive no httpRequests1dGroups). NÃO é preciso Logs:Read — isso só
+#       seria para o firewallEventsAdaptiveGroups, que exige plano Pro+ e por
+#       isso foi abandonado (ver src/lib/cf-analytics.js e dynamic/PLAN.md).
 #
 # Rotação do RATE_SALT: rodar SEMANALMENTE. Trocar o segredo invalida de
 # imediato TODOS os rate-limits acumulados (o hash deixa de bater) — é

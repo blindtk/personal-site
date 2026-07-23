@@ -65,3 +65,13 @@ npm run preview   # servir o build localmente
 2. Se mexeste nas ferramentas, testa a lógica com vetores conhecidos.
 3. Se adicionaste página nova, cria as **duas** versões (PT + EN) e o par em
    `routes.ts`.
+
+## Fluxo de PRs
+
+- **Um PR merged está fechado: nunca se lhe juntam commits novos.** Trabalho
+  novo é **sempre um PR novo** — reiniciar a branch a partir do `main`
+  (`git checkout -B <branch> origin/main`) e abrir novo PR. Nunca empilhar por
+  cima de história já merged.
+- Idealmente, **manter um PR aberto** até a feature estar confirmada (dá para
+  testar da branch sem merge: `git checkout <branch> && cd dynamic/worker &&
+  npx wrangler deploy`), para não andar a abrir vários PRs seguidos.

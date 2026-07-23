@@ -18,8 +18,7 @@ const jsStrings = {
   lastCheck: c.lastCheck,
   countriesEmpty: c.topCountriesEmpty,
   typesEmpty: c.typesEmpty,
-  sourceLabels: c.sourceLabels,
-  actionLabels: c.actionLabels,
+  typeLabels: c.typeLabels,
 };
 ---
 
@@ -49,29 +48,16 @@ const jsStrings = {
       </table>
     </div>
 
-    <p class="cfa-countries-title mono">{c.bySourceTitle}</p>
-    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelSource}>
+    <p class="cfa-countries-title mono">{c.byTypeTitle}</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelType}>
       <table class="result-table cfa-table">
         <thead>
           <tr>
-            <th>{c.tableSource}</th>
-            <th>{c.tableEvents}</th>
+            <th>{c.tableType}</th>
+            <th>{c.tableThreats}</th>
           </tr>
         </thead>
-        <tbody id="cfa-source-rows"></tbody>
-      </table>
-    </div>
-
-    <p class="cfa-countries-title mono">{c.byActionTitle}</p>
-    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelAction}>
-      <table class="result-table cfa-table">
-        <thead>
-          <tr>
-            <th>{c.tableAction}</th>
-            <th>{c.tableEvents}</th>
-          </tr>
-        </thead>
-        <tbody id="cfa-action-rows"></tbody>
+        <tbody id="cfa-type-rows"></tbody>
       </table>
     </div>
 
@@ -116,7 +102,7 @@ const jsStrings = {
     }
   }
 
-  // Tabela genérica de tipos (origem/ação): traduz a chave crua da API pela
+  // Tabela de tipos de ameaça: traduz a chave crua do threatPathingMap pela
   // etiqueta do i18n; chave desconhecida cai para o valor cru — o painel
   // nunca fica em branco por deriva de schema.
   function renderBreakdown(
@@ -162,8 +148,7 @@ const jsStrings = {
       setText('cfa-errors', pct(worker.errorRatio ?? 0));
       setText('cfa-worker-requests', (worker.requests ?? 0).toLocaleString(lang));
       renderCountries(zone.topCountries ?? []);
-      renderBreakdown('cfa-source-rows', zone.threatsBySource ?? [], S.sourceLabels ?? {});
-      renderBreakdown('cfa-action-rows', zone.threatsByAction ?? [], S.actionLabels ?? {});
+      renderBreakdown('cfa-type-rows', zone.threatsByType ?? [], S.typeLabels ?? {});
 
       document.getElementById('cfa-stat-threats')!.classList.toggle('amber', (zone.threats ?? 0) > 0);
       document.getElementById('cfa-stat-errors')!.classList.toggle('amber', (worker.errorRatio ?? 0) > 0);
