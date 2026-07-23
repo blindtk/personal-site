@@ -11,6 +11,27 @@
 
 ## Decisões registadas
 
+- **2026-07 — Detalhe de tipo no painel "Estado da Cloudflare"** (aprovado pelo
+  dono do repo): o card "ameaças bloqueadas (WAF/edge)" mostrava só um contador
+  cego (`threats` do `httpRequests1dGroups`), que não distingue *porque* é que
+  um pedido foi mitigado. Passa a haver quebra por **origem/sistema** (`source`:
+  Regras Geridas/WAF, Custom Rules, Rate limiting, Bot management, BIC…) e por
+  **ação** (`action`: block, managed_challenge, jschallenge…), tiradas do
+  dataset **`firewallEventsAdaptiveGroups`** (agregado, *zone-level*) da mesma
+  GraphQL Analytics API. **Não exige token novo**: está coberto pela permissão
+  *Zone Analytics:Read* que o `CF_API_TOKEN` já tem — só o `firewallEventsAdaptive`
+  cru (eventos individuais com IP) precisaria de *Logs:Read*, e esse fica **de
+  fora** por princípio (só agregados, nunca IPs nem dados de visitantes
+  individuais). Uma só query pede `dimensions { action source }` + `count`; o
+  parse exclui `action=allow` (não é mitigação) e soma o `count` por cada
+  dimensão. Lógica pura em `dynamic/worker/src/lib/cf-analytics.js`
+  (`breakdownByDimension`), testada com vetores. UI estende o painel existente
+  (`static/src/components/CfAnalytics.astro`) com duas tabelas por baixo do "top
+  países"; etiquetas legíveis no i18n (`sourceLabels`/`actionLabels`) com
+  **fallback ao valor cru** — chave desconhecida por deriva de schema aparece na
+  mesma, o painel nunca fica em branco. *Por regra* (`ruleId`) ficou de fora da
+  v1 (ruidoso); dá para juntar depois se se sentir falta.
+
 - **2026-07 — Dependabot security-only a par do Renovate** (decisão do dono do
   repo): o Renovate faz todos os *version updates* (rotina agrupada + majors),
   mas fica ligado também o **Dependabot security updates** — só para
