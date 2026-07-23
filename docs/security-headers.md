@@ -29,9 +29,26 @@ Pages) — sem geração no build, sem `<meta>` por página.
 > bundler). Com isso, `script-src 'self'` e `style-src 'self'` já são tão
 > restritos quanto uma lista de hashes — nenhum script/estilo fora do próprio
 > domínio executa — mas com uma linha de tamanho fixo, que não volta a
-> crescer com mais páginas ou ferramentas. O `<script type="application/ld+json">`
-> (dados estruturados) continua inline em todas as páginas: não é executado
-> como script pelo parser HTML, por isso `script-src` não o restringe.
+> crescer com mais páginas ou ferramentas.
+>
+> Exceção única: o `<script type="application/ld+json">` (dados estruturados
+> schema.org Person, `BaseLayout.astro`) continua inline em todas as páginas
+> — JSON-LD não tem forma fiável de ir para ficheiro externo (crawlers não
+> seguem `src` de forma consistente). A hipótese inicial era que, por não ser
+> executado como JS, `script-src` não o restringia — **errado**: o browser
+> aplica `script-src`/`script-src-elem` a qualquer `<script>` sem `src`,
+> independentemente do `type`, e isso gerou violações reais em produção
+> (apanhadas pelo self-scan). A correção foi um único hash SHA-256 do
+> conteúdo exato do bloco em `script-src` — não reabre `'unsafe-inline'` e,
+> como o conteúdo só depende de `SITE.name`/`role`/`url`/redes em
+> `config.ts` (iguais em PT e EN hoje), um hash cobre as duas páginas. Se
+> `role[pt]` e `role[en]` alguma vez divergirem, recalcula com:
+> ```
+> node -e "console.log('sha256-' + require('crypto').createHash('sha256').update(CONTEUDO_EXATO_DO_SCRIPT,'utf8').digest('base64'))"
+> ```
+> (usa o texto exato entre `<script type="application/ld+json">` e
+> `</script>` do HTML gerado, ex.: `dist/index.html`) e acrescenta o segundo
+> hash a par do primeiro — cresce por *variante de conteúdo*, não por página.
 >
 > A CSP acrescenta ainda o **reporting de violações**: `report-uri
 > /api/csp-report` (Firefox/Safari) e `report-to csp-endpoint` (Chrome, via o
@@ -52,7 +69,7 @@ atualiza os blocos abaixo em espelho.
 ## Valores atuais (espelho de `_headers`)
 
 ```
-Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
+Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
 Strict-Transport-Security: max-age=63072000; includeSubDomains
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
@@ -108,7 +125,7 @@ server {
     index index.html;
 
     # --- Cabeçalhos de segurança (espelho de static/public/_headers) ---
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
@@ -154,7 +171,7 @@ danielmala.co {
     file_server
 
     header {
-        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint"
         Strict-Transport-Security "max-age=63072000; includeSubDomains"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"

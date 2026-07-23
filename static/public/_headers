@@ -13,8 +13,22 @@
 # static/astro.config.mjs e static/public/js/), por isso 'self' já é tão
 # restrito quanto uma lista de hashes — mas com tamanho fixo, que não volta
 # a crescer com mais páginas ou ferramentas.
+#
+# Exceção única: o <script type="application/ld+json"> (schema.org Person)
+# em src/layouts/BaseLayout.astro é inline em todas as páginas — JSON-LD não
+# tem equivalente a <link> externo com suporte fiável em crawlers, por isso
+# não pode seguir o lever "sempre externo" dos outros scripts. O parser HTML
+# aplica script-src/script-src-elem a QUALQUER elemento <script>, mesmo com
+# type não-executável (browsers não distinguem pelo type ao decidir bloquear
+# inline — só depois de já não bloquear é que o type decide se corre como
+# JS). Por isso entra aqui um único hash sha256 do conteúdo exato do bloco,
+# em vez de reabrir 'unsafe-inline'. O conteúdo (SITE.name/role/url/redes em
+# config.ts) é igual em PT e EN hoje, logo um hash chega; se algum dia PT e
+# EN divergirem (ex.: role[pt] != role[en]), recalcula e acrescenta o
+# segundo hash — não crescerá por página, só por variante de conteúdo (ver
+# docs/security-headers.md para o comando de cálculo).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
   # Força HTTPS por 2 anos (sem "preload" para manter reversível enquanto o
   # domínio é provisório; acrescenta "; preload" e submete em hstspreload.org
   # quando o domínio final estiver fixo).
