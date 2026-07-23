@@ -20,7 +20,7 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
-import { parseCfStats, threatPathingBreakdown } from '../src/lib/cf-analytics.js';
+import { parseCfStats } from '../src/lib/cf-analytics.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
@@ -985,7 +985,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
   assert.deepEqual(stats.zone, {
     requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
-    topCountries: [], threatsByType: [],
+    topCountries: [], blockedByStatus: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -995,7 +995,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
 test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
   assert.deepEqual(parseCfStats({}).zone, {
     requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
-    topCountries: [], threatsByType: [],
+    topCountries: [], blockedByStatus: [],
   });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
@@ -1050,47 +1050,51 @@ test('parseCfStats: topCountries corta no limite (mais países do que o topo ped
   assert.equal(stats.zone.topCountries[0].threats, 15);
 });
 
-// Helper: resposta da CF_THREATPATHING_QUERY (httpRequests1dGroups com só o
-// threatPathingMap no sum), uma linha por dia.
-function threatPathingFixture(days) {
-  return {
-    data: {
-      viewer: {
-        zones: [{ httpRequests1dGroups: days.map((threatPathingMap) => ({ sum: { threatPathingMap } })) }],
+test('parseCfStats: blockedByStatus soma por código HTTP, só 4xx/5xx, ordena', () => {
+  const raw = graphqlFixture({
+    zoneRows: [
+      {
+        sum: {
+          requests: 1000,
+          responseStatusMap: [
+            { edgeResponseStatus: 200, requests: 500 }, // < 400 → fora
+            { edgeResponseStatus: 403, requests: 900 },
+            { edgeResponseStatus: 503, requests: 100 },
+            { edgeResponseStatus: 302, requests: 300 }, // redirect → fora
+          ],
+        },
       },
-    },
-  };
-}
-
-test('threatPathingBreakdown: soma por tipo através dos dias, ordena e ignora zero', () => {
-  const raw = threatPathingFixture([
-    [
-      { threatPathingName: 'user.securityLevel', requests: 400 },
-      { threatPathingName: 'firewallRules', requests: 150 },
-      { threatPathingName: 'bic', requests: 26 },
-      { threatPathingName: 'hot', requests: 0 }, // zero é ignorado
+      {
+        sum: {
+          requests: 500,
+          responseStatusMap: [
+            { edgeResponseStatus: 403, requests: 474 }, // acumula com o dia anterior
+            { edgeResponseStatus: 429, requests: 2 },
+            { edgeResponseStatus: 404, requests: 0 }, // zero → fora
+          ],
+        },
+      },
     ],
-    [
-      { threatPathingName: 'user.securityLevel', requests: 100 }, // acumula com o dia anterior
-      { threatPathingName: 'ratelimit', requests: 40 },
-    ],
-  ]);
-  const { threatsByType } = threatPathingBreakdown(raw);
-  assert.deepEqual(threatsByType, [
-    { key: 'user.securityLevel', count: 500 }, // 400 + 100
-    { key: 'firewallRules', count: 150 },
-    { key: 'ratelimit', count: 40 },
-    { key: 'bic', count: 26 },
+  });
+  const stats = parseCfStats(raw);
+  assert.deepEqual(stats.zone.blockedByStatus, [
+    { key: '403', count: 1374 }, // 900 + 474
+    { key: '503', count: 100 },
+    { key: '429', count: 2 },
   ]);
 });
 
-test('threatPathingBreakdown: nome em falta vira "unknown"; shape ausente degrada para []', () => {
-  const raw = threatPathingFixture([[{ requests: 7 }, { threatPathingName: '', requests: 3 }]]);
-  assert.deepEqual(threatPathingBreakdown(raw).threatsByType, [{ key: 'unknown', count: 10 }]);
-  // threatPathingMap ausente, resposta vazia ou nula não rebenta — devolve [].
-  assert.deepEqual(threatPathingBreakdown({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).threatsByType, []);
-  assert.deepEqual(threatPathingBreakdown({}).threatsByType, []);
-  assert.deepEqual(threatPathingBreakdown(null).threatsByType, []);
+test('parseCfStats: blockedByStatus corta no limite e degrada para [] sem o campo', () => {
+  const responseStatusMap = Array.from({ length: 15 }, (_, i) => ({
+    edgeResponseStatus: 400 + i, // 400, 401, 402… todos >= 400
+    requests: 15 - i, // decrescente
+  }));
+  const raw = graphqlFixture({ zoneRows: [{ sum: { requests: 150, responseStatusMap } }] });
+  const stats = parseCfStats(raw);
+  assert.equal(stats.zone.blockedByStatus.length, 10);
+  assert.deepEqual(stats.zone.blockedByStatus[0], { key: '400', count: 15 });
+  // responseStatusMap ausente → []
+  assert.deepEqual(parseCfStats(graphqlFixture({ zoneRows: [{ sum: { requests: 5 } }] })).zone.blockedByStatus, []);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
@@ -1159,58 +1163,26 @@ test('/api/cf-stats?refresh=1: ignora a cache existente e escreve uma entrada no
   }
 });
 
-test('/api/cf-stats: o detalhe por tipo (2.º pedido) preenche threatsByType', async () => {
+test('/api/cf-stats: 200 devolve blockedByStatus a partir do responseStatusMap', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
   };
   const orig = globalThis.fetch;
-  globalThis.fetch = async (url, init) => {
-    const isTp = JSON.parse(init.body).query.includes('threatPathingMap');
-    if (isTp) {
-      return {
-        ok: true,
-        json: async () => ({ data: { viewer: { zones: [{ httpRequests1dGroups: [
-          { sum: { threatPathingMap: [
-            { threatPathingName: 'user.securityLevel', requests: 500 },
-            { threatPathingName: 'firewallRules', requests: 176 },
-          ] } },
-        ] }] } } }),
-      };
-    }
-    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 676 } }] }) };
-  };
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => graphqlFixture({
+      zoneRows: [{ sum: { requests: 10, threats: 676, responseStatusMap: [
+        { edgeResponseStatus: 200, requests: 1443 },
+        { edgeResponseStatus: 403, requests: 1374 },
+      ] } }],
+    }),
+  });
   try {
     const res = await runFetch(fakeRequest('/api/cf-stats'), env);
     assert.equal(res.status, 200);
     const data = await res.json();
-    assert.equal(data.zone.threats, 676);
-    assert.deepEqual(data.zone.threatsByType, [
-      { key: 'user.securityLevel', count: 500 },
-      { key: 'firewallRules', count: 176 },
-    ]);
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('/api/cf-stats: erro só no 2.º pedido (tipo) mantém o núcleo (threatsByType vazio, sem 502)', async () => {
-  const env = {
-    KV: fakeKV(),
-    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
-  };
-  const orig = globalThis.fetch;
-  globalThis.fetch = async (url, init) => {
-    const isTp = JSON.parse(init.body).query.includes('threatPathingMap');
-    if (isTp) return { ok: true, json: async () => ({ errors: [{ message: 'does not have access to the path' }] }) };
-    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 5 } }] }) };
-  };
-  try {
-    const res = await runFetch(fakeRequest('/api/cf-stats'), env);
-    assert.equal(res.status, 200); // núcleo intacto — NÃO 502
-    const data = await res.json();
-    assert.equal(data.zone.threats, 5);
-    assert.deepEqual(data.zone.threatsByType, []);
+    assert.deepEqual(data.zone.blockedByStatus, [{ key: '403', count: 1374 }]); // 200 fica de fora
   } finally {
     globalThis.fetch = orig;
   }

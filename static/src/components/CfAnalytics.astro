@@ -17,8 +17,8 @@ const c = t(lang).cfanalytics;
 const jsStrings = {
   lastCheck: c.lastCheck,
   countriesEmpty: c.topCountriesEmpty,
-  typesEmpty: c.typesEmpty,
-  typeLabels: c.typeLabels,
+  statusEmpty: c.statusEmpty,
+  statusLabels: c.statusLabels,
 };
 ---
 
@@ -48,16 +48,16 @@ const jsStrings = {
       </table>
     </div>
 
-    <p class="cfa-countries-title mono">{c.byTypeTitle}</p>
-    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelType}>
+    <p class="cfa-countries-title mono">{c.byStatusTitle}</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelStatus}>
       <table class="result-table cfa-table">
         <thead>
           <tr>
-            <th>{c.tableType}</th>
-            <th>{c.tableThreats}</th>
+            <th>{c.tableStatus}</th>
+            <th>{c.tableRequests}</th>
           </tr>
         </thead>
-        <tbody id="cfa-type-rows"></tbody>
+        <tbody id="cfa-status-rows"></tbody>
       </table>
     </div>
 
@@ -102,9 +102,9 @@ const jsStrings = {
     }
   }
 
-  // Tabela de tipos de ameaça: traduz a chave crua do threatPathingMap pela
-  // etiqueta do i18n; chave desconhecida cai para o valor cru — o painel
-  // nunca fica em branco por deriva de schema.
+  // Tabela por código HTTP: traduz o código (403, 429…) pela etiqueta do
+  // i18n; código sem etiqueta cai para o valor cru — o painel nunca fica em
+  // branco se a Cloudflare devolver um código que não anteviste.
   function renderBreakdown(
     rowsId: string,
     rows: { key: string; count: number }[],
@@ -117,7 +117,7 @@ const jsStrings = {
       const td = document.createElement('td');
       td.colSpan = 2;
       td.className = 'hp-loading';
-      td.textContent = S.typesEmpty;
+      td.textContent = S.statusEmpty;
       tr.append(td);
       rowsEl.append(tr);
       return;
@@ -148,7 +148,7 @@ const jsStrings = {
       setText('cfa-errors', pct(worker.errorRatio ?? 0));
       setText('cfa-worker-requests', (worker.requests ?? 0).toLocaleString(lang));
       renderCountries(zone.topCountries ?? []);
-      renderBreakdown('cfa-type-rows', zone.threatsByType ?? [], S.typeLabels ?? {});
+      renderBreakdown('cfa-status-rows', zone.blockedByStatus ?? [], S.statusLabels ?? {});
 
       document.getElementById('cfa-stat-threats')!.classList.toggle('amber', (zone.threats ?? 0) > 0);
       document.getElementById('cfa-stat-errors')!.classList.toggle('amber', (worker.errorRatio ?? 0) > 0);
