@@ -199,6 +199,49 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
  * Logs:Read no token; sem essa permissão, ou com deriva de schema, engolimos
  * o erro e as quebras ficam vazias, mas o painel principal mantém-se).
  */
+// TEMPORÁRIO (diagnóstico): sonda um mapa de repartição do httpRequests1dGroups
+// (responseStatusMap, ipClassMap…) e devolve as linhas somadas por `keyField`,
+// ou o erro. Cada sonda é um pedido GraphQL próprio, por isso um nome de campo
+// errado numa não afeta as outras — serve para ver, com dados reais, o que o
+// Free expõe para esta zona. A remover assim que se escolher a fonte final.
+async function probeSumMap(post, mapName, keyField) {
+  const query = `
+    query CfProbe($zoneTag: String!, $since: Date!, $until: Date!) {
+      viewer {
+        zones(filter: { zoneTag: $zoneTag }) {
+          httpRequests1dGroups(limit: 8, filter: { date_geq: $since, date_leq: $until }) {
+            sum { ${mapName} { ${keyField} requests } }
+          }
+        }
+      }
+    }
+  `;
+  try {
+    const res = await post(query);
+    if (!res.ok) return { error: `http ${res.status}` };
+    const raw = await res.json();
+    if (Array.isArray(raw?.errors) && raw.errors.length > 0) {
+      return { error: String(raw.errors[0]?.message ?? 'erro') };
+    }
+    const groups = raw?.data?.viewer?.zones?.[0]?.httpRequests1dGroups ?? [];
+    const byKey = new Map();
+    for (const g of Array.isArray(groups) ? groups : []) {
+      for (const row of Array.isArray(g?.sum?.[mapName]) ? g.sum[mapName] : []) {
+        const k = String(row?.[keyField] ?? 'unknown');
+        byKey.set(k, (byKey.get(k) ?? 0) + (Number(row?.requests) || 0));
+      }
+    }
+    return {
+      rows: [...byKey.entries()]
+        .map(([key, count]) => ({ key, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 15),
+    };
+  } catch (e) {
+    return { error: String(e?.message ?? e) };
+  }
+}
+
 export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   if (!env.CF_API_TOKEN || !env.CF_ZONE_TAG || !env.CF_ACCOUNT_ID || !env.CF_WORKER_SCRIPT) {
     throw new Error('cf_stats_not_configured');
@@ -252,6 +295,18 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
   } catch (e) {
     threatDebug.graphqlErrors = [String(e?.message ?? e)];
   }
+
+  // TEMPORÁRIO: sonda os outros mapas de repartição do httpRequests1dGroups
+  // para vermos, com dados reais, se algum categoriza os 676 melhor que o
+  // threatPathingMap (que só trouxe 1). Cada sonda é best-effort e isolada.
+  const [responseStatus, ipClass, contentType, clientHTTPVersion] = await Promise.all([
+    probeSumMap(post, 'responseStatusMap', 'edgeResponseStatus'),
+    probeSumMap(post, 'ipClassMap', 'ipType'),
+    probeSumMap(post, 'contentTypeMap', 'edgeResponseContentTypeName'),
+    probeSumMap(post, 'clientHTTPVersionMap', 'clientHTTPProtocol'),
+  ]);
+  threatDebug.probes = { responseStatus, ipClass, contentType, clientHTTPVersion };
+
   stats.zone.threatDebug = threatDebug;
 
   return stats;
