@@ -45,7 +45,7 @@ export const ui = {
       title: 'Segurança',
       metaTitle: 'Postura de segurança',
       intro:
-        'A segurança é o foco deste site — não só no que diz, mas na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
+        'A segurança é o foco deste site — no que diz e na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
@@ -883,7 +883,7 @@ export const ui = {
       title: 'Security',
       metaTitle: 'Security posture',
       intro:
-        'Security is the focus of this site — not just in what it says, but in how it is served. Here is what is in place, for anyone who wants to check.',
+        'Security is the focus of this site — in what it says and in how it\'s served. Here\'s what\'s in place, for anyone who wants to check.',
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:

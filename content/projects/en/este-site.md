@@ -13,7 +13,7 @@ Bilingual by construction: content (markdown/JSON) lives separate from the
 code and feeds both versions (PT/EN) from the same shared components — no
 duplicated logic between languages.
 
-Security was treated as part of the design, not an afterthought: strict
+Security shaped the design from the start: strict
 Content-Security-Policy with no 'unsafe-inline', security headers, and a
 published responsible-disclosure policy. The why behind each layer is on
 [Security](/en/security/); the proof — commit, live header scan, workflows —

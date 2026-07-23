@@ -13,7 +13,7 @@ Bilingue por construção: o conteúdo (markdown/JSON) vive separado do código
 e alimenta as duas versões (PT/EN) a partir das mesmas componentes — sem
 duplicar lógica entre idiomas.
 
-A segurança foi tratada como parte do design, não um extra: Content-Security-Policy
+A segurança moldou o design desde o início: Content-Security-Policy
 estrita sem 'unsafe-inline', cabeçalhos de segurança e uma política de
 divulgação responsável publicada. O porquê de cada camada está em
 [Segurança](/seguranca/); as provas — commit, scan aos cabeçalhos ao vivo,
