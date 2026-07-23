@@ -39,14 +39,29 @@ const CF_STATS_QUERY = `
             countryMap { clientCountryName requests threats }
           }
         }
-        firewallEventsAdaptiveGroups(limit: 200, filter: { datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
-          count
-          dimensions { action source }
-        }
       }
       accounts(filter: { accountTag: $accountTag }) {
         workersInvocationsAdaptive(limit: 8, filter: { scriptName: $scriptName, datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
           sum { requests errors }
+        }
+      }
+    }
+  }
+`;
+
+// Query SEPARADA (best-effort) para o detalhe por origem/ação. Distinta da
+// query-núcleo de propósito: o dataset firewallEventsAdaptiveGroups precisa de
+// Logs:Read no token (o Analytics:Read do resto do painel não chega), e um
+// erro aqui — permissão em falta ou deriva de schema — NÃO pode derrubar o
+// painel principal. Por isso vai num pedido próprio, com o erro engolido em
+// fetchCfStats. Uma linha por combinação action+source, com count de eventos.
+const CF_FIREWALL_QUERY = `
+  query CfFirewall($zoneTag: String!, $sinceDt: Time!, $untilDt: Time!) {
+    viewer {
+      zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptiveGroups(limit: 200, filter: { datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
+          count
+          dimensions { action source }
         }
       }
     }
@@ -118,18 +133,35 @@ function breakdownByDimension(groups, dimension, limit = CF_STATS_TOP_TYPES) {
 }
 
 /**
+ * Extrai o detalhe por origem/ação da resposta da CF_FIREWALL_QUERY (pedido
+ * SEPARADO — ver fetchCfStats). Função pura e defensiva: shape inesperado,
+ * `errors` ou campo em falta viram listas vazias, nunca lança. Devolve o
+ * bloco que se cola em `stats.zone`.
+ */
+export function firewallBreakdown(raw) {
+  const zones = raw?.data?.viewer?.zones;
+  const groups = (Array.isArray(zones) ? zones[0] : null)?.firewallEventsAdaptiveGroups ?? [];
+  return {
+    threatsBySource: breakdownByDimension(groups, 'source'),
+    threatsByAction: breakdownByDimension(groups, 'action'),
+  };
+}
+
+/**
  * Normaliza a resposta bruta da GraphQL Analytics API num resumo estável
  * para o painel. Qualquer coisa que não bata com o shape esperado vira 0 —
  * nunca lança, para o Worker poder responder mesmo que a Cloudflare mude o
  * schema entretanto (o mesmo princípio de "degradar em silêncio" do resto
  * do projeto — ver techniquesForText em attack-map.js).
+ *
+ * O detalhe por origem/ação (threatsBySource/ByAction) nasce vazio aqui — é
+ * preenchido à parte por fetchCfStats a partir da CF_FIREWALL_QUERY, para que
+ * uma falha nesse dataset (que exige Logs:Read) nunca derrube este núcleo.
  */
 export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   const zones = raw?.data?.viewer?.zones;
   const accounts = raw?.data?.viewer?.accounts;
-  const zone0 = Array.isArray(zones) ? zones[0] : null;
-  const zoneGroups = zone0?.httpRequests1dGroups ?? [];
-  const firewallGroups = zone0?.firewallEventsAdaptiveGroups ?? [];
+  const zoneGroups = (Array.isArray(zones) ? zones[0] : null)?.httpRequests1dGroups ?? [];
   const workerGroups = (Array.isArray(accounts) ? accounts[0] : null)?.workersInvocationsAdaptive ?? [];
 
   const requests = sumField(zoneGroups, 'requests');
@@ -148,8 +180,8 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       bytes,
       threats,
       topCountries: topCountriesByThreats(zoneGroups),
-      threatsBySource: breakdownByDimension(firewallGroups, 'source'),
-      threatsByAction: breakdownByDimension(firewallGroups, 'action'),
+      threatsBySource: [],
+      threatsByAction: [],
     },
     worker: {
       requests: workerRequests,
@@ -167,6 +199,11 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
  * CF_WORKER_SCRIPT (vars, ver wrangler.toml). Sem qualquer um destes,
  * lança — a rota devolve 502 e o painel mostra o fallback, tal como o
  * vigia CT sem SCAN_TARGET configurado.
+ *
+ * Dois pedidos: o NÚCLEO (obrigatório — se falhar, 502) e o detalhe por
+ * origem/ação (BEST-EFFORT — o dataset firewallEventsAdaptiveGroups exige
+ * Logs:Read no token; sem essa permissão, ou com deriva de schema, engolimos
+ * o erro e as quebras ficam vazias, mas o painel principal mantém-se).
  */
 export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   if (!env.CF_API_TOKEN || !env.CF_ZONE_TAG || !env.CF_ACCOUNT_ID || !env.CF_WORKER_SCRIPT) {
@@ -184,17 +221,34 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     untilDt: new Date(until).toISOString(),
   };
 
-  const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+  const post = (query) => fetch('https://api.cloudflare.com/client/v4/graphql', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${env.CF_API_TOKEN}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ query: CF_STATS_QUERY, variables }),
+    body: JSON.stringify({ query, variables }),
     signal: AbortSignal.timeout(timeoutMs),
   });
+
+  const res = await post(CF_STATS_QUERY);
   if (!res.ok) throw new Error('cf_graphql_unavailable');
   const raw = await res.json();
   if (Array.isArray(raw?.errors) && raw.errors.length > 0) throw new Error('cf_graphql_error');
-  return parseCfStats(raw, { now, windowDays });
+  const stats = parseCfStats(raw, { now, windowDays });
+
+  // Detalhe por origem/ação — best-effort, isolado do núcleo acima.
+  try {
+    const fwRes = await post(CF_FIREWALL_QUERY);
+    if (fwRes.ok) {
+      const fwRaw = await fwRes.json();
+      if (!(Array.isArray(fwRaw?.errors) && fwRaw.errors.length > 0)) {
+        Object.assign(stats.zone, firewallBreakdown(fwRaw));
+      }
+    }
+  } catch {
+    // Timeout/rede/permissão: fica com as quebras vazias de parseCfStats.
+  }
+
+  return stats;
 }

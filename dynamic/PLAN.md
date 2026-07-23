@@ -18,14 +18,20 @@
   Regras Geridas/WAF, Custom Rules, Rate limiting, Bot management, BIC…) e por
   **ação** (`action`: block, managed_challenge, jschallenge…), tiradas do
   dataset **`firewallEventsAdaptiveGroups`** (agregado, *zone-level*) da mesma
-  GraphQL Analytics API. **Não exige token novo**: está coberto pela permissão
-  *Zone Analytics:Read* que o `CF_API_TOKEN` já tem — só o `firewallEventsAdaptive`
-  cru (eventos individuais com IP) precisaria de *Logs:Read*, e esse fica **de
-  fora** por princípio (só agregados, nunca IPs nem dados de visitantes
-  individuais). Uma só query pede `dimensions { action source }` + `count`; o
-  parse exclui `action=allow` (não é mitigação) e soma o `count` por cada
-  dimensão. Lógica pura em `dynamic/worker/src/lib/cf-analytics.js`
-  (`breakdownByDimension`), testada com vetores. UI estende o painel existente
+  GraphQL Analytics API. **Exige `Zone Logs:Read` no `CF_API_TOKEN`** (ao
+  contrário do que se pensou de início: o `Zone Analytics:Read` do painel base
+  *não* dá acesso ao dataset de eventos de firewall — confirmado em produção
+  com um `upstream_error` na 1.ª tentativa). Continua a ser só agregados
+  (`count` por combinação `action`+`source`), nunca IPs nem o
+  `firewallEventsAdaptive` cru de eventos individuais. O parse exclui
+  `action=allow` (não é mitigação) e soma o `count` por dimensão. Lógica pura
+  em `dynamic/worker/src/lib/cf-analytics.js` (`breakdownByDimension` +
+  `firewallBreakdown`), testada com vetores. **Isolamento:** o detalhe vai num
+  **pedido GraphQL separado e best-effort** (`CF_FIREWALL_QUERY`) — se falhar
+  (permissão em falta ou deriva de schema), engole-se o erro e as quebras ficam
+  vazias, mas o painel-núcleo (pedidos/cache/ameaças/Worker) **nunca** cai. Foi
+  a correção de um bug: a 1.ª versão metia tudo numa query e o erro do dataset
+  de firewall derrubava o painel inteiro (502). UI estende o painel existente
   (`static/src/components/CfAnalytics.astro`) com duas tabelas por baixo do "top
   países"; etiquetas legíveis no i18n (`sourceLabels`/`actionLabels`) com
   **fallback ao valor cru** — chave desconhecida por deriva de schema aparece na
