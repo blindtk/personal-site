@@ -1124,6 +1124,25 @@ test('firewallBreakdown: agrega os eventos crus por ação e por origem, ordenad
   ]);
 });
 
+test('firewallBreakdown: pesa por sampleInterval (amostragem), falta/zero conta como 1', () => {
+  const raw = firewallFixture([
+    { action: 'block', source: 'firewallCustom', sampleInterval: 5 },
+    { action: 'block', source: 'firewallCustom', sampleInterval: 5 },
+    { action: 'managed_challenge', source: 'ratelimit' }, // sem sampleInterval → 1
+    { action: 'skip', source: 'firewallCustom', sampleInterval: 0 }, // 0 → 1
+  ]);
+  const fw = firewallBreakdown(raw);
+  assert.deepEqual(fw.firewallByAction, [
+    { key: 'block', count: 10 }, // 5 + 5
+    { key: 'managed_challenge', count: 1 },
+    { key: 'skip', count: 1 },
+  ]);
+  assert.deepEqual(fw.firewallBySource, [
+    { key: 'firewallCustom', count: 11 }, // 5 + 5 + 1
+    { key: 'ratelimit', count: 1 },
+  ]);
+});
+
 test('firewallBreakdown: campo em falta vira "unknown"; shape ausente/nulo degrada para []', () => {
   const fw = firewallBreakdown(firewallFixture([{ action: 'block' }, { source: 'ratelimit' }]));
   assert.deepEqual(fw.firewallByAction, [{ key: 'block', count: 1 }, { key: 'unknown', count: 1 }]);

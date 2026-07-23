@@ -75,7 +75,7 @@ const CF_FIREWALL_QUERY = `
     viewer {
       zones(filter: { zoneTag: $zoneTag }) {
         firewallEventsAdaptive(limit: 10000, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
-          action source
+          action source sampleInterval
         }
       }
     }
@@ -151,10 +151,14 @@ function topEntries(map, limit) {
  * Agrega os eventos crus do `firewallEventsAdaptive` (CF_FIREWALL_QUERY) por
  * **ação** (o que a Cloudflare fez: managed_challenge, block, js_challenge…) e
  * por **origem** (que sistema disparou: firewallCustom, ratelimit, bic…).
- * Conta um por evento — no Free e a este volume a amostragem é ~1:1, por isso
- * a contagem crua chega para a distribuição. Função pura e defensiva: shape
- * inesperado, `errors` ou campo em falta viram listas vazias, nunca lança.
- * Devolve o bloco que se cola em `stats.zone` (janela de 24h).
+ *
+ * IMPORTANTE — amostragem: o dataset é AMOSTRADO ("Sampled logs" no dashboard).
+ * Cada evento traz um `sampleInterval` = quantos eventos reais aquela linha
+ * representa. Somamos esse peso (não 1 por linha), para os totais aproximarem
+ * os do dashboard (ex.: 143 linhas × ~5 ≈ 758 eventos reais). Falta/zero → 1.
+ *
+ * Função pura e defensiva: shape inesperado, `errors` ou campo em falta viram
+ * listas vazias, nunca lança. Devolve o bloco que se cola em `stats.zone`.
  */
 export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
   const zones = raw?.data?.viewer?.zones;
@@ -164,8 +168,9 @@ export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
   for (const e of Array.isArray(events) ? events : []) {
     const action = typeof e?.action === 'string' && e.action.length > 0 ? e.action : 'unknown';
     const source = typeof e?.source === 'string' && e.source.length > 0 ? e.source : 'unknown';
-    byAction.set(action, (byAction.get(action) ?? 0) + 1);
-    bySource.set(source, (bySource.get(source) ?? 0) + 1);
+    const weight = Math.max(1, Number(e?.sampleInterval) || 1);
+    byAction.set(action, (byAction.get(action) ?? 0) + weight);
+    bySource.set(source, (bySource.get(source) ?? 0) + weight);
   }
   return {
     firewallByAction: topEntries(byAction, limit),

@@ -283,6 +283,7 @@ export const ui = {
       tableSource: 'origem',
       tableEvents: 'eventos',
       firewallEmpty: 'Sem eventos de firewall nas últimas 24h.',
+      firewallNote: 'Eventos de firewall são amostrados (os mesmos "Sampled logs" do dashboard da Cloudflare) — os totais são estimativas pesadas pela amostragem. Retenção de 24h no plano Free.',
       scrollLabelAction: 'tabela de eventos de firewall por ação, com scroll horizontal',
       scrollLabelSource: 'tabela de eventos de firewall por origem, com scroll horizontal',
       // Etiquetas para os valores crus do firewallEventsAdaptive (chave em
@@ -1200,6 +1201,7 @@ export const ui = {
       tableSource: 'source',
       tableEvents: 'events',
       firewallEmpty: 'No firewall events in the last 24h.',
+      firewallNote: 'Firewall events are sampled (the same "Sampled logs" as the Cloudflare dashboard) — totals are sample-weighted estimates. 24h retention on the Free plan.',
       scrollLabelAction: 'firewall events by action table, horizontally scrollable',
       scrollLabelSource: 'firewall events by source table, horizontally scrollable',
       // Labels for the raw firewallEventsAdaptive values (lowercased key). A
