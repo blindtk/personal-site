@@ -1,0 +1,58 @@
+# Labeler único do repo. Numa passagem, aplica ao PR:
+#   - claude         → branch claude/*
+#   - content        → content/**   (conteúdo)
+#   - static         → static/**    (site Astro)
+#   - dynamic        → dynamic/**   (Worker)
+#   - documentation  → docs/** ou *.md na raiz
+#   - ci             → .github/**   (workflows, config)
+# Sem action externa (usa o gh do runner) para não acrescentar digests a pinar.
+# As labels são geridas à mão: têm de existir no repo antes de o labeler as
+# poder aplicar. As que faltam hoje: content, static, dynamic, ci
+# (claude e documentation já existem). Se faltar alguma, o passo falha —
+# de propósito, para dar sinal em vez de a criar silenciosamente.
+name: Labeler
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+# Nada por omissão — o job declara só o que precisa (ver ci.yml).
+permissions: {}
+
+jobs:
+  label:
+    # Só PRs deste repo (forks têm token read-only e falhariam) e não do
+    # Renovate — esse já etiqueta os seus (npm, pypi, github-actions, major…),
+    # não queremos sobrepor labels de área por cima.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.event.pull_request.user.login, 'renovate')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write   # aplicar labels ao PR
+    steps:
+      - name: Aplicar labels por branch/área
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+
+          files=$(gh pr diff "$PR" --repo "$REPO" --name-only)
+
+          labels=()
+          case "$HEAD" in claude/*) labels+=(claude);; esac
+          grep -q  '^content/'          <<<"$files" && labels+=(content)       || true
+          grep -q  '^static/'           <<<"$files" && labels+=(static)        || true
+          grep -q  '^dynamic/'          <<<"$files" && labels+=(dynamic)       || true
+          grep -q  '^\.github/'         <<<"$files" && labels+=(ci)            || true
+          grep -qE '^docs/|^[^/]+\.md$' <<<"$files" && labels+=(documentation) || true
+
+          if [ ${#labels[@]} -eq 0 ]; then
+            echo "Sem labels a aplicar."
+            exit 0
+          fi
+          echo "A aplicar: ${labels[*]}"
+          gh pr edit "$PR" --repo "$REPO" $(printf ' --add-label %s' "${labels[@]}")
