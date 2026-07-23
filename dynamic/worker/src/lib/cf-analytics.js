@@ -179,19 +179,70 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     until: isoDate(until),
     sinceDt: new Date(since).toISOString(),
     untilDt: new Date(until).toISOString(),
+    // Janela de 23h (adaptativos no Free limitam-se a 24h).
+    since24hDt: new Date(now - 23 * 3600_000).toISOString(),
   };
 
-  const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+  const post = (query) => fetch('https://api.cloudflare.com/client/v4/graphql', {
     method: 'POST',
     headers: {
       authorization: `Bearer ${env.CF_API_TOKEN}`,
       'content-type': 'application/json',
     },
-    body: JSON.stringify({ query: CF_STATS_QUERY, variables }),
+    body: JSON.stringify({ query, variables }),
     signal: AbortSignal.timeout(timeoutMs),
   });
+
+  const res = await post(CF_STATS_QUERY);
   if (!res.ok) throw new Error('cf_graphql_unavailable');
   const raw = await res.json();
   if (Array.isArray(raw?.errors) && raw.errors.length > 0) throw new Error('cf_graphql_error');
-  return parseCfStats(raw, { now, windowDays });
+  const stats = parseCfStats(raw, { now, windowDays });
+
+  // TEMPORÁRIO (diagnóstico a pedido do dono do repo): testa VÁRIAS variações
+  // da query de firewall para distinguir "query minha mal-feita" de "acesso
+  // negado pelo plano". A ideia: se todas derem "does not have access to the
+  // path" (e não "unknown field"), a query está válida e é o acesso ao dataset
+  // que está trancado. A remover a seguir.
+  const probe = async (label, query) => {
+    try {
+      const r = await post(query);
+      if (!r.ok) return { label, error: `http ${r.status}` };
+      const j = await r.json();
+      if (Array.isArray(j?.errors) && j.errors.length > 0) {
+        return { label, error: String(j.errors[0]?.message ?? 'erro') };
+      }
+      return { label, ok: j?.data ?? null };
+    } catch (e) {
+      return { label, error: String(e?.message ?? e) };
+    }
+  };
+  stats.zone.fwProbe = await Promise.all([
+    // 1) Estrutura oficial do tutorial: raw firewallEventsAdaptive, orderBy datetime.
+    probe('raw_adaptive_official', `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+      viewer { zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptive(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
+          action source datetime clientCountryName
+        }
+      } }
+    }`),
+    // 2) Groups minimal — só count, com orderBy.
+    probe('groups_minimal', `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+      viewer { zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [count_DESC]) {
+          count
+        }
+      } }
+    }`),
+    // 3) Ao nível da CONTA (a Cloudflare adicionou um dataset de firewall à conta).
+    probe('account_groups', `query($accountTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+      viewer { accounts(filter: { accountTag: $accountTag }) {
+        firewallEventsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
+          count dimensions { action source }
+        }
+      } }
+    }`),
+  ]);
+
+  return stats;
 }
