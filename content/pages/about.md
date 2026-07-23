@@ -9,7 +9,7 @@ SIEM, endpoint protection, identity management, threat intelligence and
 incident response — the full cycle, from designing the control to analysing
 the event.
 
-I came to security through networks. For the best part of a decade I
+I came to security through networks. For several years I
 designed, installed and commissioned IP networks for metro and rail systems
 across four countries — the Doha Metro in Qatar, the Santos VLT in Brazil,
 and the Odense and Bergen light metros in Denmark and Norway. In transport

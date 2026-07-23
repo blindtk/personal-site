@@ -8,8 +8,8 @@ de infraestrutura crítica rodoviária: firewalls de nova geração, SIEM,
 proteção de endpoints, gestão de identidades, threat intelligence e resposta
 a incidentes — o ciclo completo, do desenho do controlo à análise do evento.
 
-Cheguei à segurança pelo caminho das redes. Durante quase uma década
-desenhei, instalei e comissionei redes IP para sistemas de metro e ferrovia
+Cheguei à segurança pelo caminho das redes. Durante vários anos desenhei,
+instalei e comissionei redes IP para sistemas de metro e ferrovia
 em quatro países — o metro de Doha no Qatar, o VLT de Santos no Brasil e os
 metros ligeiros de Odense e Bergen, na Dinamarca e na Noruega. Em
 infraestrutura de transporte, uma falha de rede não é um incómodo: é um

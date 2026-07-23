@@ -40,8 +40,9 @@ npm run preview   # servir o build localmente
   testada em Node; as componentes em `src/components/tools/*.astro` só fazem
   a ligação ao DOM.
 - A maioria é **100% client-side**: sem chamadas de rede, sem depender de
-  backend. As exceções (verificador de passwords k-anonimato, self-scan de
-  cabeçalhos) falam com o Worker em `dynamic/worker/` — vivem no mesmo
+  backend. As três exceções (`pwned` — password comprometida por k-anonimato;
+  `self-scan` de cabeçalhos; `mirror` — o que o servidor vê de ti) falam com o
+  Worker em `dynamic/worker/` — vivem no mesmo
   índice, mas com o badge "requer servidor" (`ToolsIndexPage.astro`/
   `ToolPage.astro`, chave `kind` por ferramenta), nunca escondidas como se
   fossem client-side. Novas ferramentas que precisem de servidor seguem o

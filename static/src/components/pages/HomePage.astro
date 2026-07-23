@@ -8,6 +8,7 @@ import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
 // content/ é a fonte de verdade: o nº de badges do painel stats vem daqui,
 // com o mesmo critério (verified !== false) da página Certificações.
 import certs from '../../../../content/certs.json';
+import awards from '../../../../content/awards.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -43,6 +44,9 @@ const verifiedBadges = certItems.filter((item) => item.verified !== false).lengt
 const statValues: Record<string, string> = {
   certsTotal: String(totalCerts),
   certs: String(verifiedBadges),
+  // O stat de CTFs vem de content/awards.json para nunca divergir da galeria
+  // de prémios na página Sobre (mesma lógica dos stats de certificações).
+  awards: String(awards.items.length),
 };
 const stats = dict.home.statsStatic.map((stat) =>
   'key' in stat && stat.key in statValues ? { ...stat, n: statValues[stat.key] } : stat,
