@@ -11,40 +11,37 @@
 
 ## Decisões registadas
 
-- **2026-07 — Detalhe de tipo no painel "Estado da Cloudflare"** (aprovado pelo
-  dono do repo): o card "ameaças bloqueadas (WAF/edge)" mostrava só um contador
-  cego (`threats` do `httpRequests1dGroups`), que não distingue *porque* é que
-  um pedido foi mitigado. Passa a haver quebra por **origem/sistema** (`source`:
-  Regras Geridas/WAF, Custom Rules, Rate limiting, Bot management, BIC…) e por
-  **ação** (`action`: block, managed_challenge, jschallenge…), tiradas do
-  dataset **`firewallEventsAdaptiveGroups`** (agregado, *zone-level*) da mesma
-  GraphQL Analytics API. **Fonte: `threatPathingMap`** (a taxonomia da
-  Cloudflare de *que mecanismo* apanhou cada ameaça — `user.securityLevel`,
-  `firewallRules`, `bic`, `hot`, `ratelimit`…), campo irmão do `countryMap`
-  dentro do `sum` do **`httpRequests1dGroups`**. Só agregados, nunca IPs nem
-  dados de visitantes individuais.
+- **2026-07 — Detalhe por código HTTP no painel "Estado da Cloudflare"**
+  (aprovado pelo dono do repo): o card "ameaças bloqueadas (WAF/edge)" mostrava
+  só um contador cego (`threats` do `httpRequests1dGroups`), sem dizer *o que* a
+  proteção fez. Passa a haver uma tabela **"pedidos rejeitados por código HTTP ·
+  7d"** (só 4xx/5xx: 403 bloqueado, 429 rate limit, 503 desafio/indisponível…),
+  a partir do **`responseStatusMap`** do `httpRequests1dGroups` — campo irmão do
+  `countryMap` que já usamos. Só agregados, nunca IPs. Fica no **pedido-núcleo**
+  (não é best-effort separado): é um campo tão estável como o `countryMap`.
+  Lógica pura em `cf-analytics.js` (`blockedByStatus`), testada; UI
+  (`CfAnalytics.astro`) + i18n (`statusLabels`, com fallback ao código cru).
 
-  **Porque NÃO os eventos de firewall (`firewallEventsAdaptiveGroups`), a
-  escolha óbvia à primeira vista:** esse dataset exige **plano Pro+**. A zona
-  está no **Free** e o dono do repo não vai passar a Pro — no Free a query
-  devolve `"zone does not have access to the path"` (confirmado em produção,
-  com o token já a ter `Zone Logs:Read` + `Analytics:Read`; ou seja, não era
-  permissão, era o plano). O `threatPathingMap` dá a mesma leitura por tipo,
-  funciona no Free, e **basta o `Zone Analytics:Read`** que o painel-base já
-  usa — sem Logs:Read. (Percurso registado porque custou várias iterações a
-  perceber: token → permissões → plano.)
+  **Porquê o código HTTP e não a "origem/ação" da regra WAF (a escolha óbvia):**
+  o detalhe real — `firewallEventsAdaptiveGroups` (action `block`/`skip`, source
+  `firewallCustom`/`ratelimit`…) — é **Pro+**. Provado por eliminação contra a
+  zona real (Free), não por documentação:
+    - permissões: o token tem `Account Analytics:Read` + `Zone Analytics:Read` +
+      `Zone Logs:Read` e o dataset continua a dar `"does not have access to the
+      path"`;
+    - janela: no Free os datasets adaptativos limitam-se a 24h (o
+      `httpRequestsAdaptiveGroups` devolveu literalmente *"cannot request a time
+      range wider than 1d"*); reduzida a query de firewall para 24h, **continua**
+      barrada, enquanto o `httpRequestsAdaptiveGroups` — mesmo token, mesma
+      janela — **devolve** dados. Logo: não é permissão nem janela, é o **plano**.
+    - O `threatPathingMap` (Free, mecanismo por ameaça) foi testado e é esparso
+      ao ponto de inútil (1 em ~676), por isso também caiu.
 
-  **Isolamento:** o detalhe vai num **pedido GraphQL separado e best-effort**
-  (`CF_THREATPATHING_QUERY`) — se falhar, engole-se o erro e a quebra fica
-  vazia, mas o painel-núcleo (pedidos/cache/ameaças/Worker) **nunca** cai (foi
-  a correção de um bug anterior em que tudo numa só query derrubava o painel com
-  502). Lógica pura em `dynamic/worker/src/lib/cf-analytics.js`
-  (`threatsByPathing` + `threatPathingBreakdown`), testada com vetores. UI
-  estende o painel existente (`static/src/components/CfAnalytics.astro`) com uma
-  tabela "por tipo de ameaça" por baixo do "top países"; etiquetas legíveis no
-  i18n (`typeLabels`) com **fallback ao valor cru** — mecanismo desconhecido
-  aparece na mesma, o painel nunca fica em branco. Separação `action`/`source`
-  (que os eventos de firewall dariam) ficou de fora por indisponível no Free.
+  **Custo desta decisão:** custou muitas iterações e vários PRs (o dataset de
+  firewall foi tentado e revertido). Fica registado o desfecho: no plano Free, a
+  via honesta e rica para "o que a proteção faz" é o **código HTTP das respostas
+  do edge**; o detalhe por regra WAF exige Pro+. Se a zona um dia passar a Pro,
+  reabre-se o `firewallEventsAdaptiveGroups` (com janela ≤ retenção do plano).
 
 - **2026-07 — Dependabot security-only a par do Renovate** (decisão do dono do
   repo): o Renovate faz todos os *version updates* (rotina agrupada + majors),

@@ -67,10 +67,11 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 #   npx wrangler secret put NVD_API_KEY  # opcional, sobe o rate limit do NVD
 #   npx wrangler secret put CF_API_TOKEN # token criado em dash.cloudflare.com → Meu perfil → Tokens de API
 #     · Scope necessário: "Account Analytics:Read" + "Zone Analytics:Read".
-#       Cobre TUDO, incluindo o detalhe por tipo de ameaça (threatPathingMap,
-#       que vive no httpRequests1dGroups). NÃO é preciso Logs:Read — isso só
-#       seria para o firewallEventsAdaptiveGroups, que exige plano Pro+ e por
-#       isso foi abandonado (ver src/lib/cf-analytics.js e dynamic/PLAN.md).
+#       Cobre TUDO o que o painel usa, incluindo a repartição por código HTTP
+#       (responseStatusMap, no httpRequests1dGroups). NÃO é preciso Logs:Read:
+#       isso só valeria para o firewallEventsAdaptiveGroups (action/source das
+#       regras WAF), que é Pro+ e no Free responde "does not have access to the
+#       path" mesmo com Logs:Read — ver src/lib/cf-analytics.js e dynamic/PLAN.md.
 #
 # Rotação do RATE_SALT: rodar SEMANALMENTE. Trocar o segredo invalida de
 # imediato TODOS os rate-limits acumulados (o hash deixa de bater) — é

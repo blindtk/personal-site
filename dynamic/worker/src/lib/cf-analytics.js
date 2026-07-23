@@ -10,6 +10,17 @@
 // (pedidos, bytes, ameaças, invocações do Worker); nunca IPs nem dados de
 // visitantes individuais.
 //
+// NOTA sobre o "detalhe por tipo de ameaça": o dataset dos eventos de firewall
+// (firewallEventsAdaptiveGroups, com action/source/regra) é Pro+ — no plano
+// Free a GraphQL API responde "does not have access to the path", mesmo com
+// Zone Analytics:Read + Logs:Read e mesmo pedindo só as últimas 24h (provado
+// por eliminação: o httpRequestsAdaptiveGroups, mesmo token e mesma janela,
+// devolve dados; só o de firewall é barrado). Também o threatPathingMap, que é
+// Free, praticamente não regista mecanismo (1 em centenas). Por isso o sinal
+// honesto e rico que o Free dá é a repartição por CÓDIGO HTTP das respostas do
+// edge (responseStatusMap): os 4xx/5xx são a proteção/erros em ação (ex.: 403 =
+// bloqueado). Ver dynamic/PLAN.md para o historial desta decisão.
+//
 // Como em ct.js: parse (puro, testável) separado de fetch (rede).
 
 import { normalizeCountry } from './sanitize.js';
@@ -17,10 +28,9 @@ import { normalizeCountry } from './sanitize.js';
 const DAY_MS = 86400_000;
 export const CF_STATS_WINDOW_DAYS = 7;
 export const CF_STATS_TOP_COUNTRIES = 10;
-// Quantas linhas por tipo mostrar no painel (origens/ações são poucas na
-// prática; este teto só evita uma lista infinita se a Cloudflare devolver
-// muitas combinações).
-export const CF_STATS_TOP_TYPES = 10;
+// Quantas linhas de código de estado mostrar no painel (na prática são poucas;
+// este teto só evita uma lista infinita).
+export const CF_STATS_TOP_STATUSES = 10;
 
 // NOTA: os nomes de campos abaixo (httpRequests1dGroups, workersInvocationsAdaptive,
 // etc.) seguem o schema documentado da GraphQL Analytics API da Cloudflare
@@ -37,35 +47,13 @@ const CF_STATS_QUERY = `
           sum {
             requests cachedRequests bytes threats
             countryMap { clientCountryName requests threats }
+            responseStatusMap { edgeResponseStatus requests }
           }
         }
       }
       accounts(filter: { accountTag: $accountTag }) {
         workersInvocationsAdaptive(limit: 8, filter: { scriptName: $scriptName, datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
           sum { requests errors }
-        }
-      }
-    }
-  }
-`;
-
-// Query SEPARADA (best-effort) para o detalhe por TIPO de ameaça. Usa o
-// `threatPathingMap` do httpRequests1dGroups — a taxonomia da própria
-// Cloudflare de *que mecanismo* apanhou cada ameaça (nível de segurança,
-// regras de firewall, rate limit, BIC…). Escolhido de propósito em vez do
-// firewallEventsAdaptiveGroups: este último exige plano Pro+ (no Free devolve
-// "zone does not have access to the path"), enquanto o httpRequests1dGroups —
-// e portanto o threatPathingMap, irmão do countryMap que já usamos — está
-// disponível no Free. Fica num pedido próprio best-effort: qualquer erro é
-// engolido em fetchCfStats e o painel-núcleo nunca cai.
-const CF_THREATPATHING_QUERY = `
-  query CfThreatPathing($zoneTag: String!, $since: Date!, $until: Date!) {
-    viewer {
-      zones(filter: { zoneTag: $zoneTag }) {
-        httpRequests1dGroups(limit: 8, filter: { date_geq: $since, date_leq: $until }) {
-          sum {
-            threatPathingMap { threatPathingName requests }
-          }
         }
       }
     }
@@ -106,40 +94,27 @@ function topCountriesByThreats(groups, limit = CF_STATS_TOP_COUNTRIES) {
 }
 
 /**
- * Soma as ameaças por *tipo* (mecanismo) através das várias linhas diárias,
- * a partir do `threatPathingMap` — a taxonomia da Cloudflare de que sistema
- * apanhou cada ameaça (ex.: `user.securityLevel`, `firewallRules`, `bic`,
- * `hot`, `ratelimit`). É isto que dá o *tipo* que o contador cego `threats`
- * não distingue. Nome em falta vira 'unknown'; devolve os `limit` tipos com
- * mais ameaças, do maior para o menor.
+ * Soma os pedidos por código HTTP das respostas do edge (`responseStatusMap`),
+ * ficando só com os de REJEIÇÃO/ERRO (>= 400) através das várias linhas
+ * diárias. É o sinal de "proteção/erros em ação" que o Free dá com números a
+ * sério (ex.: 403 = bloqueado, 429 = rate limit) — os eventos de firewall com
+ * action/source são Pro+ (ver nota no topo). Devolve os `limit` códigos com
+ * mais pedidos, do maior para o menor; a chave é o código como string.
  */
-function threatsByPathing(groups, limit = CF_STATS_TOP_TYPES) {
-  const byName = new Map();
+function blockedByStatus(groups, limit = CF_STATS_TOP_STATUSES) {
+  const byStatus = new Map();
   for (const g of Array.isArray(groups) ? groups : []) {
-    for (const row of Array.isArray(g?.sum?.threatPathingMap) ? g.sum.threatPathingMap : []) {
+    for (const row of Array.isArray(g?.sum?.responseStatusMap) ? g.sum.responseStatusMap : []) {
+      const status = Number(row?.edgeResponseStatus) || 0;
       const requests = Number(row?.requests) || 0;
-      if (requests <= 0) continue;
-      const raw = row?.threatPathingName;
-      const name = typeof raw === 'string' && raw.length > 0 ? raw : 'unknown';
-      byName.set(name, (byName.get(name) ?? 0) + requests);
+      if (status < 400 || requests <= 0) continue;
+      byStatus.set(status, (byStatus.get(status) ?? 0) + requests);
     }
   }
-  return [...byName.entries()]
-    .map(([key, count]) => ({ key, count }))
+  return [...byStatus.entries()]
+    .map(([status, count]) => ({ key: String(status), count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
-}
-
-/**
- * Extrai o detalhe por tipo de ameaça da resposta da CF_THREATPATHING_QUERY
- * (pedido SEPARADO — ver fetchCfStats). Função pura e defensiva: shape
- * inesperado, `errors` ou campo em falta viram lista vazia, nunca lança.
- * Devolve o bloco que se cola em `stats.zone`.
- */
-export function threatPathingBreakdown(raw) {
-  const zones = raw?.data?.viewer?.zones;
-  const groups = (Array.isArray(zones) ? zones[0] : null)?.httpRequests1dGroups ?? [];
-  return { threatsByType: threatsByPathing(groups) };
 }
 
 /**
@@ -148,10 +123,6 @@ export function threatPathingBreakdown(raw) {
  * nunca lança, para o Worker poder responder mesmo que a Cloudflare mude o
  * schema entretanto (o mesmo princípio de "degradar em silêncio" do resto
  * do projeto — ver techniquesForText em attack-map.js).
- *
- * O detalhe por tipo (threatsByType) nasce vazio aqui — é preenchido à parte
- * por fetchCfStats a partir da CF_THREATPATHING_QUERY, para que uma falha
- * nesse pedido nunca derrube este núcleo.
  */
 export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   const zones = raw?.data?.viewer?.zones;
@@ -175,7 +146,7 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       bytes,
       threats,
       topCountries: topCountriesByThreats(zoneGroups),
-      threatsByType: [],
+      blockedByStatus: blockedByStatus(zoneGroups),
     },
     worker: {
       requests: workerRequests,
@@ -188,35 +159,12 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
 
 /**
  * Busca as métricas dos últimos `windowDays` dias: pedidos/cache/ameaças da
- * zona + invocações/erros deste Worker. Precisa de CF_API_TOKEN (secret,
- * scope Analytics:Read na zona e na conta) e CF_ZONE_TAG / CF_ACCOUNT_ID /
- * CF_WORKER_SCRIPT (vars, ver wrangler.toml). Sem qualquer um destes,
- * lança — a rota devolve 502 e o painel mostra o fallback, tal como o
- * vigia CT sem SCAN_TARGET configurado.
- *
- * Dois pedidos: o NÚCLEO (obrigatório — se falhar, 502) e o detalhe por
- * origem/ação (BEST-EFFORT — o dataset firewallEventsAdaptiveGroups exige
- * Logs:Read no token; sem essa permissão, ou com deriva de schema, engolimos
- * o erro e as quebras ficam vazias, mas o painel principal mantém-se).
+ * zona (+ repartição por país e por código HTTP) e invocações/erros deste
+ * Worker. Precisa de CF_API_TOKEN (secret, scope Analytics:Read na zona e na
+ * conta) e CF_ZONE_TAG / CF_ACCOUNT_ID / CF_WORKER_SCRIPT (vars, ver
+ * wrangler.toml). Sem qualquer um destes, lança — a rota devolve 502 e o
+ * painel mostra o fallback, tal como o vigia CT sem SCAN_TARGET configurado.
  */
-// TEMPORÁRIO (diagnóstico): corre uma query GraphQL arbitrária e devolve o
-// que `pick` extrair da resposta, ou o erro (ex.: "does not have access to the
-// path" quando o dataset é Pro+). Cada sonda é isolada — serve para validar,
-// contra a zona real, que datasets de firewall/segurança o Free deixa buscar.
-async function probeRaw(post, query, pick) {
-  try {
-    const res = await post(query);
-    if (!res.ok) return { error: `http ${res.status}` };
-    const raw = await res.json();
-    if (Array.isArray(raw?.errors) && raw.errors.length > 0) {
-      return { error: String(raw.errors[0]?.message ?? 'erro') };
-    }
-    return { ok: pick(raw) };
-  } catch (e) {
-    return { error: String(e?.message ?? e) };
-  }
-}
-
 export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   if (!env.CF_API_TOKEN || !env.CF_ZONE_TAG || !env.CF_ACCOUNT_ID || !env.CF_WORKER_SCRIPT) {
     throw new Error('cf_stats_not_configured');
@@ -231,8 +179,7 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     until: isoDate(until),
     sinceDt: new Date(since).toISOString(),
     untilDt: new Date(until).toISOString(),
-    // Janela de 23h para os datasets adaptativos: no Free têm retenção de 24h
-    // e recusam intervalos > 1d ("cannot request a time range wider than 1d").
+    // Janela de 23h (adaptativos no Free limitam-se a 24h).
     since24hDt: new Date(now - 23 * 3600_000).toISOString(),
   };
 
@@ -252,67 +199,50 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
   if (Array.isArray(raw?.errors) && raw.errors.length > 0) throw new Error('cf_graphql_error');
   const stats = parseCfStats(raw, { now, windowDays });
 
-  // Detalhe por tipo de ameaça — best-effort, isolado do núcleo acima.
-  // NOTA (TEMPORÁRIO): anexa-se um `threatDebug` à resposta para se ver, só
-  // de abrir o URL, o que o threatPathingMap devolveu (status HTTP, erros
-  // GraphQL, nomes crus dos mecanismos). Não expõe IPs nem dados de
-  // visitantes. A remover assim que as etiquetas estiverem afinadas.
-  const threatDebug = { httpStatus: null, graphqlErrors: [], pathing: [] };
-  try {
-    const tpRes = await post(CF_THREATPATHING_QUERY);
-    threatDebug.httpStatus = tpRes.status;
-    const tpRaw = tpRes.ok ? await tpRes.json() : null;
-    if (Array.isArray(tpRaw?.errors)) {
-      threatDebug.graphqlErrors = tpRaw.errors.map((e) => String(e?.message ?? e)).slice(0, 5);
+  // TEMPORÁRIO (diagnóstico a pedido do dono do repo): testa VÁRIAS variações
+  // da query de firewall para distinguir "query minha mal-feita" de "acesso
+  // negado pelo plano". A ideia: se todas derem "does not have access to the
+  // path" (e não "unknown field"), a query está válida e é o acesso ao dataset
+  // que está trancado. A remover a seguir.
+  const probe = async (label, query) => {
+    try {
+      const r = await post(query);
+      if (!r.ok) return { label, error: `http ${r.status}` };
+      const j = await r.json();
+      if (Array.isArray(j?.errors) && j.errors.length > 0) {
+        return { label, error: String(j.errors[0]?.message ?? 'erro') };
+      }
+      return { label, ok: j?.data ?? null };
+    } catch (e) {
+      return { label, error: String(e?.message ?? e) };
     }
-    if (tpRes.ok && threatDebug.graphqlErrors.length === 0) {
-      const breakdown = threatPathingBreakdown(tpRaw);
-      Object.assign(stats.zone, breakdown);
-      threatDebug.pathing = breakdown.threatsByType;
-    }
-  } catch (e) {
-    threatDebug.graphqlErrors = [String(e?.message ?? e)];
-  }
-
-  // TEMPORÁRIO: validação empírica de que datasets de firewall/segurança o
-  // Free deixa buscar. (1) introspeção lista TODOS os datasets da zona cujo
-  // nome cheira a firewall/segurança; (2)+(3) tentam de facto ler os dois
-  // candidatos principais — a mensagem de erro (ou os dados) é a prova.
-  const [zoneDatasets, firewallEventsAdaptiveGroups, httpRequestsAdaptiveGroups] = await Promise.all([
-    probeRaw(
-      post,
-      `{ __type(name: "Zone") { fields { name } } }`,
-      (raw) => (raw?.data?.__type?.fields ?? [])
-        .map((f) => f?.name)
-        .filter((n) => typeof n === 'string' && /fire|waf|secur|threat|attack|bot|ratelimit|ddos/i.test(n)),
-    ),
-    probeRaw(
-      post,
-      `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
-        viewer { zones(filter: { zoneTag: $zoneTag }) {
-          firewallEventsAdaptiveGroups(limit: 100, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
-            count dimensions { action source }
-          }
-        } }
-      }`,
-      (raw) => (raw?.data?.viewer?.zones?.[0]?.firewallEventsAdaptiveGroups ?? [])
-        .map((r) => ({ action: r?.dimensions?.action, source: r?.dimensions?.source, count: r?.count })),
-    ),
-    probeRaw(
-      post,
-      `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
-        viewer { zones(filter: { zoneTag: $zoneTag }) {
-          httpRequestsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
-            count dimensions { edgeResponseStatus }
-          }
-        } }
-      }`,
-      (raw) => raw?.data?.viewer?.zones?.[0]?.httpRequestsAdaptiveGroups ?? null,
-    ),
+  };
+  stats.zone.fwProbe = await Promise.all([
+    // 1) Estrutura oficial do tutorial: raw firewallEventsAdaptive, orderBy datetime.
+    probe('raw_adaptive_official', `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+      viewer { zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptive(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
+          action source datetime clientCountryName
+        }
+      } }
+    }`),
+    // 2) Groups minimal — só count, com orderBy.
+    probe('groups_minimal', `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+      viewer { zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [count_DESC]) {
+          count
+        }
+      } }
+    }`),
+    // 3) Ao nível da CONTA (a Cloudflare adicionou um dataset de firewall à conta).
+    probe('account_groups', `query($accountTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+      viewer { accounts(filter: { accountTag: $accountTag }) {
+        firewallEventsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
+          count dimensions { action source }
+        }
+      } }
+    }`),
   ]);
-  threatDebug.datasets = { zoneDatasets, firewallEventsAdaptiveGroups, httpRequestsAdaptiveGroups };
-
-  stats.zone.threatDebug = threatDebug;
 
   return stats;
 }
