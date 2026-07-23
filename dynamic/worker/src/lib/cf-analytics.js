@@ -64,7 +64,7 @@ const CF_THREATPATHING_QUERY = `
       zones(filter: { zoneTag: $zoneTag }) {
         httpRequests1dGroups(limit: 8, filter: { date_geq: $since, date_leq: $until }) {
           sum {
-            threatPathingMap { name requests }
+            threatPathingMap { threatPathingName requests }
           }
         }
       }
@@ -119,7 +119,8 @@ function threatsByPathing(groups, limit = CF_STATS_TOP_TYPES) {
     for (const row of Array.isArray(g?.sum?.threatPathingMap) ? g.sum.threatPathingMap : []) {
       const requests = Number(row?.requests) || 0;
       if (requests <= 0) continue;
-      const name = typeof row?.name === 'string' && row.name.length > 0 ? row.name : 'unknown';
+      const raw = row?.threatPathingName;
+      const name = typeof raw === 'string' && raw.length > 0 ? raw : 'unknown';
       byName.set(name, (byName.get(name) ?? 0) + requests);
     }
   }

@@ -1065,14 +1065,14 @@ function threatPathingFixture(days) {
 test('threatPathingBreakdown: soma por tipo através dos dias, ordena e ignora zero', () => {
   const raw = threatPathingFixture([
     [
-      { name: 'user.securityLevel', requests: 400 },
-      { name: 'firewallRules', requests: 150 },
-      { name: 'bic', requests: 26 },
-      { name: 'hot', requests: 0 }, // zero é ignorado
+      { threatPathingName: 'user.securityLevel', requests: 400 },
+      { threatPathingName: 'firewallRules', requests: 150 },
+      { threatPathingName: 'bic', requests: 26 },
+      { threatPathingName: 'hot', requests: 0 }, // zero é ignorado
     ],
     [
-      { name: 'user.securityLevel', requests: 100 }, // acumula com o dia anterior
-      { name: 'ratelimit', requests: 40 },
+      { threatPathingName: 'user.securityLevel', requests: 100 }, // acumula com o dia anterior
+      { threatPathingName: 'ratelimit', requests: 40 },
     ],
   ]);
   const { threatsByType } = threatPathingBreakdown(raw);
@@ -1085,7 +1085,7 @@ test('threatPathingBreakdown: soma por tipo através dos dias, ordena e ignora z
 });
 
 test('threatPathingBreakdown: nome em falta vira "unknown"; shape ausente degrada para []', () => {
-  const raw = threatPathingFixture([[{ requests: 7 }, { name: '', requests: 3 }]]);
+  const raw = threatPathingFixture([[{ requests: 7 }, { threatPathingName: '', requests: 3 }]]);
   assert.deepEqual(threatPathingBreakdown(raw).threatsByType, [{ key: 'unknown', count: 10 }]);
   // threatPathingMap ausente, resposta vazia ou nula não rebenta — devolve [].
   assert.deepEqual(threatPathingBreakdown({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).threatsByType, []);
@@ -1172,8 +1172,8 @@ test('/api/cf-stats: o detalhe por tipo (2.º pedido) preenche threatsByType', a
         ok: true,
         json: async () => ({ data: { viewer: { zones: [{ httpRequests1dGroups: [
           { sum: { threatPathingMap: [
-            { name: 'user.securityLevel', requests: 500 },
-            { name: 'firewallRules', requests: 176 },
+            { threatPathingName: 'user.securityLevel', requests: 500 },
+            { threatPathingName: 'firewallRules', requests: 176 },
           ] } },
         ] }] } } }),
       };
