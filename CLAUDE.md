@@ -66,24 +66,12 @@ npm run preview   # servir o build localmente
 3. Se adicionaste página nova, cria as **duas** versões (PT + EN) e o par em
    `routes.ts`.
 
-## Fluxo de PRs e branches
+## Fluxo de PRs
 
-Regras para features que precisam de várias voltas de feedback (ex.: validar
-uma query contra a API real em produção):
-
-1. **Um PR por feature, mantido aberto até estar confirmado.** Itera-se na
-   mesma branch/PR; o merge é **um só, no fim**. Não fazer merge de commits
-   intermédios ou de diagnóstico — foi assim que o painel de ameaças ficou uma
-   vez com a versão errada no `main` (um merge apanhou um commit de andaime
-   antes do fix real).
-2. **Testar a partir da branch sem merge.** O deploy do Worker é manual
-   (`cd dynamic/worker && npx wrangler deploy`), por isso dá para fazer
-   `git checkout <branch>` e deployar/ver ao vivo sem tocar no `main`. Confirmar
-   primeiro, mergear depois.
-3. **Se um PR JÁ foi merged e aparece trabalho novo**, a história dessa branch
-   está fechada: **nunca** empilhar por cima. Reiniciar a branch a partir do
-   `main` (mesmo nome, `git checkout -B <branch> origin/main`), aplicar o
-   trabalho novo (cherry-pick/commits) e abrir um **PR novo**. É a rede de
-   segurança, não o fluxo normal — o normal é a regra 1.
-4. **Andaimes de diagnóstico** (campos temporários numa resposta para depurar)
-   removem-se antes do merge final; nunca ficam no `main`.
+- **Um PR merged está fechado: nunca se lhe juntam commits novos.** Trabalho
+  novo é **sempre um PR novo** — reiniciar a branch a partir do `main`
+  (`git checkout -B <branch> origin/main`) e abrir novo PR. Nunca empilhar por
+  cima de história já merged.
+- Idealmente, **manter um PR aberto** até a feature estar confirmada (dá para
+  testar da branch sem merge: `git checkout <branch> && cd dynamic/worker &&
+  npx wrangler deploy`), para não andar a abrir vários PRs seguidos.
