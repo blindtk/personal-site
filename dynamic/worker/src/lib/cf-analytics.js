@@ -10,16 +10,19 @@
 // (pedidos, bytes, ameaças, invocações do Worker); nunca IPs nem dados de
 // visitantes individuais.
 //
-// NOTA sobre o "detalhe por tipo de ameaça": o dataset dos eventos de firewall
-// (firewallEventsAdaptiveGroups, com action/source/regra) é Pro+ — no plano
-// Free a GraphQL API responde "does not have access to the path", mesmo com
-// Zone Analytics:Read + Logs:Read e mesmo pedindo só as últimas 24h (provado
-// por eliminação: o httpRequestsAdaptiveGroups, mesmo token e mesma janela,
-// devolve dados; só o de firewall é barrado). Também o threatPathingMap, que é
-// Free, praticamente não regista mecanismo (1 em centenas). Por isso o sinal
-// honesto e rico que o Free dá é a repartição por CÓDIGO HTTP das respostas do
-// edge (responseStatusMap): os 4xx/5xx são a proteção/erros em ação (ex.: 403 =
-// bloqueado). Ver dynamic/PLAN.md para o historial desta decisão.
+// NOTA sobre o "detalhe por tipo de ameaça" (importante — houve confusão aqui):
+// há DOIS datasets de eventos de firewall e no Free só um está acessível.
+//   · firewallEventsAdaptive**Groups** (agregado) → Pro+; no Free responde
+//     "does not have access to the path".
+//   · firewallEventsAdaptive (CRU, eventos individuais) → **acessível no Free**
+//     (retenção 24h), com o token a ter as permissões de Firewall/Logs Read.
+// Por isso o painel usa o CRU e agrega por action/source aqui no Worker (ver
+// CF_FIREWALL_QUERY + firewallBreakdown), best-effort. Duas fontes complementares:
+//   · blockedByStatus — código HTTP das respostas do edge (responseStatusMap,
+//     7d, do httpRequests1dGroups): o que o edge devolveu (403, 429…).
+//   · firewallByAction/Source — eventos de regra de firewall (24h): managed_
+//     challenge, block… de firewallCustom, ratelimit… Para 7d seria preciso
+//     coletar/acumular (fase 2). Ver dynamic/PLAN.md para o historial.
 //
 // Como em ct.js: parse (puro, testável) separado de fetch (rede).
 
@@ -54,6 +57,25 @@ const CF_STATS_QUERY = `
       accounts(filter: { accountTag: $accountTag }) {
         workersInvocationsAdaptive(limit: 8, filter: { scriptName: $scriptName, datetime_geq: $sinceDt, datetime_leq: $untilDt }) {
           sum { requests errors }
+        }
+      }
+    }
+  }
+`;
+
+// Eventos de firewall (últimas 24h) — pedido SEPARADO e best-effort. Usa o
+// dataset CRU `firewallEventsAdaptive` (eventos individuais), NÃO o
+// `firewallEventsAdaptiveGroups` (agregado), porque no plano Free só o cru
+// está acessível — o agregado é Pro+ ("does not have access to the path"). Por
+// isso a agregação por ação/origem faz-se aqui no Worker, não na API. Retenção
+// no Free: 24h; para 7d seria preciso coletar/acumular (fase 2). Só se pedem
+// `action` + `source` — NUNCA o IP nem dados de visitante individual.
+const CF_FIREWALL_QUERY = `
+  query CfFirewall($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+    viewer {
+      zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptive(limit: 10000, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
+          action source
         }
       }
     }
@@ -117,6 +139,40 @@ function blockedByStatus(groups, limit = CF_STATS_TOP_STATUSES) {
     .slice(0, limit);
 }
 
+/** Ordena um Map<chave,contagem> em [{key,count}] decrescente, top `limit`. */
+function topEntries(map, limit) {
+  return [...map.entries()]
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/**
+ * Agrega os eventos crus do `firewallEventsAdaptive` (CF_FIREWALL_QUERY) por
+ * **ação** (o que a Cloudflare fez: managed_challenge, block, js_challenge…) e
+ * por **origem** (que sistema disparou: firewallCustom, ratelimit, bic…).
+ * Conta um por evento — no Free e a este volume a amostragem é ~1:1, por isso
+ * a contagem crua chega para a distribuição. Função pura e defensiva: shape
+ * inesperado, `errors` ou campo em falta viram listas vazias, nunca lança.
+ * Devolve o bloco que se cola em `stats.zone` (janela de 24h).
+ */
+export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
+  const zones = raw?.data?.viewer?.zones;
+  const events = (Array.isArray(zones) ? zones[0] : null)?.firewallEventsAdaptive ?? [];
+  const byAction = new Map();
+  const bySource = new Map();
+  for (const e of Array.isArray(events) ? events : []) {
+    const action = typeof e?.action === 'string' && e.action.length > 0 ? e.action : 'unknown';
+    const source = typeof e?.source === 'string' && e.source.length > 0 ? e.source : 'unknown';
+    byAction.set(action, (byAction.get(action) ?? 0) + 1);
+    bySource.set(source, (bySource.get(source) ?? 0) + 1);
+  }
+  return {
+    firewallByAction: topEntries(byAction, limit),
+    firewallBySource: topEntries(bySource, limit),
+  };
+}
+
 /**
  * Normaliza a resposta bruta da GraphQL Analytics API num resumo estável
  * para o painel. Qualquer coisa que não bata com o shape esperado vira 0 —
@@ -147,6 +203,9 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       threats,
       topCountries: topCountriesByThreats(zoneGroups),
       blockedByStatus: blockedByStatus(zoneGroups),
+      // Preenchidos à parte por fetchCfStats (CF_FIREWALL_QUERY, best-effort).
+      firewallByAction: [],
+      firewallBySource: [],
     },
     worker: {
       requests: workerRequests,
@@ -199,50 +258,21 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
   if (Array.isArray(raw?.errors) && raw.errors.length > 0) throw new Error('cf_graphql_error');
   const stats = parseCfStats(raw, { now, windowDays });
 
-  // TEMPORÁRIO (diagnóstico a pedido do dono do repo): testa VÁRIAS variações
-  // da query de firewall para distinguir "query minha mal-feita" de "acesso
-  // negado pelo plano". A ideia: se todas derem "does not have access to the
-  // path" (e não "unknown field"), a query está válida e é o acesso ao dataset
-  // que está trancado. A remover a seguir.
-  const probe = async (label, query) => {
-    try {
-      const r = await post(query);
-      if (!r.ok) return { label, error: `http ${r.status}` };
-      const j = await r.json();
-      if (Array.isArray(j?.errors) && j.errors.length > 0) {
-        return { label, error: String(j.errors[0]?.message ?? 'erro') };
+  // Eventos de firewall das últimas 24h (por ação/origem) — best-effort e
+  // isolado do núcleo: se o dataset falhar (permissão de firewall em falta,
+  // deriva de schema), engole-se o erro e as tabelas ficam vazias, mas o
+  // painel-núcleo (pedidos/cache/ameaças/código HTTP) mantém-se sempre.
+  try {
+    const fwRes = await post(CF_FIREWALL_QUERY);
+    if (fwRes.ok) {
+      const fwRaw = await fwRes.json();
+      if (!(Array.isArray(fwRaw?.errors) && fwRaw.errors.length > 0)) {
+        Object.assign(stats.zone, firewallBreakdown(fwRaw));
       }
-      return { label, ok: j?.data ?? null };
-    } catch (e) {
-      return { label, error: String(e?.message ?? e) };
     }
-  };
-  stats.zone.fwProbe = await Promise.all([
-    // 1) Estrutura oficial do tutorial: raw firewallEventsAdaptive, orderBy datetime.
-    probe('raw_adaptive_official', `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
-      viewer { zones(filter: { zoneTag: $zoneTag }) {
-        firewallEventsAdaptive(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
-          action source datetime clientCountryName
-        }
-      } }
-    }`),
-    // 2) Groups minimal — só count, com orderBy.
-    probe('groups_minimal', `query($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
-      viewer { zones(filter: { zoneTag: $zoneTag }) {
-        firewallEventsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [count_DESC]) {
-          count
-        }
-      } }
-    }`),
-    // 3) Ao nível da CONTA (a Cloudflare adicionou um dataset de firewall à conta).
-    probe('account_groups', `query($accountTag: String!, $since24hDt: Time!, $untilDt: Time!) {
-      viewer { accounts(filter: { accountTag: $accountTag }) {
-        firewallEventsAdaptiveGroups(limit: 5, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }) {
-          count dimensions { action source }
-        }
-      } }
-    }`),
-  ]);
+  } catch {
+    // Timeout/rede/permissão: fica com as tabelas de firewall vazias.
+  }
 
   return stats;
 }

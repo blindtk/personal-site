@@ -19,6 +19,9 @@ const jsStrings = {
   countriesEmpty: c.topCountriesEmpty,
   statusEmpty: c.statusEmpty,
   statusLabels: c.statusLabels,
+  firewallEmpty: c.firewallEmpty,
+  actionLabels: c.actionLabels,
+  sourceLabels: c.sourceLabels,
 };
 ---
 
@@ -58,6 +61,32 @@ const jsStrings = {
           </tr>
         </thead>
         <tbody id="cfa-status-rows"></tbody>
+      </table>
+    </div>
+
+    <p class="cfa-countries-title mono">{c.byActionTitle}</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelAction}>
+      <table class="result-table cfa-table">
+        <thead>
+          <tr>
+            <th>{c.tableAction}</th>
+            <th>{c.tableEvents}</th>
+          </tr>
+        </thead>
+        <tbody id="cfa-action-rows"></tbody>
+      </table>
+    </div>
+
+    <p class="cfa-countries-title mono">{c.bySourceTitle}</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label={c.scrollLabelSource}>
+      <table class="result-table cfa-table">
+        <thead>
+          <tr>
+            <th>{c.tableSource}</th>
+            <th>{c.tableEvents}</th>
+          </tr>
+        </thead>
+        <tbody id="cfa-source-rows"></tbody>
       </table>
     </div>
 
@@ -109,6 +138,7 @@ const jsStrings = {
     rowsId: string,
     rows: { key: string; count: number }[],
     labels: Record<string, string>,
+    emptyMsg: string,
   ) {
     const rowsEl = document.getElementById(rowsId)!;
     rowsEl.replaceChildren();
@@ -117,7 +147,7 @@ const jsStrings = {
       const td = document.createElement('td');
       td.colSpan = 2;
       td.className = 'hp-loading';
-      td.textContent = S.statusEmpty;
+      td.textContent = emptyMsg;
       tr.append(td);
       rowsEl.append(tr);
       return;
@@ -148,7 +178,9 @@ const jsStrings = {
       setText('cfa-errors', pct(worker.errorRatio ?? 0));
       setText('cfa-worker-requests', (worker.requests ?? 0).toLocaleString(lang));
       renderCountries(zone.topCountries ?? []);
-      renderBreakdown('cfa-status-rows', zone.blockedByStatus ?? [], S.statusLabels ?? {});
+      renderBreakdown('cfa-status-rows', zone.blockedByStatus ?? [], S.statusLabels ?? {}, S.statusEmpty);
+      renderBreakdown('cfa-action-rows', zone.firewallByAction ?? [], S.actionLabels ?? {}, S.firewallEmpty);
+      renderBreakdown('cfa-source-rows', zone.firewallBySource ?? [], S.sourceLabels ?? {}, S.firewallEmpty);
 
       document.getElementById('cfa-stat-threats')!.classList.toggle('amber', (zone.threats ?? 0) > 0);
       document.getElementById('cfa-stat-errors')!.classList.toggle('amber', (worker.errorRatio ?? 0) > 0);
