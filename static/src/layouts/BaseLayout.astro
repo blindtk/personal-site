@@ -91,7 +91,15 @@ const personSchema = {
     <meta property="og:image:height" content="630" />
     {/* < evita que um valor de config com "</script>" alguma vez quebre
        para fora da tag — hoje os valores são todos estáticos e inofensivos,
-       mas é a mitigação padrão para JSON-LD via set:html. */}
+       mas é a mitigação padrão para JSON-LD via set:html.
+
+       Este bloco é inline (JSON-LD não tem forma fiável de externalizar) e
+       por isso NÃO está coberto pelo lever "zero inline" do resto do site —
+       está autorizado na CSP por um hash sha256 explícito em
+       static/public/_headers (ver docs/security-headers.md). Se este objeto
+       mudar de conteúdo (ex.: SITE.role[pt] passar a diferir de
+       SITE.role[en]), recalcula e atualiza esse hash — senão a CSP volta a
+       bloquear este script em produção. */}
     <script type="application/ld+json" set:html={JSON.stringify(personSchema).replace(/</g, '\\u003c')} />
     <meta property="og:locale" content={lang === 'pt' ? 'pt_PT' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
