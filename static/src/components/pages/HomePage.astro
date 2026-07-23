@@ -35,13 +35,17 @@ const tools = [
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
 // Stats: sinais de competência, não de consumo (os 550 repos do catálogo
-// GitHub vivem na página Links, não aqui). O nº de badges é calculado do
+// GitHub vivem na página Links, não aqui). Os nºs de certificações vêm do
 // certs.json para nunca divergir da página Certificações.
-const verifiedBadges = (certs.items as { verified?: boolean }[]).filter(
-  (item) => item.verified !== false,
-).length;
+const certItems = certs.items as { verified?: boolean }[];
+const totalCerts = certItems.length;
+const verifiedBadges = certItems.filter((item) => item.verified !== false).length;
+const statValues: Record<string, string> = {
+  certsTotal: String(totalCerts),
+  certs: String(verifiedBadges),
+};
 const stats = dict.home.statsStatic.map((stat) =>
-  'key' in stat && stat.key === 'certs' ? { ...stat, n: String(verifiedBadges) } : stat,
+  'key' in stat && stat.key in statValues ? { ...stat, n: statValues[stat.key] } : stat,
 );
 
 const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
@@ -77,9 +81,10 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       <div class="stats-grid">
         {stats.map((stat) => {
           const cls = `stat ${toneClass[stat.tone] ?? ''}`.trim();
-          // O nº de badges vem de certs.json — ligá-lo à página que os prova
-          // é o cruzamento natural (a mesma lógica "não acredites, verifica").
-          return 'key' in stat && stat.key === 'certs' ? (
+          // Os dois stats de certificações vêm de certs.json — ligá-los à
+          // página que os prova é o cruzamento natural (a mesma lógica
+          // "não acredites, verifica").
+          return 'key' in stat && (stat.key === 'certs' || stat.key === 'certsTotal') ? (
             <a class={`${cls} stat-link`} href={routes.certifications[lang]}>
               <div class="n">{stat.n}</div>
               <div class="l">{stat.d}</div>

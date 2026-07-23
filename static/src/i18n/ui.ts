@@ -364,16 +364,14 @@ export const ui = {
       chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Sinais de competência (não de consumo). Números consistentes com as
       // páginas que os detalham: 9+ = redes desde 2017 (Sobre: "quase uma
-      // década"); o nº de badges é calculado em build a partir de
-      // content/certs.json (entrada key:'certs' — mesmo critério
-      // verified!==false da página Certificações); 5 países = as 5 paragens
-      // do Percurso, todas em infraestrutura crítica (incluindo a Ascendi);
-      // 4 CTFs = content/awards.json.
+      // década"); certsTotal e certs são calculados em build a partir de
+      // content/certs.json (comprimento total e critério verified!==false
+      // — mesmo critério da página Certificações); 4 CTFs = content/awards.json.
       statsStatic: [
         { n: '9+', d: 'anos em redes & segurança', tone: 'green' },
-        { key: 'certs', n: '12', d: 'badges de segurança verificáveis', tone: 'amber' },
-        { n: '5', d: 'países com infraestrutura crítica', tone: 'blue' },
-        { n: '4', d: 'CTFs vencidos · 1.º lugar', tone: 'green' },
+        { key: 'certsTotal', n: '31', d: 'certificações', tone: 'blue' },
+        { key: 'certs', n: '12', d: 'verificáveis · Credly', tone: 'amber' },
+        { n: '4', d: 'CTFs vencidos', tone: 'green' },
       ],
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
@@ -1204,16 +1202,14 @@ export const ui = {
       chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
       // Competence signals (not consumption). Numbers kept consistent with
       // the pages that detail them: 9+ = networking since 2017 (About:
-      // "almost a decade"); the badge count is computed at build from
-      // content/certs.json (key:'certs' entry — same verified!==false
-      // criterion as the Certifications page); 5 countries = the Journey's
-      // 5 stops, all in critical infrastructure (Ascendi included);
-      // 4 CTFs = content/awards.json.
+      // "almost a decade"); certsTotal and certs are computed at build from
+      // content/certs.json (total length and the verified!==false criterion
+      // — same as the Certifications page); 4 CTFs = content/awards.json.
       statsStatic: [
         { n: '9+', d: 'years in networking & security', tone: 'green' },
-        { key: 'certs', n: '12', d: 'verifiable security badges', tone: 'amber' },
-        { n: '5', d: 'countries with critical infrastructure', tone: 'blue' },
-        { n: '4', d: 'CTFs won · 1st place', tone: 'green' },
+        { key: 'certsTotal', n: '31', d: 'certifications', tone: 'blue' },
+        { key: 'certs', n: '12', d: 'verifiable · Credly', tone: 'amber' },
+        { n: '4', d: 'CTFs won', tone: 'green' },
       ],
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).
