@@ -20,7 +20,7 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
-import { parseCfStats } from '../src/lib/cf-analytics.js';
+import { parseCfStats, firewallBreakdown } from '../src/lib/cf-analytics.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
@@ -985,7 +985,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
   assert.deepEqual(stats.zone, {
     requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
-    topCountries: [], blockedByStatus: [],
+    topCountries: [], blockedByStatus: [], firewallByAction: [], firewallBySource: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -995,7 +995,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
 test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
   assert.deepEqual(parseCfStats({}).zone, {
     requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
-    topCountries: [], blockedByStatus: [],
+    topCountries: [], blockedByStatus: [], firewallByAction: [], firewallBySource: [],
   });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
@@ -1095,6 +1095,99 @@ test('parseCfStats: blockedByStatus corta no limite e degrada para [] sem o camp
   assert.deepEqual(stats.zone.blockedByStatus[0], { key: '400', count: 15 });
   // responseStatusMap ausente → []
   assert.deepEqual(parseCfStats(graphqlFixture({ zoneRows: [{ sum: { requests: 5 } }] })).zone.blockedByStatus, []);
+});
+
+// Helper: resposta da CF_FIREWALL_QUERY (firewallEventsAdaptive cru).
+function firewallFixture(events) {
+  return { data: { viewer: { zones: [{ firewallEventsAdaptive: events }] } } };
+}
+
+test('firewallBreakdown: agrega os eventos crus por ação e por origem, ordenado', () => {
+  const raw = firewallFixture([
+    { action: 'managed_challenge', source: 'firewallCustom' },
+    { action: 'managed_challenge', source: 'firewallCustom' },
+    { action: 'block', source: 'firewallCustom' },
+    { action: 'block', source: 'ratelimit' },
+    { action: 'block', source: 'ratelimit' },
+    { action: 'js_challenge', source: 'bic' },
+  ]);
+  const fw = firewallBreakdown(raw);
+  assert.deepEqual(fw.firewallByAction, [
+    { key: 'block', count: 3 },
+    { key: 'managed_challenge', count: 2 },
+    { key: 'js_challenge', count: 1 },
+  ]);
+  assert.deepEqual(fw.firewallBySource, [
+    { key: 'firewallCustom', count: 3 },
+    { key: 'ratelimit', count: 2 },
+    { key: 'bic', count: 1 },
+  ]);
+});
+
+test('firewallBreakdown: campo em falta vira "unknown"; shape ausente/nulo degrada para []', () => {
+  const fw = firewallBreakdown(firewallFixture([{ action: 'block' }, { source: 'ratelimit' }]));
+  assert.deepEqual(fw.firewallByAction, [{ key: 'block', count: 1 }, { key: 'unknown', count: 1 }]);
+  assert.deepEqual(fw.firewallBySource, [{ key: 'unknown', count: 1 }, { key: 'ratelimit', count: 1 }]);
+  assert.deepEqual(firewallBreakdown({}).firewallByAction, []);
+  assert.deepEqual(firewallBreakdown(null).firewallBySource, []);
+});
+
+test('/api/cf-stats: o 2.º pedido (firewall) preenche firewallByAction/Source', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptive');
+    if (isFw) {
+      return { ok: true, json: async () => firewallFixture([
+        { action: 'managed_challenge', source: 'firewallCustom' },
+        { action: 'managed_challenge', source: 'firewallCustom' },
+        { action: 'block', source: 'ratelimit' },
+      ]) };
+    }
+    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 676 } }] }) };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats'), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.zone.threats, 676);
+    assert.deepEqual(data.zone.firewallByAction, [
+      { key: 'managed_challenge', count: 2 },
+      { key: 'block', count: 1 },
+    ]);
+    assert.deepEqual(data.zone.firewallBySource, [
+      { key: 'firewallCustom', count: 2 },
+      { key: 'ratelimit', count: 1 },
+    ]);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats: erro só no 2.º pedido (firewall) mantém o núcleo (sem 502)', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptive');
+    if (isFw) return { ok: true, json: async () => ({ errors: [{ message: 'does not have access to the path' }] }) };
+    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 5 } }] }) };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats'), env);
+    assert.equal(res.status, 200); // núcleo intacto — NÃO 502
+    const data = await res.json();
+    assert.equal(data.zone.threats, 5);
+    assert.deepEqual(data.zone.firewallByAction, []);
+    assert.deepEqual(data.zone.firewallBySource, []);
+  } finally {
+    globalThis.fetch = orig;
+  }
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {

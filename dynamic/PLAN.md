@@ -43,6 +43,25 @@
   do edge**; o detalhe por regra WAF exige Pro+. Se a zona um dia passar a Pro,
   reabre-se o `firewallEventsAdaptiveGroups` (com janela ≤ retenção do plano).
 
+- **2026-07 — CORREÇÃO: eventos de firewall SÃO acessíveis no Free (dataset
+  cru)** (fase 1 aprovada pelo dono do repo): a conclusão anterior ("firewall é
+  Pro-only") estava **errada** — confundi os dois datasets. O
+  `firewallEventsAdaptive**Groups**` (agregado) é Pro+, mas o
+  `firewallEventsAdaptive` (**cru**, eventos individuais) **funciona no Free**
+  (retenção 24h), com o token a ter as permissões de leitura de firewall (Zone
+  Firewall Services:Read, Zone WAF:Read, Account Firewall Access Rules:Read).
+  Provado em produção: o cru devolveu eventos reais (`managed_challenge` de
+  `firewallCustom`), enquanto o agregado continuou a dar "no access". Como o
+  agregado é Pro, a **agregação por ação/origem faz-se no Worker** a partir do
+  cru (`firewallBreakdown`). Pedido separado e **best-effort** (nunca derruba o
+  painel-núcleo). O painel passa a ter duas tabelas — **por ação** e **por
+  origem · 24h** — a par do "por código HTTP · 7d" (que se mantém, é sinal
+  complementar). Etiquetas i18n (`actionLabels`/`sourceLabels`) com fallback ao
+  valor cru; nunca se pede nem guarda o IP. **Fase 2 (planeada, ainda não
+  feita):** como o cru só tem 24h no Free, um **cron diário** coleta o agregado
+  do dia para KV e acumula uma janela de **7 dias** — a ideia de "coletar e
+  guardar" do dono do repo, que aqui faz todo o sentido.
+
 - **2026-07 — Dependabot security-only a par do Renovate** (decisão do dono do
   repo): o Renovate faz todos os *version updates* (rotina agrupada + majors),
   mas fica ligado também o **Dependabot security updates** — só para
