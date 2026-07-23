@@ -18,25 +18,33 @@
   Regras Geridas/WAF, Custom Rules, Rate limiting, Bot management, BIC…) e por
   **ação** (`action`: block, managed_challenge, jschallenge…), tiradas do
   dataset **`firewallEventsAdaptiveGroups`** (agregado, *zone-level*) da mesma
-  GraphQL Analytics API. **Exige `Zone Logs:Read` no `CF_API_TOKEN`** (ao
-  contrário do que se pensou de início: o `Zone Analytics:Read` do painel base
-  *não* dá acesso ao dataset de eventos de firewall — confirmado em produção
-  com um `upstream_error` na 1.ª tentativa). Continua a ser só agregados
-  (`count` por combinação `action`+`source`), nunca IPs nem o
-  `firewallEventsAdaptive` cru de eventos individuais. O parse exclui
-  `action=allow` (não é mitigação) e soma o `count` por dimensão. Lógica pura
-  em `dynamic/worker/src/lib/cf-analytics.js` (`breakdownByDimension` +
-  `firewallBreakdown`), testada com vetores. **Isolamento:** o detalhe vai num
-  **pedido GraphQL separado e best-effort** (`CF_FIREWALL_QUERY`) — se falhar
-  (permissão em falta ou deriva de schema), engole-se o erro e as quebras ficam
-  vazias, mas o painel-núcleo (pedidos/cache/ameaças/Worker) **nunca** cai. Foi
-  a correção de um bug: a 1.ª versão metia tudo numa query e o erro do dataset
-  de firewall derrubava o painel inteiro (502). UI estende o painel existente
-  (`static/src/components/CfAnalytics.astro`) com duas tabelas por baixo do "top
-  países"; etiquetas legíveis no i18n (`sourceLabels`/`actionLabels`) com
-  **fallback ao valor cru** — chave desconhecida por deriva de schema aparece na
-  mesma, o painel nunca fica em branco. *Por regra* (`ruleId`) ficou de fora da
-  v1 (ruidoso); dá para juntar depois se se sentir falta.
+  GraphQL Analytics API. **Fonte: `threatPathingMap`** (a taxonomia da
+  Cloudflare de *que mecanismo* apanhou cada ameaça — `user.securityLevel`,
+  `firewallRules`, `bic`, `hot`, `ratelimit`…), campo irmão do `countryMap`
+  dentro do `sum` do **`httpRequests1dGroups`**. Só agregados, nunca IPs nem
+  dados de visitantes individuais.
+
+  **Porque NÃO os eventos de firewall (`firewallEventsAdaptiveGroups`), a
+  escolha óbvia à primeira vista:** esse dataset exige **plano Pro+**. A zona
+  está no **Free** e o dono do repo não vai passar a Pro — no Free a query
+  devolve `"zone does not have access to the path"` (confirmado em produção,
+  com o token já a ter `Zone Logs:Read` + `Analytics:Read`; ou seja, não era
+  permissão, era o plano). O `threatPathingMap` dá a mesma leitura por tipo,
+  funciona no Free, e **basta o `Zone Analytics:Read`** que o painel-base já
+  usa — sem Logs:Read. (Percurso registado porque custou várias iterações a
+  perceber: token → permissões → plano.)
+
+  **Isolamento:** o detalhe vai num **pedido GraphQL separado e best-effort**
+  (`CF_THREATPATHING_QUERY`) — se falhar, engole-se o erro e a quebra fica
+  vazia, mas o painel-núcleo (pedidos/cache/ameaças/Worker) **nunca** cai (foi
+  a correção de um bug anterior em que tudo numa só query derrubava o painel com
+  502). Lógica pura em `dynamic/worker/src/lib/cf-analytics.js`
+  (`threatsByPathing` + `threatPathingBreakdown`), testada com vetores. UI
+  estende o painel existente (`static/src/components/CfAnalytics.astro`) com uma
+  tabela "por tipo de ameaça" por baixo do "top países"; etiquetas legíveis no
+  i18n (`typeLabels`) com **fallback ao valor cru** — mecanismo desconhecido
+  aparece na mesma, o painel nunca fica em branco. Separação `action`/`source`
+  (que os eventos de firewall dariam) ficou de fora por indisponível no Free.
 
 - **2026-07 — Dependabot security-only a par do Renovate** (decisão do dono do
   repo): o Renovate faz todos os *version updates* (rotina agrupada + majors),

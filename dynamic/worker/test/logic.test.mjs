@@ -20,7 +20,7 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
-import { parseCfStats, firewallBreakdown } from '../src/lib/cf-analytics.js';
+import { parseCfStats, threatPathingBreakdown } from '../src/lib/cf-analytics.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
   MAX_SOURCES_PER_BUCKET,
@@ -960,11 +960,11 @@ test('/api/ct: uma query falhada degrada para a outra; as duas → 502', async (
 
 // ---------- Estado da Cloudflare (/api/cf-stats) ----------
 
-function graphqlFixture({ zoneRows = [], workerRows = [], firewallRows = [] } = {}) {
+function graphqlFixture({ zoneRows = [], workerRows = [] } = {}) {
   return {
     data: {
       viewer: {
-        zones: [{ httpRequests1dGroups: zoneRows, firewallEventsAdaptiveGroups: firewallRows }],
+        zones: [{ httpRequests1dGroups: zoneRows }],
         accounts: [{ workersInvocationsAdaptive: workerRows }],
       },
     },
@@ -985,7 +985,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
   assert.deepEqual(stats.zone, {
     requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
-    topCountries: [], threatsBySource: [], threatsByAction: [],
+    topCountries: [], threatsByType: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -995,7 +995,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
 test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
   assert.deepEqual(parseCfStats({}).zone, {
     requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
-    topCountries: [], threatsBySource: [], threatsByAction: [],
+    topCountries: [], threatsByType: [],
   });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
@@ -1050,53 +1050,47 @@ test('parseCfStats: topCountries corta no limite (mais países do que o topo ped
   assert.equal(stats.zone.topCountries[0].threats, 15);
 });
 
-test('firewallBreakdown: threatsBySource/ByAction somam count, ordenam e excluem allow', () => {
-  const raw = graphqlFixture({
-    firewallRows: [
-      { count: 400, dimensions: { action: 'block', source: 'firewallManaged' } },
-      { count: 100, dimensions: { action: 'managed_challenge', source: 'firewallManaged' } },
-      { count: 150, dimensions: { action: 'block', source: 'rateLimit' } },
-      { count: 26, dimensions: { action: 'jschallenge', source: 'botManagement' } },
-      // action=allow nunca conta (não é mitigação) — nem para source nem para action
-      { count: 9999, dimensions: { action: 'allow', source: 'firewallCustom' } },
-      // count 0 é ignorado
-      { count: 0, dimensions: { action: 'block', source: 'uaBlock' } },
+// Helper: resposta da CF_THREATPATHING_QUERY (httpRequests1dGroups com só o
+// threatPathingMap no sum), uma linha por dia.
+function threatPathingFixture(days) {
+  return {
+    data: {
+      viewer: {
+        zones: [{ httpRequests1dGroups: days.map((threatPathingMap) => ({ sum: { threatPathingMap } })) }],
+      },
+    },
+  };
+}
+
+test('threatPathingBreakdown: soma por tipo através dos dias, ordena e ignora zero', () => {
+  const raw = threatPathingFixture([
+    [
+      { name: 'user.securityLevel', requests: 400 },
+      { name: 'firewallRules', requests: 150 },
+      { name: 'bic', requests: 26 },
+      { name: 'hot', requests: 0 }, // zero é ignorado
     ],
-  });
-  const fw = firewallBreakdown(raw);
-  assert.deepEqual(fw.threatsBySource, [
-    { key: 'firewallManaged', count: 500 }, // 400 + 100 acumulam pela origem
-    { key: 'rateLimit', count: 150 },
-    { key: 'botManagement', count: 26 },
+    [
+      { name: 'user.securityLevel', requests: 100 }, // acumula com o dia anterior
+      { name: 'ratelimit', requests: 40 },
+    ],
   ]);
-  assert.deepEqual(fw.threatsByAction, [
-    { key: 'block', count: 550 }, // 400 + 150
-    { key: 'managed_challenge', count: 100 },
-    { key: 'jschallenge', count: 26 },
+  const { threatsByType } = threatPathingBreakdown(raw);
+  assert.deepEqual(threatsByType, [
+    { key: 'user.securityLevel', count: 500 }, // 400 + 100
+    { key: 'firewallRules', count: 150 },
+    { key: 'ratelimit', count: 40 },
+    { key: 'bic', count: 26 },
   ]);
 });
 
-test('firewallBreakdown: dimensão em falta vira "unknown"; shape ausente/errors degrada para []', () => {
-  const raw = graphqlFixture({
-    firewallRows: [
-      { count: 5, dimensions: { action: 'block' } }, // sem source → unknown
-      { count: 3, dimensions: { source: 'rateLimit' } }, // sem action → conta (não é allow)
-    ],
-  });
-  const fw = firewallBreakdown(raw);
-  assert.deepEqual(fw.threatsBySource, [
-    { key: 'unknown', count: 5 },
-    { key: 'rateLimit', count: 3 },
-  ]);
-  assert.deepEqual(fw.threatsByAction, [
-    { key: 'block', count: 5 },
-    { key: 'unknown', count: 3 },
-  ]);
-  // firewallEventsAdaptiveGroups ausente (schema antigo/deriva) ou resposta
-  // vazia não rebenta — devolve listas vazias.
-  assert.deepEqual(firewallBreakdown({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).threatsBySource, []);
-  assert.deepEqual(firewallBreakdown({}).threatsByAction, []);
-  assert.deepEqual(firewallBreakdown(null).threatsBySource, []);
+test('threatPathingBreakdown: nome em falta vira "unknown"; shape ausente degrada para []', () => {
+  const raw = threatPathingFixture([[{ requests: 7 }, { name: '', requests: 3 }]]);
+  assert.deepEqual(threatPathingBreakdown(raw).threatsByType, [{ key: 'unknown', count: 10 }]);
+  // threatPathingMap ausente, resposta vazia ou nula não rebenta — devolve [].
+  assert.deepEqual(threatPathingBreakdown({ data: { viewer: { zones: [{ httpRequests1dGroups: [] }] } } }).threatsByType, []);
+  assert.deepEqual(threatPathingBreakdown({}).threatsByType, []);
+  assert.deepEqual(threatPathingBreakdown(null).threatsByType, []);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
@@ -1165,20 +1159,22 @@ test('/api/cf-stats?refresh=1: ignora a cache existente e escreve uma entrada no
   }
 });
 
-test('/api/cf-stats: o detalhe de firewall (2.º pedido) preenche as quebras', async () => {
+test('/api/cf-stats: o detalhe por tipo (2.º pedido) preenche threatsByType', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
   };
   const orig = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
-    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptiveGroups');
-    if (isFw) {
+    const isTp = JSON.parse(init.body).query.includes('threatPathingMap');
+    if (isTp) {
       return {
         ok: true,
-        json: async () => ({ data: { viewer: { zones: [{ firewallEventsAdaptiveGroups: [
-          { count: 500, dimensions: { action: 'block', source: 'firewallManaged' } },
-          { count: 176, dimensions: { action: 'managed_challenge', source: 'rateLimit' } },
+        json: async () => ({ data: { viewer: { zones: [{ httpRequests1dGroups: [
+          { sum: { threatPathingMap: [
+            { name: 'user.securityLevel', requests: 500 },
+            { name: 'firewallRules', requests: 176 },
+          ] } },
         ] }] } } }),
       };
     }
@@ -1189,29 +1185,24 @@ test('/api/cf-stats: o detalhe de firewall (2.º pedido) preenche as quebras', a
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.zone.threats, 676);
-    assert.deepEqual(data.zone.threatsBySource, [
-      { key: 'firewallManaged', count: 500 },
-      { key: 'rateLimit', count: 176 },
-    ]);
-    assert.deepEqual(data.zone.threatsByAction, [
-      { key: 'block', count: 500 },
-      { key: 'managed_challenge', count: 176 },
+    assert.deepEqual(data.zone.threatsByType, [
+      { key: 'user.securityLevel', count: 500 },
+      { key: 'firewallRules', count: 176 },
     ]);
   } finally {
     globalThis.fetch = orig;
   }
 });
 
-test('/api/cf-stats: erro só no dataset de firewall mantém o núcleo (quebras vazias, sem 502)', async () => {
+test('/api/cf-stats: erro só no 2.º pedido (tipo) mantém o núcleo (threatsByType vazio, sem 502)', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
   };
   const orig = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
-    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptiveGroups');
-    // Simula Logs:Read em falta: a GraphQL API devolve errors no 2.º pedido.
-    if (isFw) return { ok: true, json: async () => ({ errors: [{ message: 'authentication error [code: 10000]' }] }) };
+    const isTp = JSON.parse(init.body).query.includes('threatPathingMap');
+    if (isTp) return { ok: true, json: async () => ({ errors: [{ message: 'does not have access to the path' }] }) };
     return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 5 } }] }) };
   };
   try {
@@ -1219,8 +1210,7 @@ test('/api/cf-stats: erro só no dataset de firewall mantém o núcleo (quebras 
     assert.equal(res.status, 200); // núcleo intacto — NÃO 502
     const data = await res.json();
     assert.equal(data.zone.threats, 5);
-    assert.deepEqual(data.zone.threatsBySource, []);
-    assert.deepEqual(data.zone.threatsByAction, []);
+    assert.deepEqual(data.zone.threatsByType, []);
   } finally {
     globalThis.fetch = orig;
   }
