@@ -5,7 +5,7 @@ import StatusBadge from '../site/StatusBadge.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, INFRA, SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
+import { routes, projectUrl } from '../../i18n/routes';
 import { BUILD_INFO } from '../../lib/build-info';
 
 interface Props { lang: Lang }
@@ -50,9 +50,22 @@ const jsStrings = {
     <p class="intro">{s.overviewIntro}</p>
   </div>
 
+  <section aria-labelledby="h-map">
+    <div class="section-title"><h2 id="h-map">{s.hubTitle}</h2></div>
+    <p class="intro">{dict.layers.intro}</p>
+    <ul class="sec-links mono">
+      <li><a href={routes.security[lang]}>{dict.layers.security}</a></li>
+      <li><a href={routes.evidence[lang]}>{dict.layers.evidence}</a></li>
+      <li><a href={routes.perimeter[lang]}>{dict.layers.perimeter}</a></li>
+      <li><a href={routes.detections[lang]}>{dict.layers.detections}</a></li>
+      <li><a href={routes.performance[lang]}>{dict.layers.performance}</a></li>
+    </ul>
+  </section>
+
   <section aria-labelledby="h-arch">
     <div class="section-title"><h2 id="h-arch">{s.archTitle}</h2></div>
     <p class="intro">{s.archBody}</p>
+    <p class="note">📐 {s.overviewProjectBody} <a href={projectUrl(lang, 'este-site')}>{s.overviewProjectCta}</a></p>
   </section>
 
   <section aria-labelledby="h-status" class="overview-grid">
@@ -146,6 +159,21 @@ const jsStrings = {
 </script>
 
 <style>
+  .sec-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .sec-links a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .sec-links a:hover {
+    text-decoration: underline;
+  }
   .overview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));

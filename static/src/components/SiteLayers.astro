@@ -5,9 +5,15 @@ import { routes, projectUrl } from '../i18n/routes';
 
 /**
  * Cross-links entre as páginas do "sistema" do site (Segurança, Provas,
- * Perímetro, Deteções, ATT&CK e o projeto este-site). O mesmo bloco em todas
- * elas, com a página atual marcada — é o que liga a narrativa do projeto
- * este-site à postura de segurança e à telemetria ao vivo.
+ * Perímetro, Deteções, Performance e o projeto este-site). O mesmo bloco em
+ * todas elas, com a página atual marcada — é o que liga a narrativa do
+ * projeto este-site à postura de segurança e à telemetria ao vivo.
+ *
+ * ATT&CK fica de fora de propósito (mesma razão que o exclui do dropdown
+ * "Este Site" na nav principal — ver BaseLayout.astro): não é sobre este
+ * site, é sobre credenciais e percurso pessoais. Não é uma "camada" do
+ * sistema, por isso não aparece aqui — evita a própria página ATT&CK
+ * dizer-se a si mesma parte de algo de que a nav a exclui.
  */
 type LayerKey =
   | 'overview'
@@ -15,9 +21,7 @@ type LayerKey =
   | 'evidence'
   | 'perimeter'
   | 'detections'
-  | 'analytics'
   | 'performance'
-  | 'attack'
   | 'project';
 
 interface Props {
@@ -33,9 +37,7 @@ const items: { key: LayerKey; href: string; label: string }[] = [
   { key: 'evidence', href: routes.evidence[lang], label: dict.evidence },
   { key: 'perimeter', href: routes.perimeter[lang], label: dict.perimeter },
   { key: 'detections', href: routes.detections[lang], label: dict.detections },
-  { key: 'analytics', href: routes.analytics[lang], label: dict.analytics },
   { key: 'performance', href: routes.performance[lang], label: dict.performance },
-  { key: 'attack', href: routes.attack[lang], label: dict.attack },
   { key: 'project', href: projectUrl(lang, 'este-site'), label: dict.project },
 ];
 ---
