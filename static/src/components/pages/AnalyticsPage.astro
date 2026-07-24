@@ -28,6 +28,7 @@ const jsStrings = {
   firewallEmpty: s.firewallEmpty,
   tiEmpty: s.tiEmpty,
   tiNoneYet: s.tiNoneYet,
+  tiDays: s.tiDays,
   logVerdict: s.logVerdict,
   logsEmpty: s.logsEmpty,
   logsPageOf: s.logsPageOf,
@@ -494,7 +495,7 @@ const jsStrings = {
           label: String(r.key),
           value: Number(r.count) || 0,
           tone: 'warn',
-          display: `${formatNumber(r.count, locale)} · ${r.days}d`,
+          display: `${formatNumber(r.count, locale)} · ${r.days} ${S.tiDays}`,
         })),
         S.tiNoneYet,
       );
