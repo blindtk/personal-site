@@ -989,7 +989,7 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   assert.deepEqual(stats.zone, {
     requests: 300, visitors: 0, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
     topCountries: [], riskByCountry: [], blockedByStatus: [], series: [],
-    firewallByAction: [], firewallBySource: [],
+    firewallByAction: [], firewallBySource: [], firewallByCountry: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -1000,7 +1000,7 @@ test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança',
   assert.deepEqual(parseCfStats({}).zone, {
     requests: 0, visitors: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
     topCountries: [], riskByCountry: [], blockedByStatus: [], series: [],
-    firewallByAction: [], firewallBySource: [],
+    firewallByAction: [], firewallBySource: [], firewallByCountry: [],
   });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
@@ -1209,6 +1209,20 @@ test('firewallBreakdown: campo em falta vira "unknown"; shape ausente/nulo degra
   assert.deepEqual(firewallBreakdown(null).firewallBySource, []);
 });
 
+test('firewallBreakdown: firewallByCountry cruza país com a ação dominante desse país', () => {
+  const fw = firewallBreakdown(firewallFixture([
+    { action: 'block', source: 'ratelimit', clientCountryName: 'NL' },
+    { action: 'block', source: 'ratelimit', clientCountryName: 'NL' },
+    { action: 'managed_challenge', source: 'firewallCustom', clientCountryName: 'NL' },
+    { action: 'js_challenge', source: 'bic', clientCountryName: 'DE' },
+    { action: 'block', source: 'ratelimit', clientCountryName: 'xx' }, // normaliza p/ 'XX' (sentinela): fora
+  ]));
+  assert.deepEqual(fw.firewallByCountry, [
+    { country: 'NL', action: 'block', count: 2 }, // NL: block=2 domina sobre managed_challenge=1
+    { country: 'DE', action: 'js_challenge', count: 1 },
+  ]);
+});
+
 test('/api/cf-stats: o 2.º pedido (firewall) preenche firewallByAction/Source', async () => {
   const env = {
     KV: fakeKV(),
@@ -1265,6 +1279,32 @@ test('/api/cf-stats: erro só no 2.º pedido (firewall) mantém o núcleo (sem 5
   } finally {
     globalThis.fetch = orig;
   }
+});
+
+test('/api/threat-intel: funde snapshots fw:<dia> de vários dias em firewall7d.byCountry', async () => {
+  const env = { KV: fakeKV() };
+  const now = Date.now();
+  const fwDayKey = (ms) => `fw:${new Date(ms).toISOString().slice(0, 10)}`;
+  const DAY_MS = 86_400_000;
+  // Hoje: NL domina com block=3. Ontem: NL também apareceu, mas com
+  // managed_challenge=2 — a soma da semana (block=3, managed_challenge=2)
+  // tem de continuar a apontar 'block' como a ação dominante de NL.
+  env.KV.store.set(fwDayKey(now), JSON.stringify({
+    byAction: { block: 3 }, bySource: { ratelimit: 3 },
+    byCountry: { NL: { action: 'block', count: 3 }, DE: { action: 'js_challenge', count: 1 } },
+  }));
+  env.KV.store.set(fwDayKey(now - DAY_MS), JSON.stringify({
+    byAction: { managed_challenge: 2 }, bySource: { firewallCustom: 2 },
+    byCountry: { NL: { action: 'managed_challenge', count: 2 } },
+  }));
+  const res = await runFetch(fakeRequest('/api/threat-intel'), env);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.deepEqual(data.firewall7d.byAction, [{ key: 'block', count: 3 }, { key: 'managed_challenge', count: 2 }]);
+  assert.deepEqual(data.firewall7d.byCountry, [
+    { country: 'NL', action: 'block', count: 3 },
+    { country: 'DE', action: 'js_challenge', count: 1 },
+  ]);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {

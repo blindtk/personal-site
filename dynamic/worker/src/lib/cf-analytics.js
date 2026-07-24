@@ -70,14 +70,17 @@ const CF_STATS_QUERY = `
 // `firewallEventsAdaptiveGroups` (agregado), porque no plano Free só o cru
 // está acessível — o agregado é Pro+ ("does not have access to the path"). Por
 // isso a agregação por ação/origem faz-se aqui no Worker, não na API. Retenção
-// no Free: 24h; para 7d seria preciso coletar/acumular (fase 2). Só se pedem
-// `action` + `source` — NUNCA o IP nem dados de visitante individual.
+// no Free: 24h; para 7d seria preciso coletar/acumular (fase 2). Pedem-se
+// `action` + `source` + `clientCountryName` (país, não IP — o mesmo nível de
+// detalhe já usado no `countryMap` de CF_STATS_QUERY) para poder cruzar país
+// com o tipo de ação que a Cloudflare tomou — NUNCA o IP nem dados de
+// visitante individual.
 const CF_FIREWALL_QUERY = `
   query CfFirewall($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
     viewer {
       zones(filter: { zoneTag: $zoneTag }) {
         firewallEventsAdaptive(limit: 10000, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
-          action source sampleInterval
+          action source sampleInterval clientCountryName
         }
       }
     }
@@ -197,9 +200,34 @@ function topEntries(map, limit) {
 }
 
 /**
+ * Ordena um mapa aninhado país→(ação→contagem) numa lista [{country, action,
+ * count}] — o `action` de cada país é o mais frequente nesse país (a "ameaça
+ * específica" que domina a esse país), `count` é o peso desse par. Ordenado
+ * pelo total do país (soma de todas as ações), do maior para o menor.
+ */
+function topCountryAction(byCountryAction, limit) {
+  return [...byCountryAction.entries()]
+    .map(([country, actions]) => {
+      let bestAction = null;
+      let bestCount = -1;
+      let total = 0;
+      for (const [action, count] of actions) {
+        total += count;
+        if (count > bestCount) { bestAction = action; bestCount = count; }
+      }
+      return { country, action: bestAction, count: bestCount, total };
+    })
+    .sort((a, b) => b.total - a.total)
+    .slice(0, limit)
+    .map(({ country, action, count }) => ({ country, action, count }));
+}
+
+/**
  * Agrega os eventos crus do `firewallEventsAdaptive` (CF_FIREWALL_QUERY) por
- * **ação** (o que a Cloudflare fez: managed_challenge, block, js_challenge…) e
- * por **origem** (que sistema disparou: firewallCustom, ratelimit, bic…).
+ * **ação** (o que a Cloudflare fez: managed_challenge, block, js_challenge…),
+ * por **origem** (que sistema disparou: firewallCustom, ratelimit, bic…) e por
+ * **país × ação** (qual é a ação mais comum vinda de cada país — a resposta a
+ * "que ameaça específica vem de cada país", que `topCountries` sozinho não dá).
  *
  * IMPORTANTE — amostragem: o dataset é AMOSTRADO ("Sampled logs" no dashboard).
  * Cada evento traz um `sampleInterval` = quantos eventos reais aquela linha
@@ -214,16 +242,24 @@ export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
   const events = (Array.isArray(zones) ? zones[0] : null)?.firewallEventsAdaptive ?? [];
   const byAction = new Map();
   const bySource = new Map();
+  const byCountryAction = new Map(); // country -> Map<action, weight>
   for (const e of Array.isArray(events) ? events : []) {
     const action = typeof e?.action === 'string' && e.action.length > 0 ? e.action : 'unknown';
     const source = typeof e?.source === 'string' && e.source.length > 0 ? e.source : 'unknown';
     const weight = Math.max(1, Number(e?.sampleInterval) || 1);
     byAction.set(action, (byAction.get(action) ?? 0) + weight);
     bySource.set(source, (bySource.get(source) ?? 0) + weight);
+    const country = normalizeCountry(e?.clientCountryName);
+    if (country !== 'XX') {
+      const inner = byCountryAction.get(country) ?? new Map();
+      inner.set(action, (inner.get(action) ?? 0) + weight);
+      byCountryAction.set(country, inner);
+    }
   }
   return {
     firewallByAction: topEntries(byAction, limit),
     firewallBySource: topEntries(bySource, limit),
+    firewallByCountry: topCountryAction(byCountryAction, limit),
   };
 }
 
@@ -270,6 +306,7 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       // Preenchidos à parte por fetchCfStats (CF_FIREWALL_QUERY, best-effort).
       firewallByAction: [],
       firewallBySource: [],
+      firewallByCountry: [],
     },
     worker: {
       requests: workerRequests,

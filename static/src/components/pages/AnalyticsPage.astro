@@ -151,6 +151,11 @@ const jsStrings = {
               <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="ti-fwaction"></div></Widget>
               <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="ti-fwsource"></div></Widget>
             </div>
+            <div class="widget-grid an-mt">
+              <Widget title={s.tiFirewallByCountry} tone="warn" meta={s.windowNote} class="wide-widget">
+                <div id="ti-fwcountry"></div>
+              </Widget>
+            </div>
             <p class="note">🛰️ {s.privacyNote}</p>
             <p class="note">→ <a href={routes.perimeter[lang]}>{s.seePerimeter}</a> · <a href={routes.detections[lang]}>{s.seeDetections}</a></p>
           </div>
@@ -508,6 +513,13 @@ const jsStrings = {
       const fw = d.firewall7d ?? {};
       renderBars('ti-fwaction', bars(fw.byAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderBars('ti-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      // País × ação dominante desse país — cruza o que topCountries (zona
+      // inteira) não dá sozinho: qual é a ameaça específica de cada país.
+      renderBars(
+        'ti-fwcountry',
+        (fw.byCountry ?? []).map((r) => ({ label: `${r.country} · ${r.action}`, value: r.count, tone: 'warn' })),
+        S.firewallEmpty,
+      );
 
       document.getElementById('ti-fallback')!.hidden = true;
       document.getElementById('ti-body')!.hidden = false;

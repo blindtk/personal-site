@@ -235,30 +235,66 @@ const fwDayKey = (ms) => `fw:${new Date(ms).toISOString().slice(0, 10)}`; // fw:
  * Fotografa a repartição de firewall das últimas 24h (já calculada em
  * `stats.zone` pelo cf-analytics) num snapshot diário no KV. Como o dataset
  * cru só tem 24h no Free, é assim que se acumula uma janela de 7 dias (a
- * "fase 2" registada no PLAN.md). Só contadores por ação/origem — nunca IPs.
+ * "fase 2" registada no PLAN.md). Contadores por ação/origem e por país×ação
+ * (ação mais comum vinda de cada país, nesse dia) — só país, nunca IP.
  */
 async function snapshotFirewall(env, stats, now) {
   const zone = stats?.zone;
   if (!zone) return;
   const toMap = (list) => Object.fromEntries((Array.isArray(list) ? list : []).map((r) => [r.key, r.count]));
-  const snap = { byAction: toMap(zone.firewallByAction), bySource: toMap(zone.firewallBySource) };
-  if (Object.keys(snap.byAction).length === 0 && Object.keys(snap.bySource).length === 0) return;
+  const byCountry = Object.fromEntries(
+    (Array.isArray(zone.firewallByCountry) ? zone.firewallByCountry : [])
+      .filter((r) => r?.country && r?.action)
+      .map((r) => [r.country, { action: r.action, count: r.count }]),
+  );
+  const snap = { byAction: toMap(zone.firewallByAction), bySource: toMap(zone.firewallBySource), byCountry };
+  if (
+    Object.keys(snap.byAction).length === 0 &&
+    Object.keys(snap.bySource).length === 0 &&
+    Object.keys(snap.byCountry).length === 0
+  ) return;
   await env.KV.put(fwDayKey(now), JSON.stringify(snap), { expirationTtl: 8 * 86400 });
 }
 
-/** Lê e funde os snapshots de firewall dos últimos 7 dias em tops por ação/origem. */
+/**
+ * Lê e funde os snapshots de firewall dos últimos 7 dias em tops por
+ * ação/origem, e por país (ação mais comum de cada país, somada através dos
+ * dias — recalculada sobre a soma da semana, não só o vencedor do último dia).
+ */
 async function readFirewall7d(env, now) {
   const keys = Array.from({ length: 7 }, (_, i) => fwDayKey(now - i * DAY_MS));
   const snaps = await Promise.all(keys.map((k) => getJSON(env, k)));
   const byAction = {};
   const bySource = {};
+  const byCountry = {}; // country -> { action -> count }
   for (const s of snaps) {
     if (!s) continue;
     for (const [k, v] of Object.entries(s.byAction ?? {})) byAction[k] = (byAction[k] ?? 0) + (Number(v) || 0);
     for (const [k, v] of Object.entries(s.bySource ?? {})) bySource[k] = (bySource[k] ?? 0) + (Number(v) || 0);
+    for (const [country, entry] of Object.entries(s.byCountry ?? {})) {
+      const action = entry?.action;
+      const count = Number(entry?.count) || 0;
+      if (!action || count <= 0) continue;
+      byCountry[country] ??= {};
+      byCountry[country][action] = (byCountry[country][action] ?? 0) + count;
+    }
   }
   const top = (m) => Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 10);
-  return { byAction: top(byAction), bySource: top(bySource) };
+  const topCountry = Object.entries(byCountry)
+    .map(([country, actions]) => {
+      let bestAction = null;
+      let bestCount = -1;
+      let total = 0;
+      for (const [action, count] of Object.entries(actions)) {
+        total += count;
+        if (count > bestCount) { bestAction = action; bestCount = count; }
+      }
+      return { country, action: bestAction, count: bestCount, total };
+    })
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10)
+    .map(({ country, action, count }) => ({ country, action, count }));
+  return { byAction: top(byAction), bySource: top(bySource), byCountry: topCountry };
 }
 
 // ---------- caching de leitura ----------
