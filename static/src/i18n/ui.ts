@@ -179,7 +179,6 @@ export const ui = {
     },
     footer: {
       built: 'Construído com Astro. Código-fonte no',
-      rights: 'Estático, bilingue e sem trackers.',
       thisSiteLabel: 'Este site:',
       pathLabel: 'Percurso:',
       security: 'Segurança',
@@ -1129,7 +1128,6 @@ export const ui = {
     },
     footer: {
       built: 'Built with Astro. Source code on',
-      rights: 'Static, bilingual, and tracker-free.',
       thisSiteLabel: 'This site:',
       pathLabel: 'Track record:',
       security: 'Security',
