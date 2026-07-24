@@ -820,6 +820,23 @@ a.card:hover {
 .heatmap-legend .i3 { background: rgba(61, 220, 132, 0.75); }
 .heatmap-legend .i4 { background: rgba(61, 220, 132, 1); }
 
+/* Sparklines (timelines Requests/Threats) — SVG criado por script, por isso
+   as classes vivem no global (mesma razão das barras e do heatmap acima). */
+.spark-svg { width: 100%; height: 48px; display: block; overflow: visible; }
+.spark-area { fill: var(--accent-dim); }
+.spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.spark.warn .spark-area { fill: rgba(245, 181, 68, 0.14); }
+.spark.warn .spark-line { stroke: var(--accent-2); }
+.spark-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-top: 0.4rem;
+}
+
 /* Lista chave→valor do painel de estado (versão, commit, branch…). */
 .kv-list {
   display: grid;

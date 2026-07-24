@@ -47,6 +47,8 @@ const CF_STATS_QUERY = `
     viewer {
       zones(filter: { zoneTag: $zoneTag }) {
         httpRequests1dGroups(limit: 8, filter: { date_geq: $since, date_leq: $until }) {
+          dimensions { date }
+          uniq { uniques }
           sum {
             requests cachedRequests bytes threats
             countryMap { clientCountryName requests threats }
@@ -112,6 +114,53 @@ function topCountriesByThreats(groups, limit = CF_STATS_TOP_COUNTRIES) {
   return [...byCountry.entries()]
     .map(([country, threats]) => ({ country, threats }))
     .sort((a, b) => b.threats - a.threats)
+    .slice(0, limit);
+}
+
+// Abaixo deste nº de pedidos, a taxa de ameaça de um país é ruído estatístico
+// (1 ameaça em 3 pedidos = 33% não diz nada) — fica fora do Risk Score.
+export const CF_STATS_RISK_MIN_REQUESTS = 100;
+
+/**
+ * Série temporal por dia (para as timelines Requests/Threats/Visitors e a
+ * tendência semanal). Cada `httpRequests1dGroups` já traz um dia
+ * (`dimensions.date`); ordena-se do mais antigo para o mais recente. Dia sem
+ * data cai fora (não dá para posicionar na timeline).
+ */
+function dailySeries(groups) {
+  return (Array.isArray(groups) ? groups : [])
+    .map((g) => ({
+      date: g?.dimensions?.date ?? null,
+      requests: Number(g?.sum?.requests) || 0,
+      threats: Number(g?.sum?.threats) || 0,
+      visitors: Number(g?.uniq?.uniques) || 0,
+    }))
+    .filter((d) => typeof d.date === 'string' && d.date.length > 0)
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+/**
+ * "Risk Score" por país — métrica PRÓPRIA que a Cloudflare não mostra: a
+ * fração de pedidos de cada país que são ameaça (threats/requests), só para
+ * países com pedidos suficientes para o rácio significar algo. Ordenado do
+ * mais arriscado para o menos; devolve rate ∈ [0,1] + os brutos.
+ */
+function riskByCountry(groups, limit = CF_STATS_TOP_COUNTRIES, minRequests = CF_STATS_RISK_MIN_REQUESTS) {
+  const acc = new Map(); // country -> { requests, threats }
+  for (const g of Array.isArray(groups) ? groups : []) {
+    for (const row of Array.isArray(g?.sum?.countryMap) ? g.sum.countryMap : []) {
+      const country = normalizeCountry(row?.clientCountryName);
+      if (country === 'XX') continue;
+      const cur = acc.get(country) ?? { requests: 0, threats: 0 };
+      cur.requests += Number(row?.requests) || 0;
+      cur.threats += Number(row?.threats) || 0;
+      acc.set(country, cur);
+    }
+  }
+  return [...acc.entries()]
+    .filter(([, v]) => v.requests >= minRequests && v.threats > 0)
+    .map(([country, v]) => ({ country, requests: v.requests, threats: v.threats, rate: v.threats / v.requests }))
+    .sort((a, b) => b.rate - a.rate)
     .slice(0, limit);
 }
 
@@ -195,6 +244,12 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
   const cachedRequests = sumField(zoneGroups, 'cachedRequests');
   const bytes = sumField(zoneGroups, 'bytes');
   const threats = sumField(zoneGroups, 'threats');
+  // Visitantes únicos (estimativa da Cloudflare): soma os únicos diários. Como
+  // o dashboard oficial, é uma soma por-dia (um visitante em 2 dias conta 2) —
+  // é o que o `uniq.uniques` do 1dGroups dá no Free.
+  const visitors = (Array.isArray(zoneGroups) ? zoneGroups : []).reduce(
+    (acc, g) => acc + (Number(g?.uniq?.uniques) || 0), 0,
+  );
   const workerRequests = sumField(workerGroups, 'requests');
   const workerErrors = sumField(workerGroups, 'errors');
 
@@ -202,12 +257,16 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
     windowDays,
     zone: {
       requests,
+      visitors,
       cachedRequests,
       cacheRatio: requests > 0 ? cachedRequests / requests : 0,
       bytes,
       threats,
       topCountries: topCountriesByThreats(zoneGroups),
+      riskByCountry: riskByCountry(zoneGroups),
       blockedByStatus: blockedByStatus(zoneGroups),
+      // Série por dia para as timelines (Requests/Threats/Visitors) e tendência.
+      series: dailySeries(zoneGroups),
       // Preenchidos à parte por fetchCfStats (CF_FIREWALL_QUERY, best-effort).
       firewallByAction: [],
       firewallBySource: [],

@@ -28,9 +28,12 @@ const jsStrings = {
   statusEmpty: s.statusEmpty,
   firewallEmpty: s.firewallEmpty,
   tiEmpty: s.tiEmpty,
+  tiNoneYet: s.tiNoneYet,
   logVerdict: s.logVerdict,
   logsEmpty: s.logsEmpty,
   logsPageOf: s.logsPageOf,
+  tlPeak: s.tlPeak,
+  tlLast: s.tlLast,
 };
 ---
 
@@ -38,6 +41,7 @@ const jsStrings = {
   <div class="page-head">
     <h1>{s.analyticsTitle}</h1>
     <p class="intro">{s.analyticsIntro}</p>
+    <p class="an-refresh mono"><span class="live-dot" aria-hidden="true"></span> {s.autoRefresh}</p>
   </div>
 
   <div
@@ -54,12 +58,21 @@ const jsStrings = {
         <div slot="overview">
           <div class="metric-grid" id="an-cards">
             <div class="stat"><div class="n" id="an-requests">—</div><div class="l">{s.cardRequests}</div></div>
+            <div class="stat blue"><div class="n" id="an-visitors">—</div><div class="l">{s.cardVisitors}</div></div>
             <div class="stat amber"><div class="n" id="an-threats">—</div><div class="l">{s.cardThreats}</div></div>
             <div class="stat amber"><div class="n" id="an-blocked">—</div><div class="l">{s.cardBlocked}</div></div>
             <div class="stat"><div class="n" id="an-challenges">—</div><div class="l">{s.cardChallenges}</div></div>
             <div class="stat blue"><div class="n" id="an-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
             <div class="stat blue"><div class="n" id="an-cache">—</div><div class="l">{s.cardCacheRatio}</div></div>
             <div class="stat amber"><div class="n" id="an-threatrate">—</div><div class="l">{s.cardThreatRate}</div></div>
+          </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.tlRequests} meta={s.windowNote}>
+              <div class="spark" id="an-tl-requests"><Skeleton block /></div>
+            </Widget>
+            <Widget title={s.tlThreats} tone="warn" meta={s.windowNote}>
+              <div class="spark warn" id="an-tl-threats"><Skeleton block /></div>
+            </Widget>
           </div>
           <div class="widget-grid an-mt">
             <Widget title={s.wTopCountries} meta={s.windowNote}>
@@ -129,6 +142,11 @@ const jsStrings = {
               </Widget>
             </div>
             <div class="widget-grid an-mt">
+              <Widget title={s.tiNewAttackers} tone="warn"><div id="ti-newatk"></div></Widget>
+              <Widget title={s.tiRecurring} tone="warn"><div id="ti-recatk"></div></Widget>
+              <Widget title={s.tiRiskCountry} tone="warn"><div id="ti-risk"></div></Widget>
+            </div>
+            <div class="widget-grid an-mt">
               <Widget title={s.tiTopAsns}><div id="ti-topasns"></div></Widget>
               <Widget title={s.tiTechniques}><div id="ti-tech"></div></Widget>
               <Widget title={s.tiTopCountries} tone="warn"><div id="ti-topcountries"></div></Widget>
@@ -178,7 +196,7 @@ const jsStrings = {
 </BaseLayout>
 
 <script>
-  import { formatNumber, formatBytes, formatPercent, threatRate, withBars } from '../../scripts/observability.js';
+  import { formatNumber, formatBytes, formatPercent, threatRate, withBars, sparkPath } from '../../scripts/observability.js';
 
   const root = document.getElementById('an-root')!;
   const base = root.dataset.api ?? '';
@@ -193,7 +211,11 @@ const jsStrings = {
   // Barras horizontais via createElement + textContent (Trusted Types safe:
   // zero innerHTML). A largura é CSSOM (element.style), não estilo inline em
   // markup — permitido pela CSP style-src 'self'.
-  function renderBars(id: string, rows: { label: string; value: number; tone?: string }[], empty: string) {
+  function renderBars(
+    id: string,
+    rows: { label: string; value: number; tone?: string; display?: string }[],
+    empty: string,
+  ) {
     const host = document.getElementById(id);
     if (!host) return;
     host.replaceChildren();
@@ -216,7 +238,9 @@ const jsStrings = {
       label.textContent = row.label;
       const val = document.createElement('span');
       val.className = 'bar-val';
-      val.textContent = formatNumber(row.value, locale);
+      // `display` permite formatar o valor (ex.: percentagem do Risk Score)
+      // mantendo a escala da barra pelo `value` numérico.
+      val.textContent = (row as any).display ?? formatNumber(row.value, locale);
       head.append(label, val);
       const track = document.createElement('div');
       track.className = 'bar-track';
@@ -232,6 +256,47 @@ const jsStrings = {
 
   const bars = (rows: any[], keyField: string, valField: string, tone?: string) =>
     rows.map((r) => ({ label: String(r[keyField]), value: Number(r[valField]) || 0, tone }));
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  // Sparkline: SVG construído via createElementNS + setAttribute (sem innerHTML,
+  // Trusted Types safe). O traço usa non-scaling-stroke para não distorcer
+  // quando o viewBox estica na largura.
+  function renderSpark(id: string, series: any[], valueKey: string, unitLabel: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    const values = series.map((d) => Number(d?.[valueKey]) || 0);
+    if (values.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'note';
+      p.textContent = S.tiNoneYet;
+      host.append(p);
+      return;
+    }
+    const { line, area, max } = sparkPath(values);
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'spark-svg');
+    svg.setAttribute('viewBox', '0 0 100 30');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('role', 'img');
+    const areaEl = document.createElementNS(SVG_NS, 'path');
+    areaEl.setAttribute('class', 'spark-area');
+    areaEl.setAttribute('d', area);
+    const lineEl = document.createElementNS(SVG_NS, 'path');
+    lineEl.setAttribute('class', 'spark-line');
+    lineEl.setAttribute('d', line);
+    lineEl.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.append(areaEl, lineEl);
+    host.append(svg);
+    const cap = document.createElement('div');
+    cap.className = 'spark-cap';
+    const last = document.createElement('span');
+    last.textContent = `${S.tlLast}: ${formatNumber(values[values.length - 1], locale)} ${unitLabel}`;
+    const peak = document.createElement('span');
+    peak.textContent = `${S.tlPeak}: ${formatNumber(max, locale)} ${unitLabel}`;
+    cap.append(last, peak);
+    host.append(cap);
+  }
 
   // ---------- Cloudflare Analytics (Overview / Security / Traffic) ----------
   async function loadCfStats() {
@@ -250,6 +315,7 @@ const jsStrings = {
         .reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
 
       setText('an-requests', formatNumber(requests, locale));
+      setText('an-visitors', formatNumber(zone.visitors ?? 0, locale));
       setText('an-threats', formatNumber(threats, locale));
       setText('an-blocked', formatNumber(blocked, locale));
       setText('an-challenges', formatNumber(challenges, locale));
@@ -266,6 +332,26 @@ const jsStrings = {
       renderBars('an-status2', statusRows, S.statusEmpty);
       renderBars('an-action', bars(zone.firewallByAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderBars('an-source', bars(zone.firewallBySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+
+      const series = Array.isArray(zone.series) ? zone.series : [];
+      renderSpark('an-tl-requests', series, 'requests', '');
+      renderSpark('an-tl-threats', series, 'threats', '');
+
+      // Risk Score por país vive na tab Threat Intel mas os dados são da
+      // Cloudflare (countryMap), por isso preenche-se aqui.
+      renderBars(
+        'ti-risk',
+        (zone.riskByCountry ?? []).map((r: any) => {
+          const rate = Number(r.rate) || 0;
+          return {
+            label: String(r.country),
+            value: rate,
+            tone: rate >= 0.5 ? 'down' : rate >= 0.2 ? 'warn' : undefined,
+            display: formatPercent(rate),
+          };
+        }),
+        S.tiNoneYet,
+      );
 
       document.getElementById('an-fallback')!.hidden = true;
       document.getElementById('an-body')!.hidden = false;
@@ -394,6 +480,19 @@ const jsStrings = {
 
       renderHeatmap(Array.isArray(d.heatmap) ? d.heatmap : []);
       renderHours(Array.isArray(d.byHourOfDay) ? d.byHourOfDay : []);
+      renderBars('ti-newatk', bars(d.newAttackers ?? [], 'key', 'count', 'warn'), S.tiNoneYet);
+      renderBars(
+        'ti-recatk',
+        (d.recurringAttackers ?? []).map((r: any) => ({
+          label: String(r.key),
+          value: Number(r.count) || 0,
+          tone: 'warn',
+          display: `${formatNumber(r.count, locale)} · ${r.days}d`,
+        })),
+        S.tiNoneYet,
+      );
+      // Nota: o Risk Score por país (ti-risk) é preenchido em loadCfStats — os
+      // dados vêm da Cloudflare (countryMap), não deste endpoint.
       renderBars('ti-topasns', bars(d.topAsns ?? [], 'key', 'count'), S.tiEmpty);
       renderBars('ti-tech', bars(d.topTechniques ?? [], 'key', 'count'), S.tiEmpty);
       renderBars('ti-topcountries', bars(d.topCountries ?? [], 'key', 'count', 'warn'), S.tiEmpty);
@@ -418,14 +517,42 @@ const jsStrings = {
     }
   }
 
+  // Lazy-load: a Threat Intel faz uma leitura pesada (168 buckets horários no
+  // Worker) — só se busca quando a tab Threat Intel ou Logs é aberta pela
+  // primeira vez, não à carga da página.
+  let tiLoaded = false;
+  function ensureThreatIntel() {
+    if (tiLoaded) return;
+    tiLoaded = true;
+    loadThreatIntel();
+  }
+  for (const tab of document.querySelectorAll('[data-tab="threatintel"], [data-tab="logs"]')) {
+    tab.addEventListener('click', ensureThreatIntel);
+  }
+
   wireLogs();
   loadCfStats();
-  loadThreatIntel();
+
+  // Atualização automática (60 s), só com o separador visível — não empilha
+  // pedidos em segundo plano nem quando a página está oculta.
+  setInterval(() => {
+    if (document.visibilityState !== 'visible') return;
+    loadCfStats();
+    if (tiLoaded) loadThreatIntel();
+  }, 60_000);
 </script>
 
 <style>
   .an-mt { margin-top: 0.9rem; }
   .wide-widget { grid-column: 1 / -1; }
+  .an-refresh {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    color: var(--faint);
+    margin: 0.5rem 0 0;
+  }
 
   /* Logs: toolbar + paginação */
   .logs-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
