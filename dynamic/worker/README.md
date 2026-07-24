@@ -102,9 +102,25 @@ o dashboard da Cloudflare quando lá entras. Só agregados diários; nunca IPs
 nem dados de visitantes individuais.
 
 Precisa de três vars (`CF_ZONE_TAG`, `CF_ACCOUNT_ID`, `CF_WORKER_SCRIPT`,
-ver `wrangler.toml`) e do secret `CF_API_TOKEN` (scope `Zone Analytics:Read`
-+ `Account Analytics:Read`, criado em dash.cloudflare.com → Meu perfil →
-Tokens de API). Sem qualquer um destes, a rota devolve 502 e o painel
+ver `wrangler.toml`) e do secret `CF_API_TOKEN`, criado em
+dash.cloudflare.com → Meu perfil → Tokens de API, com os scopes:
+
+- `Zone Analytics:Read` + `Account Analytics:Read` — pedidos/cache/ameaças
+  da zona e invocações do Worker (`CF_STATS_QUERY`).
+- `Zone Firewall Services:Read` + `Zone WAF:Read` +
+  `Account Firewall Access Rules:Read` — para o pedido separado e
+  best-effort que lê o dataset cru `firewallEventsAdaptive` (24h, único
+  acessível no plano Free) e agrega por ação/origem/país
+  (`CF_FIREWALL_QUERY`/`firewallBreakdown` em `src/lib/cf-analytics.js`). Um
+  cron diário (`scheduled()` em `src/index.js`) fotografa esse resultado
+  para o KV e funde 7 dias (`snapshotFirewall`/`readFirewall7d`) — é o que
+  alimenta o painel "Firewall por ação/origem/país (7d)" na tab Threat
+  Intel do Analytics e o card "Managed challenges" no Overview. Sem estes
+  três scopes, o pedido falha em silêncio (é *best-effort*, nunca derruba o
+  núcleo) e esses painéis ficam presos a zero — sem erro visível, porque é
+  exatamente esse o comportamento pretendido de degradação graciosa.
+
+Sem as vars/secret do primeiro grupo, a rota devolve 502 e o painel
 mostra o fallback — mesmo padrão do vigia CT sem `SCAN_TARGET`.
 
 A cache de 6h já limita a frequência com que se bate na API da Cloudflare
@@ -203,7 +219,7 @@ mudar.
 | `KV` | binding | wrangler.toml | namespace único (eventos, buckets, caches, rate limit) |
 | `RATE_SALT` | secret | `wrangler secret put` | hash de rate limit; rodar SEMANALMENTE (invalida limites acumulados de propósito) |
 | `NVD_API_KEY` | secret | `wrangler secret put` | opcional, rate limit do NVD |
-| `CF_API_TOKEN` | secret | `wrangler secret put` | token Analytics:Read (zona + conta) p/ `/api/cf-stats` |
+| `CF_API_TOKEN` | secret | `wrangler secret put` | token Analytics:Read (zona + conta) + Firewall/WAF:Read (zona + conta), p/ `/api/cf-stats` — ver secção "Estado da Cloudflare" acima |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (só no modo 2b) |
 | `SCAN_TARGET` | var | wrangler.toml | URL que o self-scan inspeciona |
 | `DEPLOY_TS` | var | `--var` no deploy | "tempo até 1.º scan" (opcional) |

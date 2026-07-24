@@ -64,7 +64,6 @@ export const ui = {
       stateDegraded: 'Degradado',
       stateDown: 'Indisponível',
       stateChecking: 'A verificar…',
-      labelStatus: 'Estado',
       labelVersion: 'Versão',
       labelDeploy: 'Último deploy',
       labelCommit: 'Commit',
@@ -97,9 +96,7 @@ export const ui = {
       analyticsIntro:
         'Métricas reais desta zona e deste Worker, via GraphQL Analytics API da Cloudflare (não é o Radar global). Toda a agregação — GROUP BY, tops, taxas — é feita localmente. Só agregados: nunca IPs nem dados de visitantes individuais.',
       windowNote: 'últimos 7 dias',
-      window24h: 'últimas 24 h',
       tabOverview: 'Overview',
-      tabSecurity: 'Segurança',
       tabTraffic: 'Tráfego',
       tabThreatIntel: 'Threat Intel',
       tabLogs: 'Logs',
@@ -115,23 +112,14 @@ export const ui = {
       cardWorkerErr: 'Taxa de erro',
       wTopCountries: 'Ameaças por país',
       wTopStatus: 'Respostas por código HTTP',
-      wByAction: 'Ameaças por ação',
-      wBySource: 'Ameaças por origem',
       wTraffic: 'Volume e cache',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
       statusEmpty: 'Sem respostas 4xx/5xx na janela.',
       firewallEmpty: 'Sem eventos de firewall na janela (ou requer permissões de firewall no token).',
       unavailable: 'Painel ao vivo indisponível — o Worker de telemetria não respondeu. O site é estático e funciona na mesma.',
       planNote:
-        'Detalhe por IP, URL, user-agent e ASN de todo o tráfego exige o dataset firewallEventsAdaptiveGroups (Cloudflare Pro+). No plano atual (Free) mostram-se os sinais que a API dá com números reais: ameaças por país, código HTTP e — 24 h — ação/origem de firewall.',
+        'Detalhe por IP, URL, user-agent e ASN de todo o tráfego exige o dataset firewallEventsAdaptiveGroups (Cloudflare Pro+). No plano atual (Free) mostram-se os sinais que a API dá com números reais: ameaças por país e código HTTP — a ação/origem de firewall acumulada a 7 dias fica na tab Threat Intel.',
       privacyNote: 'Zero PII: nenhum destes painéis pede, guarda ou mostra o IP de um visitante.',
-      // ----- Threat Intelligence / Logs (encaminham para o Perímetro na fase atual) -----
-      tiRoadmapTitle: 'Threat intelligence dedicada',
-      tiRoadmapBody:
-        'Heatmap de ataques, atacantes recorrentes (por ASN/país, nunca por IP), ataques por hora/dia e alvos mais visados — a partir do honeypot. O núcleo já está ao vivo no Perímetro; os dashboards dedicados chegam a esta tab a seguir.',
-      logsRoadmapTitle: 'Logs pesquisáveis',
-      logsRoadmapBody:
-        'Tabela de eventos do honeypot com pesquisa, filtros e paginação (timestamp, país, ASN, path, técnica, veredicto — sem IP). Os eventos recentes já estão visíveis no Perímetro; a tabela completa e virtualizada chega aqui a seguir.',
       seePerimeter: 'Ver no Perímetro',
       seeDetections: 'Ver Deteções',
       // ----- Performance -----
@@ -140,7 +128,6 @@ export const ui = {
       perfIntro:
         'Quão rápido este site chega a ti e quanto trabalho a borda poupa à origem. Os sinais de cache/largura de banda são reais, da Analytics API; os Core Web Vitals de utilizadores reais dependem de um beacon RUM, planeado a seguir.',
       perfAvailTitle: 'Ao vivo agora',
-      perfCwvTitle: 'Core Web Vitals',
       perfCwvBody:
         'Medidos no browser de cada visitante (LCP, CLS, INP, TTFB) e enviados uma vez, agregados e sem PII, para um beacon first-party. É o p75 — o mesmo percentil que a Google usa. Se ainda não há amostras, o painel enche-se à medida que chegam visitas.',
       perfProvasLink: 'Provas',
@@ -168,6 +155,7 @@ export const ui = {
       tiTopPaths: 'Alvos mais visados',
       tiFirewallAction: 'Firewall por ação (7d)',
       tiFirewallSource: 'Firewall por origem (7d)',
+      tiFirewallByCountry: 'Firewall por país · ação dominante (7d)',
       tiHeatLess: 'menos',
       tiHeatMore: 'mais',
       tiIntro: 'Dashboards próprios (não são cópia da Cloudflare) a partir do honeypot deste site — por rede, técnica, país e hora. Atacantes agrupados por ASN, nunca por IP.',
@@ -1053,7 +1041,6 @@ export const ui = {
       stateDegraded: 'Degraded',
       stateDown: 'Down',
       stateChecking: 'Checking…',
-      labelStatus: 'Status',
       labelVersion: 'Version',
       labelDeploy: 'Last deploy',
       labelCommit: 'Commit',
@@ -1085,9 +1072,7 @@ export const ui = {
       analyticsIntro:
         'Real metrics for this zone and this Worker, via Cloudflare\'s GraphQL Analytics API (not the global Radar). All aggregation — GROUP BY, tops, rates — is done locally. Aggregates only: never IPs or individual-visitor data.',
       windowNote: 'last 7 days',
-      window24h: 'last 24 h',
       tabOverview: 'Overview',
-      tabSecurity: 'Security',
       tabTraffic: 'Traffic',
       tabThreatIntel: 'Threat Intel',
       tabLogs: 'Logs',
@@ -1103,23 +1088,14 @@ export const ui = {
       cardWorkerErr: 'Error rate',
       wTopCountries: 'Threats by country',
       wTopStatus: 'Responses by HTTP status',
-      wByAction: 'Threats by action',
-      wBySource: 'Threats by source',
       wTraffic: 'Volume and cache',
       countriesEmpty: 'No threats recorded by country in the window.',
       statusEmpty: 'No 4xx/5xx responses in the window.',
       firewallEmpty: 'No firewall events in the window (or requires firewall permissions on the token).',
       unavailable: 'Live panel unavailable — the telemetry Worker did not respond. The site is static and works regardless.',
       planNote:
-        'Per-IP, per-URL, per-user-agent and per-ASN detail for all traffic requires the firewallEventsAdaptiveGroups dataset (Cloudflare Pro+). On the current plan (Free) it shows the signals the API gives with real numbers: threats by country, HTTP status and — 24 h — firewall action/source.',
+        'Per-IP, per-URL, per-user-agent and per-ASN detail for all traffic requires the firewallEventsAdaptiveGroups dataset (Cloudflare Pro+). On the current plan (Free) it shows the signals the API gives with real numbers: threats by country and HTTP status — firewall action/source accumulated over 7 days lives on the Threat Intel tab.',
       privacyNote: 'Zero PII: none of these panels request, store or show a visitor\'s IP.',
-      // ----- Threat Intelligence / Logs (route to Perimeter for now) -----
-      tiRoadmapTitle: 'Dedicated threat intelligence',
-      tiRoadmapBody:
-        'Attack heatmap, recurring attackers (by ASN/country, never by IP), attacks by hour/day and most-targeted paths — from the honeypot. The core is already live on Perimeter; the dedicated dashboards land in this tab next.',
-      logsRoadmapTitle: 'Searchable logs',
-      logsRoadmapBody:
-        'Honeypot event table with search, filters and pagination (timestamp, country, ASN, path, technique, verdict — no IP). Recent events are already visible on Perimeter; the full virtualized table lands here next.',
       seePerimeter: 'See on Perimeter',
       seeDetections: 'See Detections',
       // ----- Performance -----
@@ -1128,7 +1104,6 @@ export const ui = {
       perfIntro:
         'How fast this site reaches you and how much work the edge saves the origin. Cache/bandwidth signals are real, from the Analytics API; real-user Core Web Vitals depend on a RUM beacon, planned next.',
       perfAvailTitle: 'Live now',
-      perfCwvTitle: 'Core Web Vitals',
       perfCwvBody:
         'Measured in each visitor\'s browser (LCP, CLS, INP, TTFB) and sent once, aggregated and PII-free, to a first-party beacon. It is the p75 — the same percentile Google uses. If there are no samples yet, the panel fills in as visits arrive.',
       perfProvasLink: 'Evidence',
@@ -1156,6 +1131,7 @@ export const ui = {
       tiTopPaths: 'Most targeted paths',
       tiFirewallAction: 'Firewall by action (7d)',
       tiFirewallSource: 'Firewall by source (7d)',
+      tiFirewallByCountry: 'Firewall by country · dominant action (7d)',
       tiHeatLess: 'less',
       tiHeatMore: 'more',
       tiIntro: 'My own dashboards (not a Cloudflare copy) from this site\'s honeypot — by network, technique, country and hour. Attackers grouped by ASN, never by IP.',
