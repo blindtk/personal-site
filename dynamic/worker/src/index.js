@@ -5,7 +5,8 @@
 //   · /api/scan                — self-scan de cabeçalhos (cache 6h)
 //   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
-//   · /api/csp-report (POST)   — recetor de violações CSP (report-uri/report-to)
+//   · /api/csp-report (POST)   — recetor de violações CSP (envio manual, não
+//                                 report-uri/report-to — ver docs/security-headers.md)
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
@@ -439,12 +440,16 @@ export default {
       });
     }
 
-    // Recetor de relatórios CSP (report-uri / Reporting API). É o único POST
-    // do Worker: endpoint público por natureza (os browsers têm de lhe chegar
-    // sem credenciais), por isso cada camada é defensiva — Content-Type
-    // estrito, corpo limitado, rate limit por cliente, validação da origem do
-    // documento na lib, e cap global de escritas. A resposta é sempre 204 nos
-    // casos "aceite" e "descartado": um forjador não distingue os dois.
+    // Recetor de relatórios CSP. Desde 2026-07 o envio é manual (botão na
+    // página Provas, static/public/js/csp-report.js) — a CSP não tem
+    // report-uri/report-to, por isso não há mais um POST por violação de
+    // cada visitante (poupa escritas no KV, plano Free). O formato do corpo
+    // não mudou (legado csp-report / batch reports+json), por isso este
+    // endpoint continua público por natureza (sem credenciais), com a mesma
+    // defesa em camadas — Content-Type estrito, corpo limitado, rate limit
+    // por cliente, validação da origem do documento na lib, e cap global de
+    // escritas. A resposta é sempre 204 nos casos "aceite" e "descartado":
+    // um forjador não distingue os dois.
     if (path === '/api/csp-report' && request.method === 'POST') {
       const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
       if (!REPORT_CONTENT_TYPES.includes(ctype)) {

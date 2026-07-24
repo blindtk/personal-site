@@ -50,13 +50,24 @@ Pages) — sem geração no build, sem `<meta>` por página.
 > `</script>` do HTML gerado, ex.: `dist/index.html`) e acrescenta o segundo
 > hash a par do primeiro — cresce por *variante de conteúdo*, não por página.
 >
-> A CSP acrescenta ainda o **reporting de violações**: `report-uri
-> /api/csp-report` (Firefox/Safari) e `report-to csp-endpoint` (Chrome, via o
-> cabeçalho `Reporting-Endpoints` do `_headers`). O recetor é o Worker
-> (`dynamic/worker/`, `POST /api/csp-report`), que agrega de forma anónima —
-> ver o painel na página Segurança. Sem inline nenhum, uma violação de
-> `script-src`/`style-src` só pode significar uma coisa: uma tentativa de
-> injeção real — deixou de haver ruído de hash desatualizado a filtrar.
+> **Reporting de violações — automático até 2026-07, agora manual.** A CSP
+> teve `report-uri /api/csp-report` + `report-to csp-endpoint` (cabeçalho
+> `Reporting-Endpoints`): o browser mandava um POST a cada violação de
+> QUALQUER visitante, sem exceção. Sem inline nenhum, uma violação de
+> `script-src`/`style-src` só pode significar uma coisa (regressão da build
+> ou injeção real) — mas, na prática, a esmagadora maioria dos relatórios era
+> ruído de extensões de browser (ad-blockers, gestores de password) a injetar
+> conteúdo nas páginas de visitantes. Cada POST aceite custa escritas no KV
+> do Worker (`dynamic/worker/`), e o plano Free da Cloudflare tem um teto
+> diário apertado, partilhado com honeypot/vitals/cron — o volume de ruído
+> automático empurrou a conta para perto do teto. Removidos os três
+> cabeçalhos; substituídos por captura 100% local
+> (`static/public/js/csp-report.js`, ouve `securitypolicyviolation` e guarda
+> em `sessionStorage`) + envio manual num botão na página Provas
+> (`CspViolations.astro`) — zero escritas até alguém decidir mesmo reportar.
+> O recetor continua a ser o mesmo Worker (`POST /api/csp-report`), que
+> agrega de forma anónima; só a forma como o pedido chega lá mudou. Ver
+> `dynamic/PLAN.md`.
 >
 > A presença destes cabeçalhos em produção é verificada automaticamente pelo
 > workflow `Headers` (`.github/workflows/headers.yml`) contra a lista
@@ -69,22 +80,16 @@ atualiza os blocos abaixo em espelho.
 ## Valores atuais (espelho de `_headers`)
 
 ```
-Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
+Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
 Strict-Transport-Security: max-age=63072000; includeSubDomains
 X-Content-Type-Options: nosniff
 X-Frame-Options: DENY
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
-Reporting-Endpoints: csp-endpoint="/api/csp-report"
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Resource-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
-
-> **Reporting-Endpoints:** o URL é relativo — resolve contra a própria origem,
-> onde o Worker interceta `/api/*`. Enquanto o Worker não estiver publicado
-> nas rotas do domínio, os POSTs dos browsers caem em 404 do Pages, sem
-> qualquer efeito visível para o visitante.
 
 > **COEP `require-corp`:** todo o site é same-origin (CSS/JS/fontes/imagens),
 > por isso não quebra nada; a par do COOP ativa *cross-origin isolation*. As
@@ -125,13 +130,12 @@ server {
     index index.html;
 
     # --- Cabeçalhos de segurança (espelho de static/public/_headers) ---
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()" always;
-    add_header Reporting-Endpoints "csp-endpoint=\"/api/csp-report\"" always;
     add_header Cross-Origin-Opener-Policy "same-origin" always;
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
@@ -171,13 +175,12 @@ danielmala.co {
     file_server
 
     header {
-        Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'"
         Strict-Transport-Security "max-age=63072000; includeSubDomains"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
-        Reporting-Endpoints "csp-endpoint=\"/api/csp-report\""
         Cross-Origin-Opener-Policy "same-origin"
         Cross-Origin-Resource-Policy "same-origin"
         Cross-Origin-Embedder-Policy "require-corp"

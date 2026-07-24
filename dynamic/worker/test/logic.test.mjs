@@ -1031,8 +1031,8 @@ test('parseCfStats: série por dia, visitantes e risk score por país', () => {
         sum: {
           requests: 500, cachedRequests: 300, bytes: 2_000_000, threats: 4,
           countryMap: [
-            { clientCountryName: 'XX', requests: 999, threats: 5 }, // XX fica de fora
-            { clientCountryName: 'US', requests: 50, threats: 5 }, // < 100 pedidos: fora do risco
+            { clientCountryName: 'XX', requests: 999, threats: 5 }, // XX fica sempre fora
+            { clientCountryName: 'US', requests: 50, threats: 5 }, // < 100 pedidos: entra, mas lowSample
           ],
         },
       },
@@ -1044,10 +1044,20 @@ test('parseCfStats: série por dia, visitantes e risk score por país', () => {
   assert.deepEqual(zone.series.map((d) => d.date), ['2026-07-20', '2026-07-21']);
   assert.equal(zone.series[1].requests, 1000);
   assert.equal(zone.series[1].visitors, 40);
-  // risk score: CN com 90/200 = 0.45; PT com 1/800 baixo; US e XX excluídos
+  // risk score: CN com 90/200 = 0.45 (confiante, 1.º); PT 1/800 (confiante);
+  // US 5/50 = 0.1 (lowSample — < 100 pedidos), vem DEPOIS de PT apesar de ter
+  // taxa mais alta: confiança ordena antes da taxa. XX nunca entra.
   assert.equal(zone.riskByCountry[0].country, 'CN');
   assert.ok(Math.abs(zone.riskByCountry[0].rate - 0.45) < 1e-9);
-  assert.ok(!zone.riskByCountry.some((r) => r.country === 'US' || r.country === 'XX'));
+  assert.equal(zone.riskByCountry[0].lowSample, false);
+  assert.ok(!zone.riskByCountry.some((r) => r.country === 'XX'));
+  const us = zone.riskByCountry.find((r) => r.country === 'US');
+  assert.ok(us, 'US já não é excluído por amostra pequena');
+  assert.equal(us.lowSample, true);
+  assert.ok(Math.abs(us.rate - 0.1) < 1e-9);
+  const ptIndex = zone.riskByCountry.findIndex((r) => r.country === 'PT');
+  const usIndex = zone.riskByCountry.findIndex((r) => r.country === 'US');
+  assert.ok(ptIndex < usIndex, 'países com amostra suficiente vêm antes dos de amostra pequena');
 });
 
 test('threatIntel: atacantes novos vs recorrentes por ASN', () => {

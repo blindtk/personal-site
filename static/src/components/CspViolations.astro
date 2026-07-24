@@ -12,11 +12,27 @@ const jsStrings = {
   catExternal: c.catExternal,
   catOther: c.catOther,
   empty: c.empty,
+  queueEmpty: c.queueEmpty,
+  queueStatus: c.queueStatus,
+  queueSend: c.queueSend,
+  queueSending: c.queueSending,
+  queueSent: c.queueSent,
+  queueError: c.queueError,
 };
 ---
 
 <div class="cspv" id="cspv" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)}>
   <p class="hp-fallback" id="cspv-fallback">{c.unavailable}</p>
+
+  {/* Fila local (sessionStorage) das violações apanhadas por
+     public/js/csp-report.js nesta sessão — funciona mesmo sem o Worker
+     publicado, por isso vive fora do cspv-body (que depende do fetch). O
+     envio é sempre um clique explícito: a CSP já não tem report-uri/
+     report-to (ver _headers). */}
+  <div class="cspv-queue" id="cspv-queue">
+    <p class="mono" id="cspv-queue-status">{c.queueEmpty}</p>
+    <button type="button" class="btn ghost small" id="cspv-queue-send" hidden>{c.queueSend}</button>
+  </div>
 
   <div id="cspv-body" hidden>
     <div class="stats-grid">
@@ -146,5 +162,74 @@ const jsStrings = {
     }
   }
 
+  // ---- fila local (sessionStorage) + envio manual ----
+  // Preenchida por public/js/csp-report.js (securitypolicyviolation), nunca
+  // por rede — só este painel a lê e só um clique explícito a envia. Ver a
+  // nota em _headers sobre a saída do report-uri/report-to automático.
+  const Q_KEY = 'cspq';
+  type QueuedViolation = { d: string; b: string; u: string };
+
+  function loadQueue(): QueuedViolation[] {
+    try {
+      const raw = sessionStorage.getItem(Q_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function clearQueue() {
+    try { sessionStorage.removeItem(Q_KEY); } catch { /* storage indisponível */ }
+  }
+
+  function renderQueue() {
+    const queue = loadQueue();
+    const sendBtn = document.getElementById('cspv-queue-send') as HTMLButtonElement;
+    if (queue.length === 0) {
+      setText('cspv-queue-status', S.queueEmpty);
+      sendBtn.hidden = true;
+      return;
+    }
+    setText('cspv-queue-status', String(S.queueStatus).replace('{n}', String(queue.length)));
+    sendBtn.hidden = false;
+    sendBtn.disabled = false;
+    sendBtn.textContent = S.queueSend;
+  }
+
+  async function sendQueue() {
+    const queue = loadQueue();
+    if (queue.length === 0) return;
+    const sendBtn = document.getElementById('cspv-queue-send') as HTMLButtonElement;
+    sendBtn.disabled = true;
+    setText('cspv-queue-status', S.queueSending);
+    // Mesmo formato que a Reporting API nativa (application/reports+json),
+    // já suportado por parseReports() no Worker — nenhuma mudança do lado
+    // do servidor foi necessária.
+    const body = JSON.stringify(queue.map((v) => ({
+      type: 'csp-violation',
+      url: v.u,
+      body: { documentURL: v.u, effectiveDirective: v.d, blockedURL: v.b },
+    })));
+    try {
+      const res = await fetch(`${base}/api/csp-report`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/reports+json' },
+        body,
+      });
+      if (!res.ok && res.status !== 204) throw new Error('send failed');
+      clearQueue();
+      setText('cspv-queue-status', S.queueSent);
+      sendBtn.hidden = true;
+      load();
+    } catch {
+      setText('cspv-queue-status', S.queueError);
+      sendBtn.disabled = false;
+      sendBtn.textContent = S.queueSend;
+    }
+  }
+
+  document.getElementById('cspv-queue-send')?.addEventListener('click', sendQueue);
+  renderQueue();
   load();
 </script>

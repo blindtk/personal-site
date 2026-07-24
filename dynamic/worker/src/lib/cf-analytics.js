@@ -150,7 +150,10 @@ function topCountriesByThreats(groups, limit = CF_STATS_TOP_COUNTRIES) {
 }
 
 // Abaixo deste nº de pedidos, a taxa de ameaça de um país é ruído estatístico
-// (1 ameaça em 3 pedidos = 33% não diz nada) — fica fora do Risk Score.
+// (1 ameaça em 3 pedidos = 33% não diz nada). Já não exclui o país do Risk
+// Score (2026-07: pedido do dono do repo para ver mais países, não menos) —
+// só marca `lowSample: true`, para o painel mostrar a amostra bruta a par da
+// percentagem em vez de esconder o país por inteiro.
 export const CF_STATS_RISK_MIN_REQUESTS = 100;
 
 /**
@@ -173,9 +176,16 @@ function dailySeries(groups) {
 
 /**
  * "Risk Score" por país — métrica PRÓPRIA que a Cloudflare não mostra: a
- * fração de pedidos de cada país que são ameaça (threats/requests), só para
- * países com pedidos suficientes para o rácio significar algo. Ordenado do
- * mais arriscado para o menos; devolve rate ∈ [0,1] + os brutos.
+ * fração de pedidos de cada país que são ameaça (threats/requests). Mostra
+ * TODOS os países com pelo menos 1 ameaça — nenhum é escondido. Os que não
+ * atingem `minRequests` pedidos na janela vêm marcados com `lowSample: true`
+ * (o rácio é pouco fiável com amostra pequena: 1 ameaça em 1 pedido dava
+ * "100%" sem dizer nada) e ficam ordenados DEPOIS dos de amostra suficiente
+ * — para um fluke de amostra pequena não saltar à frente de um país com
+ * volume real só por sorte. Dentro de cada grupo, ordenado por taxa
+ * decrescente. O chamador decide como mostrar `lowSample` (ex.: tom mais
+ * discreto, contagem bruta ao lado da percentagem). Devolve rate ∈ [0,1] +
+ * os brutos.
  */
 function riskByCountry(groups, limit = CF_STATS_TOP_COUNTRIES, minRequests = CF_STATS_RISK_MIN_REQUESTS) {
   const acc = new Map(); // country -> { requests, threats }
@@ -190,9 +200,15 @@ function riskByCountry(groups, limit = CF_STATS_TOP_COUNTRIES, minRequests = CF_
     }
   }
   return [...acc.entries()]
-    .filter(([, v]) => v.requests >= minRequests && v.threats > 0)
-    .map(([country, v]) => ({ country, requests: v.requests, threats: v.threats, rate: v.threats / v.requests }))
-    .sort((a, b) => b.rate - a.rate)
+    .filter(([, v]) => v.threats > 0)
+    .map(([country, v]) => ({
+      country,
+      requests: v.requests,
+      threats: v.threats,
+      rate: v.threats / v.requests,
+      lowSample: v.requests < minRequests,
+    }))
+    .sort((a, b) => Number(a.lowSample) - Number(b.lowSample) || b.rate - a.rate)
     .slice(0, limit);
 }
 

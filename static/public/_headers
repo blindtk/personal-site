@@ -28,7 +28,7 @@
 # segundo hash — não crescerá por página, só por variante de conteúdo (ver
 # docs/security-headers.md para o comando de cálculo).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'; report-uri /api/csp-report; report-to csp-endpoint
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
   # Força HTTPS por 2 anos (sem "preload" para manter reversível enquanto o
   # domínio é provisório; acrescenta "; preload" e submete em hstspreload.org
   # quando o domínio final estiver fixo).
@@ -43,10 +43,16 @@
   Referrer-Policy: strict-origin-when-cross-origin
   # Desliga APIs de browser que o site não usa.
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()
-  # Endpoint da Reporting API para violações CSP (o report-to da CSP acima
-  # aponta para este nome). URL relativo — resolve contra a própria
-  # origem, onde o Worker interceta /api/* (ver dynamic/worker/).
-  Reporting-Endpoints: csp-endpoint="/api/csp-report"
+  # SEM report-uri/report-to/Reporting-Endpoints (2026-07): o reporting
+  # automático do browser mandava um POST a /api/csp-report por cada
+  # violação de QUALQUER visitante — na prática, sobretudo ruído de
+  # extensões de browser (ver csp-report.js) — e cada POST aceite custa
+  # escritas no KV do Worker, que no plano Free da Cloudflare tem um teto
+  # diário apertado (partilhado com honeypot/vitals/cron). Substituído por
+  # captura 100% local (static/public/js/csp-report.js, ouve
+  # securitypolicyviolation e guarda em sessionStorage) + envio manual num
+  # botão na página Provas (CspViolations.astro) — zero escritas até
+  # alguém decidir mesmo reportar. Ver dynamic/PLAN.md.
   # Isolamento de contexto de navegação e de recursos.
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
