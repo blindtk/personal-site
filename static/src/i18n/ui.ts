@@ -25,7 +25,8 @@ export const ui = {
       menuClose: 'Fechar',
     },
     // Bloco de cross-links partilhado pelas páginas do "sistema" do site
-    // (Segurança, Provas, Perímetro, Deteções, ATT&CK e o projeto este-site).
+    // (Segurança, Provas, Perímetro, Deteções, Analytics, Performance e o
+    // projeto este-site — ATT&CK fica de fora de propósito, ver SiteLayers.astro).
     layers: {
       title: 'Este site, por camadas',
       intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
@@ -36,7 +37,6 @@ export const ui = {
       detections: 'Deteções — as regras Sigma que apanhariam cada ataque',
       analytics: 'Analytics — tráfego, ameaças e threat intelligence',
       performance: 'Performance — cache, latência e Core Web Vitals',
-      attack: 'ATT&CK — cobertura defensiva mapeada',
       project: 'Projeto «Este site» — arquitetura e decisões',
     },
     // Secção "Este Site" — Visão Geral, Analytics e Performance.
@@ -49,6 +49,8 @@ export const ui = {
       archTitle: 'Arquitetura',
       archBody:
         'O que chega ao teu browser é estático: HTML/CSS gerados no build, sem base de dados nem sessões. O pouco que precisa mesmo de servidor (honeypot, self-scan, telemetria) vive num Cloudflare Worker isolado, sem estado pessoal — e o site mantém-se inteiro sem ele. Tudo à borda da Cloudflare, com deploy automático a partir do GitHub.',
+      overviewProjectBody: 'O porquê de cada decisão de arquitetura — Astro sem framework client-side, o monorepo com o Worker separado do estático — está contado no projeto que serve este site.',
+      overviewProjectCta: 'Ver o projeto Este site →',
       stackTitle: 'Stack',
       stackIntro: 'As peças e o papel de cada uma:',
       stackFrontend: 'Frontend',
@@ -1002,7 +1004,8 @@ export const ui = {
       menuClose: 'Close',
     },
     // Shared cross-link block for the site's "system" pages (Security,
-    // Evidence, Perimeter, Detections, ATT&CK and the este-site project).
+    // Evidence, Perimeter, Detections, Analytics, Performance and the
+    // este-site project — ATT&CK is deliberately left out, see SiteLayers.astro).
     layers: {
       title: 'This site, layer by layer',
       intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
@@ -1013,7 +1016,6 @@ export const ui = {
       detections: 'Detections — the Sigma rules that would catch each attack',
       analytics: 'Analytics — traffic, threats and threat intelligence',
       performance: 'Performance — cache, latency and Core Web Vitals',
-      attack: 'ATT&CK — defensive coverage, mapped',
       project: '“This site” project — architecture and decisions',
     },
     // "This Site" section — Overview, Analytics and Performance.
@@ -1026,6 +1028,8 @@ export const ui = {
       archTitle: 'Architecture',
       archBody:
         'What reaches your browser is static: HTML/CSS generated at build, no database, no sessions. The little that genuinely needs a server (honeypot, self-scan, telemetry) lives in an isolated Cloudflare Worker with no personal state — and the site stays whole without it. Everything at Cloudflare\'s edge, deployed automatically from GitHub.',
+      overviewProjectBody: 'The why behind each architecture decision — Astro with no client-side framework, the monorepo with the Worker kept separate from the static site — is told in the project that serves this site.',
+      overviewProjectCta: 'See the This site project →',
       stackTitle: 'Stack',
       stackIntro: 'The pieces and what each one does:',
       stackFrontend: 'Frontend',

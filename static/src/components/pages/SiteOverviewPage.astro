@@ -5,7 +5,7 @@ import StatusBadge from '../site/StatusBadge.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, INFRA, SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
+import { routes, projectUrl } from '../../i18n/routes';
 import { BUILD_INFO } from '../../lib/build-info';
 
 interface Props { lang: Lang }
@@ -53,6 +53,7 @@ const jsStrings = {
   <section aria-labelledby="h-arch">
     <div class="section-title"><h2 id="h-arch">{s.archTitle}</h2></div>
     <p class="intro">{s.archBody}</p>
+    <p class="note">📐 {s.overviewProjectBody} <a href={projectUrl(lang, 'este-site')}>{s.overviewProjectCta}</a></p>
   </section>
 
   <section aria-labelledby="h-status" class="overview-grid">
