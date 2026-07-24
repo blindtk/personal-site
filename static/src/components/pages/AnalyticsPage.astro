@@ -16,7 +16,6 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 const tabs = [
   { id: 'overview', label: s.tabOverview },
-  { id: 'security', label: s.tabSecurity },
   { id: 'traffic', label: s.tabTraffic },
   { id: 'threatintel', label: s.tabThreatIntel },
   { id: 'logs', label: s.tabLogs },
@@ -84,20 +83,6 @@ const jsStrings = {
               <div id="an-status"><Skeleton rows={4} /></div>
             </Widget>
           </div>
-          <p class="note">🛰️ {s.privacyNote}</p>
-        </div>
-
-        <!-- ---------- Security ---------- -->
-        <div slot="security">
-          <div class="widget-grid">
-            <Widget title={s.wByAction} tone="warn" meta={s.window24h}>
-              <div id="an-action"><Skeleton rows={4} /></div>
-            </Widget>
-            <Widget title={s.wBySource} tone="warn" meta={s.window24h}>
-              <div id="an-source"><Skeleton rows={4} /></div>
-            </Widget>
-          </div>
-          <p class="note">{s.planNote}</p>
           <p class="note">🛰️ {s.privacyNote}</p>
         </div>
 
@@ -352,8 +337,6 @@ const jsStrings = {
       const statusRows = bars(zone.blockedByStatus ?? [], 'key', 'count');
       renderBars('an-status', statusRows, S.statusEmpty);
       renderBars('an-status2', statusRows, S.statusEmpty);
-      renderBars('an-action', bars(zone.firewallByAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
-      renderBars('an-source', bars(zone.firewallBySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
 
       const series = Array.isArray(zone.series) ? zone.series : [];
       renderSpark('an-tl-requests', series, 'requests', '');
