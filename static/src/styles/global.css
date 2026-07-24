@@ -1611,7 +1611,7 @@ select {
 .hp-corr-banner[hidden] { display: none; }
 .hp-corr-spark { margin-right: 0.35rem; }
 
-/* ---------- Ticker SOC (topo da Segurança) ---------- */
+/* ---------- Ticker SOC (topo do Perímetro) ---------- */
 
 .ticker {
   overflow: hidden;
