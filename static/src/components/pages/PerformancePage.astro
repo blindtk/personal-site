@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Widget from '../site/Widget.astro';
+import SiteLayers from '../SiteLayers.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.site;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+---
+
+<BaseLayout lang={lang} title={s.perfMetaTitle} altUrl={routes.performance[other]} active="performance">
+  <div class="page-head">
+    <h1>{s.perfTitle}</h1>
+    <p class="intro">{s.perfIntro}</p>
+  </div>
+
+  <div id="perf-root" data-api={API_BASE} data-lang={lang}>
+    <section aria-labelledby="h-perf-live">
+      <div class="section-title"><h2 id="h-perf-live">{s.perfAvailTitle}</h2></div>
+      <p class="hp-fallback" id="perf-fallback">{s.unavailable}</p>
+      <div class="metric-grid" id="perf-cards" hidden>
+        <div class="stat"><div class="n" id="perf-cache">—</div><div class="l">{s.cardCacheRatio}</div></div>
+        <div class="stat blue"><div class="n" id="perf-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
+        <div class="stat"><div class="n" id="perf-requests">—</div><div class="l">{s.cardRequests}</div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-cwv" class="an-mt">
+      <div class="section-title"><h2 id="h-cwv">{s.perfCwvTitle}</h2></div>
+      <Widget title={s.perfCwvTitle} tone="muted">
+        <p class="note">{s.perfCwvBody}</p>
+        <p class="note">→ <a href={routes.evidence[lang]}>{s.perfProvasLink}</a></p>
+      </Widget>
+    </section>
+  </div>
+
+  <SiteLayers lang={lang} current="performance" />
+</BaseLayout>
+
+<script>
+  import { formatBytes, formatPercent, formatNumber } from '../../scripts/observability.js';
+
+  const root = document.getElementById('perf-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const setText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  async function load() {
+    try {
+      const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const zone = (await res.json()).zone ?? {};
+      setText('perf-cache', formatPercent(zone.cacheRatio ?? 0));
+      setText('perf-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      setText('perf-requests', formatNumber(zone.requests ?? 0, locale));
+      document.getElementById('perf-fallback')!.hidden = true;
+      document.getElementById('perf-cards')!.hidden = false;
+    } catch {
+      // Sem Worker: fica o fallback já pintado (evita CLS).
+    }
+  }
+
+  load();
+</script>
+
+<style>
+  .an-mt { margin-top: 1.6rem; }
+</style>

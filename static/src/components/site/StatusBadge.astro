@@ -1,0 +1,54 @@
+---
+/**
+ * Selo de estado (ponto + etiqueta) — reutilizável em painéis de estado e
+ * listas de componentes. Presentational: o estado inicial vem por prop; um
+ * script pode trocá-lo depois via [data-state] (setState no cliente).
+ */
+type State = 'ok' | 'warn' | 'down' | 'pending';
+interface Props {
+  state?: State;
+  label: string;
+  id?: string;
+}
+const { state = 'pending', label, id } = Astro.props;
+---
+
+<span class="status-badge" id={id} data-state={state}>
+  <span class="sb-dot" aria-hidden="true"></span>
+  <span class="sb-label">{label}</span>
+</span>
+
+<style>
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+  .sb-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: none;
+    background: var(--faint);
+    transition: background 0.2s ease;
+  }
+  .status-badge[data-state='ok'] .sb-dot {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent-dim);
+  }
+  .status-badge[data-state='warn'] .sb-dot { background: var(--accent-2); }
+  .status-badge[data-state='down'] .sb-dot { background: var(--danger); }
+  .status-badge[data-state='pending'] .sb-dot {
+    background: var(--faint);
+    animation: sb-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes sb-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .status-badge[data-state='pending'] .sb-dot { animation: none; }
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+/**
+ * Painel independente ("widget") da secção Este Site — a unidade visual de
+ * todos os dashboards de observabilidade. Cada um parece um pequeno painel
+ * autónomo (borda, título mono em caixa alta, ponto de estado opcional),
+ * estilo SOC/terminal. Reutilizável: recebe título + estado + corpo (slot).
+ *
+ * Presentational puro — não busca dados nem tem lógica. O corpo (stats,
+ * tabelas, barras) é injetado pelo slot e preenchido por scripts das páginas.
+ */
+type Tone = 'ok' | 'warn' | 'down' | 'muted';
+interface Props {
+  title: string;
+  /** Ponto de estado no canto do título. Omite para não mostrar nenhum. */
+  tone?: Tone;
+  /** Texto pequeno à direita do título (ex.: janela temporal). */
+  meta?: string;
+  id?: string;
+  class?: string;
+}
+const { title, tone, meta, id, class: klass } = Astro.props;
+---
+
+<section class:list={['widget', klass]} id={id} aria-label={title}>
+  <header class="widget-head">
+    <h3 class="widget-title mono">
+      {tone && <span class:list={['widget-dot', tone]} aria-hidden="true"></span>}
+      {title}
+    </h3>
+    {meta && <span class="widget-meta mono">{meta}</span>}
+  </header>
+  <div class="widget-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .widget {
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+  .widget-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+  }
+  .widget-title {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+  .widget-meta {
+    font-size: 0.68rem;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+  .widget-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex: none;
+    background: var(--faint);
+  }
+  .widget-dot.ok { background: var(--accent); box-shadow: 0 0 6px var(--accent-dim); }
+  .widget-dot.warn { background: var(--accent-2); }
+  .widget-dot.down { background: var(--danger); }
+  .widget-dot.muted { background: var(--faint); }
+  .widget-body { min-width: 0; }
+</style>

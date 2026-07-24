@@ -1,0 +1,239 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Tabs from '../site/Tabs.astro';
+import Widget from '../site/Widget.astro';
+import Skeleton from '../site/Skeleton.astro';
+import SiteLayers from '../SiteLayers.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.site;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const tabs = [
+  { id: 'overview', label: s.tabOverview },
+  { id: 'security', label: s.tabSecurity },
+  { id: 'traffic', label: s.tabTraffic },
+  { id: 'threatintel', label: s.tabThreatIntel },
+  { id: 'logs', label: s.tabLogs },
+];
+
+// Strings passadas ao ilhéu de dados (empties, locale).
+const jsStrings = {
+  countriesEmpty: s.countriesEmpty,
+  statusEmpty: s.statusEmpty,
+  firewallEmpty: s.firewallEmpty,
+};
+---
+
+<BaseLayout lang={lang} title={s.analyticsMetaTitle} altUrl={routes.analytics[other]} active="analytics">
+  <div class="page-head">
+    <h1>{s.analyticsTitle}</h1>
+    <p class="intro">{s.analyticsIntro}</p>
+  </div>
+
+  <div
+    id="an-root"
+    data-api={API_BASE}
+    data-lang={lang}
+    data-strings={JSON.stringify(jsStrings)}
+  >
+    <p class="hp-fallback" id="an-fallback">{s.unavailable}</p>
+
+    <div id="an-body" hidden>
+      <Tabs tabs={tabs} label={s.analyticsTitle}>
+        <!-- ---------- Overview ---------- -->
+        <div slot="overview">
+          <div class="metric-grid" id="an-cards">
+            <div class="stat"><div class="n" id="an-requests">—</div><div class="l">{s.cardRequests}</div></div>
+            <div class="stat amber"><div class="n" id="an-threats">—</div><div class="l">{s.cardThreats}</div></div>
+            <div class="stat amber"><div class="n" id="an-blocked">—</div><div class="l">{s.cardBlocked}</div></div>
+            <div class="stat"><div class="n" id="an-challenges">—</div><div class="l">{s.cardChallenges}</div></div>
+            <div class="stat blue"><div class="n" id="an-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
+            <div class="stat blue"><div class="n" id="an-cache">—</div><div class="l">{s.cardCacheRatio}</div></div>
+            <div class="stat amber"><div class="n" id="an-threatrate">—</div><div class="l">{s.cardThreatRate}</div></div>
+          </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.wTopCountries} meta={s.windowNote}>
+              <div id="an-countries"><Skeleton rows={4} /></div>
+            </Widget>
+            <Widget title={s.wTopStatus} meta={s.windowNote}>
+              <div id="an-status"><Skeleton rows={4} /></div>
+            </Widget>
+          </div>
+          <p class="note">🛰️ {s.privacyNote}</p>
+        </div>
+
+        <!-- ---------- Security ---------- -->
+        <div slot="security">
+          <div class="widget-grid">
+            <Widget title={s.wByAction} tone="warn" meta={s.window24h}>
+              <div id="an-action"><Skeleton rows={4} /></div>
+            </Widget>
+            <Widget title={s.wBySource} tone="warn" meta={s.window24h}>
+              <div id="an-source"><Skeleton rows={4} /></div>
+            </Widget>
+          </div>
+          <p class="note">{s.planNote}</p>
+          <p class="note">🛰️ {s.privacyNote}</p>
+        </div>
+
+        <!-- ---------- Traffic ---------- -->
+        <div slot="traffic">
+          <div class="widget-grid">
+            <Widget title={s.wTraffic} tone="ok" meta={s.windowNote}>
+              <dl class="kv-list">
+                <dt>{s.cardRequests}</dt><dd id="an-t-requests">—</dd>
+                <dt>{s.cardBandwidth}</dt><dd id="an-t-bandwidth">—</dd>
+                <dt>{s.cardCacheRatio}</dt><dd id="an-t-cache">—</dd>
+              </dl>
+            </Widget>
+            <Widget title={s.wTopStatus} meta={s.windowNote}>
+              <div id="an-status2"><Skeleton rows={4} /></div>
+            </Widget>
+          </div>
+          <p class="note">{s.planNote}</p>
+        </div>
+
+        <!-- ---------- Threat Intelligence (roadmap → Perímetro) ---------- -->
+        <div slot="threatintel">
+          <Widget title={s.tiRoadmapTitle} tone="muted">
+            <p class="note">{s.tiRoadmapBody}</p>
+            <p class="note">
+              → <a href={routes.perimeter[lang]}>{s.seePerimeter}</a> ·
+              <a href={routes.detections[lang]}>{s.seeDetections}</a>
+            </p>
+          </Widget>
+        </div>
+
+        <!-- ---------- Logs (roadmap → Perímetro) ---------- -->
+        <div slot="logs">
+          <Widget title={s.logsRoadmapTitle} tone="muted">
+            <p class="note">{s.logsRoadmapBody}</p>
+            <p class="note">🛰️ {s.privacyNote}</p>
+            <p class="note">→ <a href={routes.perimeter[lang]}>{s.seePerimeter}</a></p>
+          </Widget>
+        </div>
+      </Tabs>
+    </div>
+  </div>
+
+  <SiteLayers lang={lang} current="analytics" />
+</BaseLayout>
+
+<script>
+  import { formatNumber, formatBytes, formatPercent, threatRate, withBars } from '../../scripts/observability.js';
+
+  const root = document.getElementById('an-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+
+  const setText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  // Barras horizontais via createElement + textContent (Trusted Types safe:
+  // zero innerHTML). A largura é CSSOM (element.style), não estilo inline em
+  // markup — permitido pela CSP style-src 'self'.
+  function renderBars(id: string, rows: { label: string; value: number; tone?: string }[], empty: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'note';
+      p.textContent = empty;
+      host.append(p);
+      return;
+    }
+    const list = document.createElement('div');
+    list.className = 'bar-list';
+    for (const row of withBars(rows)) {
+      const r = document.createElement('div');
+      r.className = 'bar-row';
+      const head = document.createElement('div');
+      head.className = 'bar-head';
+      const label = document.createElement('span');
+      label.className = 'bar-label';
+      label.textContent = row.label;
+      const val = document.createElement('span');
+      val.className = 'bar-val';
+      val.textContent = formatNumber(row.value, locale);
+      head.append(label, val);
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('div');
+      fill.className = row.tone ? `bar-fill ${row.tone}` : 'bar-fill';
+      fill.style.width = `${(row as any).pct}%`;
+      track.append(fill);
+      r.append(head, track);
+      list.append(r);
+    }
+    host.append(list);
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const zone = data.zone ?? {};
+
+      const requests = Number(zone.requests ?? 0);
+      const threats = Number(zone.threats ?? 0);
+      const blocked = (zone.blockedByStatus ?? []).reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
+      const challenges = (zone.firewallByAction ?? [])
+        .filter((r: any) => String(r.key).includes('challenge'))
+        .reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
+
+      setText('an-requests', formatNumber(requests, locale));
+      setText('an-threats', formatNumber(threats, locale));
+      setText('an-blocked', formatNumber(blocked, locale));
+      setText('an-challenges', formatNumber(challenges, locale));
+      setText('an-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      setText('an-cache', formatPercent(zone.cacheRatio ?? 0));
+      setText('an-threatrate', formatPercent(threatRate(threats, requests)));
+      // Traffic tab (mesmos números, vista de volume/cache)
+      setText('an-t-requests', formatNumber(requests, locale));
+      setText('an-t-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      setText('an-t-cache', formatPercent(zone.cacheRatio ?? 0));
+
+      renderBars(
+        'an-countries',
+        (zone.topCountries ?? []).map((r: any) => ({ label: r.country, value: Number(r.threats) || 0, tone: 'warn' })),
+        S.countriesEmpty,
+      );
+      const statusRows = (zone.blockedByStatus ?? []).map((r: any) => ({ label: r.key, value: Number(r.count) || 0 }));
+      renderBars('an-status', statusRows, S.statusEmpty);
+      renderBars('an-status2', statusRows, S.statusEmpty);
+      renderBars(
+        'an-action',
+        (zone.firewallByAction ?? []).map((r: any) => ({ label: r.key, value: Number(r.count) || 0, tone: 'warn' })),
+        S.firewallEmpty,
+      );
+      renderBars(
+        'an-source',
+        (zone.firewallBySource ?? []).map((r: any) => ({ label: r.key, value: Number(r.count) || 0, tone: 'warn' })),
+        S.firewallEmpty,
+      );
+
+      document.getElementById('an-fallback')!.hidden = true;
+      document.getElementById('an-body')!.hidden = false;
+    } catch {
+      // Sem Worker: o HTML já nasce no fallback — nada a mudar (evita CLS).
+    }
+  }
+
+  load();
+</script>
+
+<style>
+  .an-mt { margin-top: 0.9rem; }
+</style>
