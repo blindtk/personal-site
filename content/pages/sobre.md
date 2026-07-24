@@ -2,7 +2,7 @@
 title: 'Sobre'
 ---
 
-Sou o **Daniel Assis Malaco**, **Information Security Engineer** no Porto.
+Sou o **Daniel Malaco**, **Information Security Engineer** no Porto.
 Desde 2020 estou na Ascendi, onde desenho e opero a arquitetura de segurança
 de infraestrutura crítica rodoviária: firewalls de nova geração, SIEM,
 proteção de endpoints, gestão de identidades, threat intelligence e resposta

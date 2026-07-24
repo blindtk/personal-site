@@ -67,7 +67,6 @@ const jsStrings = {
 ---
 
 <BaseLayout lang={lang} title={p.metaTitle} altUrl={routes.perimeter[other]} active="perimeter" wide>
-  <Ticker lang={lang} />
   <div class="page-head">
     <h1>{p.title}</h1>
     <p class="intro">{p.intro}</p>
@@ -94,6 +93,7 @@ const jsStrings = {
           <div class="stat"><div class="n" id="hp-firstscan">—</div><div class="l">{p.statFirstScan}</div></div>
         </div>
 
+        <Ticker lang={lang} />
         <p class="hp-corr-banner" id="hp-corr" role="status" hidden><span class="hp-corr-spark" aria-hidden="true">⚡</span> {p.corrLead}</p>
 
         <HostMap lang={lang} />
