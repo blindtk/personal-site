@@ -42,19 +42,18 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
 ];
 
 // "Este Site" agrupa na nav as páginas sobre a arquitetura e telemetria
-// DESTE site: Visão Geral, Segurança, Provas, Perímetro, Deteções, Analytics
-// e Performance. ATT&CK e Certificações ficam de fora de propósito — não são
-// sobre o site, são sobre credenciais e percurso pessoais (o próprio
-// attack.json chama-lhe "heatmap pessoal", "o meu CV"). O sítio natural para
-// as duas é o Sobre, que já as linka em prosa; continuam também acessíveis
-// pelo rodapé e por cross-links a partir do Perímetro/Deteções.
+// DESTE site: Visão Geral, Segurança, Provas, Perímetro (honeypot +
+// ameaças Cloudflare), Deteções e Performance (tráfego + Core Web Vitals).
+// ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
+// são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
+// "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
+// que já as linka em prosa; continuam também acessíveis pelo rodapé.
 const siteGroup: { key: RouteKey; label: string }[] = [
   { key: 'siteOverview', label: dict.nav.overview },
   { key: 'security', label: dict.nav.security },
   { key: 'evidence', label: dict.footer.evidence },
   { key: 'perimeter', label: dict.nav.perimeter },
   { key: 'detections', label: dict.footer.detections },
-  { key: 'analytics', label: dict.nav.analytics },
   { key: 'performance', label: dict.nav.performance },
 ];
 const siteActive = siteGroup.some((item) => item.key === active);
@@ -197,10 +196,22 @@ const personSchema = {
     <footer class="site-footer">
       <div class:list={['container', 'inner', { wide }]}>
         <span>
-          © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
+          © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]}
+        </span>
+        {/* Dois grupos, não uma lista só: "Este site" (as páginas de
+           segurança/telemetria) e "Percurso" (credenciais pessoais — ATT&CK,
+           Certificações). Misturados numa lista só, pareciam a mesma família;
+           ver a nota em SiteLayers.astro sobre porque ATT&CK/Certificações
+           não são "camadas" do site. */}
+        <span class="footer-group">
+          {dict.footer.thisSiteLabel}{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a> ·{' '}
-          <a href={routes.detections[lang]}>{dict.footer.detections}</a> ·{' '}
+          <a href={routes.perimeter[lang]}>{dict.footer.perimeter}</a> ·{' '}
+          <a href={routes.detections[lang]}>{dict.footer.detections}</a>
+        </span>
+        <span class="footer-group">
+          {dict.footer.pathLabel}{' '}
           <a href={routes.attack[lang]}>{dict.footer.attack}</a> ·{' '}
           <a href={routes.certifications[lang]}>{dict.footer.certs}</a>
         </span>

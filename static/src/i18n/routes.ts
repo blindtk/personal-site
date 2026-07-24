@@ -11,7 +11,6 @@ export const routes = {
   contact: { pt: '/contactos/', en: '/en/contact/' },
   lab: { pt: '/lab/', en: '/en/lab/' },
   siteOverview: { pt: '/este-site/', en: '/en/this-site/' },
-  analytics: { pt: '/este-site/analytics/', en: '/en/this-site/analytics/' },
   performance: { pt: '/este-site/performance/', en: '/en/this-site/performance/' },
   security: { pt: '/seguranca/', en: '/en/security/' },
   perimeter: { pt: '/perimetro/', en: '/en/perimeter/' },
