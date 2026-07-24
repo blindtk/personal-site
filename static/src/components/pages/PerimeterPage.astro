@@ -63,6 +63,7 @@ const jsStrings = {
   logsPageOf: s.logsPageOf,
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
+  riskLowSample: s.riskLowSample,
 };
 ---
 
@@ -463,11 +464,17 @@ const jsStrings = {
         'cf-risk',
         (zone.riskByCountry ?? []).map((r: any) => {
           const rate = Number(r.rate) || 0;
+          const lowSample = !!r.lowSample;
+          const raw = `${formatNumber(r.threats, locale)}/${formatNumber(r.requests, locale)}`;
           return {
             label: String(r.country),
             value: rate,
-            tone: rate >= 0.5 ? 'down' : rate >= 0.2 ? 'warn' : undefined,
-            display: formatPercent(rate),
+            // Amostra pequena não pinta como alarme (down/warn) mesmo com
+            // taxa alta — o rácio não é fiável abaixo do limiar (ver riskNote).
+            tone: lowSample ? undefined : rate >= 0.5 ? 'down' : rate >= 0.2 ? 'warn' : undefined,
+            display: lowSample
+              ? `${formatPercent(rate)} (${raw} · ${S.riskLowSample})`
+              : `${formatPercent(rate)} (${raw})`,
           };
         }),
         S.tiNoneYet,
