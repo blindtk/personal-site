@@ -211,7 +211,7 @@ export const ui = {
         { name: 'Referrer-Policy', why: 'Não vaza o caminho completo desta página para sites externos ao seguir uma ligação.' },
         { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
         { name: 'COOP / COEP / CORP', why: 'O trio cross-origin completo: isola o contexto de navegação e os recursos de outras origens — os mesmos três exigidos no contrato de cabeçalhos das Provas.' },
-        { name: 'Reporting-Endpoints', why: 'Quando a CSP bloqueia algo, o browser reporta a violação a este site — agregada de forma anónima no painel abaixo. Uma CSP estrita sem reporting é um alarme sem sirene.' },
+        { name: 'Reporting-Endpoints', why: 'Quando a CSP bloqueia algo, o browser reporta a violação a este site — agregada de forma anónima nas Provas. Uma CSP estrita sem reporting é um alarme sem sirene.' },
       ],
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
@@ -1175,7 +1175,7 @@ export const ui = {
         { name: 'Referrer-Policy', why: 'Does not leak this page’s full path to external sites when following a link.' },
         { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
         { name: 'COOP / COEP / CORP', why: 'The full cross-origin trio: isolates the browsing context and resources from other origins — the same three required by the header contract on Evidence.' },
-        { name: 'Reporting-Endpoints', why: 'When the CSP blocks something, the browser reports the violation back to this site — aggregated anonymously in the panel below. A strict CSP without reporting is an alarm without a siren.' },
+        { name: 'Reporting-Endpoints', why: 'When the CSP blocks something, the browser reports the violation back to this site — aggregated anonymously on Evidence. A strict CSP without reporting is an alarm without a siren.' },
       ],
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
