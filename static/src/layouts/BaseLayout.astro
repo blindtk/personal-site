@@ -39,20 +39,23 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
   { key: 'contact', label: dict.nav.contact },
 ];
 
-// "Transparência" agrupa na nav as páginas sobre a arquitetura e telemetria
-// DESTE site: Segurança, Provas, Perímetro, Deteções. ATT&CK e Certificações
-// ficam de fora de propósito — não são sobre o site, são sobre credenciais e
-// percurso pessoais (o próprio attack.json chama-lhe "heatmap pessoal", "o
-// meu CV"). O sítio natural para as duas é o Sobre, que já as linka em
-// prosa; continuam também acessíveis pelo rodapé e por cross-links a partir
-// do Perímetro/Deteções (que classificam com os IDs do heatmap).
-const securityGroup: { key: RouteKey; label: string }[] = [
+// "Este Site" agrupa na nav as páginas sobre a arquitetura e telemetria
+// DESTE site: Visão Geral, Segurança, Provas, Perímetro, Deteções, Analytics
+// e Performance. ATT&CK e Certificações ficam de fora de propósito — não são
+// sobre o site, são sobre credenciais e percurso pessoais (o próprio
+// attack.json chama-lhe "heatmap pessoal", "o meu CV"). O sítio natural para
+// as duas é o Sobre, que já as linka em prosa; continuam também acessíveis
+// pelo rodapé e por cross-links a partir do Perímetro/Deteções.
+const siteGroup: { key: RouteKey; label: string }[] = [
+  { key: 'siteOverview', label: dict.nav.overview },
   { key: 'security', label: dict.nav.security },
   { key: 'evidence', label: dict.footer.evidence },
   { key: 'perimeter', label: dict.nav.perimeter },
   { key: 'detections', label: dict.footer.detections },
+  { key: 'analytics', label: dict.nav.analytics },
+  { key: 'performance', label: dict.nav.performance },
 ];
-const securityActive = securityGroup.some((item) => item.key === active);
+const siteActive = siteGroup.some((item) => item.key === active);
 
 const currentPath = Astro.url.pathname;
 // Imagem de partilha (LinkedIn, Twitter/X, etc.) — uma por idioma, gerada
@@ -137,15 +140,14 @@ const personSchema = {
             </li>
           ))}
           <li class="nav-security">
-            {/* Sem open={securityActive}: abrir por omissão punha o painel
+            {/* Sem open={siteActive}: abrir por omissão punha o painel
                flutuante (position: absolute) a tapar a intro da própria
-               página em /seguranca/, /provas/, /perimetro/ e /detecoes/ no
-               primeiro paint, sem precisar de nenhuma interação. A secção
-               ativa continua marcada — só no aria-current do summary. */}
+               página no primeiro paint, sem precisar de nenhuma interação. A
+               secção ativa continua marcada — só no aria-current do summary. */}
             <details>
-              <summary aria-current={securityActive ? 'page' : undefined}>{dict.nav.transparency}</summary>
+              <summary aria-current={siteActive ? 'page' : undefined}>{dict.nav.thisSite}</summary>
               <ul class="sub-links">
-                {securityGroup.map((item) => (
+                {siteGroup.map((item) => (
                   <li>
                     <a
                       href={routes[item.key][lang]}
@@ -211,5 +213,9 @@ const personSchema = {
     <!-- Ficheiro estático em public/js/ (não hoisted pelo Astro): fica
          fora do bundler para nunca ser inlinado no HTML — ver astro.config.mjs. -->
     <script src="/js/nav.js" defer></script>
+    <!-- Beacon de Core Web Vitals (first-party, agregado, sem PII): mede a
+         performance real e envia UMA vez para /api/vitals — alimenta a página
+         Performance. Ver public/js/vitals.js. -->
+    <script src="/js/vitals.js" defer></script>
   </body>
 </html>

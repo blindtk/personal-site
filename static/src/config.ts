@@ -48,6 +48,22 @@ export const SITE = {
   },
 } as const;
 
+// Factos de infraestrutura (não traduzíveis — nomes próprios) mostrados na
+// secção "Este Site" (Visão Geral, painel de estado). Dados configuráveis
+// vivem aqui, por regra do projeto (ver CLAUDE.md, regra 5). As etiquetas
+// traduzíveis ficam no i18n; isto são só os valores/proper nouns.
+export const INFRA = {
+  region: 'Portugal',
+  framework: 'Astro',
+  hosting: 'Cloudflare Pages',
+  edge: 'Cloudflare',
+  backend: 'Cloudflare Workers',
+  storage: 'Workers KV',
+  ci: 'GitHub Actions',
+  source: 'GitHub',
+  environment: 'Production',
+} as const;
+
 export type Lang = 'pt' | 'en';
 
 // Base da API das features dinâmicas (Worker do Bloco 3, em dynamic/worker/).

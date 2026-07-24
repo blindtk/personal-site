@@ -1,0 +1,131 @@
+---
+/**
+ * Tabs acessíveis, sem framework — para dividir os dashboards (ex.: Analytics
+ * em Overview/Security/Traffic/…). O consumidor passa a lista de tabs e coloca
+ * o conteúdo de cada uma num slot com o nome do id (`<div slot="overview">`).
+ *
+ * A11y: role tablist/tab/tabpanel, aria-selected e navegação por setas
+ * (wiring no script). Sem JS, a 1.ª tab fica visível e as outras escondidas —
+ * degradação graciosa, mesmo padrão dos restantes ilhéus do site.
+ */
+interface TabDef {
+  id: string;
+  label: string;
+}
+interface Props {
+  tabs: TabDef[];
+  /** id da tab ativa por omissão (senão, a primeira). */
+  initial?: string;
+  /** rótulo acessível do tablist. */
+  label: string;
+}
+const { tabs, initial, label } = Astro.props;
+const active = initial && tabs.some((t) => t.id === initial) ? initial : tabs[0]?.id;
+---
+
+<div class="tabs" data-tabs>
+  <div class="tablist" role="tablist" aria-label={label}>
+    {tabs.map((tab) => (
+      <button
+        type="button"
+        role="tab"
+        id={`tab-${tab.id}`}
+        class="tab mono"
+        data-tab={tab.id}
+        aria-selected={tab.id === active ? 'true' : 'false'}
+        aria-controls={`panel-${tab.id}`}
+        tabindex={tab.id === active ? '0' : '-1'}
+      >
+        {tab.label}
+      </button>
+    ))}
+  </div>
+  {tabs.map((tab) => (
+    <div
+      role="tabpanel"
+      id={`panel-${tab.id}`}
+      class="tabpanel"
+      data-panel={tab.id}
+      aria-labelledby={`tab-${tab.id}`}
+      hidden={tab.id !== active}
+      tabindex="0"
+    >
+      <slot name={tab.id} />
+    </div>
+  ))}
+</div>
+
+<style>
+  .tablist {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.1rem;
+    scrollbar-width: thin;
+  }
+  .tab {
+    appearance: none;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+    padding: 0.55rem 0.7rem;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected='true'] {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab:focus-visible {
+    outline: 2px solid var(--accent-3);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  .tabpanel:focus-visible {
+    outline: none;
+  }
+</style>
+
+<script>
+  // Progressive enhancement: liga cliques + navegação por setas. Só corre para
+  // os blocos [data-tabs] presentes; várias instâncias na mesma página são
+  // independentes.
+  for (const root of document.querySelectorAll<HTMLElement>('[data-tabs]')) {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
+
+    function select(id: string, focus = false) {
+      for (const tab of tabs) {
+        const on = tab.dataset.tab === id;
+        tab.setAttribute('aria-selected', on ? 'true' : 'false');
+        tab.tabIndex = on ? 0 : -1;
+        if (on && focus) tab.focus();
+      }
+      for (const panel of panels) {
+        panel.hidden = panel.dataset.panel !== id;
+      }
+    }
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => select(tab.dataset.tab!));
+      tab.addEventListener('keydown', (e) => {
+        const key = e.key;
+        let next = -1;
+        if (key === 'ArrowRight' || key === 'ArrowDown') next = (i + 1) % tabs.length;
+        else if (key === 'ArrowLeft' || key === 'ArrowUp') next = (i - 1 + tabs.length) % tabs.length;
+        else if (key === 'Home') next = 0;
+        else if (key === 'End') next = tabs.length - 1;
+        if (next >= 0) {
+          e.preventDefault();
+          select(tabs[next].dataset.tab!, true);
+        }
+      });
+    });
+  }
+</script>

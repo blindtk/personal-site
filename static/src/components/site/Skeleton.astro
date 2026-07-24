@@ -1,0 +1,54 @@
+---
+/**
+ * Placeholder de carregamento (shimmer) — mostrado enquanto um widget espera
+ * dados do Worker, para não haver salto de layout. Reutilizável: `rows`
+ * controla quantas linhas, `block` desenha um retângulo maior (ex.: gráfico).
+ */
+interface Props {
+  rows?: number;
+  block?: boolean;
+  id?: string;
+}
+const { rows = 3, block = false, id } = Astro.props;
+const lines = Array.from({ length: rows });
+---
+
+<div class="skeleton" id={id} aria-hidden="true">
+  {block ? (
+    <div class="sk-block"></div>
+  ) : (
+    lines.map(() => <div class="sk-line"></div>)
+  )}
+</div>
+
+<style>
+  .skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .sk-line,
+  .sk-block {
+    background: linear-gradient(
+      90deg,
+      var(--bg-raise-2) 25%,
+      var(--border) 37%,
+      var(--bg-raise-2) 63%
+    );
+    background-size: 400% 100%;
+    border-radius: 4px;
+    animation: sk-shimmer 1.4s ease infinite;
+  }
+  .sk-line { height: 0.8rem; }
+  .sk-line:nth-child(2) { width: 82%; }
+  .sk-line:nth-child(3) { width: 64%; }
+  .sk-block { height: 7rem; }
+  @keyframes sk-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sk-line,
+    .sk-block { animation: none; }
+  }
+</style>

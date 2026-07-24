@@ -1,0 +1,173 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Widget from '../site/Widget.astro';
+import StatusBadge from '../site/StatusBadge.astro';
+import SiteLayers from '../SiteLayers.astro';
+import { API_BASE, INFRA, SITE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+import { BUILD_INFO } from '../../lib/build-info';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.site;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// Stack: etiqueta traduzida → valor (proper noun, de INFRA). Só ligação de
+// dados, sem lógica — a fonte dos valores é config.ts (regra 5 do CLAUDE.md).
+const stack: { label: string; value: string }[] = [
+  { label: s.stackFrontend, value: INFRA.framework },
+  { label: s.stackBackend, value: INFRA.backend },
+  { label: s.stackEdge, value: INFRA.edge },
+  { label: s.stackHosting, value: INFRA.hosting },
+  { label: s.stackStorage, value: INFRA.storage },
+  { label: s.stackCi, value: INFRA.ci },
+  { label: s.stackSource, value: INFRA.source },
+];
+
+// Data absoluta do build (fallback sem-JS do "há X"): o script hidrata para
+// tempo relativo a partir de builtAt.
+const builtAbs = new Date(BUILD_INFO.builtAt).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+
+// Strings que o ilhéu de estado precisa (tempo relativo + verificação ao vivo).
+const jsStrings = {
+  ago: s.agoPrefix,
+  units: {
+    second: s.unitSecond, minute: s.unitMinute, hour: s.unitHour,
+    day: s.unitDay, month: s.unitMonth, year: s.unitYear,
+  },
+  stateOperational: s.stateOperational,
+  stateDegraded: s.stateDegraded,
+  stateDown: s.stateDown,
+  lastCheck: s.lastCheck,
+};
+---
+
+<BaseLayout lang={lang} title={s.overviewMetaTitle} altUrl={routes.siteOverview[other]} active="siteOverview">
+  <div class="page-head">
+    <h1>{s.overviewTitle}</h1>
+    <p class="intro">{s.overviewIntro}</p>
+  </div>
+
+  <section aria-labelledby="h-arch">
+    <div class="section-title"><h2 id="h-arch">{s.archTitle}</h2></div>
+    <p class="intro">{s.archBody}</p>
+  </section>
+
+  <section aria-labelledby="h-status" class="overview-grid">
+    <div id="ss-data" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)} hidden></div>
+    <Widget title={s.statusTitle} tone="ok" class="status-widget" id="site-status">
+      <div class="status-overall">
+        <StatusBadge state="pending" label={s.stateChecking} id="ss-overall" />
+      </div>
+      <dl class="kv-list">
+        <dt>{s.labelVersion}</dt><dd>v{BUILD_INFO.version}</dd>
+        <dt>{s.labelCommit}</dt><dd>{BUILD_INFO.commit}</dd>
+        <dt>{s.labelBranch}</dt><dd>{BUILD_INFO.branch}</dd>
+        <dt>{s.labelBuild}</dt><dd>{s.valueProduction}</dd>
+        <dt>{s.labelEnvironment}</dt><dd>{s.valueProduction}</dd>
+        <dt>{s.labelRegion}</dt><dd>{INFRA.region}</dd>
+        <dt>{s.labelDeploy}</dt>
+        <dd><time datetime={BUILD_INFO.builtAt} data-relative>{builtAbs}</time></dd>
+      </dl>
+    </Widget>
+
+    <Widget title={s.componentsTitle} class="components-widget">
+      <ul class="components-list">
+        <li><StatusBadge state="ok" label={s.compEdge} id="ss-edge" /></li>
+        <li><StatusBadge state="pending" label={s.compWorker} id="ss-worker" /></li>
+        <li><StatusBadge state="ok" label={s.compDns} id="ss-dns" /></li>
+        <li><StatusBadge state="ok" label={s.compTls} id="ss-tls" /></li>
+      </ul>
+      <p class="note">{s.compNote}</p>
+      <p class="note">🔒 {s.tlsNote} <a href={routes.evidence[lang]}>{s.tlsNoteLink}</a>.</p>
+    </Widget>
+  </section>
+
+  <section aria-labelledby="h-stack">
+    <div class="section-title"><h2 id="h-stack">{s.stackTitle}</h2></div>
+    <p class="intro">{s.stackIntro}</p>
+    <dl class="kv-list stack-list">
+      {stack.map((row) => (
+        <>
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </>
+      ))}
+    </dl>
+  </section>
+
+  <SiteLayers lang={lang} current="overview" />
+</BaseLayout>
+
+<script>
+  import { relativeTime } from '../../scripts/observability.js';
+
+  const data = document.getElementById('ss-data');
+  const S = JSON.parse(data?.dataset.strings ?? '{}');
+
+  function setState(id: string, state: 'ok' | 'warn' | 'down' | 'pending', label?: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.dataset.state = state;
+    if (label) {
+      const l = el.querySelector('.sb-label');
+      if (l) l.textContent = label;
+    }
+  }
+
+  // Tempo relativo desde o build (proxy do deploy). Sem JS, fica a data ISO.
+  const rel = document.querySelector<HTMLTimeElement>('time[data-relative]');
+  if (rel?.dateTime) {
+    const { value, unit } = relativeTime(new Date(rel.dateTime).getTime());
+    const unitLabel = (S.units ?? {})[unit] ?? unit;
+    rel.textContent = S.ago ? `${S.ago} ${value} ${unitLabel}` : `${value} ${unitLabel}`;
+  }
+
+  // Verificação ao vivo do Worker/API. Edge/DNS/TLS já estão "ok" (esta página
+  // chegou por HTTPS = resolveram e entregaram). O estado global segue o Worker.
+  async function checkWorker() {
+    const base = data?.dataset.api ?? '';
+    try {
+      const res = await fetch(`${base}/api/health`, { headers: { accept: 'application/json' } });
+      const ok = res.ok && (res.headers.get('content-type') ?? '').includes('application/json');
+      setState('ss-worker', ok ? 'ok' : 'down', ok ? S.stateOperational : S.stateDown);
+      // O site estático está de pé (esta página chegou); se o Worker falha, o
+      // conjunto está "degradado" (amarelo), não totalmente em baixo.
+      setState('ss-overall', ok ? 'ok' : 'warn', ok ? S.stateOperational : S.stateDegraded);
+    } catch {
+      setState('ss-worker', 'down', S.stateDown);
+      setState('ss-overall', 'warn', S.stateDegraded);
+    }
+  }
+
+  checkWorker();
+</script>
+
+<style>
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: 0.8rem;
+    margin-top: 1.4rem;
+    align-items: start;
+  }
+  .status-overall {
+    margin-bottom: 0.2rem;
+  }
+  .components-list {
+    list-style: none;
+    margin: 0 0 0.6rem;
+    padding: 0;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .stack-list {
+    margin-top: 0.8rem;
+    max-width: 34rem;
+  }
+  .stack-list dd {
+    text-align: right;
+  }
+</style>

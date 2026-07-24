@@ -1,0 +1,466 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Tabs from '../site/Tabs.astro';
+import Widget from '../site/Widget.astro';
+import Skeleton from '../site/Skeleton.astro';
+import SiteLayers from '../SiteLayers.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.site;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const tabs = [
+  { id: 'overview', label: s.tabOverview },
+  { id: 'security', label: s.tabSecurity },
+  { id: 'traffic', label: s.tabTraffic },
+  { id: 'threatintel', label: s.tabThreatIntel },
+  { id: 'logs', label: s.tabLogs },
+];
+
+// Strings que o ilhéu de dados precisa em runtime (empties, verdictos, locale).
+const jsStrings = {
+  countriesEmpty: s.countriesEmpty,
+  statusEmpty: s.statusEmpty,
+  firewallEmpty: s.firewallEmpty,
+  tiEmpty: s.tiEmpty,
+  logVerdict: s.logVerdict,
+  logsEmpty: s.logsEmpty,
+  logsPageOf: s.logsPageOf,
+};
+---
+
+<BaseLayout lang={lang} title={s.analyticsMetaTitle} altUrl={routes.analytics[other]} active="analytics">
+  <div class="page-head">
+    <h1>{s.analyticsTitle}</h1>
+    <p class="intro">{s.analyticsIntro}</p>
+  </div>
+
+  <div
+    id="an-root"
+    data-api={API_BASE}
+    data-lang={lang}
+    data-strings={JSON.stringify(jsStrings)}
+  >
+    <p class="hp-fallback" id="an-fallback">{s.unavailable}</p>
+
+    <div id="an-body" hidden>
+      <Tabs tabs={tabs} label={s.analyticsTitle}>
+        <!-- ---------- Overview ---------- -->
+        <div slot="overview">
+          <div class="metric-grid" id="an-cards">
+            <div class="stat"><div class="n" id="an-requests">—</div><div class="l">{s.cardRequests}</div></div>
+            <div class="stat amber"><div class="n" id="an-threats">—</div><div class="l">{s.cardThreats}</div></div>
+            <div class="stat amber"><div class="n" id="an-blocked">—</div><div class="l">{s.cardBlocked}</div></div>
+            <div class="stat"><div class="n" id="an-challenges">—</div><div class="l">{s.cardChallenges}</div></div>
+            <div class="stat blue"><div class="n" id="an-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
+            <div class="stat blue"><div class="n" id="an-cache">—</div><div class="l">{s.cardCacheRatio}</div></div>
+            <div class="stat amber"><div class="n" id="an-threatrate">—</div><div class="l">{s.cardThreatRate}</div></div>
+          </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.wTopCountries} meta={s.windowNote}>
+              <div id="an-countries"><Skeleton rows={4} /></div>
+            </Widget>
+            <Widget title={s.wTopStatus} meta={s.windowNote}>
+              <div id="an-status"><Skeleton rows={4} /></div>
+            </Widget>
+          </div>
+          <p class="note">🛰️ {s.privacyNote}</p>
+        </div>
+
+        <!-- ---------- Security ---------- -->
+        <div slot="security">
+          <div class="widget-grid">
+            <Widget title={s.wByAction} tone="warn" meta={s.window24h}>
+              <div id="an-action"><Skeleton rows={4} /></div>
+            </Widget>
+            <Widget title={s.wBySource} tone="warn" meta={s.window24h}>
+              <div id="an-source"><Skeleton rows={4} /></div>
+            </Widget>
+          </div>
+          <p class="note">{s.planNote}</p>
+          <p class="note">🛰️ {s.privacyNote}</p>
+        </div>
+
+        <!-- ---------- Traffic ---------- -->
+        <div slot="traffic">
+          <div class="widget-grid">
+            <Widget title={s.wTraffic} tone="ok" meta={s.windowNote}>
+              <dl class="kv-list">
+                <dt>{s.cardRequests}</dt><dd id="an-t-requests">—</dd>
+                <dt>{s.cardBandwidth}</dt><dd id="an-t-bandwidth">—</dd>
+                <dt>{s.cardCacheRatio}</dt><dd id="an-t-cache">—</dd>
+              </dl>
+            </Widget>
+            <Widget title={s.wTopStatus} meta={s.windowNote}>
+              <div id="an-status2"><Skeleton rows={4} /></div>
+            </Widget>
+          </div>
+          <p class="note">{s.planNote}</p>
+        </div>
+
+        <!-- ---------- Threat Intelligence (honeypot + firewall 7d) ---------- -->
+        <div slot="threatintel">
+          <p class="note">{s.tiIntro}</p>
+          <p class="hp-fallback" id="ti-fallback">{s.tiEmpty}</p>
+          <div id="ti-body" hidden>
+            <div class="metric-grid">
+              <div class="stat amber"><div class="n" id="ti-events">—</div><div class="l">{s.tiEvents7d}</div></div>
+              <div class="stat blue"><div class="n" id="ti-countries">—</div><div class="l">{s.tiCountries7d}</div></div>
+              <div class="stat blue"><div class="n" id="ti-asns">—</div><div class="l">{s.tiAsns7d}</div></div>
+              <div class="stat"><div class="n" id="ti-peak">—</div><div class="l">{s.tiPeakHour}</div></div>
+            </div>
+            <div class="widget-grid an-mt">
+              <Widget title={s.tiHeatmap} tone="warn" class="wide-widget">
+                <div class="heatmap" id="ti-heatmap"></div>
+                <div class="heatmap-legend">
+                  <span>{s.tiHeatLess}</span>
+                  <span class="swatch i1"></span><span class="swatch i2"></span>
+                  <span class="swatch i3"></span><span class="swatch i4"></span>
+                  <span>{s.tiHeatMore}</span>
+                </div>
+              </Widget>
+              <Widget title={s.tiHours} tone="warn" class="wide-widget">
+                <div class="hours-strip" id="ti-hours"></div>
+              </Widget>
+            </div>
+            <div class="widget-grid an-mt">
+              <Widget title={s.tiTopAsns}><div id="ti-topasns"></div></Widget>
+              <Widget title={s.tiTechniques}><div id="ti-tech"></div></Widget>
+              <Widget title={s.tiTopCountries} tone="warn"><div id="ti-topcountries"></div></Widget>
+              <Widget title={s.tiTopPaths}><div id="ti-toppaths"></div></Widget>
+              <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="ti-fwaction"></div></Widget>
+              <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="ti-fwsource"></div></Widget>
+            </div>
+            <p class="note">🛰️ {s.privacyNote}</p>
+            <p class="note">→ <a href={routes.perimeter[lang]}>{s.seePerimeter}</a> · <a href={routes.detections[lang]}>{s.seeDetections}</a></p>
+          </div>
+        </div>
+
+        <!-- ---------- Logs (tabela pesquisável, sem IP) ---------- -->
+        <div slot="logs">
+          <p class="note">{s.logsIntro}</p>
+          <div class="logs-toolbar">
+            <input type="search" id="logs-search" class="logs-search" placeholder={s.logsSearch} aria-label={s.logsSearch} autocomplete="off" />
+          </div>
+          <p class="hp-fallback" id="logs-fallback">{s.tiEmpty}</p>
+          <div class="table-scroll" id="logs-tablewrap" hidden tabindex="0" role="region" aria-label={s.tabLogs}>
+            <table class="result-table wrap-normal">
+              <thead>
+                <tr>
+                  <th>{s.logColWhen}</th>
+                  <th>{s.logColCountry}</th>
+                  <th>{s.logColAsn}</th>
+                  <th>{s.logColPath}</th>
+                  <th>{s.logColTechnique}</th>
+                  <th>{s.logColVerdict}</th>
+                </tr>
+              </thead>
+              <tbody id="logs-rows"></tbody>
+            </table>
+          </div>
+          <div class="logs-pager" id="logs-pager" hidden>
+            <button type="button" id="logs-prev" class="pager-btn">{s.logsPrev}</button>
+            <span id="logs-count" class="mono"></span>
+            <button type="button" id="logs-next" class="pager-btn">{s.logsNext}</button>
+          </div>
+          <p class="note">🛰️ {s.privacyNote}</p>
+        </div>
+      </Tabs>
+    </div>
+  </div>
+
+  <SiteLayers lang={lang} current="analytics" />
+</BaseLayout>
+
+<script>
+  import { formatNumber, formatBytes, formatPercent, threatRate, withBars } from '../../scripts/observability.js';
+
+  const root = document.getElementById('an-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+
+  const setText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  // Barras horizontais via createElement + textContent (Trusted Types safe:
+  // zero innerHTML). A largura é CSSOM (element.style), não estilo inline em
+  // markup — permitido pela CSP style-src 'self'.
+  function renderBars(id: string, rows: { label: string; value: number; tone?: string }[], empty: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'note';
+      p.textContent = empty;
+      host.append(p);
+      return;
+    }
+    const list = document.createElement('div');
+    list.className = 'bar-list';
+    for (const row of withBars(rows)) {
+      const r = document.createElement('div');
+      r.className = 'bar-row';
+      const head = document.createElement('div');
+      head.className = 'bar-head';
+      const label = document.createElement('span');
+      label.className = 'bar-label';
+      label.textContent = row.label;
+      const val = document.createElement('span');
+      val.className = 'bar-val';
+      val.textContent = formatNumber(row.value, locale);
+      head.append(label, val);
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('div');
+      fill.className = row.tone ? `bar-fill ${row.tone}` : 'bar-fill';
+      fill.style.width = `${(row as any).pct}%`;
+      track.append(fill);
+      r.append(head, track);
+      list.append(r);
+    }
+    host.append(list);
+  }
+
+  const bars = (rows: any[], keyField: string, valField: string, tone?: string) =>
+    rows.map((r) => ({ label: String(r[keyField]), value: Number(r[valField]) || 0, tone }));
+
+  // ---------- Cloudflare Analytics (Overview / Security / Traffic) ----------
+  async function loadCfStats() {
+    try {
+      const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const zone = data.zone ?? {};
+
+      const requests = Number(zone.requests ?? 0);
+      const threats = Number(zone.threats ?? 0);
+      const blocked = (zone.blockedByStatus ?? []).reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
+      const challenges = (zone.firewallByAction ?? [])
+        .filter((r: any) => String(r.key).includes('challenge'))
+        .reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
+
+      setText('an-requests', formatNumber(requests, locale));
+      setText('an-threats', formatNumber(threats, locale));
+      setText('an-blocked', formatNumber(blocked, locale));
+      setText('an-challenges', formatNumber(challenges, locale));
+      setText('an-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      setText('an-cache', formatPercent(zone.cacheRatio ?? 0));
+      setText('an-threatrate', formatPercent(threatRate(threats, requests)));
+      setText('an-t-requests', formatNumber(requests, locale));
+      setText('an-t-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      setText('an-t-cache', formatPercent(zone.cacheRatio ?? 0));
+
+      renderBars('an-countries', bars(zone.topCountries ?? [], 'country', 'threats', 'warn'), S.countriesEmpty);
+      const statusRows = bars(zone.blockedByStatus ?? [], 'key', 'count');
+      renderBars('an-status', statusRows, S.statusEmpty);
+      renderBars('an-status2', statusRows, S.statusEmpty);
+      renderBars('an-action', bars(zone.firewallByAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars('an-source', bars(zone.firewallBySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+
+      document.getElementById('an-fallback')!.hidden = true;
+      document.getElementById('an-body')!.hidden = false;
+    } catch {
+      // Sem Worker: o HTML já nasce no fallback — nada a mudar (evita CLS).
+    }
+  }
+
+  // ---------- Threat Intelligence + Logs (honeypot + firewall 7d) ----------
+  function renderHeatmap(rows: { date: string; hours: number[] }[]) {
+    const host = document.getElementById('ti-heatmap');
+    if (!host) return;
+    host.replaceChildren();
+    let max = 0;
+    for (const r of rows) for (const c of r.hours) if (c > max) max = c;
+    for (const r of rows) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'heatmap-row';
+      const label = document.createElement('span');
+      label.className = 'heat-label';
+      label.textContent = r.date.slice(5); // MM-DD
+      rowEl.append(label);
+      r.hours.forEach((count, hour) => {
+        const cell = document.createElement('span');
+        cell.className = 'heat-cell';
+        const intensity = max > 0 ? count / max : 0;
+        if (count > 0) cell.style.backgroundColor = `rgba(61, 220, 132, ${(0.15 + intensity * 0.85).toFixed(3)})`;
+        cell.title = `${r.date} ${String(hour).padStart(2, '0')}h · ${count}`;
+        rowEl.append(cell);
+      });
+      host.append(rowEl);
+    }
+  }
+
+  function renderHours(hours: number[]) {
+    const host = document.getElementById('ti-hours');
+    if (!host) return;
+    host.replaceChildren();
+    const max = hours.reduce((m, v) => Math.max(m, v), 0);
+    // Altura em px (não %): a % contra a área de grelha colapsa de forma
+    // inconsistente entre motores; 54px ≈ a altura fixa da faixa (.hours-strip).
+    hours.forEach((count, hour) => {
+      const bar = document.createElement('span');
+      bar.className = 'hour-bar';
+      bar.style.height = `${max > 0 && count > 0 ? Math.max(3, Math.round((count / max) * 54)) : 2}px`;
+      bar.title = `${String(hour).padStart(2, '0')}h · ${count}`;
+      host.append(bar);
+    });
+  }
+
+  // Logs: estado de pesquisa + paginação (client-side sobre até 200 eventos).
+  const timeFmt = new Intl.DateTimeFormat(locale, {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+  });
+  let logEvents: any[] = [];
+  let logPage = 0;
+  const LOG_PAGE = 25;
+
+  function filteredEvents(): any[] {
+    const q = (document.getElementById('logs-search') as HTMLInputElement | null)?.value.trim().toLowerCase() ?? '';
+    if (!q) return logEvents;
+    return logEvents.filter((e) => {
+      const hay = `${e.country ?? ''} ${e.asn ? 'as' + e.asn : ''} ${e.path ?? ''} ${e.technique ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function renderLogsPage() {
+    const rowsEl = document.getElementById('logs-rows');
+    if (!rowsEl) return;
+    const list = filteredEvents();
+    const pages = Math.max(1, Math.ceil(list.length / LOG_PAGE));
+    if (logPage >= pages) logPage = pages - 1;
+    rowsEl.replaceChildren();
+    const slice = list.slice(logPage * LOG_PAGE, logPage * LOG_PAGE + LOG_PAGE);
+    if (slice.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      td.className = 'hp-loading';
+      td.textContent = S.logsEmpty;
+      tr.append(td);
+      rowsEl.append(tr);
+    }
+    for (const e of slice) {
+      const tr = document.createElement('tr');
+      const cells = [
+        timeFmt.format(new Date(e.ts)),
+        e.country ?? 'XX',
+        e.asn ? `AS${e.asn}` : '—',
+        e.path ?? '',
+        e.technique ?? '—',
+        S.logVerdict,
+      ];
+      cells.forEach((value, i) => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        if (i === 1 || i === 2 || i === 3 || i === 4) td.className = 'mono';
+        tr.append(td);
+      });
+      rowsEl.append(tr);
+    }
+    setText('logs-count', `${list.length ? logPage + 1 : 0} ${S.logsPageOf} ${pages}`);
+    (document.getElementById('logs-prev') as HTMLButtonElement).disabled = logPage <= 0;
+    (document.getElementById('logs-next') as HTMLButtonElement).disabled = logPage >= pages - 1;
+  }
+
+  function wireLogs() {
+    document.getElementById('logs-search')?.addEventListener('input', () => { logPage = 0; renderLogsPage(); });
+    document.getElementById('logs-prev')?.addEventListener('click', () => { if (logPage > 0) { logPage--; renderLogsPage(); } });
+    document.getElementById('logs-next')?.addEventListener('click', () => { logPage++; renderLogsPage(); });
+  }
+
+  async function loadThreatIntel() {
+    try {
+      const res = await fetch(`${base}/api/threat-intel`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const d = await res.json();
+      const totals = d.totals ?? {};
+
+      setText('ti-events', formatNumber(totals.events7d ?? 0, locale));
+      setText('ti-countries', formatNumber(totals.countries7d ?? 0, locale));
+      setText('ti-asns', formatNumber(totals.asns7d ?? 0, locale));
+      setText('ti-peak', d.peakHour ? `${String(d.peakHour.hour).padStart(2, '0')}h` : '—');
+
+      renderHeatmap(Array.isArray(d.heatmap) ? d.heatmap : []);
+      renderHours(Array.isArray(d.byHourOfDay) ? d.byHourOfDay : []);
+      renderBars('ti-topasns', bars(d.topAsns ?? [], 'key', 'count'), S.tiEmpty);
+      renderBars('ti-tech', bars(d.topTechniques ?? [], 'key', 'count'), S.tiEmpty);
+      renderBars('ti-topcountries', bars(d.topCountries ?? [], 'key', 'count', 'warn'), S.tiEmpty);
+      renderBars('ti-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
+      const fw = d.firewall7d ?? {};
+      renderBars('ti-fwaction', bars(fw.byAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars('ti-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+
+      document.getElementById('ti-fallback')!.hidden = true;
+      document.getElementById('ti-body')!.hidden = false;
+
+      // Logs
+      logEvents = Array.isArray(d.events) ? d.events : [];
+      if (logEvents.length > 0) {
+        document.getElementById('logs-fallback')!.hidden = true;
+        document.getElementById('logs-tablewrap')!.hidden = false;
+        document.getElementById('logs-pager')!.hidden = false;
+        renderLogsPage();
+      }
+    } catch {
+      // Sem Worker/dados: ficam os fallbacks já pintados.
+    }
+  }
+
+  wireLogs();
+  loadCfStats();
+  loadThreatIntel();
+</script>
+
+<style>
+  .an-mt { margin-top: 0.9rem; }
+  .wide-widget { grid-column: 1 / -1; }
+
+  /* Logs: toolbar + paginação */
+  .logs-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+  .logs-search {
+    flex: 1;
+    min-width: 12rem;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.7rem;
+  }
+  .logs-search:focus-visible { outline: 2px solid var(--accent-3); outline-offset: 1px; }
+  .logs-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 0.7rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .pager-btn {
+    appearance: none;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+  }
+  .pager-btn:hover:not(:disabled) { border-color: var(--accent); }
+  .pager-btn:disabled { opacity: 0.4; cursor: default; }
+</style>

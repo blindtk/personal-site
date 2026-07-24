@@ -9,8 +9,11 @@ import {
   normalizeCountry, normalizeAsn, floorToWindow,
 } from '../src/lib/sanitize.js';
 import {
-  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData,
+  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData, threatIntel,
 } from '../src/lib/aggregate.js';
+import {
+  normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
+} from '../src/lib/vitals.js';
 import { gradeFromHeaders } from '../src/lib/scan.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
@@ -1379,4 +1382,113 @@ test('/api/mirror: 200 sem IP no corpo, no-store, e rate limit ao fim de 30/min'
   let last;
   for (let i = 0; i < 40; i++) last = await runFetch(mkReq(), env);
   assert.equal(last.status, 429);
+});
+
+// ---------- Threat Intelligence (aggregate.js) ----------
+
+test('addEvent acumula ASN e técnica a par de país/path', () => {
+  const b = emptyBucket();
+  addEvent(b, { country: 'CN', path: '/.env', asn: 4837, technique: 'T1190' });
+  addEvent(b, { country: 'CN', path: '/.env', asn: 4837, technique: 'T1190' });
+  addEvent(b, { country: 'RU', path: '/admin', asn: 12345, technique: 'T1078' });
+  assert.equal(b.total, 3);
+  assert.deepEqual(b.byAsn, { AS4837: 2, AS12345: 1 });
+  assert.deepEqual(b.byTech, { T1190: 2, T1078: 1 });
+  // asn/técnica nulos não criam chave nova
+  addEvent(b, { country: 'US', path: '/x', asn: null, technique: null });
+  assert.equal(Object.keys(b.byAsn).length, 2);
+  assert.equal(Object.keys(b.byTech).length, 2);
+});
+
+test('mergeBuckets funde byAsn/byTech e tolera buckets antigos sem esses campos', () => {
+  const legacy = { total: 1, byCountry: { PT: 1 }, byPath: { '/a': 1 } }; // sem byAsn/byTech
+  const modern = emptyBucket();
+  addEvent(modern, { country: 'PT', path: '/a', asn: 1000, technique: 'T1190' });
+  const merged = mergeBuckets([legacy, modern]);
+  assert.equal(merged.total, 2);
+  assert.deepEqual(merged.byAsn, { AS1000: 1 });
+  assert.deepEqual(merged.byTech, { T1190: 1 });
+});
+
+test('threatIntel: heatmap, hora-do-dia, tops e eventos', () => {
+  // dois buckets horários em horas UTC conhecidas
+  const h1 = emptyBucket(); h1.total = 5;
+  const h2 = emptyBucket(); h2.total = 3;
+  const ms1 = Date.UTC(2026, 6, 20, 14, 0, 0); // 2026-07-20 14:00 UTC
+  const ms2 = Date.UTC(2026, 6, 20, 14, 30, 0); // mesma hora/dia
+  const ms3 = Date.UTC(2026, 6, 21, 9, 0, 0); // 2026-07-21 09:00 UTC
+  const h3 = emptyBucket(); h3.total = 2;
+
+  const day = emptyBucket();
+  addEvent(day, { country: 'CN', path: '/.env', asn: 4837, technique: 'T1190' });
+  addEvent(day, { country: 'CN', path: '/wp-login.php', asn: 4837, technique: 'T1110' });
+
+  const ti = threatIntel({
+    hourlySeries: [
+      { ms: ms1, bucket: h1 },
+      { ms: ms2, bucket: h2 },
+      { ms: ms3, bucket: h3 },
+    ],
+    days: [day],
+    recent: [{ ts: ms3, country: 'CN', asn: 4837, path: '/.env', technique: 'T1190' }],
+  });
+
+  // hora-do-dia: 14h = 5+3 = 8, 9h = 2
+  assert.equal(ti.byHourOfDay[14], 8);
+  assert.equal(ti.byHourOfDay[9], 2);
+  assert.deepEqual(ti.peakHour, { hour: 14, count: 8 });
+  // heatmap: dois dias distintos
+  assert.equal(ti.heatmap.length, 2);
+  const d20 = ti.heatmap.find((r) => r.date === '2026-07-20');
+  assert.equal(d20.hours[14], 8);
+  // tops do dia
+  assert.deepEqual(ti.topCountries, [{ key: 'CN', count: 2 }]);
+  assert.deepEqual(ti.topAsns, [{ key: 'AS4837', count: 2 }]);
+  assert.equal(ti.totals.techniques7d, 2);
+  assert.equal(ti.events.length, 1);
+});
+
+test('threatIntel: entrada vazia não rebenta', () => {
+  const ti = threatIntel({});
+  assert.equal(ti.totals.events7d, 0);
+  assert.equal(ti.peakHour, null);
+  assert.deepEqual(ti.heatmap, []);
+  assert.deepEqual(ti.topAsns, []);
+});
+
+// ---------- Core Web Vitals (vitals.js) ----------
+
+test('normalizeVitals: aceita válidos, rejeita lixo', () => {
+  assert.deepEqual(normalizeVitals({ lcp: 1800, cls: 0.05, inp: 120, ttfb: 300 }), { lcp: 1800, cls: 0.05, inp: 120, ttfb: 300 });
+  // campos fora de intervalo caem; string numérica é aceite
+  assert.deepEqual(normalizeVitals({ lcp: '2000', cls: -1, inp: 999999999 }), { lcp: 2000 });
+  assert.equal(normalizeVitals({ foo: 1 }), null);
+  assert.equal(normalizeVitals(null), null);
+});
+
+test('vitalsStats: p75 e classificação a partir do histograma', () => {
+  const b = emptyVitalsBucket();
+  // 4 amostras de LCP: 1000,1000,1000,3000 → p75 (cum≥3) cai no balde 1000 = "good"
+  addVitals(b, { lcp: 1000 });
+  addVitals(b, { lcp: 1000 });
+  addVitals(b, { lcp: 1000 });
+  addVitals(b, { lcp: 3000 });
+  const stats = vitalsStats([b]);
+  assert.equal(stats.samples, 4);
+  assert.equal(stats.metrics.lcp.p75, 1000);
+  assert.equal(stats.metrics.lcp.rating, 'good');
+  // métrica sem amostras → null
+  assert.equal(stats.metrics.cls, null);
+});
+
+test('vitalsStats: LCP mau classifica poor; merge soma histogramas', () => {
+  const b1 = emptyVitalsBucket();
+  for (let i = 0; i < 3; i++) addVitals(b1, { lcp: 6000 });
+  const b2 = emptyVitalsBucket();
+  addVitals(b2, { lcp: 6000 });
+  const merged = mergeVitalsBuckets([b1, b2]);
+  assert.equal(merged.count, 4);
+  const stats = vitalsStats([b1, b2]);
+  assert.equal(stats.metrics.lcp.rating, 'poor');
+  assert.equal(stats.metrics.lcp.samples, 4);
 });
