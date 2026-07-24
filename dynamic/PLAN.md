@@ -232,6 +232,31 @@
     assinatura ECDSA), testada com vetores. Sem rede, sem estado no servidor; a
     passkey criada é real e fica no gestor do utilizador (aviso de limpeza).
 
+- **2026-07 — Reporting CSP: de automático (`report-uri`/`report-to`) para
+  manual (botão)** (pedido direto do dono do repo, motivado por um alerta real
+  da Cloudflare — "50% of your daily Workers KV operation limit reached" no
+  plano Free): o reporting automático mandava um POST a `/api/csp-report` por
+  cada violação de QUALQUER visitante — na prática, sobretudo ruído de
+  extensões de browser (ver painel "Violações CSP", stat `ruído de
+  extensões`), e cada POST aceite custa escritas no KV (rate-limit + bucket +
+  cap, ~3 writes/POST), partilhadas com honeypot/vitals/cron no mesmo teto
+  diário. Removidos `report-uri`, `report-to` e o cabeçalho
+  `Reporting-Endpoints` de `static/public/_headers` (+ espelhos nginx/Caddy em
+  `docs/security-headers.md`, + `.github/expected-headers.json`). No lugar:
+  captura 100% local — `static/public/js/csp-report.js`, o primeiro recurso
+  de `<head>` (sem `defer`, de propósito: liga o listener
+  `securitypolicyviolation` antes de qualquer script/link que pudesse violar
+  a CSP, para não perder o sinal de regressão da própria build) — guarda em
+  `sessionStorage` (dedup por diretiva+origem, teto de 20). Nada sai daí sem
+  um clique: `CspViolations.astro` (página Provas) lê a fila e manda um
+  botão "Reportar" que envia tudo num único POST no formato batch
+  `application/reports+json` já suportado por `parseReports()` — zero
+  mudança no Worker além dos comentários. **Trade-off aceite conscientemente:**
+  perde-se a deteção automática de regressões reais em produção — só se sabe
+  se alguém (tipicamente o próprio dono, a testar após um deploy) visitar a
+  página Provas e clicar. Revisitar se o teto do KV deixar de ser
+  problema (upgrade de plano, ou amostragem em vez de corte total).
+
 ## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
 
 Propostas de 2026-07 que ficaram na gaveta por decisão do dono do repo —

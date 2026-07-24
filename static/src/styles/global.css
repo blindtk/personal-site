@@ -1842,6 +1842,17 @@ select {
 .cspv .stat .n { overflow-wrap: anywhere; }
 #cspv-body[hidden] { display: none; }
 
+/* Fila local + botão de envio manual — vive fora do #cspv-body de propósito
+   (funciona mesmo sem o Worker publicado, ver CspViolations.astro). */
+.cspv-queue {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+.cspv-queue p { margin: 0; font-size: 0.78rem; color: var(--muted); }
+
 /* Barra de composição: as larguras dos segmentos são postas por JS via
    CSSOM (style="" no HTML é bloqueado pela CSP por hashes). */
 .cspv-bar-label {

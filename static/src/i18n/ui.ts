@@ -317,7 +317,13 @@ export const ui = {
     cspviolations: {
       title: 'Violações CSP',
       intro:
-        'Agregado anónimo dos relatórios que os browsers dos visitantes enviam quando a Content-Security-Policy bloqueia algo. Serve dois papéis: canário de regressão da própria build e observatório do que uma CSP estrita apanha na prática — que é, sobretudo, ruído de extensões de browser. Essa é a lição.',
+        'Agregado anónimo dos relatórios que quem visita escolhe enviar quando a Content-Security-Policy bloqueia algo. Deixou de ser automático: o browser só regista localmente (sessionStorage) e nada sai daqui sem um clique — poupa escritas no KV do Worker (plano Free, teto diário apertado). Serve dois papéis: canário de regressão da própria build e observatório do que uma CSP estrita apanha na prática — que é, sobretudo, ruído de extensões de browser.',
+      queueEmpty: 'Sem violações CSP registadas nesta sessão.',
+      queueStatus: '{n} violação(ões) desta sessão por reportar.',
+      queueSend: 'Reportar',
+      queueSending: 'A enviar…',
+      queueSent: 'Reportado — obrigado.',
+      queueError: 'Falhou o envio. Tenta mais tarde.',
       statReports: 'relatórios · 7d',
       statTopDirective: 'diretiva mais violada',
       statNoise: 'ruído de extensões',
@@ -1266,7 +1272,13 @@ export const ui = {
     cspviolations: {
       title: 'CSP violations',
       intro:
-        "Anonymous aggregate of the reports visitors' browsers send when the Content-Security-Policy blocks something. It plays two roles: a canary for build regressions, and an observatory of what a strict CSP actually catches in practice — which is, above all, browser-extension noise. That is the lesson.",
+        "Anonymous aggregate of the reports visitors choose to send when the Content-Security-Policy blocks something. No longer automatic: the browser only records locally (sessionStorage), nothing leaves without a click — saves KV writes on the Worker (Free plan, tight daily cap). It plays two roles: a canary for build regressions, and an observatory of what a strict CSP actually catches in practice — which is, above all, browser-extension noise.",
+      queueEmpty: 'No CSP violations recorded this session.',
+      queueStatus: '{n} violation(s) from this session, not yet reported.',
+      queueSend: 'Report',
+      queueSending: 'Sending…',
+      queueSent: 'Reported — thank you.',
+      queueError: 'Send failed. Try again later.',
       statReports: 'reports · 7d',
       statTopDirective: 'most-violated directive',
       statNoise: 'extension noise',

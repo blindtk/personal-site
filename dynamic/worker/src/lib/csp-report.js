@@ -6,6 +6,13 @@
 // ORIGEM (scheme + host); path, query e fragmentos (onde vivem tokens) nunca
 // são persistidos.
 //
+// Desde 2026-07 quem envia é sempre um clique explícito no browser (botão
+// na página Provas, static/public/js/csp-report.js) — a CSP não tem
+// report-uri/report-to, por isso já não há um POST automático por violação
+// de cada visitante (ver docs/security-headers.md). O wire format não
+// mudou: continuamos a aceitar os dois formatos que os browsers usariam
+// nativamente, porque o envio manual reconstrói o mesmo corpo.
+//
 // Dois formatos no wire, normalizados para um só:
 //   · legado `report-uri` — Content-Type application/csp-report, um objeto
 //     { "csp-report": { "document-uri", "effective-directive", "blocked-uri" } }
