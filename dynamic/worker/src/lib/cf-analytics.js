@@ -24,9 +24,20 @@
 //     challenge, block… de firewallCustom, ratelimit… Para 7d seria preciso
 //     coletar/acumular (fase 2). Ver dynamic/PLAN.md para o historial.
 //
+// CORREÇÃO (2026-07): o dataset CRU já dá detalhe por URL, user-agent e ASN
+// de todo o tráfego — não é preciso Pro+ para isso, ao contrário do que uma
+// versão anterior do texto do painel dizia. Só o AGREGADO
+// (firewallEventsAdaptiveGroups) é Pro+; o campo `clientIP` também está
+// disponível no cru, mas o site nunca o pede nem mostra (zero-PII, ver
+// CF_FIREWALL_DETAIL_QUERY abaixo — de propósito sem clientIP). Pedido
+// SEPARADO de CF_FIREWALL_QUERY (não junta os campos na mesma query) para
+// isolar o risco: se um nome de campo desviar do schema, só esta tabela
+// best-effort fica vazia, nunca o painel de ação/origem/país que já
+// funciona em produção.
+//
 // Como em ct.js: parse (puro, testável) separado de fetch (rede).
 
-import { normalizeCountry } from './sanitize.js';
+import { normalizeCountry, normalizeAsn, sanitizeText } from './sanitize.js';
 
 const DAY_MS = 86400_000;
 export const CF_STATS_WINDOW_DAYS = 7;
@@ -81,6 +92,24 @@ const CF_FIREWALL_QUERY = `
       zones(filter: { zoneTag: $zoneTag }) {
         firewallEventsAdaptive(limit: 10000, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
           action source sampleInterval clientCountryName
+        }
+      }
+    }
+  }
+`;
+
+// Detalhe por URL, user-agent e ASN de todo o tráfego visto pelo firewall
+// (últimas 24h) — pedido SEPARADO do CF_FIREWALL_QUERY (ver nota no topo do
+// ficheiro: isola o risco de deriva de schema). Mesmo dataset CRU
+// `firewallEventsAdaptive`, campos diferentes. `clientIP` está disponível
+// neste dataset mas NUNCA se pede — zero-PII é uma escolha do site, não uma
+// limitação do plano Free.
+const CF_FIREWALL_DETAIL_QUERY = `
+  query CfFirewallDetail($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+    viewer {
+      zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptive(limit: 10000, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
+          sampleInterval clientRequestPath userAgent clientAsn
         }
       }
     }
@@ -263,6 +292,46 @@ export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
   };
 }
 
+// Quanto do path/user-agent cru se guarda por linha antes de agregar — só
+// para conter entradas absurdas (paths gigantes, UAs forjados); não é PII,
+// mas mesmo assim passa por sanitizeText (remove controlo/tags, trunca).
+const CF_FIREWALL_PATH_MAXLEN = 120;
+const CF_FIREWALL_UA_MAXLEN = 140;
+
+/**
+ * Agrega os eventos crus do `firewallEventsAdaptive` (CF_FIREWALL_DETAIL_QUERY)
+ * por **URL** (`clientRequestPath`), **user-agent** e **ASN** (`clientAsn`) —
+ * o detalhe que o texto do painel dizia (incorretamente) exigir Pro+; vem do
+ * mesmo dataset CRU já usado por `firewallBreakdown`, só que com campos
+ * diferentes. Mesma amostragem por peso (`sampleInterval`) que `firewallBreakdown`.
+ * `clientIP` não é pedido nem processado aqui — decisão de produto (zero-PII),
+ * não limitação da API. Função pura e defensiva: nunca lança.
+ */
+export function firewallDetailBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
+  const zones = raw?.data?.viewer?.zones;
+  const events = (Array.isArray(zones) ? zones[0] : null)?.firewallEventsAdaptive ?? [];
+  const byPath = new Map();
+  const byUserAgent = new Map();
+  const byAsn = new Map();
+  for (const e of Array.isArray(events) ? events : []) {
+    const weight = Math.max(1, Number(e?.sampleInterval) || 1);
+    const path = sanitizeText(e?.clientRequestPath, CF_FIREWALL_PATH_MAXLEN);
+    if (path) byPath.set(path, (byPath.get(path) ?? 0) + weight);
+    const ua = sanitizeText(e?.userAgent, CF_FIREWALL_UA_MAXLEN);
+    if (ua) byUserAgent.set(ua, (byUserAgent.get(ua) ?? 0) + weight);
+    const asn = normalizeAsn(e?.clientAsn);
+    if (asn) {
+      const key = `AS${asn}`;
+      byAsn.set(key, (byAsn.get(key) ?? 0) + weight);
+    }
+  }
+  return {
+    firewallByPath: topEntries(byPath, limit),
+    firewallByUserAgent: topEntries(byUserAgent, limit),
+    firewallByAsn: topEntries(byAsn, limit),
+  };
+}
+
 /**
  * Normaliza a resposta bruta da GraphQL Analytics API num resumo estável
  * para o painel. Qualquer coisa que não bata com o shape esperado vira 0 —
@@ -307,6 +376,11 @@ export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WIND
       firewallByAction: [],
       firewallBySource: [],
       firewallByCountry: [],
+      // Preenchidos à parte por fetchCfStats (CF_FIREWALL_DETAIL_QUERY,
+      // best-effort, pedido separado — ver nota no topo do ficheiro).
+      firewallByPath: [],
+      firewallByUserAgent: [],
+      firewallByAsn: [],
     },
     worker: {
       requests: workerRequests,
@@ -373,6 +447,21 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     }
   } catch {
     // Timeout/rede/permissão: fica com as tabelas de firewall vazias.
+  }
+
+  // Detalhe por URL/user-agent/ASN das últimas 24h — pedido SEPARADO do de
+  // cima (mesmo princípio: um desvio de schema aqui nunca deve apagar as
+  // tabelas de ação/origem/país que já funcionam). Também best-effort.
+  try {
+    const fwDetailRes = await post(CF_FIREWALL_DETAIL_QUERY);
+    if (fwDetailRes.ok) {
+      const fwDetailRaw = await fwDetailRes.json();
+      if (!(Array.isArray(fwDetailRaw?.errors) && fwDetailRaw.errors.length > 0)) {
+        Object.assign(stats.zone, firewallDetailBreakdown(fwDetailRaw));
+      }
+    }
+  } catch {
+    // Timeout/rede/permissão: fica com as tabelas de detalhe vazias.
   }
 
   return stats;

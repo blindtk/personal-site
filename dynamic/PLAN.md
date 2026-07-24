@@ -92,6 +92,36 @@
   do dia para KV e acumula uma janela de **7 dias** — a ideia de "coletar e
   guardar" do dono do repo, que aqui faz todo o sentido.
 
+- **2026-07 — CORREÇÃO 2: o texto do painel "Tráfego" sobre IP/URL/user-agent/
+  ASN estava errado; adicionado detalhe por URL, user-agent e ASN** (pedido
+  direto do dono do repo): o `planNote` da tab Tráfego dizia que "detalhe por
+  IP, URL, user-agent e ASN de todo o tráfego exige o dataset
+  `firewallEventsAdaptiveGroups` (Pro+)". Isso confundia outra vez os dois
+  datasets do ponto acima — só o AGREGADO é Pro+; o CRU (já em uso para
+  ação/origem/país desde a correção anterior) sempre teve os campos
+  `clientRequestPath`, `userAgent` e `clientAsn` disponíveis no Free. Corrigido
+  o texto e adicionado o que ele dizia faltar: três tabelas novas na tab
+  Tráfego — **URLs mais visadas**, **user-agents mais vistos** e **redes (ASN)
+  mais vistas**, todas pelo firewall nas últimas 24h (limite de retenção do
+  cru). Implementação:
+    - `CF_FIREWALL_DETAIL_QUERY` — pedido GraphQL **separado** de
+      `CF_FIREWALL_QUERY` (mesmo dataset, campos diferentes), para isolar o
+      risco: uma deriva de schema nestes três campos novos nunca apaga as
+      tabelas de ação/origem/país que já funcionam em produção (mesmo
+      princípio best-effort de sempre).
+    - `firewallDetailBreakdown` em `cf-analytics.js` — pesa por
+      `sampleInterval` (mesma amostragem que `firewallBreakdown`), sanitiza
+      path/user-agent com `sanitizeText` e valida o ASN com `normalizeAsn`.
+    - **`clientIP` continua fora** — está disponível neste dataset (é
+      literalmente o que prova que o texto antigo estava errado), mas nunca é
+      pedido nem processado. Zero-PII é escolha do site, não limitação do
+      Free — o `planNote` corrigido diz isto explicitamente.
+    - Sem acumulação a 7 dias para estas três tabelas (ficam a 24h, ao
+      contrário de ação/origem/país que já têm o snapshot diário da fase 2
+      acima) — manter o KV/`snapshotFirewall` a acumular path/user-agent
+      aumentaria a pegada de dados retidos sem pedido explícito para isso;
+      revisitar só se o dono do repo pedir.
+
 - **2026-07 — Dependabot security-only a par do Renovate** (decisão do dono do
   repo): o Renovate faz todos os *version updates* (rotina agrupada + majors),
   mas fica ligado também o **Dependabot security updates** — só para

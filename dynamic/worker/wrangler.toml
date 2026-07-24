@@ -68,14 +68,17 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 #   npx wrangler secret put CF_API_TOKEN # token criado em dash.cloudflare.com → Meu perfil → Tokens de API
 #     · Base (pedidos/cache/ameaças/país/código HTTP, 7d): "Account
 #       Analytics:Read" + "Zone Analytics:Read".
-#     · Eventos de firewall por ação/origem (24h, firewallEventsAdaptive CRU):
-#       juntar as permissões de leitura de firewall — "Zone Firewall
-#       Services:Read", "Zone WAF:Read" e "Account Firewall Access Rules:Read".
-#       Sem elas o sub-pedido é best-effort e as tabelas de firewall ficam
-#       vazias, mas o painel-base mantém-se. NOTA: o dataset AGREGADO
+#     · Eventos de firewall por ação/origem/URL/user-agent/ASN (24h,
+#       firewallEventsAdaptive CRU, dois pedidos separados): juntar as
+#       permissões de leitura de firewall — "Zone Firewall Services:Read",
+#       "Zone WAF:Read" e "Account Firewall Access Rules:Read". Sem elas os
+#       sub-pedidos são best-effort e as tabelas de firewall ficam vazias, mas
+#       o painel-base mantém-se. NOTA: o dataset AGREGADO
 #       (firewallEventsAdaptive**Groups**) é Pro+ e no Free dá "does not have
 #       access to the path" — por isso usamos o cru e agregamos no Worker.
-#       Ver src/lib/cf-analytics.js e dynamic/PLAN.md.
+#       `clientIP` está disponível no cru mas nunca é pedido (zero-PII por
+#       escolha, não limitação do plano). Ver src/lib/cf-analytics.js e
+#       dynamic/PLAN.md.
 #
 # Rotação do RATE_SALT: rodar SEMANALMENTE. Trocar o segredo invalida de
 # imediato TODOS os rate-limits acumulados (o hash deixa de bater) — é
