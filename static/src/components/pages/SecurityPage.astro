@@ -64,16 +64,6 @@ const scanners = [
     <p>{sec.privacyBody}</p>
   </section>
 
-  <section aria-labelledby="h-pwned">
-    <div class="section-title">
-      <h2 id="h-pwned">{sec.pwnedTitle}</h2>
-    </div>
-    <p class="intro">{sec.pwnedIntro}</p>
-    <ul class="sec-links mono">
-      <li><a href={toolUrl(lang, 'pwned')}>{sec.pwnedCta}</a></li>
-    </ul>
-  </section>
-
   <section aria-labelledby="h-ci">
     <div class="section-title">
       <h2 id="h-ci">{sec.ciTitle}</h2>
@@ -104,16 +94,6 @@ const scanners = [
       {scanners.map((l) => (
         <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
       ))}
-    </ul>
-  </section>
-
-  <section aria-labelledby="h-attack">
-    <div class="section-title">
-      <h2 id="h-attack">{sec.attackTitle}</h2>
-    </div>
-    <p>{sec.attackBody}</p>
-    <ul class="sec-links mono">
-      <li><a href={routes.attack[lang]}>{sec.attackCta}</a></li>
     </ul>
   </section>
 

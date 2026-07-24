@@ -217,11 +217,6 @@ export const ui = {
       privacyTitle: 'Privacidade e dados',
       privacyBody:
         'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, self-scan) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
-      // ----- Password comprometida (k-anonimato) -----
-      pwnedTitle: 'A tua password já vazou?',
-      pwnedIntro:
-        'A mesma ideia — não guardar o que não é preciso — aplicada a uma consulta. Verifica se uma password aparece em fugas conhecidas sem que ela saia do teu browser: o SHA-1 é calculado localmente e só 5 caracteres do hash chegam ao servidor.',
-      pwnedCta: 'Experimentar o verificador →',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -238,9 +233,6 @@ export const ui = {
       selfScanCta: 'Correr o self-scan deste site →',
       headersScanLabel: 'Scan em securityheaders.com',
       observatoryLabel: 'Scan no Mozilla Observatory',
-      attackTitle: 'Cobertura defensiva',
-      attackBody: 'Do lado de quem defende: as técnicas do MITRE ATT&CK que cubro em produção, mapeadas às ferramentas e à experiência.',
-      attackCta: 'Ver o heatmap ATT&CK →',
       // ----- Provas -----
       evidenceTitle: 'Transparência verificável',
       evidenceBody:
@@ -1181,11 +1173,6 @@ export const ui = {
       privacyTitle: 'Privacy and data',
       privacyBody:
         'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, self-scan) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
-      // ----- Pwned password (k-anonymity) -----
-      pwnedTitle: 'Has your password leaked?',
-      pwnedIntro:
-        'The same idea — never keep what you don’t need — applied to a query. Check whether a password appears in known breaches without it ever leaving your browser: the SHA-1 is computed locally and only 5 characters of the hash reach the server.',
-      pwnedCta: 'Try the checker →',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -1197,9 +1184,6 @@ export const ui = {
       selfScanCta: 'Run this site\'s self-scan →',
       headersScanLabel: 'Scan on securityheaders.com',
       observatoryLabel: 'Scan on Mozilla Observatory',
-      attackTitle: 'Defensive coverage',
-      attackBody: "From the defender's side: the MITRE ATT&CK techniques I cover in production, mapped to the tools and the experience.",
-      attackCta: 'See the ATT&CK heatmap →',
       // ----- Delivery chain (CI) -----
       ciTitle: 'Delivery chain',
       ciBody:
