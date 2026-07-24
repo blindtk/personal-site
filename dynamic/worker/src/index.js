@@ -9,10 +9,18 @@
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
+//   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 5min)
+//   · /api/vitals (GET)        — Core Web Vitals p75 (RUM, 7d)
+//   · /api/vitals (POST)       — beacon RUM first-party (agregados, sem PII)
 //   · /api/health
 // Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
 
-import { emptyBucket, addEvent, honeypotStats, mapData } from './lib/aggregate.js';
+import {
+  emptyBucket, addEvent, honeypotStats, mapData, threatIntel, THREAT_INTEL_HOURS,
+} from './lib/aggregate.js';
+import {
+  normalizeVitals, emptyVitalsBucket, addVitals, vitalsStats,
+} from './lib/vitals.js';
 import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, cspStats,
   REPORT_CONTENT_TYPES, MAX_REPORTS_PER_REQUEST,
@@ -56,6 +64,11 @@ const UPSTREAM_TIMEOUT_MS = 5000;
 // spam deliberado) sem perder o sinal: os agregados já contados ficam.
 const CSP_REPORT_MAX_BODY = 16 * 1024;
 const CSP_WRITE_CAP = { windowMs: HOUR_MS, max: 300 };
+
+// RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas por
+// janela (mesmo padrão do honeypot/CSP). Só agregados; ver lib/vitals.js.
+const VITALS_MAX_BODY = 2 * 1024;
+const VITALS_WRITE_CAP = { windowMs: HOUR_MS, max: 5000 };
 
 // ---------- helpers de tempo/KV ----------
 
@@ -108,7 +121,9 @@ async function recordHoneypot(env, request, path, now) {
   const { allowed, state: capState } = underCap(capPrev, { now, ...HONEYPOT_WRITE_CAP });
   if (!allowed) return;
 
-  const nextRecent = [event, ...recent].slice(0, 30);
+  // 200 (não 30): a tabela de Logs da Threat Intelligence pagina/pesquisa
+  // sobre esta lista. Continua a ser só metadados por evento — nunca o IP.
+  const nextRecent = [event, ...recent].slice(0, 200);
   addEvent(hBucket, event);
   addEvent(dBucket, event);
 
@@ -118,7 +133,7 @@ async function recordHoneypot(env, request, path, now) {
 
   await Promise.all([
     env.KV.put('recent', JSON.stringify(nextRecent)),
-    env.KV.put(hourKey(now), JSON.stringify(hBucket), { expirationTtl: 2 * 86400 }),
+    env.KV.put(hourKey(now), JSON.stringify(hBucket), { expirationTtl: 8 * 86400 }),
     env.KV.put(dayKey(now), JSON.stringify(dBucket), { expirationTtl: 9 * 86400 }),
     env.KV.put('meta', JSON.stringify(nextMeta)),
     env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(HONEYPOT_WRITE_CAP.windowMs / 1000) + 60 }),
@@ -159,6 +174,91 @@ async function recordCspViolations(env, violations, now) {
 async function readCspBuckets(env, now) {
   const keys = Array.from({ length: 7 }, (_, i) => cspDayKey(now - i * DAY_MS));
   return Promise.all(keys.map((k) => getJSON(env, k)));
+}
+
+// ---------- Core Web Vitals (RUM): escrita/leitura ----------
+
+const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; // vit:2026-07-24
+
+/**
+ * Acumula uma amostra de Web Vitals já normalizada no histograma diário. Só
+ * agregados — nenhum valor individual, IP ou UA é persistido. Cap global de
+ * escritas por janela, como o honeypot/CSP.
+ */
+async function recordVitals(env, sample, now) {
+  const capKey = `vitcap:${hourKey(now)}`;
+  const dayK = vitalsDayKey(now);
+  const [bucket, capPrev] = await Promise.all([
+    getJSON(env, dayK, emptyVitalsBucket()),
+    getJSON(env, capKey),
+  ]);
+  const { allowed, state } = underCap(capPrev, { now, ...VITALS_WRITE_CAP });
+  if (!allowed) return;
+  addVitals(bucket, sample);
+  await Promise.all([
+    env.KV.put(dayK, JSON.stringify(bucket), { expirationTtl: 9 * 86400 }),
+    env.KV.put(capKey, JSON.stringify(state), { expirationTtl: Math.ceil(VITALS_WRITE_CAP.windowMs / 1000) + 60 }),
+  ]);
+}
+
+/** Lê os 7 histogramas diários de Web Vitals (hoje primeiro). */
+async function readVitalsBuckets(env, now) {
+  const keys = Array.from({ length: 7 }, (_, i) => vitalsDayKey(now - i * DAY_MS));
+  return Promise.all(keys.map((k) => getJSON(env, k)));
+}
+
+// ---------- Threat Intelligence: leitura dos buckets acumulados ----------
+
+/**
+ * Lê os buckets horários (THREAT_INTEL_HOURS = 7d, para o heatmap/hora-do-dia)
+ * + diários (7d, para os tops por país/ASN/técnica/path) + os eventos
+ * recentes (Logs). Cada bucket horário vai com o `ms` do início da hora, para
+ * a agregação o poder posicionar no heatmap.
+ */
+async function readThreatBuckets(env, now) {
+  const hourStamps = Array.from({ length: THREAT_INTEL_HOURS }, (_, i) => now - i * HOUR_MS);
+  const dayKeys = Array.from({ length: 7 }, (_, i) => dayKey(now - i * DAY_MS));
+  const [hourlyBuckets, days, recent] = await Promise.all([
+    Promise.all(hourStamps.map((ms) => getJSON(env, hourKey(ms)))),
+    Promise.all(dayKeys.map((k) => getJSON(env, k))),
+    getJSON(env, 'recent', []),
+  ]);
+  const hourlySeries = hourStamps.map((ms, i) => ({ ms, bucket: hourlyBuckets[i] }));
+  return { hourlySeries, days, recent };
+}
+
+// ---------- Firewall Cloudflare: acumulação diária (24h → 7d) ----------
+
+const fwDayKey = (ms) => `fw:${new Date(ms).toISOString().slice(0, 10)}`; // fw:2026-07-24
+
+/**
+ * Fotografa a repartição de firewall das últimas 24h (já calculada em
+ * `stats.zone` pelo cf-analytics) num snapshot diário no KV. Como o dataset
+ * cru só tem 24h no Free, é assim que se acumula uma janela de 7 dias (a
+ * "fase 2" registada no PLAN.md). Só contadores por ação/origem — nunca IPs.
+ */
+async function snapshotFirewall(env, stats, now) {
+  const zone = stats?.zone;
+  if (!zone) return;
+  const toMap = (list) => Object.fromEntries((Array.isArray(list) ? list : []).map((r) => [r.key, r.count]));
+  const snap = { byAction: toMap(zone.firewallByAction), bySource: toMap(zone.firewallBySource) };
+  if (Object.keys(snap.byAction).length === 0 && Object.keys(snap.bySource).length === 0) return;
+  await env.KV.put(fwDayKey(now), JSON.stringify(snap), { expirationTtl: 8 * 86400 });
+}
+
+/** Lê e funde os snapshots de firewall dos últimos 7 dias em tops por ação/origem. */
+async function readFirewall7d(env, now) {
+  const keys = Array.from({ length: 7 }, (_, i) => fwDayKey(now - i * DAY_MS));
+  const snaps = await Promise.all(keys.map((k) => getJSON(env, k)));
+  const byAction = {};
+  const bySource = {};
+  for (const s of snaps) {
+    if (!s) continue;
+    for (const [k, v] of Object.entries(s.byAction ?? {})) byAction[k] = (byAction[k] ?? 0) + (Number(v) || 0);
+    for (const [k, v] of Object.entries(s.bySource ?? {})) bySource[k] = (bySource[k] ?? 0) + (Number(v) || 0);
+  }
+  const top = (m) => Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 10);
+  return { byAction: top(byAction), bySource: top(bySource) };
 }
 
 // ---------- caching de leitura ----------
@@ -346,6 +446,51 @@ export default {
       return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
     }
 
+    // Beacon de Core Web Vitals (RUM first-party). Segundo POST público do
+    // Worker — mesma defesa em camadas do recetor CSP: Content-Type restrito
+    // (navigator.sendBeacon envia text/plain por omissão), corpo minúsculo,
+    // rate limit por cliente, cap global de escritas, e só agregados no KV. A
+    // resposta é sempre 204 (aceite ou descartado — indistinguível).
+    if (path === '/api/vitals' && request.method === 'POST') {
+      const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+      if (ctype !== '' && ctype !== 'application/json' && ctype !== 'text/plain') {
+        return json({ error: 'unsupported_media_type' }, request, env, { status: 415 });
+      }
+      const { allowed, retryAfterSec } = await rateLimit(env, request, 'vitals', {
+        windowMs: 60_000,
+        max: 30,
+      });
+      if (!allowed) {
+        return json({ error: 'rate_limited' }, request, env, {
+          status: 429,
+          extra: { 'retry-after': String(retryAfterSec) },
+        });
+      }
+      let text;
+      try {
+        text = await request.text();
+      } catch {
+        return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
+      }
+      if (text.length > VITALS_MAX_BODY) {
+        return json({ error: 'payload_too_large' }, request, env, { status: 413 });
+      }
+      let sample = null;
+      try {
+        sample = normalizeVitals(JSON.parse(text));
+      } catch {
+        sample = null;
+      }
+      if (sample) {
+        ctx.waitUntil(
+          recordVitals(env, sample, Date.now()).catch((err) =>
+            console.error('vitals_write_failed', err?.message ?? String(err)),
+          ),
+        );
+      }
+      return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
+    }
+
     if (request.method !== 'GET') {
       return json({ error: 'method_not_allowed' }, request, env, { status: 405 });
     }
@@ -424,6 +569,31 @@ export default {
           cspStats(await readCspBuckets(env, Date.now())),
         );
         return json(data, request, env, { maxAge: 60 });
+      }
+
+      // Threat Intelligence: dashboards próprios a partir dos buckets
+      // acumulados do honeypot (heatmap, hora-do-dia, top país/ASN/técnica/
+      // path, eventos p/ os Logs) + a repartição de firewall acumulada a 7d.
+      // Tudo agregado, zero-PII. Cache 5 min (aquecida no cron).
+      if (path === '/api/threat-intel') {
+        const data = await cached(env, ctx, 'cache:threatintel', 300, async () => {
+          const now = Date.now();
+          const [buckets, firewall7d] = await Promise.all([
+            readThreatBuckets(env, now),
+            readFirewall7d(env, now),
+          ]);
+          return { ...threatIntel(buckets), firewall7d };
+        });
+        return json(data, request, env, { maxAge: 300 });
+      }
+
+      // Core Web Vitals (RUM): p75 por métrica dos últimos 7 dias, dos
+      // histogramas acumulados pelo beacon. Só agregados.
+      if (path === '/api/vitals') {
+        const data = await cached(env, ctx, 'cache:vitals', 120, async () =>
+          vitalsStats(await readVitalsBuckets(env, Date.now())),
+        );
+        return json(data, request, env, { maxAge: 120 });
       }
 
       // Vigia CT: emissões de certificados para o próprio domínio, dos logs
@@ -511,7 +681,20 @@ export default {
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
         cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
         cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
-        cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env)).catch(() => {}),
+        // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
+        cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env))
+          .then((stats) => snapshotFirewall(env, stats, Date.now()))
+          .catch(() => {}),
+        // Threat Intel é caro de ler (168 buckets horários) — aquece-se aqui
+        // para as visitas caírem sempre em cache.
+        cached(env, ctx, 'cache:threatintel', 300, async () => {
+          const now = Date.now();
+          const [buckets, firewall7d] = await Promise.all([
+            readThreatBuckets(env, now),
+            readFirewall7d(env, now),
+          ]);
+          return { ...threatIntel(buckets), firewall7d };
+        }).catch(() => {}),
       ]),
     );
   },

@@ -83,6 +83,12 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # automática (salt = RATE_SALT + data UTC); esta é a rotação do próprio
 # segredo. Ver src/lib/ratelimit.js.
 
-# --- Cron opcional para aquecer caches (a agregação do honeypot é on-read) ---
-# [triggers]
-# crons = ["*/30 * * * *"]
+# --- Cron para aquecer caches e acumular janelas de 7 dias ---
+# A cada 30 min: aquece ticker/scan/ct/cf-stats/threat-intel (para as visitas
+# caírem sempre em cache) E fotografa a repartição de firewall das últimas 24h
+# num snapshot diário (fw:<dia>) — é assim que se acumula a janela de 7 dias a
+# partir do dataset cru do Free, que só retém 24h (ver src/lib/cf-analytics.js
+# e a Threat Intelligence). Correr de 30 em 30 min só mantém o snapshot do dia
+# atualizado; o que acumula é um por dia. Ver scheduled() em src/index.js.
+[triggers]
+crons = ["*/30 * * * *"]

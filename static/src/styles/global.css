@@ -792,6 +792,34 @@ a.card:hover {
 .bar-fill.warn { background: var(--accent-2); }
 .bar-fill.down { background: var(--danger); }
 
+/* Heatmap dia × hora e faixa de horas da Threat Intelligence. Vivem no CSS
+   GLOBAL (não scoped) de propósito: as células/barras são criadas por script
+   (createElement) e por isso não recebem o atributo de scope do Astro — um
+   seletor scoped nunca lhes bateria (mesma razão das .bar-* acima). */
+.heatmap { display: flex; flex-direction: column; gap: 3px; overflow-x: auto; }
+.heatmap-row {
+  display: grid;
+  grid-template-columns: 3rem repeat(24, minmax(9px, 1fr));
+  gap: 3px;
+  align-items: center;
+}
+.heat-label { font-size: 0.6rem; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+.heat-cell { height: 15px; min-width: 9px; border-radius: 2px; background: var(--bg-raise-2); }
+.hours-strip {
+  display: grid;
+  grid-template-columns: repeat(24, 1fr);
+  gap: 2px;
+  align-items: end;
+  height: 3.4rem;
+}
+.hour-bar { background: var(--accent-2); border-radius: 2px 2px 0 0; min-height: 2px; align-self: end; }
+.heatmap-legend { display: flex; align-items: center; gap: 0.35rem; font-size: 0.66rem; color: var(--faint); margin-top: 0.6rem; }
+.heatmap-legend .swatch { width: 13px; height: 13px; border-radius: 2px; }
+.heatmap-legend .i1 { background: rgba(61, 220, 132, 0.25); }
+.heatmap-legend .i2 { background: rgba(61, 220, 132, 0.5); }
+.heatmap-legend .i3 { background: rgba(61, 220, 132, 0.75); }
+.heatmap-legend .i4 { background: rgba(61, 220, 132, 1); }
+
 /* Lista chave→valor do painel de estado (versão, commit, branch…). */
 .kv-list {
   display: grid;

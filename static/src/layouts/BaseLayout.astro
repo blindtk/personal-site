@@ -213,5 +213,9 @@ const personSchema = {
     <!-- Ficheiro estático em public/js/ (não hoisted pelo Astro): fica
          fora do bundler para nunca ser inlinado no HTML — ver astro.config.mjs. -->
     <script src="/js/nav.js" defer></script>
+    <!-- Beacon de Core Web Vitals (first-party, agregado, sem PII): mede a
+         performance real e envia UMA vez para /api/vitals — alimenta a página
+         Performance. Ver public/js/vitals.js. -->
+    <script src="/js/vitals.js" defer></script>
   </body>
 </html>

@@ -11,6 +11,21 @@ const { lang } = Astro.props;
 const dict = t(lang);
 const s = dict.site;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const metrics = [
+  { key: 'lcp', label: 'LCP', desc: s.metricLcpDesc },
+  { key: 'inp', label: 'INP', desc: s.metricInpDesc },
+  { key: 'cls', label: 'CLS', desc: s.metricClsDesc },
+  { key: 'ttfb', label: 'TTFB', desc: s.metricTtfbDesc },
+];
+
+const jsStrings = {
+  good: s.ratingGood,
+  needs: s.ratingNeeds,
+  poor: s.ratingPoor,
+  samples: s.perfSamples,
+  noData: s.perfNoData,
+};
 ---
 
 <BaseLayout lang={lang} title={s.perfMetaTitle} altUrl={routes.performance[other]} active="performance">
@@ -19,8 +34,28 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
     <p class="intro">{s.perfIntro}</p>
   </div>
 
-  <div id="perf-root" data-api={API_BASE} data-lang={lang}>
-    <section aria-labelledby="h-perf-live">
+  <div id="perf-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+    <section aria-labelledby="h-cwv">
+      <div class="section-title"><h2 id="h-cwv">{s.perfRumTitle}</h2></div>
+      <p class="hp-fallback" id="cwv-fallback">{s.perfNoData}</p>
+      <div id="cwv-body" hidden>
+        <div class="widget-grid">
+          {metrics.map((m) => (
+            <Widget title={m.label} id={`cwv-w-${m.key}`}>
+              <div class="cwv">
+                <span class="cwv-val" id={`cwv-${m.key}`}>—</span>
+                <span class="cwv-rating" id={`cwv-${m.key}-r`}></span>
+              </div>
+              <p class="cwv-desc">{m.desc}</p>
+            </Widget>
+          ))}
+        </div>
+        <p class="note" id="cwv-samples"></p>
+        <p class="note">{s.perfCwvBody}</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-perf-live" class="an-mt">
       <div class="section-title"><h2 id="h-perf-live">{s.perfAvailTitle}</h2></div>
       <p class="hp-fallback" id="perf-fallback">{s.unavailable}</p>
       <div class="metric-grid" id="perf-cards" hidden>
@@ -28,14 +63,7 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
         <div class="stat blue"><div class="n" id="perf-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
         <div class="stat"><div class="n" id="perf-requests">—</div><div class="l">{s.cardRequests}</div></div>
       </div>
-    </section>
-
-    <section aria-labelledby="h-cwv" class="an-mt">
-      <div class="section-title"><h2 id="h-cwv">{s.perfCwvTitle}</h2></div>
-      <Widget title={s.perfCwvTitle} tone="muted">
-        <p class="note">{s.perfCwvBody}</p>
-        <p class="note">→ <a href={routes.evidence[lang]}>{s.perfProvasLink}</a></p>
-      </Widget>
+      <p class="note">→ <a href={routes.evidence[lang]}>{s.perfProvasLink}</a></p>
     </section>
   </div>
 
@@ -48,12 +76,52 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
   const root = document.getElementById('perf-root')!;
   const base = root.dataset.api ?? '';
   const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
   const setText = (id: string, value: string) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
 
-  async function load() {
+  const RATING = { good: S.good, 'needs-improvement': S.needs, poor: S.poor } as Record<string, string>;
+  const TONE = { good: 'ok', 'needs-improvement': 'warn', poor: 'down' } as Record<string, string>;
+
+  // ms → "1.8 s" acima de 1 s, senão "820 ms"; CLS é adimensional.
+  function fmtMetric(key: string, value: number): string {
+    if (key === 'cls') return value.toFixed(3);
+    if (value >= 1000) return `${(value / 1000).toFixed(2)} s`;
+    return `${Math.round(value)} ms`;
+  }
+
+  async function loadVitals() {
+    try {
+      const res = await fetch(`${base}/api/vitals`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const m = data.metrics ?? {};
+      let any = false;
+      for (const key of ['lcp', 'inp', 'cls', 'ttfb']) {
+        const metric = m[key];
+        if (!metric) continue;
+        any = true;
+        setText(`cwv-${key}`, fmtMetric(key, Number(metric.p75)) + (metric.overflow ? '+' : ''));
+        const r = document.getElementById(`cwv-${key}-r`);
+        if (r) {
+          r.textContent = RATING[metric.rating] ?? metric.rating;
+          r.className = `cwv-rating ${TONE[metric.rating] ?? ''}`;
+        }
+      }
+      if (any) {
+        setText('cwv-samples', `${formatNumber(data.samples ?? 0, locale)} ${S.samples} · p75`);
+        document.getElementById('cwv-fallback')!.hidden = true;
+        document.getElementById('cwv-body')!.hidden = false;
+      }
+    } catch {
+      // Sem dados/Worker: fica o fallback (perfNoData) já pintado.
+    }
+  }
+
+  async function loadCache() {
     try {
       const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
       const ctype = res.headers.get('content-type') ?? '';
@@ -69,9 +137,31 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
     }
   }
 
-  load();
+  loadVitals();
+  loadCache();
 </script>
 
 <style>
-  .an-mt { margin-top: 1.6rem; }
+  .an-mt { margin-top: 1.8rem; }
+  .cwv { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+  .cwv-val {
+    font-family: var(--mono);
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.1;
+  }
+  .cwv-rating {
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+  }
+  .cwv-rating.ok { color: var(--accent); border-color: var(--accent); }
+  .cwv-rating.warn { color: var(--accent-2); border-color: var(--accent-2); }
+  .cwv-rating.down { color: var(--danger); border-color: var(--danger); }
+  .cwv-desc { font-size: 0.72rem; color: var(--muted); margin: 0.4rem 0 0; }
 </style>

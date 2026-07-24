@@ -11,6 +11,36 @@
 
 ## Decisões registadas
 
+- **2026-07 — Secção "Este Site" (observabilidade) — fases 2/3** (aprovado pelo
+  dono do repo, na sequência do pedido "Este Site"): três adições ao Worker
+  para alimentar a Threat Intelligence, os Logs e a Performance da nova secção.
+  Todas **zero-PII** e **best-effort** (nunca derrubam o núcleo):
+    1. **Threat Intelligence do honeypot** (`/api/threat-intel`, cache 5 min,
+       aquecida no cron). Os buckets do honeypot passam a acumular também
+       **byAsn** e **byTech** (a par de country/path — ver `aggregate.js`), e os
+       buckets horários passam a reter **8 dias** (era 2) para dar um **heatmap
+       dia×hora** e "ataques por hora do dia". Agrega localmente: top país/ASN/
+       técnica/path, hora de pico. **Atacantes agrupados por ASN, NUNCA por IP**
+       — os eventos do honeypot nunca tiveram IP. O `recent` sobe de 30→200
+       eventos para a **tabela de Logs** (pesquisa/paginação no cliente).
+    2. **Acumulação de firewall 7d** (a "fase 2" já antevista abaixo): o cron
+       fotografa a repartição de firewall das últimas 24h num snapshot diário
+       (`fw:<dia>`, TTL 8d) e o `/api/threat-intel` funde os 7 dias. É assim que
+       se estende a janela de 24h (limite do dataset cru no Free) para 7 dias,
+       só com contadores por ação/origem. **Cron ativado** (`*/30 * * * *`) —
+       era opcional; agora é preciso para acumular.
+    3. **RUM first-party de Core Web Vitals** (`POST/GET /api/vitals`,
+       `lib/vitals.js` + `static/public/js/vitals.js`). O browser mede LCP/CLS/
+       INP/TTFB com `PerformanceObserver` e envia **uma vez** via `sendBeacon`;
+       o Worker acumula **histogramas diários** e devolve o **p75** (o percentil
+       da Google) por métrica. **Só agregados**: nunca a amostra individual,
+       nem IP, nem UA, nem URL — mesma defesa em camadas do recetor CSP
+       (Content-Type restrito, corpo ≤2KB, rate limit, cap de escritas). Porquê
+       first-party e não o RUM da Cloudflare: o beacon deles é **script de
+       terceiros**, incompatível com a CSP estrita e com o "sem trackers" do
+       site. **Para desligar**: remover `<script src="/js/vitals.js">` do
+       `BaseLayout.astro` (o resto do site não depende dele).
+
 - **2026-07 — Detalhe por código HTTP no painel "Estado da Cloudflare"**
   (aprovado pelo dono do repo): o card "ameaças bloqueadas (WAF/edge)" mostrava
   só um contador cego (`threats` do `httpRequests1dGroups`), sem dizer *o que* a
