@@ -1,6 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Tabs from '../site/Tabs.astro';
 import Widget from '../site/Widget.astro';
+import Skeleton from '../site/Skeleton.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -11,6 +13,11 @@ const { lang } = Astro.props;
 const dict = t(lang);
 const s = dict.site;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const tabs = [
+  { id: 'traffic', label: s.perfTabTraffic },
+  { id: 'cwv', label: s.perfTabCwv },
+];
 
 const metrics = [
   { key: 'lcp', label: 'LCP', desc: s.metricLcpDesc },
@@ -25,6 +32,9 @@ const jsStrings = {
   poor: s.ratingPoor,
   samples: s.perfSamples,
   noData: s.perfNoData,
+  tlPeak: s.tlPeak,
+  tlLast: s.tlLast,
+  tiNoneYet: s.tiNoneYet,
 };
 ---
 
@@ -35,43 +45,61 @@ const jsStrings = {
   </div>
 
   <div id="perf-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
-    <section aria-labelledby="h-cwv">
-      <div class="section-title"><h2 id="h-cwv">{s.perfRumTitle}</h2></div>
-      <p class="hp-fallback" id="cwv-fallback">{s.perfNoData}</p>
-      <div id="cwv-body" hidden>
-        <div class="widget-grid">
-          {metrics.map((m) => (
-            <Widget title={m.label} id={`cwv-w-${m.key}`}>
-              <div class="cwv">
-                <span class="cwv-val" id={`cwv-${m.key}`}>—</span>
-                <span class="cwv-rating" id={`cwv-${m.key}-r`}></span>
-              </div>
-              <p class="cwv-desc">{m.desc}</p>
+    <Tabs tabs={tabs} label={s.perfTitle}>
+      <!-- ---------- Tráfego ---------- -->
+      <div slot="traffic">
+        <p class="hp-fallback" id="perf-fallback">{s.unavailable}</p>
+        <div id="perf-body" hidden>
+          <div class="metric-grid">
+            <div class="stat"><div class="n" id="perf-requests">—</div><div class="l">{s.cardRequests}</div></div>
+            <div class="stat blue"><div class="n" id="perf-visitors">—</div><div class="l">{s.cardVisitors}</div></div>
+            <div class="stat blue"><div class="n" id="perf-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
+            <div class="stat blue"><div class="n" id="perf-cache">—</div><div class="l">{s.cardCacheRatio}</div></div>
+          </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.tlRequests} meta={s.windowNote} class="wide-widget">
+              <div class="spark" id="perf-tl-requests"><Skeleton block /></div>
             </Widget>
-          ))}
+          </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.wWorker} tone="ok" meta={s.windowNote}>
+              <dl class="kv-list">
+                <dt>{s.cardWorkerReq}</dt><dd id="perf-w-req">—</dd>
+                <dt>{s.cardWorkerErr}</dt><dd id="perf-w-err">—</dd>
+              </dl>
+            </Widget>
+          </div>
+          <p class="note">→ <a href={routes.evidence[lang]}>{s.perfProvasLink}</a></p>
         </div>
-        <p class="note" id="cwv-samples"></p>
-        <p class="note">{s.perfCwvBody}</p>
       </div>
-    </section>
 
-    <section aria-labelledby="h-perf-live" class="an-mt">
-      <div class="section-title"><h2 id="h-perf-live">{s.perfAvailTitle}</h2></div>
-      <p class="hp-fallback" id="perf-fallback">{s.unavailable}</p>
-      <div class="metric-grid" id="perf-cards" hidden>
-        <div class="stat"><div class="n" id="perf-cache">—</div><div class="l">{s.cardCacheRatio}</div></div>
-        <div class="stat blue"><div class="n" id="perf-bandwidth">—</div><div class="l">{s.cardBandwidth}</div></div>
-        <div class="stat"><div class="n" id="perf-requests">—</div><div class="l">{s.cardRequests}</div></div>
+      <!-- ---------- Core Web Vitals ---------- -->
+      <div slot="cwv">
+        <p class="hp-fallback" id="cwv-fallback">{s.perfNoData}</p>
+        <div id="cwv-body" hidden>
+          <div class="widget-grid">
+            {metrics.map((m) => (
+              <Widget title={m.label} id={`cwv-w-${m.key}`}>
+                <div class="cwv">
+                  <span class="cwv-val" id={`cwv-${m.key}`}>—</span>
+                  <span class="cwv-rating" id={`cwv-${m.key}-r`}></span>
+                </div>
+                <p class="cwv-desc">{m.desc}</p>
+              </Widget>
+            ))}
+          </div>
+          <p class="note" id="cwv-samples"></p>
+          <p class="note">{s.perfCwvBody}</p>
+        </div>
       </div>
-      <p class="note">→ <a href={routes.evidence[lang]}>{s.perfProvasLink}</a></p>
-    </section>
+    </Tabs>
   </div>
 
   <SiteLayers lang={lang} current="performance" />
 </BaseLayout>
 
 <script>
-  import { formatBytes, formatPercent, formatNumber } from '../../scripts/observability.js';
+  import { formatBytes, formatPercent, formatNumber, sparkPath } from '../../scripts/observability.js';
 
   const root = document.getElementById('perf-root')!;
   const base = root.dataset.api ?? '';
@@ -121,28 +149,76 @@ const jsStrings = {
     }
   }
 
-  async function loadCache() {
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  function renderSpark(id: string, series: any[], valueKey: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    const values = series.map((d) => Number(d?.[valueKey]) || 0);
+    if (values.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = S.tiNoneYet;
+      host.append(el);
+      return;
+    }
+    const { line, area, max } = sparkPath(values);
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'spark-svg');
+    svg.setAttribute('viewBox', '0 0 100 30');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('role', 'img');
+    const areaEl = document.createElementNS(SVG_NS, 'path');
+    areaEl.setAttribute('class', 'spark-area');
+    areaEl.setAttribute('d', area);
+    const lineEl = document.createElementNS(SVG_NS, 'path');
+    lineEl.setAttribute('class', 'spark-line');
+    lineEl.setAttribute('d', line);
+    lineEl.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.append(areaEl, lineEl);
+    host.append(svg);
+    const cap = document.createElement('div');
+    cap.className = 'spark-cap';
+    const last = document.createElement('span');
+    last.textContent = `${S.tlLast}: ${formatNumber(values[values.length - 1], locale)}`;
+    const peak = document.createElement('span');
+    peak.textContent = `${S.tlPeak}: ${formatNumber(max, locale)}`;
+    cap.append(last, peak);
+    host.append(cap);
+  }
+
+  async function loadTraffic() {
     try {
       const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
       const ctype = res.headers.get('content-type') ?? '';
       if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
-      const zone = (await res.json()).zone ?? {};
-      setText('perf-cache', formatPercent(zone.cacheRatio ?? 0));
-      setText('perf-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      const data = await res.json();
+      const zone = data.zone ?? {};
+      const worker = data.worker ?? {};
+
       setText('perf-requests', formatNumber(zone.requests ?? 0, locale));
+      setText('perf-visitors', formatNumber(zone.visitors ?? 0, locale));
+      setText('perf-bandwidth', formatBytes(zone.bytes ?? 0, locale));
+      setText('perf-cache', formatPercent(zone.cacheRatio ?? 0));
+      setText('perf-w-req', formatNumber(worker.requests ?? 0, locale));
+      setText('perf-w-err', formatPercent(worker.errorRatio ?? 0));
+
+      renderSpark('perf-tl-requests', Array.isArray(zone.series) ? zone.series : [], 'requests');
+
       document.getElementById('perf-fallback')!.hidden = true;
-      document.getElementById('perf-cards')!.hidden = false;
+      document.getElementById('perf-body')!.hidden = false;
     } catch {
       // Sem Worker: fica o fallback já pintado (evita CLS).
     }
   }
 
   loadVitals();
-  loadCache();
+  loadTraffic();
 </script>
 
 <style>
-  .an-mt { margin-top: 1.8rem; }
+  .an-mt { margin-top: 0.9rem; }
+  .wide-widget { grid-column: 1 / -1; }
   .cwv { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
   .cwv-val {
     font-family: var(--mono);

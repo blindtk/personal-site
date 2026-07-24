@@ -50,6 +50,18 @@ const jsStrings = {
     <p class="intro">{s.overviewIntro}</p>
   </div>
 
+  <section aria-labelledby="h-map">
+    <div class="section-title"><h2 id="h-map">{s.hubTitle}</h2></div>
+    <p class="intro">{dict.layers.intro}</p>
+    <ul class="sec-links mono">
+      <li><a href={routes.security[lang]}>{dict.layers.security}</a></li>
+      <li><a href={routes.evidence[lang]}>{dict.layers.evidence}</a></li>
+      <li><a href={routes.perimeter[lang]}>{dict.layers.perimeter}</a></li>
+      <li><a href={routes.detections[lang]}>{dict.layers.detections}</a></li>
+      <li><a href={routes.performance[lang]}>{dict.layers.performance}</a></li>
+    </ul>
+  </section>
+
   <section aria-labelledby="h-arch">
     <div class="section-title"><h2 id="h-arch">{s.archTitle}</h2></div>
     <p class="intro">{s.archBody}</p>
@@ -147,6 +159,21 @@ const jsStrings = {
 </script>
 
 <style>
+  .sec-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .sec-links a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .sec-links a:hover {
+    text-decoration: underline;
+  }
   .overview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));

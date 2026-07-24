@@ -32,8 +32,10 @@ const scanners = [
       <h2 id="h-threat">{sec.threatTitle}</h2>
     </div>
     <p>{sec.threatBody}</p>
+    <p class="intro">{sec.perimeterBody}</p>
     <p class="intro">{sec.projectBody}</p>
     <ul class="sec-links mono">
+      <li><a href={routes.perimeter[lang]}>{sec.perimeterCta}</a></li>
       <li><a href={projectUrl(lang, 'este-site')}>{sec.projectCta}</a></li>
     </ul>
   </section>
