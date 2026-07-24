@@ -116,7 +116,7 @@ const personSchema = {
     <a class="skip-link" href="#main">{dict.a11y.skipToContent}</a>
 
     <nav class:list={['site-nav', { 'nav-solid': wide }]}>
-      <div class="container inner">
+      <div class:list={['container', 'inner', { wide }]}>
         <a class="brand" href={routes.home[lang]}>
           <span class="live-dot" aria-hidden="true"></span>
           <span class="cmd">{SITE.handle}</span>
@@ -195,7 +195,7 @@ const personSchema = {
     </main>
 
     <footer class="site-footer">
-      <div class="container inner">
+      <div class:list={['container', 'inner', { wide }]}>
         <span>
           © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
