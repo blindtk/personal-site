@@ -791,7 +791,7 @@ a.card:hover {
   gap: 0.5rem;
   margin: 0;
 }
-.bar-row { display: grid; gap: 0.25rem; }
+.bar-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
 .bar-head {
   display: flex;
   justify-content: space-between;
