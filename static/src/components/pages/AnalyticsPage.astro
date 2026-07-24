@@ -34,14 +34,16 @@ const jsStrings = {
   logsPageOf: s.logsPageOf,
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
+  updatedNow: s.updatedNow,
+  updatedTmpl: s.updatedTmpl,
 };
 ---
 
-<BaseLayout lang={lang} title={s.analyticsMetaTitle} altUrl={routes.analytics[other]} active="analytics">
+<BaseLayout lang={lang} title={s.analyticsMetaTitle} altUrl={routes.analytics[other]} active="analytics" wide>
   <div class="page-head">
     <h1>{s.analyticsTitle}</h1>
     <p class="intro">{s.analyticsIntro}</p>
-    <p class="an-refresh mono"><span class="live-dot" aria-hidden="true"></span> {s.autoRefresh}</p>
+    <p class="an-refresh mono"><span class="live-dot" aria-hidden="true"></span> {s.autoRefresh} <span id="an-updated" class="an-updated"></span></p>
   </div>
 
   <div
@@ -112,6 +114,12 @@ const jsStrings = {
             <Widget title={s.wTopStatus} meta={s.windowNote}>
               <div id="an-status2"><Skeleton rows={4} /></div>
             </Widget>
+            <Widget title={s.wWorker} tone="ok" meta={s.windowNote}>
+              <dl class="kv-list">
+                <dt>{s.cardWorkerReq}</dt><dd id="an-w-req">—</dd>
+                <dt>{s.cardWorkerErr}</dt><dd id="an-w-err">—</dd>
+              </dl>
+            </Widget>
           </div>
           <p class="note">{s.planNote}</p>
         </div>
@@ -130,6 +138,9 @@ const jsStrings = {
             <div class="widget-grid an-mt">
               <Widget title={s.tiHeatmap} tone="warn" class="wide-widget">
                 <div class="heatmap" id="ti-heatmap"></div>
+                <div class="heatmap-axis mono" aria-hidden="true">
+                  <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
+                </div>
                 <div class="heatmap-legend">
                   <span>{s.tiHeatLess}</span>
                   <span class="swatch i1"></span><span class="swatch i2"></span>
@@ -207,6 +218,14 @@ const jsStrings = {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
+
+  // "atualizado há Xs" — relógio relativo desde a última carga bem-sucedida.
+  let lastUpdate = 0;
+  function renderUpdated() {
+    if (!lastUpdate) return;
+    const secs = Math.max(0, Math.round((Date.now() - lastUpdate) / 1000));
+    setText('an-updated', secs < 5 ? S.updatedNow : S.updatedTmpl.replace('{n}', String(secs)));
+  }
 
   // Barras horizontais via createElement + textContent (Trusted Types safe:
   // zero innerHTML). A largura é CSSOM (element.style), não estilo inline em
@@ -325,6 +344,9 @@ const jsStrings = {
       setText('an-t-requests', formatNumber(requests, locale));
       setText('an-t-bandwidth', formatBytes(zone.bytes ?? 0, locale));
       setText('an-t-cache', formatPercent(zone.cacheRatio ?? 0));
+      const worker = data.worker ?? {};
+      setText('an-w-req', formatNumber(worker.requests ?? 0, locale));
+      setText('an-w-err', formatPercent(worker.errorRatio ?? 0));
 
       renderBars('an-countries', bars(zone.topCountries ?? [], 'country', 'threats', 'warn'), S.countriesEmpty);
       const statusRows = bars(zone.blockedByStatus ?? [], 'key', 'count');
@@ -355,6 +377,8 @@ const jsStrings = {
 
       document.getElementById('an-fallback')!.hidden = true;
       document.getElementById('an-body')!.hidden = false;
+      lastUpdate = Date.now();
+      renderUpdated();
     } catch {
       // Sem Worker: o HTML já nasce no fallback — nada a mudar (evita CLS).
     }
@@ -540,6 +564,9 @@ const jsStrings = {
     loadCfStats();
     if (tiLoaded) loadThreatIntel();
   }, 60_000);
+
+  // Relógio "atualizado há Xs" (1 s), independente do fetch.
+  setInterval(renderUpdated, 1000);
 </script>
 
 <style>
@@ -553,6 +580,9 @@ const jsStrings = {
     color: var(--faint);
     margin: 0.5rem 0 0;
   }
+  .an-updated { color: var(--muted); }
+  .an-updated::before { content: '· '; color: var(--faint); }
+  .an-updated:empty { display: none; }
 
   /* Logs: toolbar + paginação */
   .logs-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.7rem; }

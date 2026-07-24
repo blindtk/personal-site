@@ -63,6 +63,13 @@ const active = initial && tabs.some((t) => t.id === initial) ? initial : tabs[0]
     border-bottom: 1px solid var(--border);
     margin-bottom: 1.1rem;
     scrollbar-width: thin;
+    /* Fica visível ao rolar páginas longas (Analytics). Cola por baixo da nav
+       fixa (--nav-h) com fundo opaco para o conteúdo não transparecer. */
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 30;
+    background: var(--bg);
+    padding-top: 0.4rem;
   }
   .tab {
     appearance: none;

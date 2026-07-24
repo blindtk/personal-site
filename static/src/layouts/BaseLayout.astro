@@ -13,9 +13,11 @@ interface Props {
   altUrl?: string;
   /** Chave da rota ativa, para destacar na nav. */
   active?: RouteKey;
+  /** Alarga o container (páginas-dashboard: Analytics, Performance). */
+  wide?: boolean;
 }
 
-const { lang, title, description, altUrl, active } = Astro.props;
+const { lang, title, description, altUrl, active, wide } = Astro.props;
 const dict = t(lang);
 const otherLang: Lang = lang === 'pt' ? 'en' : 'pt';
 const desc = description ?? SITE.description[lang];
@@ -113,8 +115,8 @@ const personSchema = {
   <body>
     <a class="skip-link" href="#main">{dict.a11y.skipToContent}</a>
 
-    <nav class="site-nav">
-      <div class="container inner">
+    <nav class:list={['site-nav', { 'nav-solid': wide }]}>
+      <div class:list={['container', 'inner', { wide }]}>
         <a class="brand" href={routes.home[lang]}>
           <span class="live-dot" aria-hidden="true"></span>
           <span class="cmd">{SITE.handle}</span>
@@ -188,12 +190,12 @@ const personSchema = {
       </div>
     </nav>
 
-    <main id="main" class="container">
+    <main id="main" class:list={['container', { wide }]}>
       <slot />
     </main>
 
     <footer class="site-footer">
-      <div class="container inner">
+      <div class:list={['container', 'inner', { wide }]}>
         <span>
           © {new Date().getFullYear()} {SITE.name} · {SITE.role[lang]} ·{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}

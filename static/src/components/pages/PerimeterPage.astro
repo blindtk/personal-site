@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import HostMap from '../HostMap.astro';
-import CfAnalytics from '../CfAnalytics.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -102,14 +101,12 @@ const jsStrings = {
     </section>
 
     <HostMap lang={lang} />
-  </section>
 
-  <section aria-labelledby="h-cf">
-    <div class="section-title">
-      <h2 id="h-cf">{p.cfTitle}</h2>
-    </div>
-    <p class="intro">{p.cfIntro}</p>
-    <CfAnalytics lang={lang} />
+    {/* As métricas da zona Cloudflare (pedidos, cache, ameaças, firewall)
+        deixaram de viver aqui — passaram para a secção Analytics, que as
+        cobre com dashboards próprios. O Perímetro fica com o que é só dele:
+        o honeypot ao vivo e o mapa de tráfego hostil. */}
+    <p class="note">📊 {p.cfMoved} <a href={routes.analytics[lang]}>{p.cfMovedLink}</a>.</p>
   </section>
 
   <SiteLayers lang={lang} current="perimeter" />
