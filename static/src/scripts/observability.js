@@ -84,6 +84,29 @@ export function withBars(rows, valueKey = 'value') {
 }
 
 /**
+ * Caminhos SVG (linha + área) de um sparkline para uma série de valores, num
+ * viewBox fixo (por omissão 100×30). Puro e determinístico — o desenho é só
+ * SVG, sem biblioteca de gráficos (a CSP proíbe scripts externos). O chamador
+ * usa a linha com vector-effect: non-scaling-stroke para o traço não distorcer
+ * quando o viewBox estica na largura. Série vazia → caminhos vazios.
+ */
+export function sparkPath(values, { width = 100, height = 30, pad = 2 } = {}) {
+  const arr = (Array.isArray(values) ? values : []).map((v) => Number(v) || 0);
+  if (arr.length === 0) return { line: '', area: '', max: 0 };
+  const max = Math.max(...arr, 1);
+  const n = arr.length;
+  const innerW = width - pad * 2;
+  const innerH = height - pad * 2;
+  const x = (i) => pad + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW);
+  const y = (v) => pad + innerH - (v / max) * innerH;
+  const pts = arr.map((v, i) => [x(i), y(v)]);
+  const line = pts.map(([px, py], i) => `${i === 0 ? 'M' : 'L'}${px.toFixed(2)} ${py.toFixed(2)}`).join(' ');
+  const base = height - pad;
+  const area = `${line} L${x(n - 1).toFixed(2)} ${base.toFixed(2)} L${x(0).toFixed(2)} ${base.toFixed(2)} Z`;
+  return { line, area, max };
+}
+
+/**
  * Taxa de ameaça: fração de pedidos classificados como ameaça. Defensiva a
  * zero/negativos/NaN — devolve sempre um número em [0,1].
  */

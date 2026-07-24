@@ -156,6 +156,31 @@ export function threatIntel({ hourlySeries = [], days = [], recent = [] }, { lim
     { hour: 0, count: -1 },
   );
 
+  // Atacantes novos vs. recorrentes — por REDE (ASN), nunca por IP. Só com os
+  // buckets diários já existentes: para cada ASN conta-se em quantos dos 7 dias
+  // apareceu (days[0] = hoje). Recorrente = ≥2 dias; novo = só no dia mais
+  // recente e em nenhum anterior (primeira vez visto na janela).
+  const daysArr = Array.isArray(days) ? days : [];
+  const asnDayCount = new Map(); // ASN -> nº de dias distintos
+  const asnTotal = new Map(); // ASN -> total na janela
+  for (const bucket of daysArr) {
+    for (const [asn, count] of Object.entries(bucket?.byAsn ?? {})) {
+      asnDayCount.set(asn, (asnDayCount.get(asn) ?? 0) + 1);
+      asnTotal.set(asn, (asnTotal.get(asn) ?? 0) + count);
+    }
+  }
+  const todayAsns = daysArr[0]?.byAsn ?? {};
+  const recurringAttackers = [...asnDayCount.entries()]
+    .filter(([, d]) => d >= 2)
+    .map(([key, d]) => ({ key, count: asnTotal.get(key) ?? 0, days: d }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+  const newAttackers = Object.entries(todayAsns)
+    .filter(([asn]) => (asnDayCount.get(asn) ?? 0) === 1)
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+
   return {
     totals: {
       events7d: week.total,
@@ -167,6 +192,8 @@ export function threatIntel({ hourlySeries = [], days = [], recent = [] }, { lim
     topAsns: topN(week.byAsn, limit),
     topTechniques: topN(week.byTech, limit),
     topPaths: topN(week.byPath, limit),
+    recurringAttackers,
+    newAttackers,
     byHourOfDay,
     peakHour: peakHour.count > 0 ? peakHour : null,
     heatmap,

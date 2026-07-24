@@ -987,8 +987,9 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
   });
   const stats = parseCfStats(raw, { now: 1_753_200_000_000, windowDays: 7 });
   assert.deepEqual(stats.zone, {
-    requests: 300, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
-    topCountries: [], blockedByStatus: [], firewallByAction: [], firewallBySource: [],
+    requests: 300, visitors: 0, cachedRequests: 210, cacheRatio: 210 / 300, bytes: 3_000_000, threats: 4,
+    topCountries: [], riskByCountry: [], blockedByStatus: [], series: [],
+    firewallByAction: [], firewallBySource: [],
   });
   assert.deepEqual(stats.worker, { requests: 80, errors: 2, errorRatio: 2 / 80 });
   assert.equal(stats.windowDays, 7);
@@ -997,14 +998,68 @@ test('parseCfStats: soma vários dias e calcula os rácios', () => {
 
 test('parseCfStats: shape inesperado ou vazio degrada para zeros, nunca lança', () => {
   assert.deepEqual(parseCfStats({}).zone, {
-    requests: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
-    topCountries: [], blockedByStatus: [], firewallByAction: [], firewallBySource: [],
+    requests: 0, visitors: 0, cachedRequests: 0, cacheRatio: 0, bytes: 0, threats: 0,
+    topCountries: [], riskByCountry: [], blockedByStatus: [], series: [],
+    firewallByAction: [], firewallBySource: [],
   });
   assert.deepEqual(parseCfStats(null).worker, { requests: 0, errors: 0, errorRatio: 0 });
   assert.deepEqual(parseCfStats({ data: { viewer: {} } }).zone.requests, 0);
   // campo `sum` em falta numa linha não rebenta a soma das outras
   const partial = graphqlFixture({ zoneRows: [{ sum: { requests: 10 } }, {}] });
   assert.equal(parseCfStats(partial).zone.requests, 10);
+});
+
+test('parseCfStats: série por dia, visitantes e risk score por país', () => {
+  const raw = graphqlFixture({
+    zoneRows: [
+      {
+        dimensions: { date: '2026-07-21' },
+        uniq: { uniques: 40 },
+        sum: {
+          requests: 1000, cachedRequests: 700, bytes: 5_000_000, threats: 10,
+          countryMap: [
+            { clientCountryName: 'PT', requests: 800, threats: 1 },
+            { clientCountryName: 'CN', requests: 200, threats: 90 }, // rácio alto
+          ],
+        },
+      },
+      {
+        dimensions: { date: '2026-07-20' }, // ordem invertida de propósito
+        uniq: { uniques: 35 },
+        sum: {
+          requests: 500, cachedRequests: 300, bytes: 2_000_000, threats: 4,
+          countryMap: [
+            { clientCountryName: 'XX', requests: 999, threats: 5 }, // XX fica de fora
+            { clientCountryName: 'US', requests: 50, threats: 5 }, // < 100 pedidos: fora do risco
+          ],
+        },
+      },
+    ],
+  });
+  const zone = parseCfStats(raw).zone;
+  assert.equal(zone.visitors, 75); // 40 + 35
+  // série ordenada do mais antigo para o mais recente
+  assert.deepEqual(zone.series.map((d) => d.date), ['2026-07-20', '2026-07-21']);
+  assert.equal(zone.series[1].requests, 1000);
+  assert.equal(zone.series[1].visitors, 40);
+  // risk score: CN com 90/200 = 0.45; PT com 1/800 baixo; US e XX excluídos
+  assert.equal(zone.riskByCountry[0].country, 'CN');
+  assert.ok(Math.abs(zone.riskByCountry[0].rate - 0.45) < 1e-9);
+  assert.ok(!zone.riskByCountry.some((r) => r.country === 'US' || r.country === 'XX'));
+});
+
+test('threatIntel: atacantes novos vs recorrentes por ASN', () => {
+  // day[0] = hoje. AS4837 em 3 dias (recorrente); AS9999 só hoje (novo).
+  const mkDay = (asns) => { const b = emptyBucket(); b.byAsn = asns; return b; };
+  const ti = threatIntel({
+    days: [
+      mkDay({ AS4837: 10, AS9999: 4 }), // hoje
+      mkDay({ AS4837: 8 }),
+      mkDay({ AS4837: 6, AS1000: 2 }),
+    ],
+  });
+  assert.deepEqual(ti.recurringAttackers, [{ key: 'AS4837', count: 24, days: 3 }]);
+  assert.deepEqual(ti.newAttackers, [{ key: 'AS9999', count: 4 }]);
 });
 
 test('parseCfStats: topCountries soma ameaças através dos dias, ordena e filtra XX/zero', () => {

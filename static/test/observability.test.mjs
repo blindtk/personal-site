@@ -8,6 +8,7 @@ import {
   groupBy,
   withBars,
   threatRate,
+  sparkPath,
 } from '../src/scripts/observability.js';
 
 test('formatNumber: milhares e não-números', () => {
@@ -71,6 +72,19 @@ test('withBars: escala relativa ao máximo', () => {
     { value: 0, pct: 0 },
   ]);
   assert.deepEqual(withBars([{ value: 0 }]), [{ value: 0, pct: 0 }]);
+});
+
+test('sparkPath: linha/área num viewBox, vazio degrada', () => {
+  assert.deepEqual(sparkPath([]), { line: '', area: '', max: 0 });
+  const sp = sparkPath([0, 10], { width: 100, height: 30, pad: 2 });
+  assert.equal(sp.max, 10);
+  // 2 pontos: x começa no pad (2) e acaba em width-pad (98)
+  assert.ok(sp.line.startsWith('M2.00 28.00')); // valor 0 → fundo (30-2)
+  assert.ok(sp.line.includes('L98.00 2.00')); // valor 10 (=max) → topo (pad)
+  // a área fecha até à base
+  assert.ok(sp.area.endsWith('Z'));
+  // um único ponto centra-se
+  assert.ok(sparkPath([5]).line.startsWith('M50.00'));
 });
 
 test('threatRate: clamp e defesa', () => {
