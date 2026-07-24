@@ -11,14 +11,14 @@ export const SITE = {
   /** Handle mostrado na nav e no rodapé (ex.: "danielmalaco"). */
   handle: 'danielmalaco',
   /** Nome real, usado no "Sobre" e nos metadados. */
-  name: 'Daniel Assis Malaco',
+  name: 'Daniel Malaco',
   role: {
     pt: 'Information Security Engineer',
     en: 'Information Security Engineer',
   },
   description: {
-    pt: 'Site pessoal de Daniel Assis Malaco — Information Security Engineer. Blog, projetos e ferramentas de rede e segurança.',
-    en: 'Personal site of Daniel Assis Malaco — Information Security Engineer. Blog, projects, and networking/security tools.',
+    pt: 'Site pessoal de Daniel Malaco — Information Security Engineer. Blog, projetos e ferramentas de rede e segurança.',
+    en: 'Personal site of Daniel Malaco — Information Security Engineer. Blog, projects, and networking/security tools.',
   },
   /** Contactos e redes. Deixa vazio ('') para esconder. */
   // Recomendação: quando o domínio estiver ativo, cria um alias (ex.:

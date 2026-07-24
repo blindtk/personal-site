@@ -1,7 +1,7 @@
 # Política de segurança
 
 Obrigado por ajudares a manter este projeto seguro. Este repositório contém
-o site pessoal de Daniel Assis Malaco (Astro estático em `static/`) e o
+o site pessoal de Daniel Malaco (Astro estático em `static/`) e o
 Cloudflare Worker das features de segurança (`dynamic/worker/`).
 
 ## O que está coberto
