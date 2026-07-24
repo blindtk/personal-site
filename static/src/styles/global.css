@@ -25,6 +25,13 @@
 
   --radius: 8px;
   --container: 68rem;
+  /* Largura alargada só para as páginas-dashboard (Analytics/Performance):
+     as grelhas de widgets aproveitam o ecrã largo em vez de ficarem presas
+     à largura de leitura de texto. Ver .container.wide. */
+  --container-wide: 88rem;
+  /* Altura da nav fixa (min-height 3.4rem + padding 0.8rem) — usada para
+     compensar o topo dos elementos sticky (ex.: a barra de tabs). */
+  --nav-h: 4.2rem;
 }
 
 * {
@@ -113,6 +120,11 @@ img {
   max-width: var(--container);
   margin: 0 auto;
   padding: 0 1.1rem;
+}
+/* Páginas-dashboard: mais largura em desktop (abaixo de --container-wide o
+   comportamento é idêntico ao normal, por isso não afeta mobile). */
+.container.wide {
+  max-width: var(--container-wide);
 }
 
 .skip-link {
@@ -805,6 +817,14 @@ a.card:hover {
 }
 .heat-label { font-size: 0.6rem; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
 .heat-cell { height: 15px; min-width: 9px; border-radius: 2px; background: var(--bg-raise-2); }
+.heatmap-axis {
+  display: flex;
+  justify-content: space-between;
+  padding-left: 3rem; /* alinha com a coluna de rótulos das linhas */
+  margin-top: 4px;
+  font-size: 0.58rem;
+  color: var(--faint);
+}
 .hours-strip {
   display: grid;
   grid-template-columns: repeat(24, 1fr);

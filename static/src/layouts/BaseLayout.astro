@@ -13,9 +13,11 @@ interface Props {
   altUrl?: string;
   /** Chave da rota ativa, para destacar na nav. */
   active?: RouteKey;
+  /** Alarga o container (páginas-dashboard: Analytics, Performance). */
+  wide?: boolean;
 }
 
-const { lang, title, description, altUrl, active } = Astro.props;
+const { lang, title, description, altUrl, active, wide } = Astro.props;
 const dict = t(lang);
 const otherLang: Lang = lang === 'pt' ? 'en' : 'pt';
 const desc = description ?? SITE.description[lang];
@@ -188,7 +190,7 @@ const personSchema = {
       </div>
     </nav>
 
-    <main id="main" class="container">
+    <main id="main" class:list={['container', { wide }]}>
       <slot />
     </main>
 
