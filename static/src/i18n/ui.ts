@@ -227,12 +227,6 @@ export const ui = {
       reportBody:
         'Encontraste algo? A política de contacto para divulgação responsável está publicada em formato legível por máquinas:',
       securityTxtLabel: 'security.txt (RFC 9116)',
-      // ----- Scans públicos -----
-      verifyTitle: 'Verifica tu mesmo',
-      verifyIntro: 'Não fiques pela minha palavra:',
-      selfScanCta: 'Correr o self-scan deste site →',
-      headersScanLabel: 'Scan em securityheaders.com',
-      observatoryLabel: 'Scan no Mozilla Observatory',
       // ----- Provas -----
       evidenceTitle: 'Transparência verificável',
       evidenceBody:
@@ -1178,12 +1172,6 @@ export const ui = {
       reportBody:
         'Found something? The responsible-disclosure contact policy is published in a machine-readable format:',
       securityTxtLabel: 'security.txt (RFC 9116)',
-      // ----- Public scans -----
-      verifyTitle: 'Check for yourself',
-      verifyIntro: 'Don’t take my word for it:',
-      selfScanCta: 'Run this site\'s self-scan →',
-      headersScanLabel: 'Scan on securityheaders.com',
-      observatoryLabel: 'Scan on Mozilla Observatory',
       // ----- Delivery chain (CI) -----
       ciTitle: 'Delivery chain',
       ciBody:
