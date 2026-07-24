@@ -115,7 +115,7 @@ const personSchema = {
   <body>
     <a class="skip-link" href="#main">{dict.a11y.skipToContent}</a>
 
-    <nav class="site-nav">
+    <nav class:list={['site-nav', { 'nav-solid': wide }]}>
       <div class="container inner">
         <a class="brand" href={routes.home[lang]}>
           <span class="live-dot" aria-hidden="true"></span>

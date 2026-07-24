@@ -29,9 +29,13 @@
      as grelhas de widgets aproveitam o ecrã largo em vez de ficarem presas
      à largura de leitura de texto. Ver .container.wide. */
   --container-wide: 88rem;
-  /* Altura da nav fixa (min-height 3.4rem + padding 0.8rem) — usada para
-     compensar o topo dos elementos sticky (ex.: a barra de tabs). */
-  --nav-h: 4.2rem;
+  /* Altura da nav fixa — usada para compensar o topo dos elementos sticky
+     (ex.: a barra de tabs). É a min-height do .inner (3.4rem, que já inclui o
+     padding por ser border-box) + a border-bottom de 1px ≈ 55px. Fica 0.4rem
+     mais curta de propósito, para a barra sticky encaixar ligeiramente POR
+     BAIXO da nav (z-index maior) e nunca deixar um vão onde o conteúdo
+     transpareça — foi esse o bug (--nav-h a 4.2rem abria ~12px de folga). */
+  --nav-h: 3.4rem;
 }
 
 * {
@@ -166,6 +170,13 @@ img {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
+}
+/* Nas páginas-dashboard (wide) a nav fica opaca: são densas e de alto
+   contraste (heatmap, barras) e, com a barra de tabs colada por baixo, a
+   translucidez deixava o conteúdo fantasmar sob a nav. Nas restantes páginas
+   (prosa) mantém-se o "frosted glass" translúcido. */
+.site-nav.nav-solid {
+  background: var(--bg);
 }
 
 .site-nav .inner {
