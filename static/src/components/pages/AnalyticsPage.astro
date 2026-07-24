@@ -107,6 +107,11 @@ const jsStrings = {
               </dl>
             </Widget>
           </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.wFirewallPaths} tone="warn"><div id="an-fw-paths"><Skeleton rows={4} /></div></Widget>
+            <Widget title={s.wFirewallUserAgents} tone="warn"><div id="an-fw-uas"><Skeleton rows={4} /></div></Widget>
+            <Widget title={s.wFirewallAsns} tone="warn"><div id="an-fw-asns"><Skeleton rows={4} /></div></Widget>
+          </div>
           <p class="note">{s.planNote}</p>
         </div>
 
@@ -343,6 +348,13 @@ const jsStrings = {
       const statusRows = bars(zone.blockedByStatus ?? [], 'key', 'count');
       renderBars('an-status', statusRows, S.statusEmpty);
       renderBars('an-status2', statusRows, S.statusEmpty);
+
+      // Detalhe por URL/user-agent/ASN (firewall, 24h) — vem do dataset CRU
+      // firewallEventsAdaptive (ver planNote): nunca IP, mesmo esse campo
+      // estando disponível na fonte.
+      renderBars('an-fw-paths', bars(zone.firewallByPath ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars('an-fw-uas', bars(zone.firewallByUserAgent ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars('an-fw-asns', bars(zone.firewallByAsn ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
 
       const series = Array.isArray(zone.series) ? zone.series : [];
       renderSpark('an-tl-requests', series, 'requests', '');

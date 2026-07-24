@@ -118,7 +118,15 @@ dash.cloudflare.com → Meu perfil → Tokens de API, com os scopes:
   Intel do Analytics e o card "Managed challenges" no Overview. Sem estes
   três scopes, o pedido falha em silêncio (é *best-effort*, nunca derruba o
   núcleo) e esses painéis ficam presos a zero — sem erro visível, porque é
-  exatamente esse o comportamento pretendido de degradação graciosa.
+  exatamente esse o comportamento pretendido de degradação graciosa. Os
+  mesmos três scopes alimentam também um **segundo pedido separado**
+  (`CF_FIREWALL_DETAIL_QUERY`/`firewallDetailBreakdown`, mesmo dataset cru,
+  campos `clientRequestPath`/`userAgent`/`clientAsn`) que dá as tabelas
+  "URLs mais visadas", "User-agents mais vistos" e "Redes mais vistas" na
+  tab Tráfego — sem acumulação a 7 dias (fica a 24h). Pedido à parte de
+  propósito: uma deriva de schema aqui nunca deve apagar as tabelas de
+  ação/origem/país que já funcionam. `clientIP` está disponível neste mesmo
+  dataset mas nunca é pedido nem processado — zero-PII por escolha do site.
 
 Sem as vars/secret do primeiro grupo, a rota devolve 502 e o painel
 mostra o fallback — mesmo padrão do vigia CT sem `SCAN_TARGET`.
