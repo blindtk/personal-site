@@ -64,6 +64,13 @@ const jsStrings = {
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
   riskLowSample: s.riskLowSample,
+  colCountry: s.logColCountry,
+  colNetwork: s.logColAsn,
+  colSource: s.colSource,
+  colAction: s.colAction,
+  colCount: s.colCount,
+  sourceHoneypot: s.sourceHoneypot,
+  sourceCloudflare: s.sourceCloudflare,
 };
 ---
 
@@ -177,9 +184,7 @@ const jsStrings = {
             <Widget title={s.tiRecurring} tone="warn"><div id="ti-recatk"></div></Widget>
           </div>
           <div class="widget-grid an-mt">
-            <Widget title={s.tiTopAsns}><div id="ti-topasns"></div></Widget>
             <Widget title={s.tiTechniques}><div id="ti-tech"></div></Widget>
-            <Widget title={s.tiTopCountries} tone="warn"><div id="ti-topcountries"></div></Widget>
             <Widget title={s.tiTopPaths}><div id="ti-toppaths"></div></Widget>
           </div>
           <div class="widget-grid an-mt">
@@ -187,8 +192,13 @@ const jsStrings = {
             <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="ti-fwsource"></div></Widget>
           </div>
           <div class="widget-grid an-mt">
-            <Widget title={s.tiFirewallByCountry} tone="warn" meta={s.windowNote} class="wide-widget">
-              <div id="ti-fwcountry"></div>
+            <Widget title={s.tiCountriesMerged} tone="warn" meta={s.windowNote} class="wide-widget">
+              <div id="ti-countries"></div>
+            </Widget>
+          </div>
+          <div class="widget-grid an-mt">
+            <Widget title={s.tiAsnsMerged} tone="warn" meta={s.windowNote} class="wide-widget">
+              <div id="ti-networks"></div>
             </Widget>
           </div>
           <p class="note">🛰️ {s.privacyNote}</p>
@@ -399,6 +409,58 @@ const jsStrings = {
 
   const bars = (rows: any[], keyField: string, valField: string, tone?: string) =>
     rows.map((r) => ({ label: String(r[keyField]), value: Number(r[valField]) || 0, tone }));
+
+  // Países/redes do honeypot (URLs-isco, definição estrita de "atacante") e
+  // do firewall da Cloudflare (toda a zona, inclui ações benignas como
+  // "skip") são universos diferentes — nunca somar as contagens. Mostra os
+  // dois lado a lado, com uma coluna de fonte, em vez de widgets separados
+  // que pareciam contradizer-se (ex.: honeypot diz "1 país", firewall lista 4).
+  type SourceRow = { key: string; source: 'honeypot' | 'cloudflare'; count: number; action?: string | null };
+  function renderSourceTable(id: string, headers: string[], rows: SourceRow[], withAction: boolean, empty: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = empty;
+      host.append(el);
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    const table = document.createElement('table');
+    table.className = 'result-table wrap-normal';
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    for (const label of headers) {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headRow.append(th);
+    }
+    thead.append(headRow);
+    const tbody = document.createElement('tbody');
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      const tdKey = document.createElement('td');
+      tdKey.textContent = r.key;
+      const tdSource = document.createElement('td');
+      tdSource.textContent = r.source === 'honeypot' ? S.sourceHoneypot : S.sourceCloudflare;
+      tr.append(tdKey, tdSource);
+      if (withAction) {
+        const tdAction = document.createElement('td');
+        tdAction.textContent = r.action ?? '—';
+        tr.append(tdAction);
+      }
+      const tdCount = document.createElement('td');
+      tdCount.textContent = formatNumber(r.count, locale);
+      tr.append(tdCount);
+      tbody.append(tr);
+    }
+    table.append(thead, tbody);
+    wrap.append(table);
+    host.append(wrap);
+  }
 
   const SVG_NS = 'http://www.w3.org/2000/svg';
   function renderSpark(id: string, series: any[], valueKey: string) {
@@ -635,17 +697,38 @@ const jsStrings = {
         })),
         S.tiNoneYet,
       );
-      renderBars('ti-topasns', bars(d.topAsns ?? [], 'key', 'count'), S.tiEmpty);
       renderBars('ti-tech', bars(d.topTechniques ?? [], 'key', 'count'), S.tiEmpty);
-      renderBars('ti-topcountries', bars(d.topCountries ?? [], 'key', 'count', 'warn'), S.tiEmpty);
       renderBars('ti-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
       const fw = d.firewall7d ?? {};
       renderBars('ti-fwaction', bars(fw.byAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderBars('ti-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
-      renderBars(
-        'ti-fwcountry',
-        (fw.byCountry ?? []).map((r: any) => ({ label: `${r.country} · ${r.action}`, value: r.count, tone: 'warn' })),
-        S.firewallEmpty,
+      renderSourceTable(
+        'ti-countries',
+        [S.colCountry, S.colSource, S.colAction, S.colCount],
+        [
+          ...(d.topCountries ?? []).map((r: any): SourceRow => ({
+            key: String(r.key), source: 'honeypot', count: Number(r.count) || 0,
+          })),
+          ...(fw.byCountry ?? []).map((r: any): SourceRow => ({
+            key: String(r.country), source: 'cloudflare', count: Number(r.count) || 0, action: String(r.action ?? '—'),
+          })),
+        ].sort((a, b) => b.count - a.count),
+        true,
+        S.tiEmpty,
+      );
+      renderSourceTable(
+        'ti-networks',
+        [S.colNetwork, S.colSource, S.colCount],
+        [
+          ...(d.topAsns ?? []).map((r: any): SourceRow => ({
+            key: String(r.key), source: 'honeypot', count: Number(r.count) || 0,
+          })),
+          ...(fw.byAsn ?? []).map((r: any): SourceRow => ({
+            key: String(r.key), source: 'cloudflare', count: Number(r.count) || 0,
+          })),
+        ].sort((a, b) => b.count - a.count),
+        false,
+        S.tiEmpty,
       );
 
       document.getElementById('ti-fallback')!.hidden = true;
