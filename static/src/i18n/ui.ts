@@ -31,8 +31,7 @@ export const ui = {
       overview: 'Visão Geral — stack e estado ao vivo',
       security: 'Segurança — postura, cabeçalhos e porquê',
       evidence: 'Provas — tudo verificável, gerado no build',
-      perimeter: 'Perímetro — honeypot + Cloudflare, o que a Internet tenta contra este site',
-      detections: 'Deteções — as regras Sigma que apanhariam cada ataque',
+      perimeter: 'Perímetro — honeypot, deteções e Cloudflare, o que a Internet tenta contra este site',
       performance: 'Performance — tráfego, cache, latência e Core Web Vitals',
       project: 'Projeto «Este site» — arquitetura e decisões',
     },
@@ -116,7 +115,6 @@ export const ui = {
       planNote:
         'Correção: o detalhe por URL, user-agent e ASN de todo o tráfego não exige Pro+ — só o dataset AGREGADO (firewallEventsAdaptiveGroups) exige. O dataset CRU (firewallEventsAdaptive), já usado aqui para ação/origem/país, também dá esse detalhe no plano Free — é o que alimenta as três tabelas abaixo (últimas 24h, o limite de retenção do cru). O IP também está disponível nesse dataset, mas este site nunca o pede nem mostra (zero PII, por escolha, não por limitação do plano). A ação/origem/país de firewall acumulados a 7 dias ficam na tab Tendências.',
       privacyNote: 'Zero PII: nenhum destes painéis pede, guarda ou mostra o IP de um visitante.',
-      seeDetections: 'Ver Deteções',
       // ----- Performance -----
       perfMetaTitle: 'Performance — tráfego, cache e Core Web Vitals',
       perfTitle: 'Performance',
@@ -195,7 +193,6 @@ export const ui = {
       security: 'Segurança',
       evidence: 'Provas',
       perimeter: 'Perímetro',
-      detections: 'Deteções',
       attack: 'ATT&CK',
       certs: 'Certificações',
     },
@@ -207,7 +204,7 @@ export const ui = {
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
-        'O site que chega ao teu browser é estático: sem base de dados, sem contas, sem sessões. O pouco que precisa mesmo de servidor (honeypot, self-scan, verificador de passwords) vive num Worker isolado, sem estado pessoal — e o site continua inteiro sem ele. A superfície de ataque é mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
+        'A arquitetura — estática, sem contas nem sessões, com o pouco que precisa mesmo de servidor (honeypot, self-scan, verificador de passwords) isolado num Worker à parte — está descrita em Este Site. Para o modelo de ameaça, o que importa é a consequência: a superfície de ataque fica mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
       perimeterBody: 'Isto é o modelo — o que tenta mesmo entrar, ao vivo (honeypot e o que a Cloudflare bloqueia na zona), está no Perímetro.',
       perimeterCta: 'Ver o Perímetro →',
       // ----- Cabeçalhos e porquê -----
@@ -424,6 +421,7 @@ export const ui = {
       title: 'Perímetro',
       intro: 'A postura de defesa deste site, por completo: o honeypot (endpoints-isco que só um scanner tocaria de propósito) e o que a Cloudflare vê e bloqueia na zona inteira. Só metadados e agregados — nunca IPs.',
       tabHoneypot: 'Honeypot',
+      tabDetections: 'Deteções',
       tabCloudflare: 'Cloudflare',
       tabTrends: 'Tendências (7d)',
       tabLogs: 'Logs',
@@ -440,13 +438,10 @@ export const ui = {
       corrTitle: 'explorada agora (CISA KEV)',
       privacyNote: 'Nenhum IP é armazenado — só país, ASN e path. A anonimização é verificável no código do Worker (dynamic/worker/).',
       unavailable: 'O painel ao vivo ainda não está ligado — o Worker do honeypot precisa de estar publicado nas rotas do domínio. O código e a garantia de privacidade estão no repositório.',
-      detectionsNote: 'Cada classe de ataque aqui registada tem a regra Sigma que a detetaria num SIEM — escritas a partir do que este honeypot vê.',
-      detectionsLink: 'Ver as Deteções →',
       projectNote: 'O porquê de isto viver num Worker e não no site estático — e a garantia de privacidade por construção — está nas decisões do projeto.',
       projectLink: 'Ver o projeto Honeypot →',
     },
     detections: {
-      metaTitle: 'Deteções — do honeypot às regras Sigma',
       title: 'Deteções',
       intro:
         'O passo a seguir ao honeypot: cada classe de ataque que este site apanha vem acompanhada da regra Sigma que a detetaria num SIEM. Não é uma lista teórica — o contador ao lado de cada regra são os toques reais dos últimos 7 dias nos endpoints-isco deste site.',
@@ -464,7 +459,6 @@ export const ui = {
         'O contador carrega do mesmo /api/honeypot do painel. Se o Worker ainda não estiver publicado fica em “—” — as regras continuam válidas na mesma.',
       convertLead: 'As regras seguem as convenções webserver do SigmaHQ (campos c-uri, cs-method, sc-status). Converte para a tua plataforma com o sigma-cli:',
       convertCmd: 'sigma convert -t splunk detecao.yml',
-      seePerimeter: 'Ver o Perímetro que alimenta isto →',
       seeAttack: 'Ver o heatmap ATT&CK →',
     },
     hostmap: {
@@ -998,8 +992,7 @@ export const ui = {
       overview: 'Overview — stack and live status',
       security: 'Security — posture, headers and why',
       evidence: 'Evidence — everything verifiable, generated at build',
-      perimeter: 'Perimeter — honeypot + Cloudflare, what the Internet tries against this site',
-      detections: 'Detections — the Sigma rules that would catch each attack',
+      perimeter: 'Perimeter — honeypot, detections and Cloudflare, what the Internet tries against this site',
       performance: 'Performance — traffic, cache, latency and Core Web Vitals',
       project: '“This site” project — architecture and decisions',
     },
@@ -1082,7 +1075,6 @@ export const ui = {
       planNote:
         'Correction: per-URL, per-user-agent and per-ASN detail for all traffic does not require Pro+ — only the AGGREGATED dataset (firewallEventsAdaptiveGroups) does. The RAW dataset (firewallEventsAdaptive), already used here for action/source/country, also gives that detail on the Free plan — it feeds the three tables below (last 24h, the raw dataset\'s retention limit). The IP is available in that dataset too, but this site never requests or shows it (zero PII, by choice, not a plan limitation). Firewall action/source/country accumulated over 7 days lives on the Trends tab.',
       privacyNote: 'Zero PII: none of these panels request, store or show a visitor\'s IP.',
-      seeDetections: 'See Detections',
       // ----- Performance -----
       perfMetaTitle: 'Performance — traffic, cache and Core Web Vitals',
       perfTitle: 'Performance',
@@ -1161,7 +1153,6 @@ export const ui = {
       security: 'Security',
       evidence: 'Evidence',
       perimeter: 'Perimeter',
-      detections: 'Detections',
       attack: 'ATT&CK',
       certs: 'Certifications',
     },
@@ -1173,7 +1164,7 @@ export const ui = {
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
-        'The site that reaches your browser is static: no database, no accounts, no sessions. The little that genuinely needs a server (honeypot, self-scan, password checker) lives in an isolated Worker with no personal state — and the site stays whole without it. The attack surface is minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
+        'The architecture — static, no accounts or sessions, with the little that genuinely needs a server (honeypot, self-scan, password checker) isolated in a separate Worker — is described on This Site. For the threat model, what matters is the consequence: the attack surface stays minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
       perimeterBody: 'That is the model — what actually tries to get in, live (the honeypot and what Cloudflare blocks on the zone), is on the Perimeter.',
       perimeterCta: 'See the Perimeter →',
       // ----- Headers and why -----
@@ -1390,6 +1381,7 @@ export const ui = {
       title: 'Perimeter',
       intro: 'This site\'s full defense posture: the honeypot (decoy endpoints only a scanner would touch on purpose) and what Cloudflare sees and blocks across the whole zone. Metadata and aggregates only — never IPs.',
       tabHoneypot: 'Honeypot',
+      tabDetections: 'Detections',
       tabCloudflare: 'Cloudflare',
       tabTrends: 'Trends (7d)',
       tabLogs: 'Logs',
@@ -1406,13 +1398,10 @@ export const ui = {
       corrTitle: 'exploited now (CISA KEV)',
       privacyNote: 'No IP is ever stored — only country, ASN and path. The anonymisation is verifiable in the Worker code (dynamic/worker/).',
       unavailable: 'The live panel is not wired up yet — the honeypot Worker needs to be published on the domain routes. The code and the privacy guarantee are in the repository.',
-      detectionsNote: 'Every attack class logged here comes with the Sigma rule that would catch it in a SIEM — written from what this honeypot sees.',
-      detectionsLink: 'See the Detections →',
       projectNote: 'Why this lives in a Worker and not the static site — and the privacy-by-construction guarantee — is written up in the project decisions.',
       projectLink: 'See the Honeypot project →',
     },
     detections: {
-      metaTitle: 'Detections — from honeypot to Sigma rules',
       title: 'Detections',
       intro:
         'The step after the honeypot: every attack class this site catches comes with the Sigma rule that would detect it in a SIEM. Not a theoretical list — the counter next to each rule shows the real hits on this site\'s decoy endpoints over the last 7 days.',
@@ -1430,7 +1419,6 @@ export const ui = {
         'The counter loads from the same /api/honeypot as the panel. If the Worker is not published yet it stays at “—” — the rules remain just as valid.',
       convertLead: 'The rules follow SigmaHQ webserver conventions (c-uri, cs-method, sc-status fields). Convert to your platform with sigma-cli:',
       convertCmd: 'sigma convert -t splunk detection.yml',
-      seePerimeter: 'See the Perimeter feeding this →',
       seeAttack: 'See the ATT&CK heatmap →',
     },
     hostmap: {

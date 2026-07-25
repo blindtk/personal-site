@@ -15,13 +15,12 @@ sempre, indistinguível de um path que nunca existisse. O resultado ao vivo
 
 ## Porque vive no Worker, não no site estático
 
-A regra do monorepo é que o `static/` é 100% cliente — sem backend, sem input
-de utilizador que chegue a um servidor (é o que mantém o modelo de ameaça de
-[Este site](/projetos/este-site/) mínimo). Um honeypot precisa mesmo de
-servidor: alguém tem de ver o pedido chegar. Por isso vive isolado num
-Cloudflare Worker em `dynamic/worker/` — o primeiro código real dessa área —
-publicado à parte. Se o Worker estiver em baixo, o site estático não nota: o
-painel degrada com graça em vez de partir.
+A regra do monorepo é simples: o `static/` fica 100% cliente (ver
+[Este site](/projetos/este-site/)), e o honeypot é uma das exceções que
+precisa mesmo de servidor — alguém tem de ver o pedido chegar. Por isso vive
+isolado num Cloudflare Worker em `dynamic/worker/` — o primeiro código real
+dessa área — publicado à parte. Se o Worker estiver em baixo, o site estático
+não nota: o painel degrada com graça em vez de partir.
 
 ## Privacidade por construção
 

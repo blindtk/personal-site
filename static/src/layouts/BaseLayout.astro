@@ -42,11 +42,12 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
 ];
 
 // "Este Site" agrupa na nav as páginas sobre a arquitetura e telemetria
-// DESTE site: Visão Geral, Segurança, Perímetro (honeypot + ameaças
-// Cloudflare), Deteções, Provas e Performance (tráfego + Core Web Vitals).
-// Perímetro/Deteções (ataque ao vivo + a regra que o apanharia) vêm antes de
-// Provas (o audit trail — commit, cabeçalhos, CI) de propósito: mostra
-// primeiro o que está a acontecer, só depois o "não acredites, verifica".
+// DESTE site: Visão Geral, Segurança, Perímetro (honeypot + deteções +
+// ameaças Cloudflare, numa só página com tabs), Provas e Performance
+// (tráfego + Core Web Vitals). Perímetro (ataque ao vivo + a regra que o
+// apanharia) vem antes de Provas (o audit trail — commit, cabeçalhos, CI)
+// de propósito: mostra primeiro o que está a acontecer, só depois o "não
+// acredites, verifica".
 // ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
 // são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
 // "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
@@ -55,7 +56,6 @@ const siteGroup: { key: RouteKey; label: string }[] = [
   { key: 'siteOverview', label: dict.nav.overview },
   { key: 'security', label: dict.nav.security },
   { key: 'perimeter', label: dict.nav.perimeter },
-  { key: 'detections', label: dict.footer.detections },
   { key: 'evidence', label: dict.footer.evidence },
   { key: 'performance', label: dict.nav.performance },
 ];
@@ -220,7 +220,6 @@ const personSchema = {
           {dict.footer.thisSiteLabel}{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
           <a href={routes.perimeter[lang]}>{dict.footer.perimeter}</a> ·{' '}
-          <a href={routes.detections[lang]}>{dict.footer.detections}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
         </span>
         <span class="footer-group">

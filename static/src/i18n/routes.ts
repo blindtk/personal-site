@@ -14,7 +14,6 @@ export const routes = {
   performance: { pt: '/este-site/performance/', en: '/en/this-site/performance/' },
   security: { pt: '/seguranca/', en: '/en/security/' },
   perimeter: { pt: '/perimetro/', en: '/en/perimeter/' },
-  detections: { pt: '/detecoes/', en: '/en/detections/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
   evidence: { pt: '/provas/', en: '/en/evidence/' },
   certifications: { pt: '/certificacoes/', en: '/en/certifications/' },
