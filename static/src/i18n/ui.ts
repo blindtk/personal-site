@@ -146,11 +146,18 @@ export const ui = {
       tiHours: 'Ataques por hora do dia (UTC)',
       tiTopAsns: 'Redes mais ativas (ASN)',
       tiTechniques: 'Técnicas ATT&CK mais disparadas',
-      tiTopCountries: 'Países mais ativos',
       tiTopPaths: 'Alvos mais visados',
       tiFirewallAction: 'Firewall por ação (7d)',
       tiFirewallSource: 'Firewall por origem (7d)',
-      tiFirewallByCountry: 'Firewall por país · ação dominante (7d)',
+      // Junta países do honeypot (URLs-isco) e do firewall da Cloudflare
+      // (toda a zona) numa só tabela, com coluna de fonte — pedido do dono do
+      // repo para não parecerem dois números incompatíveis do mesmo "país".
+      tiCountriesMerged: 'Países · honeypot + firewall (7d)',
+      colSource: 'Fonte',
+      colAction: 'Ação',
+      colCount: 'Contagem',
+      sourceHoneypot: 'Honeypot',
+      sourceCloudflare: 'Cloudflare',
       tiHeatLess: 'menos',
       tiHeatMore: 'mais',
       tiIntro: 'Dashboards próprios (não são cópia da Cloudflare) a partir do honeypot deste site — por rede, técnica, país e hora. Atacantes agrupados por ASN, nunca por IP.',
@@ -1103,11 +1110,18 @@ export const ui = {
       tiHours: 'Attacks by hour of day (UTC)',
       tiTopAsns: 'Most active networks (ASN)',
       tiTechniques: 'Most-triggered ATT&CK techniques',
-      tiTopCountries: 'Most active countries',
       tiTopPaths: 'Most targeted paths',
       tiFirewallAction: 'Firewall by action (7d)',
       tiFirewallSource: 'Firewall by source (7d)',
-      tiFirewallByCountry: 'Firewall by country · dominant action (7d)',
+      // Merges honeypot countries (bait URLs) and Cloudflare firewall
+      // countries (whole zone) into one table with a source column — the two
+      // used to read as conflicting counts for the same "country".
+      tiCountriesMerged: 'Countries · honeypot + firewall (7d)',
+      colSource: 'Source',
+      colAction: 'Action',
+      colCount: 'Count',
+      sourceHoneypot: 'Honeypot',
+      sourceCloudflare: 'Cloudflare',
       tiHeatLess: 'less',
       tiHeatMore: 'more',
       tiIntro: 'My own dashboards (not a Cloudflare copy) from this site\'s honeypot — by network, technique, country and hour. Attackers grouped by ASN, never by IP.',
