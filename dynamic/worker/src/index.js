@@ -10,7 +10,7 @@
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
-//   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 5min)
+//   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 6h)
 //   · /api/vitals (GET)        — Core Web Vitals p75 (RUM, 7d)
 //   · /api/vitals (POST)       — beacon RUM first-party (agregados, sem PII)
 //   · /api/health
@@ -49,27 +49,39 @@ const DAY_MS = 86400_000;
 // esta janela (5 min), para não permitir correlação por instante preciso.
 const ANON_WINDOW_MS = 5 * 60_000;
 
-// Cap global de escritas do honeypot por janela: limita custo/abuso se
-// alguém martelar os paths-isco. Ver lib/kvcap.js. Generoso para tráfego
-// legítimo de scanners, mas põe um teto duro (max eventos → ~4×max escritas
-// de bucket por janela).
-const HONEYPOT_WRITE_CAP = { windowMs: HOUR_MS, max: 500 };
+// Cap global de escritas do honeypot por DIA (não por hora): limita
+// custo/abuso se alguém martelar os paths-isco. Ver lib/kvcap.js. O plano
+// Free tem um teto de ~1.000 escritas/dia PARA A CONTA INTEIRA, partilhado
+// com rate-limit/vitals/CSP/cron — um cap por HORA generoso (o valor antigo,
+// 500/h) deixava um único burst de scanners consumir sozinho vários dias de
+// quota (500 eventos × 4-5 escritas = até 2.500 escritas numa hora, mais do
+// que o teto diário inteiro). Por isso o cap passou a ser diário e mais
+// apertado: 60 eventos/dia × 4 escritas ≈ 240/dia, uma fatia do orçamento
+// que deixa espaço para o resto. Trade-off consciente: sob scanning pesado
+// sustentado, eventos a mais no mesmo dia são descartados (o 404 continua a
+// sair) — perde-se granularidade no Threat Intel, não a proteção do core.
+const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 };
 
 // Timeout para fetches a montante (self-scan) — não deixar um alvo lento
 // pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
 
 // Violações CSP: corpo máximo aceite num POST (um batch reports+json legítimo
-// anda nos poucos KB) e cap global de escritas por janela — uma regressão real
+// anda nos poucos KB) e cap global de escritas POR DIA — uma regressão real
 // gera 1 relatório × N visitantes, o teto limita o custo dessa rajada (e de
-// spam deliberado) sem perder o sinal: os agregados já contados ficam.
+// spam deliberado) sem perder o sinal: os agregados já contados ficam. Cap
+// diário (mesmo raciocínio do honeypot): 50 eventos/dia × 2 escritas = 100/dia.
 const CSP_REPORT_MAX_BODY = 16 * 1024;
-const CSP_WRITE_CAP = { windowMs: HOUR_MS, max: 300 };
+const CSP_WRITE_CAP = { windowMs: DAY_MS, max: 50 };
 
-// RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas por
-// janela (mesmo padrão do honeypot/CSP). Só agregados; ver lib/vitals.js.
+// RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas POR
+// DIA (mesmo padrão do honeypot/CSP — ver comentário acima). Só agregados;
+// ver lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
+// (5.000/hora) media a resiliência a abuso, não o orçamento real do plano
+// Free — tráfego orgânico normal já bastava para estourar o teto diário
+// muito antes de qualquer flood malicioso.
 const VITALS_MAX_BODY = 2 * 1024;
-const VITALS_WRITE_CAP = { windowMs: HOUR_MS, max: 5000 };
+const VITALS_WRITE_CAP = { windowMs: DAY_MS, max: 150 };
 
 // ---------- helpers de tempo/KV ----------
 
@@ -108,7 +120,7 @@ async function recordHoneypot(env, request, path, now) {
   const technique = techniqueForPath(path);
   const event = { ts, country, asn, path, technique };
 
-  const capKey = `wcap:${hourKey(now)}`;
+  const capKey = `wcap:${dayKey(now)}`;
   const [recent, hBucket, dBucket, meta, capPrev] = await Promise.all([
     getJSON(env, 'recent', []),
     getJSON(env, hourKey(now), emptyBucket()),
@@ -131,14 +143,18 @@ async function recordHoneypot(env, request, path, now) {
   // deployTs vem de var no deploy; firstScanTs = 1.ª tentativa alguma vez vista.
   const deployTs = meta.deployTs ?? clampInt(env.DEPLOY_TS, 0, Number.MAX_SAFE_INTEGER, ts);
   const nextMeta = { deployTs, firstScanTs: meta.firstScanTs ?? ts };
+  // meta só muda mesmo na 1.ª vez (deployTs/firstScanTs, uma vez definidos,
+  // nunca voltam a mudar) — poupa 1 escrita/evento em todos os seguintes.
+  const metaChanged = meta.deployTs !== nextMeta.deployTs || meta.firstScanTs !== nextMeta.firstScanTs;
 
-  await Promise.all([
+  const writes = [
     env.KV.put('recent', JSON.stringify(nextRecent)),
     env.KV.put(hourKey(now), JSON.stringify(hBucket), { expirationTtl: 8 * 86400 }),
     env.KV.put(dayKey(now), JSON.stringify(dBucket), { expirationTtl: 9 * 86400 }),
-    env.KV.put('meta', JSON.stringify(nextMeta)),
     env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(HONEYPOT_WRITE_CAP.windowMs / 1000) + 60 }),
-  ]);
+  ];
+  if (metaChanged) writes.push(env.KV.put('meta', JSON.stringify(nextMeta)));
+  await Promise.all(writes);
 }
 
 // ---------- violações CSP: escrita ----------
@@ -152,7 +168,7 @@ const cspDayKey = (ms) => `cspd:${new Date(ms).toISOString().slice(0, 10)}`; // 
  */
 async function recordCspViolations(env, violations, now) {
   if (violations.length === 0) return;
-  const capKey = `cspcap:${hourKey(now)}`;
+  const capKey = `cspcap:${dayKey(now)}`;
   const dayK = cspDayKey(now);
   const [bucket, capPrev] = await Promise.all([
     getJSON(env, dayK, emptyCspBucket()),
@@ -187,7 +203,7 @@ const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; /
  * escritas por janela, como o honeypot/CSP.
  */
 async function recordVitals(env, sample, now) {
-  const capKey = `vitcap:${hourKey(now)}`;
+  const capKey = `vitcap:${dayKey(now)}`;
   const dayK = vitalsDayKey(now);
   const [bucket, capPrev] = await Promise.all([
     getJSON(env, dayK, emptyVitalsBucket()),
@@ -625,9 +641,14 @@ export default {
       // Threat Intelligence: dashboards próprios a partir dos buckets
       // acumulados do honeypot (heatmap, hora-do-dia, top país/ASN/técnica/
       // path, eventos p/ os Logs) + a repartição de firewall acumulada a 7d.
-      // Tudo agregado, zero-PII. Cache 5 min (aquecida no cron).
+      // Tudo agregado, zero-PII. Cache 6h (aquecida no cron) — TTL a 5 min
+      // dava sempre "stale" quando o cron (30 min) batia, obrigando a
+      // reconstruir o fan-out de THREAT_INTEL_HOURS+7+1 leituras a cada
+      // tick (~183 GETs × 48/dia). Alinhado com scan/ct/cf-stats (mesmo
+      // padrão de cache já usado nesta rota) para não estourar o teto
+      // diário do KV no plano Free — ver dynamic/PLAN.md.
       if (path === '/api/threat-intel') {
-        const data = await cached(env, ctx, 'cache:threatintel', 300, async () => {
+        const data = await cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
           const now = Date.now();
           const [buckets, firewall7d] = await Promise.all([
             readThreatBuckets(env, now),
@@ -732,13 +753,23 @@ export default {
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
         cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
         cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
-        // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
-        cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env))
-          .then((stats) => snapshotFirewall(env, stats, Date.now()))
-          .catch(() => {}),
+        // Estado da Cloudflare + snapshot diário da firewall (acumula 7d). O
+        // snapshot vive dentro do producer do `cached()` — corre só quando o
+        // cfstats É DE FACTO REFRESCADO (~4×/dia, TTL 6h), não em cada um dos
+        // 48 ticks do cron: como `cached()` devolve o mesmo valor em cache
+        // nos ticks intermédios, fotografar nesses ticks só reescrevia a
+        // mesma coisa em KV sem qualquer ganho de frescura (o dado só muda
+        // quando o próprio fetchCfStats corre).
+        cached(env, ctx, 'cache:cfstats', 6 * 3600, async () => {
+          const stats = await fetchCfStats(env);
+          await snapshotFirewall(env, stats, Date.now()).catch(() => {});
+          return stats;
+        }).catch(() => {}),
         // Threat Intel é caro de ler (168 buckets horários) — aquece-se aqui
-        // para as visitas caírem sempre em cache.
-        cached(env, ctx, 'cache:threatintel', 300, async () => {
+        // para as visitas caírem sempre em cache. TTL 6h (ver comentário na
+        // rota /api/threat-intel) para não repetir o fan-out em todos os
+        // ticks do cron.
+        cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
           const now = Date.now();
           const [buckets, firewall7d] = await Promise.all([
             readThreatBuckets(env, now),

@@ -622,8 +622,9 @@ test('honeypot: cap de escritas descarta eventos acima do teto', async () => {
   const env = { KV: fakeKV() };
   const now = Date.now();
   const hourKey = `h:${new Date(now).toISOString().slice(0, 13)}`;
-  // pré-carrega o contador da janela no teto (max=500)
-  env.KV.store.set(`wcap:${hourKey}`, JSON.stringify({ count: 500, windowStart: now }));
+  const dayKey = `d:${new Date(now).toISOString().slice(0, 10)}`;
+  // pré-carrega o contador da janela (diária) no teto (max=60)
+  env.KV.store.set(`wcap:${dayKey}`, JSON.stringify({ count: 60, windowStart: now }));
 
   const req = fakeRequest('/wp-login.php', { ip: '198.51.100.5', country: 'RU', asn: 64500 });
   const res = await runFetch(req, env);
@@ -718,8 +719,8 @@ test('csp-report: Content-Type errado → 415, corpo acima do teto → 413', asy
 test('csp-report: cap global de escritas descarta acima do teto (204 na mesma)', async () => {
   const env = { KV: fakeKV() };
   const now = Date.now();
-  const capKey = `cspcap:h:${new Date(now).toISOString().slice(0, 13)}`;
-  env.KV.store.set(capKey, JSON.stringify({ count: 300, windowStart: now }));
+  const capKey = `cspcap:d:${new Date(now).toISOString().slice(0, 10)}`;
+  env.KV.store.set(capKey, JSON.stringify({ count: 50, windowStart: now }));
 
   const res = await runFetch(fakeCspPost(LEGACY_REPORT), env);
   assert.equal(res.status, 204);

@@ -88,10 +88,13 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
 # A cada 30 min: aquece ticker/scan/ct/cf-stats/threat-intel (para as visitas
-# caírem sempre em cache) E fotografa a repartição de firewall das últimas 24h
-# num snapshot diário (fw:<dia>) — é assim que se acumula a janela de 7 dias a
-# partir do dataset cru do Free, que só retém 24h (ver src/lib/cf-analytics.js
-# e a Threat Intelligence). Correr de 30 em 30 min só mantém o snapshot do dia
-# atualizado; o que acumula é um por dia. Ver scheduled() em src/index.js.
+# caírem sempre em cache). O snapshot da firewall (fw:<dia>, para acumular 7
+# dias a partir do dataset cru do Free, que só retém 24h) só é fotografado
+# quando o cf-stats É DE FACTO refrescado (TTL 6h, ~4×/dia) — não em cada um
+# dos 48 ticks. TTLs de threat-intel/cf-stats/scan/ct alinhados a 6h (≥
+# intervalo do cron): abaixo disso, cada tick encontrava a cache sempre
+# "stale" e repetia leituras caras ao KV (2026-07, alerta real de 50% do teto
+# diário do plano Free com o site ainda nem publicado — ver dynamic/PLAN.md).
+# Ver scheduled() em src/index.js.
 [triggers]
 crons = ["*/30 * * * *"]
