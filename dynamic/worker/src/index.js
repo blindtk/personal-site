@@ -10,7 +10,7 @@
 //   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
-//   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 5min)
+//   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 6h)
 //   · /api/vitals (GET)        — Core Web Vitals p75 (RUM, 7d)
 //   · /api/vitals (POST)       — beacon RUM first-party (agregados, sem PII)
 //   · /api/health
@@ -625,9 +625,14 @@ export default {
       // Threat Intelligence: dashboards próprios a partir dos buckets
       // acumulados do honeypot (heatmap, hora-do-dia, top país/ASN/técnica/
       // path, eventos p/ os Logs) + a repartição de firewall acumulada a 7d.
-      // Tudo agregado, zero-PII. Cache 5 min (aquecida no cron).
+      // Tudo agregado, zero-PII. Cache 6h (aquecida no cron) — TTL a 5 min
+      // dava sempre "stale" quando o cron (30 min) batia, obrigando a
+      // reconstruir o fan-out de THREAT_INTEL_HOURS+7+1 leituras a cada
+      // tick (~183 GETs × 48/dia). Alinhado com scan/ct/cf-stats (mesmo
+      // padrão de cache já usado nesta rota) para não estourar o teto
+      // diário do KV no plano Free — ver dynamic/PLAN.md.
       if (path === '/api/threat-intel') {
-        const data = await cached(env, ctx, 'cache:threatintel', 300, async () => {
+        const data = await cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
           const now = Date.now();
           const [buckets, firewall7d] = await Promise.all([
             readThreatBuckets(env, now),
@@ -732,13 +737,23 @@ export default {
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
         cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
         cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
-        // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
-        cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env))
-          .then((stats) => snapshotFirewall(env, stats, Date.now()))
-          .catch(() => {}),
+        // Estado da Cloudflare + snapshot diário da firewall (acumula 7d). O
+        // snapshot vive dentro do producer do `cached()` — corre só quando o
+        // cfstats É DE FACTO REFRESCADO (~4×/dia, TTL 6h), não em cada um dos
+        // 48 ticks do cron: como `cached()` devolve o mesmo valor em cache
+        // nos ticks intermédios, fotografar nesses ticks só reescrevia a
+        // mesma coisa em KV sem qualquer ganho de frescura (o dado só muda
+        // quando o próprio fetchCfStats corre).
+        cached(env, ctx, 'cache:cfstats', 6 * 3600, async () => {
+          const stats = await fetchCfStats(env);
+          await snapshotFirewall(env, stats, Date.now()).catch(() => {});
+          return stats;
+        }).catch(() => {}),
         // Threat Intel é caro de ler (168 buckets horários) — aquece-se aqui
-        // para as visitas caírem sempre em cache.
-        cached(env, ctx, 'cache:threatintel', 300, async () => {
+        // para as visitas caírem sempre em cache. TTL 6h (ver comentário na
+        // rota /api/threat-intel) para não repetir o fan-out em todos os
+        // ticks do cron.
+        cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
           const now = Date.now();
           const [buckets, firewall7d] = await Promise.all([
             readThreatBuckets(env, now),

@@ -232,6 +232,46 @@
     assinatura ECDSA), testada com vetores. Sem rede, sem estado no servidor; a
     passkey criada é real e fica no gestor do utilizador (aviso de limpeza).
 
+- **2026-07 — Cache do cron alinhada ao intervalo (evita reconstruir o
+  threat-intel a cada tick)** (pedido direto do dono do repo — "faz o que
+  achares mais adequado para reduzir o consumo de API", plano Free): mesmo
+  alerta "50% of your daily Workers KV operation limit reached" da entrada
+  abaixo (reporting CSP), mas desta vez com o site **ainda por publicar** e
+  só o dono a aceder via Zero Trust Access — a Access cobre `danielmala.co`
+  inteiro (incl. `/api/*` e os paths-isco), logo nenhum visitante real ou
+  scanner consegue lá chegar. A fonte tinha de ser algo que corre sem
+  pedidos HTTP: o **cron** (`*/30 * * * *`, `scheduled()` em `src/index.js`),
+  que dispara direto do runtime da Cloudflare, fora do alcance da Access.
+  Duas causas identificadas por inspeção do código (sem acesso ao breakdown
+  exato do dashboard):
+    1. `cache:threatintel` tinha TTL de 5 min — menor que o intervalo do
+       cron (30 min). Cada um dos 48 ticks/dia encontrava a cache sempre
+       "stale" e reconstruía o fan-out completo de `readThreatBuckets`
+       (`THREAT_INTEL_HOURS`=168 + 7 dias + `recent` = ~176 GETs) +
+       `readFirewall7d` (7 GETs) — **~183 leituras + 1 escrita por tick,
+       48×/dia (~8.800 leituras/dia)**, para um valor que na prática nunca
+       chegava a ficar em cache do ponto de vista do cron. Corrigido: TTL
+       subido para 6h, alinhado com scan/ct/cf-stats (mesmo padrão já usado
+       nesta rota).
+    2. `snapshotFirewall` corria encadeado a seguir a **todo** o
+       `cached('cache:cfstats', ...)`, não só quando a cache de facto
+       refrescava — nos ticks em que `cached()` devolvia o valor já em
+       cache (a maioria, TTL 6h), a fotografia diária (`fw:<dia>`) era
+       reescrita com os mesmos dados, sem qualquer ganho de frescura (o
+       cf-stats só muda quando `fetchCfStats` corre mesmo, ~4×/dia).
+       Corrigido: o snapshot passou para dentro do producer do `cached()`,
+       só corre quando os dados são de facto novos — de 48 escritas/dia
+       para ~4/dia nessa chave.
+  Nada mudou no dado que os visitantes veem (mesmo TTL de 6h já usado por
+  scan/ct/cf-stats) — só deixou de se pagar KV a reconstruir o mesmo valor
+  em ticks onde nada tinha mudado. `npm test` (lógica pura) continua a
+  passar; não há teste automatizado para `scheduled()`/o router em si
+  (best-effort, degradação graciosa por desenho). Se o alerta persistir
+  depois disto, o passo seguinte é olhar para o dashboard (Storage &
+  Databases → KV → Metrics) para ver a repartição real leituras/escritas —
+  sem esses números, esta correção parte do fan-out mais óbvio no código,
+  não de uma medição direta.
+
 - **2026-07 — Reporting CSP: de automático (`report-uri`/`report-to`) para
   manual (botão)** (pedido direto do dono do repo, motivado por um alerta real
   da Cloudflare — "50% of your daily Workers KV operation limit reached" no
