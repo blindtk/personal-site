@@ -15,13 +15,13 @@ result — alongside what Cloudflare blocks across the whole zone — is on the
 
 ## Why it lives in the Worker, not the static site
 
-The monorepo rule is that `static/` is 100% client — no backend, no user input
-reaching a server (that's what keeps the threat model of
-[This site](/en/projects/este-site/) minimal). A honeypot genuinely needs a
-server: someone has to see the request arrive. So it lives isolated in a
-Cloudflare Worker under `dynamic/worker/` — the first real code in that area —
-published separately. If the Worker is down, the static site doesn't notice:
-the panel degrades gracefully instead of breaking.
+The monorepo rule is simple: `static/` stays 100% client (see
+[This site](/en/projects/este-site/)), and the honeypot is one of the
+exceptions that genuinely needs a server — someone has to see the request
+arrive. So it lives isolated in a Cloudflare Worker under `dynamic/worker/` —
+the first real code in that area — published separately. If the Worker is
+down, the static site doesn't notice: the panel degrades gracefully instead
+of breaking.
 
 ## Privacy by construction
 

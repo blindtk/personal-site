@@ -2,3 +2,5 @@
 /en/honeypot/ /en/perimeter/ 301
 /este-site/analytics/ /este-site/performance/ 301
 /en/this-site/analytics/ /en/this-site/performance/ 301
+/detecoes/ /perimetro/ 301
+/en/detections/ /en/perimeter/ 301
