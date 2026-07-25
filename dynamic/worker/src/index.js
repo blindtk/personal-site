@@ -236,8 +236,9 @@ const fwDayKey = (ms) => `fw:${new Date(ms).toISOString().slice(0, 10)}`; // fw:
  * Fotografa a repartição de firewall das últimas 24h (já calculada em
  * `stats.zone` pelo cf-analytics) num snapshot diário no KV. Como o dataset
  * cru só tem 24h no Free, é assim que se acumula uma janela de 7 dias (a
- * "fase 2" registada no PLAN.md). Contadores por ação/origem e por país×ação
- * (ação mais comum vinda de cada país, nesse dia) — só país, nunca IP.
+ * "fase 2" registada no PLAN.md). Contadores por ação/origem, por país×ação
+ * (ação mais comum vinda de cada país, nesse dia) e por rede (ASN, do
+ * `firewallDetailBreakdown`) — nunca IP.
  */
 async function snapshotFirewall(env, stats, now) {
   const zone = stats?.zone;
@@ -248,30 +249,39 @@ async function snapshotFirewall(env, stats, now) {
       .filter((r) => r?.country && r?.action)
       .map((r) => [r.country, { action: r.action, count: r.count }]),
   );
-  const snap = { byAction: toMap(zone.firewallByAction), bySource: toMap(zone.firewallBySource), byCountry };
+  const snap = {
+    byAction: toMap(zone.firewallByAction),
+    bySource: toMap(zone.firewallBySource),
+    byCountry,
+    byAsn: toMap(zone.firewallByAsn),
+  };
   if (
     Object.keys(snap.byAction).length === 0 &&
     Object.keys(snap.bySource).length === 0 &&
-    Object.keys(snap.byCountry).length === 0
+    Object.keys(snap.byCountry).length === 0 &&
+    Object.keys(snap.byAsn).length === 0
   ) return;
   await env.KV.put(fwDayKey(now), JSON.stringify(snap), { expirationTtl: 8 * 86400 });
 }
 
 /**
  * Lê e funde os snapshots de firewall dos últimos 7 dias em tops por
- * ação/origem, e por país (ação mais comum de cada país, somada através dos
- * dias — recalculada sobre a soma da semana, não só o vencedor do último dia).
+ * ação/origem/rede (ASN), e por país (ação mais comum de cada país, somada
+ * através dos dias — recalculada sobre a soma da semana, não só o vencedor
+ * do último dia).
  */
 async function readFirewall7d(env, now) {
   const keys = Array.from({ length: 7 }, (_, i) => fwDayKey(now - i * DAY_MS));
   const snaps = await Promise.all(keys.map((k) => getJSON(env, k)));
   const byAction = {};
   const bySource = {};
+  const byAsn = {};
   const byCountry = {}; // country -> { action -> count }
   for (const s of snaps) {
     if (!s) continue;
     for (const [k, v] of Object.entries(s.byAction ?? {})) byAction[k] = (byAction[k] ?? 0) + (Number(v) || 0);
     for (const [k, v] of Object.entries(s.bySource ?? {})) bySource[k] = (bySource[k] ?? 0) + (Number(v) || 0);
+    for (const [k, v] of Object.entries(s.byAsn ?? {})) byAsn[k] = (byAsn[k] ?? 0) + (Number(v) || 0);
     for (const [country, entry] of Object.entries(s.byCountry ?? {})) {
       const action = entry?.action;
       const count = Number(entry?.count) || 0;
@@ -295,7 +305,7 @@ async function readFirewall7d(env, now) {
     .sort((a, b) => b.total - a.total)
     .slice(0, 10)
     .map(({ country, action, count }) => ({ country, action, count }));
-  return { byAction: top(byAction), bySource: top(bySource), byCountry: topCountry };
+  return { byAction: top(byAction), bySource: top(bySource), byAsn: top(byAsn), byCountry: topCountry };
 }
 
 // ---------- caching de leitura ----------

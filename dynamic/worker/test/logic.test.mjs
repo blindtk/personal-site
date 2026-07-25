@@ -1406,10 +1406,12 @@ test('/api/threat-intel: funde snapshots fw:<dia> de vários dias em firewall7d.
   env.KV.store.set(fwDayKey(now), JSON.stringify({
     byAction: { block: 3 }, bySource: { ratelimit: 3 },
     byCountry: { NL: { action: 'block', count: 3 }, DE: { action: 'js_challenge', count: 1 } },
+    byAsn: { AS1000: 3 },
   }));
   env.KV.store.set(fwDayKey(now - DAY_MS), JSON.stringify({
     byAction: { managed_challenge: 2 }, bySource: { firewallCustom: 2 },
     byCountry: { NL: { action: 'managed_challenge', count: 2 } },
+    byAsn: { AS1000: 2, AS2000: 1 },
   }));
   const res = await runFetch(fakeRequest('/api/threat-intel'), env);
   assert.equal(res.status, 200);
@@ -1419,6 +1421,9 @@ test('/api/threat-intel: funde snapshots fw:<dia> de vários dias em firewall7d.
     { country: 'NL', action: 'block', count: 3 },
     { country: 'DE', action: 'js_challenge', count: 1 },
   ]);
+  // AS1000 apareceu nos dois dias (3 + 2 = 5) — a soma da semana, não só o
+  // último dia, é o que decide a ordenação.
+  assert.deepEqual(data.firewall7d.byAsn, [{ key: 'AS1000', count: 5 }, { key: 'AS2000', count: 1 }]);
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
