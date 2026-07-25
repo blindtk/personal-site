@@ -272,6 +272,47 @@
   sem esses números, esta correção parte do fan-out mais óbvio no código,
   não de uma medição direta.
 
+- **2026-07 — Caps de escrita do honeypot/CSP/vitals: de por-HORA para
+  por-DIA, e valores muito mais baixos** (pedido direto do dono do repo —
+  "no futuro, quando ficar público, as APIs estão bem protegidas? o
+  honeypot não vai consumir tudo?"): resposta honesta antes da correção era
+  **não** — os caps existentes (`HONEYPOT_WRITE_CAP` 500/h,
+  `CSP_WRITE_CAP` 300/h, `VITALS_WRITE_CAP` 5000/h) foram desenhados só
+  como travão anti-abuso ("generoso para tráfego legítimo de scanners"),
+  sem qualquer relação com o teto real do plano Free (~1.000
+  escritas/dia **para a conta inteira**, partilhado entre honeypot, CSP,
+  vitals, rate-limit e cron). Nos piores casos: honeypot 500×5=2.500
+  escritas **numa hora** (2,5× o orçamento diário inteiro); vitals
+  5.000×2=10.000/hora (10×). Ou seja: mesmo sem qualquer ataque, tráfego
+  orgânico normal do dia do lançamento (RUM a disparar em cada page-load
+  real) já podia esgotar a quota do dia sozinho. Corrigido:
+    1. Os três caps passaram de janela por HORA para janela por DIA
+       (`windowMs: DAY_MS`), com as `capKey` também recalculadas por dia
+       (`wcap:d:…`, `cspcap:d:…`, `vitcap:d:…` — antes eram `h:…`, o que
+       aliás significava que o contador nunca acumulava de facto entre
+       ticks de hora diferente).
+    2. Valores muito mais baixos, dimensionados ao orçamento e não ao
+       "quanto um scanner pode gerar": honeypot 60/dia (×4 escritas ≈
+       240/dia), CSP 50/dia (×2 ≈ 100/dia), vitals 150/dia (×2 ≈
+       300/dia) — juntos ~640/dia, deixando folga para cron (~45/dia,
+       ver entrada acima) e rate-limit.
+    3. `recordHoneypot` deixou de reescrever a chave `meta` em todos os
+       eventos — `deployTs`/`firstScanTs`, uma vez definidos, nunca
+       voltam a mudar, por isso a escrita só acontece na 1.ª vez (poupa
+       1 de 5 escritas/evento, daí "×4" acima em vez de "×5").
+  **Trade-off consciente:** sob scanning pesado sustentado ou tráfego real
+  elevado, eventos a mais no mesmo dia são descartados silenciosamente (o
+  404/204 continua a sair, indistinguível) — perde-se granularidade no
+  Threat Intel/RUM, nunca o core do site. `README.md` (secção "Cap de
+  escritas ao KV") e `test/logic.test.mjs` (dois testes que assumiam
+  chave/teto por hora) atualizados a par. Isto **não** resolve tudo:
+  continua a não haver um orçamento partilhado entre as três chaves (é
+  teoricamente possível esgotar o dia com honeypot+CSP+vitals em
+  simultâneo, cada um dentro do seu próprio cap) — um "disjuntor" diário
+  único e partilhado entre todas as escritas do Worker ficaria para depois
+  se isto ainda for problema após o lançamento; não implementado agora por
+  ser uma mudança maior de arquitetura sem urgência comprovada.
+
 - **2026-07 — Reporting CSP: de automático (`report-uri`/`report-to`) para
   manual (botão)** (pedido direto do dono do repo, motivado por um alerta real
   da Cloudflare — "50% of your daily Workers KV operation limit reached" no

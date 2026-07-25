@@ -156,11 +156,18 @@ O detalhe (stack) fica só nos logs do Worker (server-side) via
 ### Cap de escritas ao KV
 
 Cada tentativa nos iscos faz várias escritas. Para limitar custo/abuso se
-alguém martelar os paths-isco, há um **cap global de escritas por janela**
-(`HONEYPOT_WRITE_CAP` em `src/index.js`, por omissão 500 eventos/hora):
+alguém martelar os paths-isco, há um **cap global de escritas por DIA**
+(`HONEYPOT_WRITE_CAP` em `src/index.js`, por omissão 60 eventos/dia):
 passado o teto, os eventos extra são descartados e o pedido devolve na
 mesma o 404 indistinguível. Ver `src/lib/kvcap.js` (best-effort — o KV é
 eventualmente consistente, o objetivo é limitar a ordem de grandeza).
+`CSP_WRITE_CAP` (50/dia) e `VITALS_WRITE_CAP` (150/dia) seguem o mesmo
+padrão. Os três são caps **diários** (não por hora) de propósito: o plano
+Free do Workers KV tem um teto de ~1.000 escritas/dia para a conta
+**inteira**, partilhado entre honeypot/CSP/vitals/rate-limit/cron — um cap
+por hora generoso deixava um único burst de scanners ou tráfego orgânico
+consumir sozinho vários dias de quota. Ver `dynamic/PLAN.md` para a decisão
+e as contas.
 
 ## Desenvolvimento
 
