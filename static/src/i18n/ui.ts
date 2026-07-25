@@ -28,7 +28,7 @@ export const ui = {
     layers: {
       title: 'Este site, por camadas',
       intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
-      overview: 'Visão Geral — arquitetura, stack e estado ao vivo',
+      overview: 'Visão Geral — stack e estado ao vivo',
       security: 'Segurança — postura, cabeçalhos e porquê',
       evidence: 'Provas — tudo verificável, gerado no build',
       perimeter: 'Perímetro — honeypot + Cloudflare, o que a Internet tenta contra este site',
@@ -986,7 +986,7 @@ export const ui = {
     layers: {
       title: 'This site, layer by layer',
       intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
-      overview: 'Overview — architecture, stack and live status',
+      overview: 'Overview — stack and live status',
       security: 'Security — posture, headers and why',
       evidence: 'Evidence — everything verifiable, generated at build',
       perimeter: 'Perimeter — honeypot + Cloudflare, what the Internet tries against this site',
