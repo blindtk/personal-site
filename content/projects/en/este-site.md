@@ -7,7 +7,7 @@ order: 1
 
 Bilingual personal site built with Astro: subnet calculator, hash generator
 and more — the tools run in the browser, and the little that genuinely needs
-a server lives in an isolated Worker, kept apart.
+a server lives in an isolated Cloudflare Worker, kept apart.
 
 Bilingual by construction: content (markdown/JSON) lives separate from the
 code and feeds both versions (PT/EN) from the same shared components — no
@@ -26,7 +26,7 @@ default — pages ship with zero JavaScript, and the islands that need
 interactivity (the networking tools, the Lab) load no hydration runtime at
 all. That's not only a performance choice: it keeps the strict CSP with no
 `'unsafe-inline'` easy to maintain, because there's no framework injecting
-inline style or script at runtime behind the scenes — and because I write my
+inline style or script at runtime invisibly — and because I write my
 own `<script>` tags as external files, never inline, `script-src 'self'` and
 `style-src 'self'` cost nothing, no hash needed. (I tried the reverse first —
 SHA-256 hashes per inline script/style — but the hash count grows with the
