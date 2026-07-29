@@ -117,7 +117,7 @@ const personSchema = {
        mudar de conteúdo (ex.: SITE.role[pt] passar a diferir de
        SITE.role[en]), recalcula e atualiza esse hash — senão a CSP volta a
        bloquear este script em produção. */}
-    <script type="application/ld+json" set:html={JSON.stringify(personSchema).replace(/</g, '\\u003c')} />
+    <script type="application/ld+json" set:html={JSON.stringify(personSchema).replace(/</g, '\\u003c')} is:inline />
     <meta property="og:locale" content={lang === 'pt' ? 'pt_PT' : 'en_US'} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
@@ -237,10 +237,10 @@ const personSchema = {
 
     <!-- Ficheiro estático em public/js/ (não hoisted pelo Astro): fica
          fora do bundler para nunca ser inlinado no HTML — ver astro.config.mjs. -->
-    <script src="/js/nav.js" defer></script>
+    <script src="/js/nav.js" defer is:inline></script>
     <!-- Beacon de Core Web Vitals (first-party, agregado, sem PII): mede a
          performance real e envia UMA vez para /api/vitals — alimenta a página
          Performance. Ver public/js/vitals.js. -->
-    <script src="/js/vitals.js" defer></script>
+    <script src="/js/vitals.js" defer is:inline></script>
   </body>
 </html>

@@ -224,16 +224,26 @@ branch protection, secret scanning) fica para quando for decidido.
 
 - [ ] Lançamento (Fase 3): desligar/ajustar a Access + confirmar que as
   regras WAF (secção 5) fazem mesmo o trabalho sozinhas.
-- [ ] Confirmar se as regras "Previews sociais" (skip para
-  LinkedInBot/Twitterbot/facebookexternalhit) e "O dono sempre" (skip por
-  IP) do desenho original chegaram a existir em produção — não aparecem nas
-  regras confirmadas em 2026-07-29 (secção 5). Se não existirem, o dono e os
-  bots de preview social ficam sujeitos às mesmas regras 4/5 que todo o
-  resto do tráfego (Managed Challenge se vier de PT, Block caso contrário).
-- [ ] `.github/expected-headers.json` → `url` continua `SET-ME` de propósito
-  (apontar para produção agora falharia o workflow `Headers`, porque a
-  Access intercetava o pedido não autenticado do CI) — atualizar no
-  lançamento.
+- [x] **Confirmado (2026-07-29, decisão do dono do repo):** as regras
+  "Previews sociais" e "O dono sempre" do desenho original **não** foram
+  criadas, **por escolha, não por esquecimento**. Os bots de preview social
+  (LinkedIn/Twitter/Facebook) já são apanhados pela regra 1 ("Bots
+  verificados", `cf.client.bot`) — a lista de bots verificados da Cloudflare
+  inclui os crawlers de preview conhecidos, tornando uma regra dedicada
+  redundante. Quanto ao dono: aceite que viajar para fora de PT o sujeita
+  à regra 5 (Block) como qualquer visitante — só PT passa (com Managed
+  Challenge), decisão mantida de propósito.
+- [ ] `.github/expected-headers.json` → `url` **voltou** a `SET-ME`
+  (2026-07-29): tinha sido apontado para `https://danielmala.co/` numa
+  revisão de segurança, mas a Access (secção 3) continua ativa — o cron
+  diário do `Headers` passaria a falhar sempre por causa da página de login
+  da Access, não de uma regressão real de headers, mascarando o sinal que
+  interessa. Duas formas de ativar antes do lançamento, se quiseres o
+  cron a verificar já: (a) criar um **Access Service Token** (Zero Trust →
+  Access → Service Auth) e adicionar `CF-Access-Client-Id`/
+  `CF-Access-Client-Secret` como secrets do GitHub + headers no
+  `check-headers.mjs`; (b) esperar pela Fase 3 (Access desligada) e só
+  então apontar o `url`.
 - [ ] CAA, HSTS preload, DNSSEC — checklist em `docs/dns-tls.md`, por
   executar/confirmar.
 - [ ] Alias de email (`hello@danielmala.co`) em vez do Hotmail pessoal —

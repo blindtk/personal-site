@@ -10,7 +10,7 @@ const { lang } = Astro.props;
 const dict = t(lang);
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
-const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug as keyof typeof dict.tools] }));
+const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug] }));
 ---
 
 <BaseLayout lang={lang} title={dict.tools.title} altUrl={routes.tools[other]} active="tools">

@@ -24,7 +24,10 @@ export function intToBinary(n, prefix) {
   return { network: grouped.slice(0, Math.max(sep, 0)), hosts: grouped.slice(Math.max(sep, 0)) };
 }
 
-/** Classifica o endereço (privado, público, loopback, …) usando chaves i18n. */
+/**
+ * Classifica o endereço (privado, público, loopback, …) usando chaves i18n.
+ * @returns {'loopback' | 'private' | 'linkLocal' | 'cgnat' | 'multicast' | 'public'}
+ */
 export function classify(ip) {
   const a = ip >>> 24;
   const b = (ip >>> 16) & 255;
@@ -47,7 +50,9 @@ export function calcSubnet(input) {
   const network = (ip & mask) >>> 0;
   const broadcast = (network | wildcard) >>> 0;
 
-  let hosts, firstHost, lastHost, special = null;
+  let hosts, firstHost, lastHost;
+  /** @type {'single' | 'p2p' | null} */
+  let special = null;
   if (prefix === 32) {
     hosts = 1;
     firstHost = lastHost = ip;

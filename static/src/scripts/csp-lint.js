@@ -113,6 +113,19 @@ function flagGenericToken(tok) {
  *   { level, id, dir?, token? } — id é a chave de mensagem no i18n.
  * - rows: linhas da tabela "diretiva a diretiva", já com os tokens marcados e
  *   as diretivas recomendadas em falta (verdict 'miss').
+ * @returns {{
+ *   grade: string,
+ *   counts: { bad: number, warn: number, ok: number, info: number, directives: number },
+ *   findings: { level: string, id: string, dir?: string, token?: string }[],
+ *   rows: {
+ *     name: string,
+ *     verdict: 'bad' | 'ok' | 'warn' | 'miss',
+ *     tokens: { t: string, flag: 'bad' | 'warn' | null }[],
+ *     missing: boolean,
+ *     recommend?: string,
+ *   }[],
+ *   empty: boolean,
+ * }}
  */
 export function analyzeCsp(text) {
   const { map, count } = parseCsp(text);
@@ -201,7 +214,7 @@ export function analyzeCsp(text) {
   findings.sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level]);
 
   // ---- linhas da tabela ----
-  const rows = buildRows(map, defaultIsNone);
+  const rows = buildRows(map);
 
   // ---- contagens e nota ----
   const counts = { bad: 0, warn: 0, ok: 0, info: 0, directives: count };
@@ -223,7 +236,7 @@ const RECOMMENDED = [
 ];
 
 /** Veredicto por diretiva presente, para a coluna da direita da tabela. */
-function verdictFor(name, dir, defaultIsNone) {
+function verdictFor(name, dir) {
   const flagTok = name.startsWith('script-src') ? flagScriptToken : flagGenericToken;
   const flags = dir.tokens.map((t) => flagTok(t));
   if (flags.includes('bad')) return 'bad';
@@ -234,7 +247,7 @@ function verdictFor(name, dir, defaultIsNone) {
   return 'ok';
 }
 
-function buildRows(map, defaultIsNone) {
+function buildRows(map) {
   const rows = [];
   const seen = new Set();
   for (const [name, dir] of map) {
@@ -245,7 +258,7 @@ function buildRows(map, defaultIsNone) {
     const tokens = dir.tokens.length
       ? dir.tokens.map((t) => ({ t, flag: flagTok(t) }))
       : [{ t: '(sem valor)', flag: null }];
-    rows.push({ name, verdict: verdictFor(name, dir, defaultIsNone), tokens, missing: false });
+    rows.push({ name, verdict: verdictFor(name, dir), tokens, missing: false });
     seen.add(name);
   }
   for (const { name, recommend } of RECOMMENDED) {
