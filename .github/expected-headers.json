@@ -1,6 +1,6 @@
 {
   "$comment": "Headers de segurança que a produção TEM de servir — a fonte de verdade do workflow Headers (.github/workflows/headers.yml). Cada entrada lista substrings obrigatórias (case-insensitive) no valor do header. Preenche 'url' com o URL de produção (*.pages.dev ou o domínio) para ativar a verificação.",
-  "url": "SET-ME: https://<projeto>.pages.dev/",
+  "url": "https://danielmala.co/",
   "headers": {
     "content-security-policy": ["default-src 'self'", "script-src", "object-src 'none'", "frame-src 'none'", "worker-src 'none'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'", "require-trusted-types-for 'script'"],
     "strict-transport-security": ["max-age=63072000", "includeSubDomains"],

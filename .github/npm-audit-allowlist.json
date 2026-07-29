@@ -1,0 +1,10 @@
+{
+  "$comment": "Exceções ao 'npm audit --audit-level=high' (ci.yml, via check-npm-audit.mjs). O npm audit, ao contrário do osv-scanner.toml, não tem mecanismo de exceção próprio — este ficheiro é o equivalente para essa gate. Cada entrada exige justificação e ignoreUntil (força revisão); passada a data, o script volta a falhar sozinho.",
+  "ignored": [
+    {
+      "ghsaId": "GHSA-hpcx-pg6g-x697",
+      "reason": "Falso positivo em astro 7.1.0 (release oficial do withastro/astro, publicado por trusted publishing OIDC, com provenance SLSA). Mesmo caso e mesma origem (ossf/malicious-packages) do MAL-2026-10726 já ignorado em osv-scanner.toml — ver esse ficheiro para o raciocínio completo e ossf/malicious-packages#1383 para o estado do advisory.",
+      "ignoreUntil": "2026-10-01"
+    }
+  ]
+}
