@@ -28,7 +28,7 @@ corrigidas num PR de seguimento, com testes a comprovar cada uma. Resumo:
 | #1 rate limiter esgota a quota do KV | **Corrigido** — cap global diário (`RATE_LIMIT_WRITE_CAP`, mesmo padrão do honeypot/CSP/vitals) | 2 testes novos (`node --test`) |
 | #2 nenhum teste corre em CI | **Corrigido** — `npm run test`/`npm test` em jobs próprios (`build` e `worker` novo) | 105 testes do Worker + 68 do static, verdes |
 | #3 lockfile do Worker não é analisado | **Corrigido** — OSV a cobrir os dois lockfiles; `npm audit` também no job `worker` | Ver achado extra abaixo — encontrou uma vulnerabilidade real |
-| #4 cron de headers não verifica nada | **Corrigido** — `url` no `expected-headers.json` já não é `SET-ME` | — |
+| #4 cron de headers não verifica nada | **POR CORRIGIR** — corrigido na ronda 1 e **revertido na ronda 2** (a Access bloqueia o CI). A ronda 3 confirmou que o workflow nunca verificou produção nem uma vez: 13 execuções, todas `schedule`, todas verdes-vazias, zero `deployment_status`. Ver ronda 3, N3 | Histórico de execuções na API do GitHub |
 | #5 `RATE_SALT` falha em silêncio | **Corrigido** — `console.error('rate_salt_missing', …)` quando o segredo falta | 1 teste novo |
 | #6 `compatibility_date` de 18 meses | **Corrigido**, com aviso — bump para `2026-01-01`; precisa da validação via deploy da branch (já documentada no `CLAUDE.md`) antes do merge | `wrangler deploy --dry-run` valida a config; o runtime real só se confirma com deploy |
 | #7 sem observabilidade no Worker | **Corrigido** — `[observability] enabled = true` | `wrangler deploy --dry-run` confirma que o TOML continua válido |
@@ -862,6 +862,12 @@ melhor do que o que a maioria das equipas produz.
 | Runtime & Cloudflare | 20 | 12 | 16 | **18** | Deploy automático confirmado (Workers Builds); WAF fechado por decisão explícita e documentada; uma regressão real (Access + `expected-headers.json`) apanhada e corrigida antes de causar dano. Desconto: CAA confirmado em falta por consulta DNS ao vivo |
 | Modelação de ameaças & documentação | 10 | 10 | 10 | **10** | Sem alterações — já estava no máximo |
 
+> **Nota da ronda 3 (validação independente):** os 94/100 abaixo foram
+> atribuídos contra a *tabela de correções*, não contra o código. Revalidado
+> a partir do código e da CI reais, o valor correto nesta data era **82/100**
+> — ver a secção "Ronda 3" no fim do documento para a repartição e para as
+> três lacunas materiais que esta pontuação não refletia.
+
 **94/100.** O que falta para os últimos 6 pontos, por ordem de esforço: CAA
 (sete linhas no DNS, cinco minutos — o mais barato de todos), triagem do
 Semgrep para `WARNING` (uma tarde), e branch protection/rate limiting nativo
@@ -910,3 +916,478 @@ próximo ano deve ser sobre **ligar, calibrar e desligar**, não sobre
 instalar. Se em julho de 2027 tiveres exatamente as mesmas ferramentas de
 hoje mais o Playwright e o CodeQL, e todas com sinal que leias de facto,
 esta foi a decisão certa.
+
+---
+
+# Ronda 3 (2026-07-29) — validação cética e independente
+
+> Âmbito: **não** repetir a auditoria. Verificar, a partir do código e da CI
+> reais, se o que está registado como corrigido continua corrigido; encontrar
+> o que as rondas 1 e 2 não apanharam; e dizer honestamente onde está o teto.
+>
+> Método: reinstalação limpa (`rm -rf node_modules && npm ci`) nos dois
+> projetos e execução de todas as gates da CI; leitura do código em vez da
+> tabela; consulta do histórico real de execuções dos workflows na API do
+> GitHub; e reprodução empírica de cada achado antes de o escrever.
+
+## 1. A CI corre verde — e isso continua verdade
+
+Tudo reproduzido neste ambiente, do zero:
+
+| Gate | Comando | Resultado |
+|---|---|---|
+| Instalação limpa (static) | `rm -rf node_modules && npm ci` | OK, 0 vulnerabilidades |
+| Instalação limpa (worker) | `rm -rf node_modules && npm ci` | OK, 0 vulnerabilidades |
+| Build | `npm run build` | OK |
+| Tipos | `npm run check` (`astro check`) | **0 erros, 0 warnings, 0 hints** (119 ficheiros) |
+| Testes static | `npm run test` | 68/68 (72/72 depois desta ronda) |
+| Testes worker | `npm test` | **105/105** |
+| Gate `npm audit` static | `check-npm-audit.mjs .` | OK |
+| Gate `npm audit` worker | `check-npm-audit.mjs .` | OK |
+| Worker compila/valida | `npx wrangler deploy --dry-run` | OK — 67,38 KiB / 18,40 KiB gzip, bindings todos resolvidos |
+| zizmor | `zizmor --offline --min-severity medium` | **Sem achados** (13 suprimidos) |
+| Semgrep (regras próprias) | `semgrep --severity ERROR --config .semgrep/` | 0 achados, 2 regras, 139 ficheiros |
+
+Duas ressalvas honestas sobre o que **não** consegui reproduzir aqui:
+
+- **Semgrep com as regras públicas** (`p/typescript`, `p/javascript`): o proxy
+  deste ambiente recusa `semgrep.dev` (403). Corri só `.semgrep/`. Isto não é
+  um defeito do repo — mas expôs um, ver **N4**.
+- **zizmor com auditorias online**: sem `GH_TOKEN`, as auditorias online
+  (commits impostores) não correm e o zizmor aborta. Com `--offline` passa
+  limpo. Na CI real o token existe, portanto lá corre completo.
+
+E o principal: **`main` está verde no GitHub**. As 30 execuções mais recentes
+(CI, Security, Labeler) concluíram com sucesso. A qualidade de construção da
+CI é real e não está em causa em nenhum ponto deste documento.
+
+## 2. Verificação das correções registadas como "Corrigida"
+
+Não confiei na tabela. Fui ao código, uma por uma:
+
+| Lacuna | Registo | Verificação da ronda 3 |
+|---|---|---|
+| #1 rate limiter esgota o KV | Corrigida | **Confirmada** — `RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 }` e `underCap` no caminho de escrita (`index.js:394-428`). Mas o padrão **não** foi aplicado a todos os caminhos de escrita — ver **N2** |
+| #2 nenhum teste corre em CI | Corrigida | **Confirmada** — jobs `build` e `worker` no `ci.yml`, 173 testes verdes |
+| #3 lockfile do Worker não é analisado | Corrigida | **Confirmada** — os dois `--lockfile` no `security.yml`; `check-npm-audit.mjs` nos dois jobs |
+| #4 cron de headers não verifica nada | Corrigida | **FALSA** — revertida na ronda 2 e, pior, o outro caminho também nunca funcionou. Ver **N3** |
+| #5 `RATE_SALT` falha em silêncio | Corrigida | **Confirmada** — `console.error('rate_salt_missing', route)` em `index.js:403` |
+| #6 `compatibility_date` velha | Corrigida | **Confirmada** — `2026-01-01`, validada por `--dry-run` |
+| #7 sem observabilidade | Corrigida | **Confirmada** — `[observability] enabled = true`, `head_sampling_rate = 1`, no fim do TOML (a posição importa e está certa) |
+| HSTS nas respostas do Worker | Corrigida | **Confirmada** — em `RESPONSE_SECURITY_HEADERS` (`index.js:448`) |
+| `wrangler deploy --dry-run` em CI | Adicionada | **Confirmada** — e funciona sem credenciais |
+| `astro check` em CI | Corrigida | **Confirmada** — 0/0/0 com reinstalação limpa |
+| Semgrep só a ERROR | Não alterada | **Confirmada como não alterada** |
+| Iscos: `routes` vs `DECOYS` | Nice-to-have | Listas **coincidem hoje**, mas há uma divergência de *forma* com consequência real — ver **N5** |
+
+**Nove das onze correções são reais e sólidas.** O trabalho das rondas 1 e 2
+não é teatro. O problema é outro: a pontuação de 94 foi atribuída a esta
+tabela, e a tabela tinha uma entrada falsa e não podia ver o que se passava
+fora dela.
+
+## 3. Lacunas NOVAS (o objetivo principal desta ronda)
+
+### N1 — RISCO ALTO, e estava **em produção**: a CSP bloqueia o JSON-LD em todas as páginas
+
+O `_headers` autoriza um hash SHA-256 do único `<script>` inline do site (o
+bloco JSON-LD `schema.org/Person` do `BaseLayout.astro`). Esse hash é escrito
+à mão e o conteúdo do bloco vem de `src/config.ts`.
+
+Reproduzido, não deduzido — recalculado sobre o `dist/` desta build:
+
+```
+hash do bloco JSON-LD realmente construído : sha256-/RztAGp2rIIt3aqLYwLYPT9MWtDrHCcQxZQBSY9sugY=
+hash declarado no _headers                 : sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA=
+```
+
+Não coincidem — em **59 de 59 páginas**. Causa raiz identificada com precisão:
+o commit **`3461d70` ("Drop 'Assis' from displayed name across site",
+2026-07-24)** mudou `SITE.name` de `Daniel Assis Malaco` para `Daniel Malaco`.
+Prova de que é exatamente esse commit: recalculando o hash com o nome antigo,
+dá **exatamente** o hash que está no `_headers`.
+
+Consequência: desde 2026-07-24, todos os browsers bloqueiam o bloco JSON-LD e
+emitem um `securitypolicyviolation` **em cada página, em cada visita**. Um site
+cujo argumento central é "CSP estrita, zero violações" estava a violar a sua
+própria CSP em todas as páginas — e passou por **duas rondas de correções de
+segurança** (PRs #126, #128, #129, todos posteriores a 24/07) sem ninguém dar
+por isso.
+
+O mais interessante é que este documento **previu este cenário exato**, na
+secção 3, como argumento para o Playwright: *"uma alteração ao `SITE.name` no
+`config.ts`, quebra isto — e o `check-headers.mjs` não apanha"*. Previu-o no
+condicional. Já tinha acontecido no indicativo, três dias antes.
+
+Nenhum controlo existente podia apanhá-lo:
+- o `check-headers.mjs` compara **substrings** (`"script-src"` está lá; um hash
+  errado passa) — e, além disso, nunca chegou a correr contra produção (N3);
+- o `csp-lint.test.mjs` testa a **ferramenta** de análise de CSP de
+  `/ferramentas/`, não a política do próprio site — confusão fácil de fazer
+  ao olhar para a lista de ficheiros de teste e concluir "a CSP tem testes";
+- `astro check` e o build não sabem nada de CSP.
+
+**Corrigido nesta ronda**, e com rede de segurança: hash atualizado em
+`static/public/_headers` e `docs/security-headers.md`, mais um teste de
+regressão novo (`static/test/csp-inline.test.mjs`) que recalcula os hashes a
+partir do `dist/` e compara com o `_headers`. Verificado nos dois sentidos —
+passa com o hash correto e **falha com o hash antigo** (controlo negativo
+executado, não presumido).
+
+Esse teste cobre também o segundo lever da arquitetura: falha se aparecer
+qualquer `<script>` inline *executável* no build (ou seja, se
+`build.inlineStylesheets: 'never'` + `vite.build.assetsInlineLimit: 0`
+deixarem de garantir o "zero inline"), e se a `script-src` alguma vez ganhar
+`'unsafe-inline'`/`'unsafe-eval'`.
+
+**Isto é o controlo que a secção 3 queria do Playwright — sem Playwright, sem
+browser, sem dependência nova, em ~30 ms dentro do `node --test` que já
+corre.** Não substitui o Playwright para violações em *runtime* (recursos que
+a página pede depois de carregar), mas cobre a fragilidade concreta que
+partiu, que é a que já falhou duas vezes.
+
+### N2 — RISCO MÉDIO-ALTO: o `?refresh=1` escapa a todos os caps de escrita do KV
+
+A lacuna #1 foi corrigida no rate limiter. O mesmo padrão **não** foi aplicado
+a dois caminhos de escrita que aceitam input do visitante:
+
+- `index.js:640` — `/api/scan?refresh=1` → `env.KV.put('cache:scan', …)`
+- `index.js:743` — `/api/cf-stats?refresh=1` → `env.KV.put('cache:cfstats', …)`
+
+Ambos escrevem **diretamente**, fora de `underCap`. O rate limit é de 3 por
+10 minutos por cliente — o que dá, por IP e por rota, **432 escritas/dia**;
+**864/dia** somando as duas. O teto do plano Free é ~1.000 escritas/dia **para
+a conta inteira**. Um único IP, a respeitar o rate limit que tu definiste,
+consome ~86% do orçamento diário de escrita da conta. Com dois IPs, esgota-o.
+
+É a **mesma classe** da lacuna #1 — e com a mesma consequência: esgotado o
+orçamento, o honeypot deixa de registar, os vitals param, as violações CSP
+perdem-se e o snapshot `fw:<dia>` não é escrito. As features de deteção
+desligam-se sozinhas, sem que nada dispare.
+
+Ironia repetida: o cap do rate limiter (300/dia) foi calibrado com cuidado
+para caber no orçamento — e depois estes dois caminhos gastam quase o triplo
+disso sem cap nenhum.
+
+Correção (código, ~6 linhas): envolver os dois `put` num `underCap` com um
+`REFRESH_WRITE_CAP` próprio, exatamente como o honeypot/CSP/vitals. Degrada o
+`?refresh=1` sob abuso (passa a servir a cache existente) em vez de gastar o
+orçamento do core. **Não a apliquei**: mexe no comportamento do Worker em
+produção e o `CLAUDE.md` exige validação por deploy da branch — é decisão e
+teste do dono do repo, não uma correção que se empurra às cegas.
+
+### N3 — RISCO MÉDIO: a verificação de headers **nunca correu**, nem uma única vez
+
+A ronda 2 reverteu o `url` para `SET-ME` por boa razão (a Access bloqueia o
+CI), e a secção 6 deste documento diz que o caminho `deployment_status` *"já
+tens, e funciona"*. Fui ver o histórico real de execuções do workflow
+`Headers` na API do GitHub:
+
+- **13 execuções no total**, desde 2026-07-17.
+- **13 de 13 são `schedule`.**
+- **Zero são `deployment_status`.** Nunca aconteceu nenhuma.
+- Todas verdes. Todas vazias: a última (`30438576915`) gastou **1 segundo** no
+  passo de verificação — o tempo de ler o JSON, ver `SET-ME` e sair com um
+  `::notice::`.
+
+Ou seja: **os dois caminhos estão mortos, não um**. O controlo mais valioso do
+repo (verificar em produção o que se promete no código) nunca verificou nada,
+e produz um ✅ diário há 13 dias. Um job que passa sempre e não testa nada é
+pior do que não existir — é a definição do anti-padrão que este próprio
+documento usa para recusar o OWASP ZAP ("treinar-te a ignorar alertas").
+
+E é o mesmo controlo que, se funcionasse, teria apanhado o N1? **Não** — e é
+importante dizê-lo: o `expected-headers.json` compara substrings, portanto
+mesmo a correr contra produção teria passado com o hash errado. Duas lacunas
+independentes que se sobrepõem no mesmo ponto cego.
+
+Porque é que o `deployment_status` nunca disparou é a única coisa que não
+consigo determinar daqui — a integração Git do Pages pode não estar a criar
+*deployments* no GitHub, ou o repo ser privado pode estar a limitar o evento.
+É verificável em dois minutos no dashboard.
+
+### N4 — RISCO MÉDIO (cadeia de fornecimento): as regras do Semgrep não estão pinadas
+
+Este repo pina **tudo**: actions por commit SHA, `semgrep==1.171.0` e
+`zizmor==1.28.0` por versão exata, `minimumReleaseAge: '3 days'`, um
+`customManager` no Renovate só para seguir os `pipx install`. É uma postura
+deliberada e coerente — com uma exceção que ninguém notou:
+
+```
+semgrep scan … --config p/typescript --config p/javascript --config .semgrep/
+```
+
+`p/typescript` e `p/javascript` são **URLs remotos, mutáveis, sem versão**,
+descarregados de `semgrep.dev` a cada execução, e cujo conteúdo é depois
+executado como regras sobre o teu código. É exatamente a categoria de risco
+que a política de pinar por SHA existe para eliminar — só que aplicada às
+*regras* em vez das *ferramentas*, e por isso passou despercebida.
+
+Há um segundo efeito, que reproduzi por acidente: quando `semgrep.dev` está
+inacessível, o job **falha com exit 2** e bloqueia todos os PRs. É uma
+dependência de rede de terceiros no caminho crítico de merge, sem fallback.
+
+Correção (código): passar as duas regras públicas a locais (versioná-las em
+`.semgrep/`, ou fixar `--config` a um tag/commit concreto do
+`semgrep-rules`), ou aceitar explicitamente o risco e documentá-lo. O mínimo
+honesto é uma linha de comentário no `security.yml` a dizer "estas duas não
+estão pinadas, e porquê" — hoje o ficheiro dá a impressão contrária.
+
+### N5 — RISCO MÉDIO-BAIXO: `/phpmyadmin/*` perde o sinal e denuncia o Worker
+
+Divergência de *forma* entre os dois sítios onde os iscos estão declarados:
+
+| `wrangler.toml` (`routes`) | `index.js` (`DECOYS`) |
+|---|---|
+| `danielmala.co/phpmyadmin/*` (glob) | `'/phpmyadmin/'` (string exata) |
+
+Os outros quatro iscos coincidem exatamente. Este não: o glob faz o Worker
+receber `/phpmyadmin/index.php`, `/phpmyadmin/setup.php` — **os paths que os
+scanners de phpMyAdmin realmente pedem** — mas `DECOYS.has()` devolve `false`
+para eles. Duas consequências:
+
+1. **Perde-se o sinal.** As tentativas mais comuns contra este isco não são
+   registadas no honeypot. O painel de Threat Intelligence sub-representa esta
+   técnica sem que nada o indique.
+2. **Denuncia o Worker.** Não estando nos `DECOYS`, o pedido cai no fim do
+   router e recebe `json({ error: 'not_found' }, 404)` — um 404 **JSON**, com
+   `Vary: Origin` e os headers do Worker, em vez do 404 **HTML** do site que o
+   `renderNotFoundHtml()` existe precisamente para imitar. O comentário no
+   código diz o objetivo por palavras próprias: *"um 404 visualmente igual ao
+   404 real do site — texto simples era um 'tell' mais fácil de distinguir"*.
+   O `tell` foi reintroduzido por uma barra e um asterisco.
+
+Correção (código, 1 linha): fazer a verificação por prefixo para os iscos com
+glob (ex.: `path.startsWith('/phpmyadmin/')`), ou alinhar as duas declarações.
+A nice-to-have "gerar uma lista da outra, ou um teste que compare as duas" que
+está na secção 2 teria apanhado isto — e continua por fazer.
+
+### N6 — RISCO MÉDIO (cadeia de fornecimento): `.mcp.json` entrou sem passar por revisão de segurança
+
+O `.mcp.json` foi adicionado no **PR #127**, *depois* da auditoria original, e
+não é mencionado em lado nenhum deste documento — nem no inventário, nem no
+modelo de ameaça. Regista **sete servidores MCP remotos da Cloudflare**,
+versionados no repo e portanto **de âmbito de projeto**: são propostos a
+qualquer pessoa (ou agente) que abra o repositório.
+
+O que merece atenção não é o ficheiro em si — os servidores são oficiais da
+Cloudflare e o transporte é HTTPS. É o que fica autorizado depois do OAuth:
+o `cloudflare-bindings` **cria e apaga namespaces KV, bases de dados D1 e
+buckets R2**; o `cloudflare-audit-logs` lê os registos de auditoria da conta.
+Isto é um caminho de **escrita na conta Cloudflare a partir do contexto do
+repositório** — precisamente a propriedade que a secção 1 elogia como o
+detalhe que "quase ninguém acerta" (*"não existe nenhum token da Cloudflare
+nos segredos do GitHub"*). O token continua a não existir no GitHub Actions,
+o que se mantém correto; mas passou a haver um caminho paralelo, por OAuth
+interativo, que o modelo de ameaça não contempla.
+
+Não é uma vulnerabilidade — é uma superfície nova que entrou sem a mesma
+disciplina de decisão que o `dynamic/PLAN.md` impõe a tudo o resto.
+Ação: registar a decisão (porquê estes sete, porquê `bindings` com escrita),
+e considerar reduzir a lista aos de leitura que usas de facto.
+
+### N7 — RISCO BAIXO: token da Access reencaminhado em redirects, e não documentado
+
+`runScan()` (`index.js:361-369`) envia `CF-Access-Client-Id` e
+`CF-Access-Client-Secret` com `redirect: 'follow'`. A especificação Fetch
+retira o `Authorization` em redirects cross-origin, mas **não** retira
+cabeçalhos personalizados — estes seguem para onde o redirect apontar.
+Como `SCAN_TARGET` é uma var fixa do teu próprio domínio, o risco prático hoje
+é baixo; deixa de ser se algum dia o alvo passar a ser configurável, ou se
+existir um open redirect no site.
+
+A par disso: **estes dois segredos não estão documentados em lado nenhum.** O
+`wrangler.toml` lista `RATE_SALT`, `NVD_API_KEY` e `CF_API_TOKEN` com o
+detalhe todo — `ACCESS_CLIENT_ID`/`ACCESS_CLIENT_SECRET` só existem no código.
+Quem for rodar segredos pela lista do `wrangler.toml` não sabe que estes
+existem. Correção: `redirect: 'manual'` (ou validar o destino) e três linhas
+de documentação.
+
+### N8 — confirmado por corrigir: sem `[limits]` no `wrangler.toml`
+
+Recomendação nº 4 da secção 5, nunca aplicada. Confirmado ausente. Continua
+barata (`[limits] cpu_ms = …`) e continua a valer pelo caminho patológico do
+fan-out do threat-intel.
+
+## 4. Os três itens "em falta" — estado confirmado
+
+| Item | Estado na ronda 3 |
+|---|---|
+| **CAA no DNS** | **Não verificável a partir deste ambiente** — o proxy recusa DNS-over-HTTPS (`dns.google`, `cloudflare-dns.com`: 403) e não há resolver disponível. **Mantido na lista** com a confirmação da ronda 2 (2026-07-29, no mesmo dia): ausente. Não fabrico uma confirmação que não fiz |
+| **Triagem do Semgrep para `WARNING`** | **Continua por fazer**, e agora com um obstáculo a mais: não consigo medir o volume real de `WARNING` sem acesso a `semgrep.dev` (ver N4). A triagem e o pinning das regras devem ser feitos **na mesma passagem** — não faz sentido calibrar sobre regras que podem mudar sozinhas |
+| **Branch protection** | **Confirmado bloqueado, e a causa também.** Consultei a API: `"private": true`, `"owner.type": "User"`. Repositório privado em conta pessoal — GitHub exige Team/Enterprise. Não é erro de configuração, é limite de plano, tal como registado |
+
+## 5. Cloudflare — o que mudou e o que não consegui ver
+
+Do lado do **código**, tudo o que a ronda 2 registou continua verdade e foi
+reverificado: `workers_dev = false`, `preview_urls = false`,
+`compatibility_date = "2026-01-01"`, `[observability]` ligada e na posição
+certa do TOML, `[triggers]` a 30 min, CORS com allowlist e `Vary: Origin`,
+zero SSRF (nenhum `fetch` com destino derivado de input), zero-PII coerente,
+`RESPONSE_SECURITY_HEADERS` com HSTS. O `--dry-run` resolve todos os bindings.
+
+Do lado do **dashboard** (Workers Builds, WAF, Access, regras de zona, rate
+limiting de zona), tenho de ser explícito: **não consegui verificar nada.**
+Os sete servidores MCP da Cloudflare declarados no `.mcp.json` exigem
+autorização OAuth e esta sessão é não-interativa — não há forma de a
+completar aqui. Precisam de ser autorizados nas definições de conectores do
+claude.ai (ou via `/mcp` numa sessão interativa) para que uma sessão futura
+os possa usar.
+
+Portanto, para o ponto 6 da tua pergunta ("verifica se alguma coisa mudou
+desde então"): **não sei, e ninguém pode saber a partir do repositório.** O
+que posso dizer é que nada no código contradiz o que está registado. As
+alterações de dashboard que interessa confirmar estão na lista da secção 8.
+
+## 6. Modelo de ameaça — o que a ronda 3 muda
+
+A tabela da secção 7 continua boa. Três linhas mudam de estado, e uma é nova:
+
+| Ameaça | Antes | Agora | Porquê |
+|---|---|---|---|
+| Regressão de CSP por atualização do Astro | Média-alta / **Não coberta** | **Já ocorreu** (por alteração de conteúdo, não do Astro) / **Coberta** | N1. E a causa real não foi o Astro — foi mudar um nome no `config.ts`. O vetor era mais banal do que o modelado |
+| Esgotamento da quota de escrita do KV | Média / **Descoberta** (#1) | Média / **Parcialmente coberta** | N2: o rate limiter foi capado, o `?refresh=1` não |
+| Deriva de headers fora de deploy | Coberta pelo cron | **Não coberta** | N3: o controlo nunca correu |
+| *(nova)* Escrita na conta Cloudflare por OAuth de MCP | — | Baixa / **Alto** | N6: caminho que não existia quando o modelo foi escrito |
+
+**O "ataque mais provável" mantém-se** (varrimento de massa, inofensivo) e o
+**"de maior impacto" também** (takeover da conta Cloudflare — com MFA por
+chave de hardware confirmada, está bem coberto).
+
+Mas o **"abuso mais realista"** deve ser reescrito. O documento dizia: alguém
+curioso a martelar `/api/mirror`. Com o rate limiter já capado, isso agora
+custa pouco. O caminho realista passou a ser **`?refresh=1`** (N2): é um botão
+visível na interface, convida ao clique, não tem cap, e três cliques a cada
+dez minutos em duas páginas consomem o orçamento de escrita da conta inteira.
+Continua a valer a frase original — *"o teu site convida ativamente o teste
+que o parte"* — só que o convite mudou de sítio.
+
+E há uma lição de método que vale mais do que qualquer linha da tabela: **as
+três lacunas materiais desta ronda (N1, N2, N3) são todas de *execução*, não
+de cobertura.** Um hash desatualizado, um cap não aplicado a dois sítios, um
+workflow que sai verde sem testar. Exatamente o diagnóstico que a secção 9 já
+tinha feito — *"controlos que já escreveste não estão ligados"* — só que a
+conclusão certa a tirar dele não era "ligar e acabou": é que **um controlo que
+não tem um teste negativo a prová-lo continua desligado, mesmo depois de o
+ligares**. Foi por isso que corri o controlo negativo no teste do N1.
+
+## 7. Maturidade por área — reavaliada, com as discordâncias
+
+| Área | Ronda 2 | **Ronda 3** | Porquê discordo (ou não) |
+|---|---|---|---|
+| Gestão de segredos | 8 | **8** | Concordo. Sem segredos no repo, sem token CF no GitHub, MFA por hardware, gitleaks nos dois lados, `rate_salt_missing` a fazer barulho. Desconto pequeno: dois segredos da Access existem só no código (N7) |
+| Dependências | 9 | **9** | Concordo. Dois lockfiles cobertos, expiração obrigatória nas exceções, `check-npm-audit.mjs` a fazer cumprir a data. Reverificado do zero, verde |
+| Cadeia de fornecimento | 9 | **7** | **Discordo.** Pinar tudo por SHA e depois puxar as regras de SAST de um URL mutável é uma inconsistência real (N4), e o `.mcp.json` entrou sem revisão (N6) |
+| Análise estática & testes | 9,5 | **8** | **Discordo.** 173 testes verdes e `astro check` a 0/0/0 são reais e valem muito. Mas o controlo de segurança mais *load-bearing* do site não tinha teste nenhum e **estava partido em produção** (N1). Sobe para 8 com o teste desta ronda; sem ele seria 6 |
+| CI/CD | 9,5 | **8** | **Discordo.** A construção é de decil de topo e mantenho o elogio. Mas 13 verdes consecutivos que não testam nada (N3) é precisamente o anti-padrão que o documento usa para recusar ferramentas |
+| Específico da Cloudflare | 9 | **7,5** | **Discordo.** Muito bom no desenho; N2 (caps por aplicar), N5 (glob vs exato) e N8 (`[limits]`) são todos concretos e todos por corrigir |
+| Segurança em runtime | 8 | **7** | Parcialmente. `[observability]` resolveu a retenção de logs, que era a maior lacuna. Mas continua sem alertas e sem *smoke test* — e a única verificação de produção que existia nunca correu |
+| Lógica de negócio | 8 | **8** | Concordo. O `PLAN.md` continua excecional. N2 é um lapso de aplicação de um padrão que o próprio projeto inventou e domina — não uma falha de raciocínio |
+
+## 8. Pontuação final
+
+| Área | Peso | Ronda 2 (declarada) | **Real, antes da ronda 3** | **Depois da ronda 3** |
+|---|---|---|---|---|
+| Segredos & cadeia de fornecimento | 20 | 19 | **17** | 17 |
+| Dependências | 15 | 14 | **14** | 14 |
+| Análise estática & testes | 20 | 19 | **14** | **17** |
+| CI/CD | 15 | 14 | **12** | 12 |
+| Runtime & Cloudflare | 20 | 18 | **17** | 17 |
+| Modelação de ameaças & documentação | 10 | 10 | **8** | **9** |
+| **Total** | **100** | **94** | **82** | **86** |
+
+Duas justificações que devo, porque são as que doem:
+
+**Porque é que não são 94.** Os 94 mediram a *tabela de correções*, e a tabela
+estava incompleta por construção: não podia listar o que ninguém tinha
+procurado. Com uma quebra de CSP viva em todas as páginas desde 24/07, dois
+caminhos de escrita sem cap da mesma classe declarada fechada, e o controlo de
+produção a nunca ter corrido, 94 não era defensável. Isto não desvaloriza as
+rondas 1 e 2 — nove das onze correções são reais, e verifiquei-as uma a uma.
+
+**Porque é que a documentação desce de 10 para 8** (e volta a 9). O
+`dynamic/PLAN.md` continua a merecer nota máxima. Mas este documento —
+o artefacto a partir do qual tu decides — afirmava que a lacuna #4 estava
+corrigida quando tinha sido revertida, e que o caminho `deployment_status`
+funcionava quando nunca disparou. Documentação que declara um controlo a
+funcionar é pior do que documentação em falta: gera confiança calibrada em
+factos errados. As duas entradas ficaram corrigidas no corpo do documento.
+
+### Os 100 são um alvo real? Não. E o teto também não é 94.
+
+Com honestidade, e é a resposta direta à tua pergunta:
+
+- **~4 pontos** estão presos a **decisões de plano/custo** que nenhuma
+  correção resolve: branch protection (GitHub Team/Enterprise, ou tornar o
+  repo público), rate limiting de zona além de 1 regra (Cloudflare Pro), e
+  os datasets agregados de firewall que o Free não expõe. Confirmado, não
+  suposto.
+- **~2 pontos** estão presos a **trade-offs que já recusaste em consciência**:
+  o WAF que bloqueia fora de PT (recusaste abri-lo para cobrir viagens) e o
+  deploy manual do Worker (recusaste pôr um token da Cloudflare no GitHub — e
+  fizeste bem: é dos melhores raciocínios de todo o repo).
+- **~2 pontos** dependem de uma execução perfeita e sustentada em runtime
+  (alertas, *smoke tests*, verificação contínua) que num site pessoal só se
+  justifica se te der prazer construí-la.
+
+**O teto realista sem gastar dinheiro nem reverter decisões conscientes é
+92-94.** O que está entre os 86 de hoje e esses 92-94 é trabalho concreto e
+identificado — está tudo na secção seguinte, e cabe numa tarde e meia. Não
+inventei nada para preencher a diferença: se a lista abaixo estiver feita e o
+número parar nos 92, é essa a nota certa, e é uma nota excelente.
+
+Um último enquadramento, para o número não ser lido de forma errada: 86 aqui
+continua a ser altíssimo. A média nesta categoria anda nos 25-35. A diferença
+entre este projeto e um repositório pessoal típico não é de grau, é de género.
+
+## 9. Roteiro — por esforço/impacto
+
+### A. Código — corrigível no repositório
+
+| # | O quê | Esforço | Impacto | Estado |
+|---|---|---|---|---|
+| 1 | **Hash da CSP + teste de regressão** (N1) | — | **Alto** | ✅ **Feito nesta ronda** |
+| 2 | **`underCap` nos dois `?refresh=1`** (N2) | ~15 min | **Alto** | Por fazer — precisa de deploy da branch para validar |
+| 3 | **`/phpmyadmin/` por prefixo** (N5) | ~5 min | Médio | Por fazer |
+| 4 | **Teste que compara `routes` ↔ `DECOYS`** | ~15 min | Médio | Por fazer — impede o N5 de voltar |
+| 5 | **Pinar/versionar as regras do Semgrep** (N4) | ~30 min | Médio | Por fazer — fazer junto com a triagem `WARNING` |
+| 6 | **`redirect: 'manual'` no `runScan` + documentar `ACCESS_CLIENT_*`** (N7) | ~10 min | Baixo | Por fazer |
+| 7 | **`[limits] cpu_ms`** (N8) | ~2 min | Baixo | Por fazer |
+| 8 | **Triagem do Semgrep para `WARNING`** | ~1 tarde | Médio | Por fazer — o item antigo, agora com o N4 acoplado |
+| 9 | **Registar a decisão do `.mcp.json` no `PLAN.md`** (N6) | ~15 min | Baixo-médio | Por fazer |
+
+Os itens 2 a 7 juntos são **menos de uma hora e meia** e fecham três das
+quatro lacunas novas com peso. Se só fizeres um, faz o **2**.
+
+### B. Dashboard / DNS — só o dono do repo pode confirmar ou agir
+
+| # | O quê | Esforço | Impacto |
+|---|---|---|---|
+| 1 | **Registo CAA** (DNS → Records → Add record) | 5 min | Alto por minuto investido — o mais barato da lista inteira |
+| 2 | **Investigar porque o `deployment_status` nunca dispara** (N3) | 10 min | Alto — devolve o controlo mais valioso do repo |
+| 3 | **Access Service Token para o CI**, ou desligar a Access no lançamento → reativar o `url` do `expected-headers.json` | 20 min | Alto — sem isto o N3 fica meio resolvido |
+| 4 | **Autorizar os conectores MCP da Cloudflare** (definições do claude.ai) | 5 min | Médio — sem isto nenhuma sessão pode verificar o dashboard |
+| 5 | **"Build watch paths" dos Workers Builds** de `*` → `dynamic/worker/**` | 2 min | Baixo — afinação, já registada na ronda 2 |
+| 6 | **Rever a lista de servidores no `.mcp.json`** (N6) | 10 min | Médio |
+
+### C. Custo / plano — fora de qualquer correção
+
+| O quê | Bloqueio | Recomendação |
+|---|---|---|
+| Branch protection / Rulesets | Repo privado em conta pessoal (confirmado na API) | **Tornar o repo público** resolve isto *e* desbloqueia CodeQL e CodeRabbit grátis — continua a ser a decisão de maior alavancagem de todo o documento. Pagar Team só por isto, não |
+| Rate limiting de zona (>1 regra) | Cloudflare Free | Não vale. O `underCap` do item A2 resolve o problema real sem custo |
+| Firewall agregado (`…Groups`) | Cloudflare Pro | Não vale — já agregas no Worker, e funciona |
+| WAF mais permeável para cobrir viagens | Decisão consciente já tomada | **Não mexer.** Registada, justificada, e o custo é teu e conhecido |
+
+### O que continuo a recomendar que **não** faças
+
+Nada mudou aqui, e a ronda 3 reforça-o: continuas **saturado** em scanners de
+dependências e SAST. A lição desta ronda é o oposto de instalar — três
+lacunas materiais, zero que uma ferramenta nova teria apanhado, e a que mais
+custou (N1) foi fechada com **28 linhas de `node --test` e nenhuma dependência
+nova**. O teste que faltava não era o Playwright: era um teste sobre o
+artefacto que já construías.
+
+Se em julho de 2027 este repo tiver exatamente as mesmas ferramentas de hoje,
+mais uns quantos testes pequenos como este a defender cada controlo que
+importa — e cada um deles verificado com um controlo negativo, não presumido —
+foi o ano certo.
