@@ -32,6 +32,13 @@ danielmala.co.  IN  CAA  0 iodef "mailto:daniel_malaco@hotmail.com"
   <https://developers.cloudflare.com/ssl/reference/certificate-authorities/>
 - Verificar depois: `dig CAA danielmala.co +short`
 
+> **Confirmado em produção (2026-07-29, revisão de segurança):** a consulta
+> `dig CAA danielmala.co` devolve **sem resposta** — os registos acima ainda
+> não foram criados. Enquanto isto ficar por fazer, qualquer CA publicamente
+> confiada pode emitir um certificado para o domínio, sem restrição.
+> DMARC/SPF já confirmados corretos na mesma verificação (`p=reject` estrito,
+> `-all`) — só falta mesmo o CAA desta lista.
+
 ## 2. Redirect HTTP → HTTPS
 
 - Cloudflare Pages já força HTTPS no `*.pages.dev` e nos custom domains.
