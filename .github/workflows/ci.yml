@@ -36,6 +36,56 @@ jobs:
 
       - run: npm run build
 
+      # Lógica pura (SubnetCalc, EXIF, MD5, encoding, geo, password, …) já
+      # tinha testes escritos (node --test) que nenhum workflow corria — só
+      # o pull_request_template.md pedia ao humano que confirmasse à mão.
+      # Descoberto numa revisão de segurança (2026-07): um controlo que
+      # depende de disciplina não é um controlo.
+      - run: npm run test
+
       # Falha em advisories high/critical (o que nos apanhou desatualizados
       # da última vez); moderate/low com fix indisponível não bloqueiam CI.
-      - run: npm audit --audit-level=high
+      # Passa por check-npm-audit.mjs (não pelo `npm audit` cru): o npm
+      # audit não tem mecanismo de exceção próprio, e um único falso
+      # positivo (GHSA-hpcx-pg6g-x697/MAL-2026-10726, astro 7.1.0 —
+      # descoberto ao ligar este mesmo passo) bloqueava todos os PRs sem
+      # forma declarativa de o ignorar. Ver .github/npm-audit-allowlist.json.
+      - run: node ../.github/scripts/check-npm-audit.mjs .
+
+  worker:
+    # Job próprio: package.json/lockfile e runtime (Cloudflare Workers)
+    # separados do static — mesma lógica do osv-scanner (2 lockfiles) e do
+    # labeler (área "dynamic" própria).
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: dynamic/worker
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: dynamic/worker/package-lock.json
+
+      - run: npm ci
+
+      # Lógica pura do Worker (sanitize, ratelimit, kvcap, aggregate, …) e
+      # os testes de integração do fetch() sem rede — mesma lacuna do job
+      # `build`, mesma correção.
+      - run: npm test
+
+      - run: node ../../.github/scripts/check-npm-audit.mjs .
+
+      # Gate sem segredos: valida que o Worker compila, o wrangler.toml é
+      # válido (nenhum binding em falta, nenhuma chave TOML engolida por
+      # engano — já aconteceu neste ficheiro) e o bundle fica dentro do
+      # limite de tamanho, SEM precisar do token da Cloudflare no CI. Não
+      # substitui o deploy real (continua manual, ver dynamic/PLAN.md) — é
+      # só o gate de "isto pelo menos monta-se" antes de chegar lá.
+      - run: npx wrangler deploy --dry-run

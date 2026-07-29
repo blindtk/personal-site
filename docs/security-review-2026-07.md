@@ -18,6 +18,67 @@ apanharia.
 
 ---
 
+## Estado das correções (follow-up, mesma revisão)
+
+As lacunas de risco alto e várias de risco médio identificadas abaixo foram
+corrigidas num PR de seguimento, com testes a comprovar cada uma. Resumo:
+
+| Lacuna | Estado | Como foi verificado |
+|---|---|---|
+| #1 rate limiter esgota a quota do KV | **Corrigido** — cap global diário (`RATE_LIMIT_WRITE_CAP`, mesmo padrão do honeypot/CSP/vitals) | 2 testes novos (`node --test`) |
+| #2 nenhum teste corre em CI | **Corrigido** — `npm run test`/`npm test` em jobs próprios (`build` e `worker` novo) | 105 testes do Worker + 68 do static, verdes |
+| #3 lockfile do Worker não é analisado | **Corrigido** — OSV a cobrir os dois lockfiles; `npm audit` também no job `worker` | Ver achado extra abaixo — encontrou uma vulnerabilidade real |
+| #4 cron de headers não verifica nada | **Corrigido** — `url` no `expected-headers.json` já não é `SET-ME` | — |
+| #5 `RATE_SALT` falha em silêncio | **Corrigido** — `console.error('rate_salt_missing', …)` quando o segredo falta | 1 teste novo |
+| #6 `compatibility_date` de 18 meses | **Corrigido**, com aviso — bump para `2026-01-01`; precisa da validação via deploy da branch (já documentada no `CLAUDE.md`) antes do merge | `wrangler deploy --dry-run` valida a config; o runtime real só se confirma com deploy |
+| #7 sem observabilidade no Worker | **Corrigido** — `[observability] enabled = true` | `wrangler deploy --dry-run` confirma que o TOML continua válido |
+| HSTS ausente nas respostas do Worker | **Corrigido** — adicionado a `RESPONSE_SECURITY_HEADERS` | testes existentes continuam verdes |
+| `wrangler deploy --dry-run` como gate de CI | **Adicionado** — funciona sem nenhum segredo da Cloudflare | Confirmado neste ambiente, sem credenciais |
+| `astro check` em CI | **Não aplicado** — ver nota abaixo | `npx astro check` correu localmente |
+| Semgrep só a `ERROR` | **Não alterado** — precisa de uma passagem de triagem que não coube neste PR | — |
+
+### Dois achados que não estavam na lista original
+
+A correção expôs dois problemas reais e atuais que a revisão inicial não
+tinha apanhado (não são hipotéticos — reproduzidos neste ambiente):
+
+1. **`dynamic/worker/package-lock.json` tinha uma vulnerabilidade high
+   real** (não um falso positivo): `sharp` `<0.35.0`, herdada via
+   `miniflare`/`wrangler` (GHSA-f88m-g3jw-g9cj, CVEs de libvips). Corrigido
+   com uma atualização real e dentro do range (`wrangler@4.112.0` →
+   `4.115.0`, ainda satisfaz `^4.0.0`), não com uma exceção — é exatamente o
+   caso que o `renovate.json5` já previa ("sharp/libvips puxado pelo
+   wrangler"), só que ninguém o estava a verificar até agora.
+2. **`zizmor==1.27.0`, a versão fixada em `security.yml`, foi retirada do
+   PyPI por um advisory de segurança** (GHSA-f42p-wjw5-97qh) — descoberto ao
+   tentar reproduzir o job localmente para validar as alterações. O
+   `renovate.json5` já tem um `customManager` para isto (regex + datasource
+   `pypi`, mesmo padrão do semgrep), mas ainda não tinha aberto PR. Corrigido
+   para `1.28.0` diretamente neste PR.
+
+Também descoberto: `npm audit --audit-level=high` já estava a falhar no
+`main` *antes* de qualquer alteração deste PR, pelo mesmo falso positivo do
+`astro@7.1.0` já documentado em `osv-scanner.toml` (MAL-2026-10726) — só que
+o `npm audit` não tem mecanismo de exceção próprio, ao contrário do
+OSV-Scanner. Corrigido com `.github/scripts/check-npm-audit.mjs` +
+`.github/npm-audit-allowlist.json`, que replica o padrão do
+`osv-scanner.toml` (justificação + `ignoreUntil`) para esta gate.
+
+### Porque não `astro check` em CI
+
+`npx astro check` (depois de instalar `@astrojs/check` + `typescript`, que
+o `package.json` não tinha) devolve **36 erros de tipo pré-existentes**,
+espalhados por `ExifTool.astro`, `PasskeyLab.astro`, `SubnetCalc.astro` e
+outros — nada relacionado com as lacunas de segurança desta revisão.
+Adicionar isto como gate de CI agora bloquearia todos os PRs futuros por
+dívida técnica não relacionada, o que é o mesmo anti-padrão criticado no
+ZAP/Nuclei mais abaixo: uma gate que começa vermelha treina toda a gente a
+ignorá-la. Por isso não se instalaram as dependências nem se ligou o
+`check` — fica registado como follow-up: corrigir os 36 erros primeiro
+(PR à parte, sem relação com segurança), só depois gate em CI.
+
+---
+
 ## 1. Maturidade atual
 
 | Área | Nota | Uma linha |
@@ -747,6 +808,25 @@ Fechar essas quatro coisas leva-te a ~85 sem instalar praticamente nada.
 Nota máxima na modelação de ameaças e documentação: o `PLAN.md`, com
 decisões datadas, custos registados e correções de conclusões erradas, é
 melhor do que o que a maioria das equipas produz.
+
+### Reavaliação pós-correção: **87/100** (+15)
+
+| Área | Peso | Nota antes | Nota agora | Porquê mudou |
+|---|---|---|---|---|
+| Segredos & cadeia de fornecimento | 20 | 16 | **18** | `RATE_SALT` já não falha em silêncio; `zizmor` já não corre numa versão retirada por segurança |
+| Dependências | 15 | 11 | **14** | Os dois lockfiles cobertos por OSV + `npm audit`; uma vulnerabilidade high **real** no lockfile do Worker (sharp/libvips) corrigida com upgrade, não com exceção |
+| Análise estática & testes | 20 | 11 | **15** | 173 testes (105 Worker + 68 static) agora correm em CI; Semgrep continua só a `ERROR` (por triagem), `astro check` continua por ligar (36 erros pré-existentes, ver acima) |
+| CI/CD | 15 | 12 | **14** | Gate `wrangler deploy --dry-run` sem segredos; `npm audit --audit-level=high`, que estava a falhar no `main` por um falso positivo sem exceção possível, tem agora o mesmo mecanismo de exceção justificada do OSV |
+| Runtime & Cloudflare | 20 | 12 | **16** | O achado principal (rate limiter a esgotar a quota do KV) está corrigido; `[observability]` ligado; HSTS nas respostas do Worker; `compatibility_date` atualizada (ainda por validar com deploy real da branch) |
+| Modelação de ameaças & documentação | 10 | 10 | **10** | Sem alterações — já estava no máximo |
+
+O salto de 72 para 87 não veio de ferramenta nenhuma nova — veio de **ligar
+o que já existia** e de **corrigir, não ignorar**, dois problemas reais
+encontrados ao validar as correções (o `sharp`/libvips e o `zizmor`
+retirado). Falta para os 95+: fechar os 36 erros de tipo do `astro check`
+e ligá-lo, triar o Semgrep para `WARNING`, e — fora do repositório — MFA por
+hardware e DMARC/SPF. Nenhum desses precisa de ferramenta nova; precisa de
+tempo dedicado à dívida que já foi identificada.
 
 ### Roteiro a 12 meses
 

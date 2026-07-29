@@ -377,7 +377,31 @@ async function runScan(env) {
 
 // ---------- rate limiting ----------
 
+// Teto global (não por-cliente) de escritas do PRÓPRIO rate limiter, por
+// dia — mesmo padrão do honeypot/CSP/vitals (ver lib/kvcap.js). Sem isto,
+// um cliente dentro do limite por rota (ex.: 30/min em /api/mirror ou
+// /api/vitals) força até ~43 mil escritas/dia SÓ NESTA ROTA — muito acima
+// do teto de ~1.000 escritas/dia da conta inteira no plano Free, e
+// esgotá-lo apaga o orçamento de que honeypot/vitals/CSP/snapshot de
+// firewall dependem (todos escrevem no mesmo KV, mesma conta — descoberto
+// numa revisão de segurança, 2026-07). Passado este cap, o estado do rate
+// limit por-cliente deixa de ser atualizado: a proteção degrada (a janela
+// desse cliente fica "stale" e pode voltar a permitir pedidos antes do
+// previsto, pelo resto do dia) em vez de continuar a consumir o orçamento
+// de escrita de que as outras features precisam. Mesma troca consciente do
+// cap do honeypot: perde-se precisão sob abuso sustentado, não o
+// orçamento do core.
+const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
+
 async function rateLimit(env, request, route, { windowMs, max }) {
+  if (!env.RATE_SALT) {
+    // Falha de configuração silenciosa: sem o segredo, dailySalt cai no
+    // fallback de dev ('rotate-me') — o rate limit continua a "funcionar",
+    // só que com um salt público e previsível. Tem de ser ruidoso nos logs
+    // do Worker (ver [observability] no wrangler.toml), não uma
+    // degradação silenciosa.
+    console.error('rate_salt_missing', route);
+  }
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   const salt = dailySalt(env.RATE_SALT);
   const id = await clientHash(ip, salt);
@@ -387,9 +411,20 @@ async function rateLimit(env, request, route, { windowMs, max }) {
   const { allowed, state, retryAfterSec } = nextState(prev, { now, windowMs, max });
   // Bloqueado ⇒ o estado não mudou (nextState devolve a mesma contagem) —
   // não se gasta uma escrita KV por pedido recusado, senão martelar a rota
-  // transformava cada 429 num put pago. O put só acontece quando conta.
+  // transformava cada 429 num put pago. O put só acontece quando conta E
+  // quando o cap GLOBAL diário do próprio rate limiter ainda tem margem.
   if (allowed) {
-    await env.KV.put(key, JSON.stringify(state), { expirationTtl: Math.ceil(windowMs / 1000) + 1 });
+    const capKey = `rlcap:${dayKey(now)}`;
+    const capPrev = await getJSON(env, capKey);
+    const { allowed: capAllowed, state: capState } = underCap(capPrev, { now, ...RATE_LIMIT_WRITE_CAP });
+    if (capAllowed) {
+      await Promise.all([
+        env.KV.put(key, JSON.stringify(state), { expirationTtl: Math.ceil(windowMs / 1000) + 1 }),
+        env.KV.put(capKey, JSON.stringify(capState), {
+          expirationTtl: Math.ceil(RATE_LIMIT_WRITE_CAP.windowMs / 1000) + 60,
+        }),
+      ]);
+    }
   }
   return { allowed, retryAfterSec };
 }
@@ -405,6 +440,12 @@ async function rateLimit(env, request, route, { windowMs, max }) {
 const RESPONSE_SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'content-security-policy': "default-src 'none'",
+  // O _headers do Pages cobre o conteúdo estático; sem isto, as respostas
+  // do Worker (API + 404 dos iscos) saíam sem HSTS — inofensivo hoje (a
+  // zona já força HTTPS), mas um scanner externo assinala a ausência, e
+  // este é literalmente um site sobre cabeçalhos de segurança. Mesmo
+  // max-age do _headers (2 anos), sem "preload" pelo mesmo motivo (ver lá).
+  'strict-transport-security': 'max-age=63072000; includeSubDomains',
 };
 
 function corsHeaders(request, env) {

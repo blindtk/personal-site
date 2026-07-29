@@ -14,8 +14,11 @@ permissions: {}
 
 jobs:
   # Dependências com vulnerabilidades conhecidas (base OSV.dev, inclui as
-  # advisories do GitHub). Analisa o lockfile e falha o CI se houver vuln
-  # (o osv-scanner sai com código ≠0; sem vuln sai 0 e o job passa).
+  # advisories do GitHub). Analisa os DOIS lockfiles do repo (static/ e
+  # dynamic/worker/ — este 2.º só entrou em 2026-07, revisão de segurança:
+  # antes disso, o wrangler/miniflare/sharp do Worker não era coberto por
+  # nada aqui) e falha o CI se houver vuln (o osv-scanner sai com código
+  # ≠0; sem vuln sai 0 e o job passa).
   #
   # Chamamos a *action* diretamente em vez do workflow reutilizável oficial:
   # esse workflow, por dentro, usa actions/download-artifact e
@@ -43,6 +46,7 @@ jobs:
           scan-args: |-
             --config=./osv-scanner.toml
             --lockfile=./static/package-lock.json
+            --lockfile=./dynamic/worker/package-lock.json
 
   # Segredos committados (tokens Cloudflare, chaves privadas, …). Corre
   # sobre a história completa (fetch-depth: 0) para apanhar segredos
@@ -95,7 +99,12 @@ jobs:
         with:
           persist-credentials: false
       - name: Instalar zizmor
-        run: pipx install zizmor==1.27.0
+        # 1.27.0 (a versão anterior aqui) foi RETIRADA do PyPI por advisory
+        # de segurança (GHSA-f42p-wjw5-97qh) — apanhado numa revisão de
+        # segurança ao tentar reproduzir este job localmente; o Renovate
+        # (customManager em renovate.json5, datasource pypi) ainda não tinha
+        # aberto PR para isto.
+        run: pipx install zizmor==1.28.0
       - name: Auditar workflows
         env:
           # permite as auditorias online (ex.: deteção de commits impostores)

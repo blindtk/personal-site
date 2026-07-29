@@ -1,7 +1,16 @@
 # Cloudflare Worker das features de segurança. Ver README.md.
 name = "personal-site-worker"
 main = "src/index.js"
-compatibility_date = "2025-01-01"
+# Era 2025-01-01 (18 meses de correções de runtime e defaults por adotar,
+# apanhado numa revisão de segurança). O Worker só usa fetch/Response/
+# crypto/URL/Cache API/KV — nada exótico — mas uma mudança de comportamento
+# por omissão não se testa por `node --test` (isso é lógica pura, sem
+# runtime da Cloudflare). Antes de fazer merge desta branch: validar com o
+# fluxo já documentado no CLAUDE.md (`git checkout <branch> && cd
+# dynamic/worker && npx wrangler deploy`, testar a partir da branch sem
+# merge) — correr `npm test` outra vez e visitar /api/health, /api/mirror,
+# /api/scan a partir do deploy da branch.
+compatibility_date = "2026-01-01"
 
 # Sem subdomínio *.workers.dev nem preview URLs: o deploy final vive só nas
 # rotas do domínio (routes abaixo). Um *.workers.dev público contornava a
@@ -98,3 +107,16 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # Ver scheduled() em src/index.js.
 [triggers]
 crons = ["*/30 * * * *"]
+
+# Observabilidade dos logs do Worker (console.error/log): sem isto, os
+# `honeypot_write_failed`/`csp_report_write_failed`/`request_failed`/
+# `rate_salt_missing` nunca ficam retidos em lado nenhum — não há resposta a
+# incidentes possível, só reconstituição a partir de nada. head_sampling_rate
+# 1 = sem amostragem (o volume de pedidos aqui é baixo o suficiente para não
+# haver custo real em reter tudo). TEM de ficar no fim do ficheiro: uma
+# chave solta a seguir a uma tabela pertence a essa tabela em TOML (mesmo
+# aviso que já existe acima para routes/[vars]) — colocar [observability]
+# mais cedo engolia workers_dev/preview_urls/routes para dentro dela.
+[observability]
+enabled = true
+head_sampling_rate = 1

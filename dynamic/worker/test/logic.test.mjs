@@ -820,6 +820,56 @@ test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
   assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
 });
 
+// ---------- rate limit: teto global de escritas do próprio limiter ----------
+// Achado da revisão de segurança de 2026-07: um cliente dentro do limite
+// por rota (ex.: 30/min em /api/mirror) força uma escrita KV por pedido —
+// sem este cap, ~43 mil escritas/dia SÓ NESTA ROTA, muito acima do teto de
+// ~1.000/dia da conta inteira no plano Free, esgotando o orçamento que o
+// honeypot/vitals/CSP também precisam.
+
+test('rate limit: cap global diário no teto não escreve mais nada, mas o pedido continua servido', async () => {
+  const kv = fakeKV();
+  const env = { KV: kv };
+  const now = Date.now();
+  // rlcap:d:<dia> — o "d:" vem de dayKey() (ver honeypot/CSP: mesmo padrão)
+  const capKey = `rlcap:d:${new Date(now).toISOString().slice(0, 10)}`;
+  // pré-carrega o cap GLOBAL do rate limiter já no teto (max=300)
+  kv.store.set(capKey, JSON.stringify({ count: 300, windowStart: now }));
+
+  let puts = 0;
+  const origPut = kv.put.bind(kv);
+  kv.put = async (...args) => { puts += 1; return origPut(...args); };
+
+  const res = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.99' }), env);
+  assert.equal(res.status, 200); // allowed continua a vir de nextState, não do cap
+  assert.equal(puts, 0, 'com o cap global no teto, nenhuma escrita adicional (nem a do cap) deve acontecer');
+});
+
+test('rate limit: abaixo do teto global escreve normalmente e o cap acumula', async () => {
+  const env = { KV: fakeKV() };
+  const res = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.98' }), env);
+  assert.equal(res.status, 200);
+  const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('rlcap:'));
+  assert.ok(capKey, 'devia ter criado o contador do cap global');
+  assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+  const rlKey = [...env.KV.store.keys()].find((k) => k.startsWith('rl:mirror:'));
+  assert.ok(rlKey, 'devia ter persistido o estado por-cliente também');
+});
+
+test('RATE_SALT em falta: regista aviso ruidoso mas o pedido continua a ser servido', async () => {
+  const env = { KV: fakeKV() }; // sem RATE_SALT
+  const logs = [];
+  const origError = console.error;
+  console.error = (...a) => logs.push(a.map(String).join(' '));
+  try {
+    const res = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.97' }), env);
+    assert.equal(res.status, 200);
+    assert.ok(logs.some((l) => l.includes('rate_salt_missing')), 'devia avisar da falta do segredo');
+  } finally {
+    console.error = origError;
+  }
+});
+
 // ---------- vigia CT: parse do crt.sh e endpoint /api/ct ----------
 
 // Entrada realista do JSON do crt.sh (campos que a lib usa).
