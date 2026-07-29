@@ -78,6 +78,7 @@ export function parseReports(text, contentType = '') {
         documentUri: pick(r.body, ['documentURL', 'document-uri']) || pick(r, ['url']),
         directive: pick(r.body, ['effectiveDirective', 'effective-directive', 'violatedDirective', 'violated-directive']),
         blockedUri: pick(r.body, ['blockedURL', 'blocked-uri']),
+        sourceFile: pick(r.body, ['sourceFile', 'source-file']),
       }));
   }
 
@@ -88,6 +89,7 @@ export function parseReports(text, contentType = '') {
     documentUri: pick(body, ['document-uri', 'documentURL', 'documentURI']),
     directive: pick(body, ['effective-directive', 'effectiveDirective', 'violated-directive', 'violatedDirective']),
     blockedUri: pick(body, ['blocked-uri', 'blockedURL', 'blockedURI']),
+    sourceFile: pick(body, ['source-file', 'sourceFile']),
   }];
 }
 
@@ -98,6 +100,12 @@ function originOf(url) {
   } catch {
     return '';
   }
+}
+
+/** Scheme isolado de um URL/URI ("chrome-extension", "https", …), ou '' se não houver. */
+function schemeOf(value) {
+  const m = String(value ?? '').trim().toLowerCase().match(/^([a-z][a-z0-9+.-]*):?/);
+  return m ? m[1] : '';
 }
 
 /**
@@ -125,14 +133,25 @@ export function normalizeViolation(raw, siteOrigin) {
 
   const blocked = String(raw.blockedUri ?? '').trim();
 
-  // palavra-chave (inline/eval/self) ou vazio: bloqueio dentro da própria página
+  // palavra-chave (inline/eval/self) ou vazio: bloqueio dentro da própria página.
+  // Isto NÃO prova que o código é nosso: uma extensão que injeta um <script>
+  // diretamente (em vez de o carregar de chrome-extension://) produz o mesmo
+  // blocked-uri "inline" — o browser não distingue pelo blocked-uri. O único
+  // sinal que sobra é sourceFile (o ficheiro de onde partiu a chamada, tirado
+  // da call stack do JS engine): se apontar para uma extensão, reclassifica
+  // como ruído em vez de acender o alerta de "regressão da build". Só o
+  // scheme é guardado (nunca o ficheiro/linha) — mesmo princípio de
+  // privacidade do resto desta função.
   if (blocked === '' || KEYWORD_BLOCKED.has(blocked.toLowerCase())) {
+    const sourceScheme = schemeOf(raw.sourceFile);
+    if (EXTENSION_SCHEMES.has(sourceScheme)) {
+      return { directive, category: 'extension', source: `${sourceScheme}://` };
+    }
     return { directive, category: 'self', source: blocked === '' ? 'inline' : blocked.toLowerCase() };
   }
 
   // scheme isolado ("data", "blob") ou URL com scheme conhecido
-  const schemeMatch = blocked.toLowerCase().match(/^([a-z][a-z0-9+.-]*):?/);
-  const scheme = schemeMatch ? schemeMatch[1] : '';
+  const scheme = schemeOf(blocked);
   if (EXTENSION_SCHEMES.has(scheme)) {
     return { directive, category: 'extension', source: `${scheme}://` };
   }

@@ -168,7 +168,7 @@ const jsStrings = {
   // por rede — só este painel a lê e só um clique explícito a envia. Ver a
   // nota em _headers sobre a saída do report-uri/report-to automático.
   const Q_KEY = 'cspq';
-  type QueuedViolation = { d: string; b: string; u: string };
+  type QueuedViolation = { d: string; b: string; u: string; s?: string };
 
   function loadQueue(): QueuedViolation[] {
     try {
@@ -211,7 +211,7 @@ const jsStrings = {
     const body = JSON.stringify(queue.map((v) => ({
       type: 'csp-violation',
       url: v.u,
-      body: { documentURL: v.u, effectiveDirective: v.d, blockedURL: v.b },
+      body: { documentURL: v.u, effectiveDirective: v.d, blockedURL: v.b, sourceFile: v.s || '' },
     })));
     try {
       const res = await fetch(`${base}/api/csp-report`, {

@@ -496,6 +496,36 @@ test('normalizeViolation: inline/eval/vazio e origem própria são categoria sel
   assert.deepEqual(mk(`${SITE}/js/x.js`), { directive: 'script-src', category: 'self', source: 'self' });
 });
 
+test('normalizeViolation: "inline" com sourceFile de extensão é ruído, não self', () => {
+  // Uma extensão que injeta um <script> diretamente (em vez de o carregar de
+  // chrome-extension://) produz blocked-uri "inline" — indistinguível de uma
+  // regressão real da build pelo blocked-uri sozinho. sourceFile (de onde
+  // partiu a chamada) é o único sinal que sobra.
+  const v = normalizeViolation(
+    {
+      documentUri: `${SITE}/`,
+      directive: 'script-src-elem',
+      blockedUri: 'inline',
+      sourceFile: 'chrome-extension://abcdefghijklmnop/inject.js',
+    },
+    SITE,
+  );
+  assert.deepEqual(v, { directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://' });
+});
+
+test('normalizeViolation: "inline" sem sourceFile ou com sourceFile do próprio site continua self', () => {
+  const semSourceFile = normalizeViolation(
+    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: 'inline' },
+    SITE,
+  );
+  assert.equal(semSourceFile.category, 'self');
+  const sourceFilePropio = normalizeViolation(
+    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: 'inline', sourceFile: `${SITE}/js/nav.js` },
+    SITE,
+  );
+  assert.equal(sourceFilePropio.category, 'self');
+});
+
 test('addCspEvent: cap de cardinalidade — fontes a mais caem em ~other', () => {
   const b = emptyCspBucket();
   for (let i = 0; i < MAX_SOURCES_PER_BUCKET + 10; i += 1) {
