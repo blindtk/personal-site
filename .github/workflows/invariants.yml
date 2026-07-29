@@ -1,0 +1,95 @@
+# Fecha o loop deteção → alerta (discutido numa revisão de segurança,
+# 2026-07-29): os dashboards do honeypot/threat-intel/CT/CF-stats são só
+# PULL — só mostram algo a quem abrir a página de propósito. Este workflow
+# é o PUSH que faltava: verifica os endpoints de leitura do Worker
+# (.github/scripts/check-invariants.mjs) e, se algo estiver genuinamente
+# partido, abre (ou atualiza) uma Issue — que chega ao dono do repo por
+# email/notificação do GitHub sem ele ter de ir espreitar o dashboard.
+# Quando a verificação volta a passar, a Issue fecha-se sozinha.
+name: Invariants
+
+on:
+  schedule:
+    # Uma vez por dia, num horário diferente do cron do Headers (17 6) e do
+    # Supply chain (0 6 * seg) — não há razão para colidir.
+    - cron: '43 7 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL a verificar (por omissão: a do expected-headers.json)'
+        required: false
+        type: string
+
+permissions: {}
+
+# Título fixo: é a chave usada para encontrar/atualizar/fechar a MESMA Issue
+# entre execuções, em vez de abrir uma nova a cada falha.
+env:
+  ALERT_TITLE: "🔴 Invariantes de produção falharam"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verificar invariantes de produção
+        id: check
+        continue-on-error: true
+        env:
+          # valores externos entram por env e nunca interpolados no run: —
+          # evita injeção de template (auditado pelo zizmor)
+          TARGET_URL: ${{ inputs.url }}
+          # Opcionais — ver check-headers.mjs para a mesma convenção.
+          ACCESS_CLIENT_ID: ${{ secrets.ACCESS_CLIENT_ID }}
+          ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
+        run: node .github/scripts/check-invariants.mjs
+
+      # Falhou: abre uma Issue nova, ou comenta na que já estiver aberta
+      # (mesmo título) em vez de duplicar. `gh` já vem instalado no runner
+      # — evita acrescentar mais uma action de terceiros só para isto.
+      - name: Abrir/atualizar issue de alerta
+        if: steps.check.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -e
+          # idempotente: cria a label na 1.ª vez, atualiza-a (sem erro) nas seguintes
+          gh label create "automated-alert" --color "B60205" \
+            --description "Alertas automáticos de invariantes de produção (invariants.yml)" --force
+          existing=$(gh issue list --state open --label "automated-alert" --json number --jq '.[0].number // empty')
+          body="Verificação de invariantes falhou. Ver o log completo: ${RUN_URL}
+
+          Isto significa que pelo menos um endpoint crítico do Worker (\`/api/health\`, ou 2+ rotas informativas ao mesmo tempo) não respondeu como esperado — ver \`.github/scripts/check-invariants.mjs\`.
+
+          Esta Issue fecha-se sozinha na próxima execução em que tudo voltar a passar."
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$ALERT_TITLE" --label "automated-alert" --body "$body"
+          fi
+
+      # Passou: se havia uma issue de alerta aberta de uma falha anterior,
+      # fecha-a com uma nota — o loop deteção→alerta→resolução completo.
+      - name: Fechar issue de alerta (recuperado)
+        if: steps.check.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -e
+          existing=$(gh issue list --state open --label "automated-alert" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Voltou a passar. Ver: ${RUN_URL}"
+            gh issue close "$existing" --reason completed
+          fi
+
+      - name: Falhar o job se a verificação falhou
+        if: steps.check.outcome == 'failure'
+        run: exit 1
