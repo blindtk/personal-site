@@ -16,6 +16,20 @@ Nada aqui toca na página Sobre.
 Factos apurados a 2026-07-29 por leitura do repositório. Não há números de
 tráfego real nesta análise — o painel ainda não está exposto (ver §0).
 
+**Documentos relacionados, já em `main`:**
+
+- `docs/arquitetura-editorial-este-site.md` — analisa a *arquitetura de páginas*
+  da secção «Este Site» e recomenda a **Opção C** (Perímetro passa a página
+  editorial; Deteções e Telemetria ganham rota própria). Trata do **continente**;
+  este documento trata do **conteúdo**. Onde havia sobreposição, §7 e §8 abaixo
+  foram alinhados com essa recomendação — ver a nota em §7.
+- `docs/pagina-mapeamento-controlos.md` — propõe a subpágina «Mapeamento de
+  controlos» e fixa uma regra que este documento adota: **ATT&CK só entra onde
+  há deteção**, e nunca a descrever a defesa do site.
+
+Ambos são propostas: nenhuma está implementada. As recomendações abaixo valem
+com ou sem elas, e §7 diz explicitamente o que muda em cada cenário.
+
 ---
 
 ## 0) Factos apurados (a base de tudo o resto)
@@ -456,7 +470,9 @@ contradizem.
   `/attack/` "coberto" quer dizer *o que eu sei fazer*; no honeypot quer dizer
   *o que tentaram contra mim*. São coisas diferentes e a página não as deve
   fundir. Os links do honeypot devem apontar para lá; as contagens do honeypot
-  não devem acender células do heatmap pessoal.
+  não devem acender células do heatmap pessoal. É a mesma fronteira que
+  `docs/pagina-mapeamento-controlos.md` fixa — *ATT&CK só entra onde há
+  deteção* — e esta análise adota-a sem alterações.
 
 ### Fluxo, em uma linha
 
@@ -533,13 +549,36 @@ Isto é vantagem editorial, não desculpa.
 
 ### Página nova?
 
-**Não.** Uma quinta página ("Spider traps", "Taxonomia") repartiria ainda mais
-um assunto que já está esticado por quatro sítios. O canário de `robots.txt` é
-**uma família na tabela + dois parágrafos no projeto**. Se um dia a taxonomia
-crescer ao ponto de merecer página própria, o candidato natural é promover
-**Deteções** de tab a página outra vez — mas isso já foi feito e desfeito
-(`_redirects` tem os 301), e mexer nos URLs uma terceira vez é pior do que o
-problema que resolve.
+**Nada nesta análise pede uma página nova.** O canário de `robots.txt` é *uma
+família na tabela + dois parágrafos no projeto*; a taxonomia é conteúdo de
+Deteções; os limites são conteúdo do projeto. Uma página "Spider traps" ou
+"Taxonomia" repartiria ainda mais um assunto já esticado.
+
+**Nota de reconciliação com `docs/arquitetura-editorial-este-site.md`.** Esse
+documento — escrito em paralelo com este e já em `main` — recomenda a **Opção
+C**: Perímetro passa a página editorial e estável, e criam-se duas rotas novas
+(**Deteções** e **Telemetria**, esta última a recolher todos os painéis ao
+vivo). O diagnóstico coincide com o meu (§1: "cinco tabs, três fontes de
+verdade, excesso de página"), por isso não há conflito de fundo — mas a minha
+frase original ("sem páginas novas") referia-se a *não criar página para o
+conteúdo desta análise*, não à arquitetura da secção. Fica clarificado: **não
+me oponho à Opção C**, e a arrumação de conteúdo desta secção mapeia-se assim
+nos dois cenários:
+
+| Conteúdo | Sem Opção C (hoje) | Com Opção C |
+|---|---|---|
+| Explicação do honeypot, tese | tab Honeypot | **Perímetro** (corpo editorial) |
+| Nota de enviesamento (§9.6) | junto às stats, tab Honeypot | **Perímetro**, junto à tira de 4 números — versão curta também em Telemetria |
+| Stats 24h, mapa, correlação KEV | tab Honeypot | **Perímetro** (a tira de 4 números que a Opção C preserva) |
+| Tendências 7d, heatmap, logs, painéis Cloudflare | tabs Tendências/Cloudflare/Logs | **Telemetria** |
+| Famílias de paths, regras Sigma, correlação | tab Deteções | **Deteções** (rota própria) |
+| Arquitetura, limites, o que não foi construído | projeto (`content/`) | projeto (`content/`) — inalterado |
+
+A única recomendação minha que a Opção C torna mais urgente é a **nota de
+enviesamento**: numa página que passa a ser *argumentativa e citável*, uma
+afirmação sobre "o que a Internet tenta contra este site" sem a ressalva da
+política geo deixa de ser um descuido de painel e passa a ser uma falha de
+tese.
 
 ---
 
@@ -577,7 +616,9 @@ de não servir logins falsos vale mais do que qualquer painel.
 **Objetivo editorial:** responder a "o que está a chegar a este site, agora, e o
 que já foi travado antes de chegar". Nada de arquitetura.
 
-**Tabs propostas** — reordenadas por *pergunta*, não por fonte de dados:
+**Tabs propostas** — reordenadas por *pergunta*, não por fonte de dados.
+Aplica-se **só se a Opção C de `docs/arquitetura-editorial-este-site.md` não
+avançar**; se avançar, as tabs desaparecem e vale a tabela de mapeamento de §7:
 
 | Tab hoje | Proposta | Nota |
 |---|---|---|
@@ -795,8 +836,10 @@ comportamento desejado), e é a ideia mais interessante do conjunto.
 
 - O 404 uniforme, sem exceções, sem variações por família.
 - Um Worker, um namespace KV, agregação on-read pura e testada.
-- Uma página de estado (Perímetro), uma explicação (projeto), uma tradução
-  (Deteções). Sem páginas novas.
+- Três registos, um por sítio: **estado** (painel), **explicação** (projeto em
+  `content/`), **tradução** (regras Sigma). Que isso sejam duas páginas ou
+  quatro é decisão de `docs/arquitetura-editorial-este-site.md` — nenhum
+  conteúdo desta análise pede rota nova.
 
 ### Segunda fase
 
