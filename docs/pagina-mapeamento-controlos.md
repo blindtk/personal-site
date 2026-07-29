@@ -141,36 +141,51 @@ H2  Limites                                    | Limits
 
 ## 4. Framework mapping (análise)
 
-> **Nota de implementação, a resolver antes de publicar:** fixar e escrever a
-> versão de cada framework na página. Este documento assume **OWASP Top 10 (2021)**,
-> **CIS Controls v8.1**, **CISA CPG v1.0.1** e **ATT&CK Enterprise** na versão
-> que alimenta `content/attack.json`. Confirmar se se quer mapear contra a
-> edição mais recente do OWASP Top 10 antes de publicar.
+> **Versões fixadas nesta proposta:** **OWASP Top 10:2025** (edição final,
+> decidida pelo dono do repo), **CIS Controls v8.1**, **ATT&CK Enterprise** na
+> versão que alimenta `content/attack.json`. As **CISA CPG** são referidas por
+> **nome de objetivo e função** (Identificar/Proteger/Detetar/Responder), sem
+> identificador alfanumérico — decisão tomada: os identificadores ficam para
+> mais tarde, depois de verificados na versão publicada do CPG.
 >
 > As referências CIS ficam ao nível de **controlo** (1–18), nunca de salvaguarda
-> (`x.y`); as CISA CPG ficam ao nível de **nome de objetivo** e função
-> (Identificar/Proteger/Detetar/Responder), não de identificador alfanumérico —
-> os identificadores só devem entrar depois de verificados na versão publicada
-> do CPG. Referenciar ao detalhe daria à página o ar de auditoria que ela
+> (`x.y`). Referenciar ao detalhe daria à página o ar de auditoria que ela
 > declaradamente não é.
+>
+> **O que a edição de 2025 muda para este site:** «Componentes vulneráveis e
+> desatualizados» deixou de ser categoria própria e foi absorvida por **A03 ·
+> Falhas na cadeia de fornecimento de software**, que passou a terceiro risco da
+> lista — é onde este site concentra mais controlos automatizados. O antigo A09
+> passou a chamar-se registo **e alerta**, o que torna explícito um limite que já
+> existia. E o SSRF, que era categoria própria (A10:2021), está agora dentro do
+> **A01**.
 
-### OWASP Top 10 — **eixo principal**
+### OWASP Top 10:2025 — **eixo principal**
 
 - **Porquê faz sentido:** é a única das quatro frameworks cuja unidade de
   análise é uma *aplicação web*. Todos os controlos deste site são
   aplicacionais.
-- **O que se pode mapear:** A03 (CSP estrita sem `unsafe-inline`, Trusted Types,
-  render por `textContent`, SAST de sinks DOM-XSS); A05 (contrato de cabeçalhos
-  verificado em produção); A06 (OSV-Scanner, `npm audit`, Renovate); A08
-  (Actions pinadas por digest, lockfile, Gitleaks, zizmor, zero terceiros); A09
-  (relatórios CSP, telemetria honeypot, vigia CT).
-- **O que não alegar:** A01 e A07 **não são controlos — são não-aplicáveis**.
-  Não há contas, sessões nem área privada. Escrever «não aplicável», nunca
-  «coberto»: ausência de superfície não é controlo implementado. A04 (design
-  inseguro) não é verificável por terceiros e não deve entrar. A02 e A10 só
-  entram se houver algo concreto a apontar.
+- **O que se pode mapear:** A02 (contrato de cabeçalhos verificado em produção);
+  A03 (OSV-Scanner, `npm audit`, Renovate, Actions pinadas por digest, zero
+  terceiros); A04 (HSTS, k-anonimato no verificador de passwords, hash com salt
+  diário no rate limiting); A05 (CSP estrita sem `unsafe-inline`, Trusted Types,
+  render por `textContent`, SAST de sinks DOM-XSS, sanitização no Worker); A08
+  (hash do commit publicado, Gitleaks, zizmor, verificação da CSP servida); A09
+  (relatórios CSP, telemetria honeypot, vigia CT); A10 (degradação explícita
+  quando o Worker falha). No A01 entra apenas a parte de **SSRF**: os pedidos de
+  saída do Worker vão para destinos fixos e a rota do verificador de passwords
+  só aceita 5 caracteres hexadecimais — o próprio código a documenta como «não
+  reutilizável como proxy aberto».
+- **O que não alegar:** a parte de *controlo de acesso* do A01 e o A07 **não são
+  controlos — são não-aplicáveis**. Não há contas, sessões nem área privada.
+  Escrever «não aplicável», nunca «coberto»: ausência de superfície não é
+  controlo implementado. A06 (design inseguro) não é verificável por terceiros e
+  fica de fora da tabela. No A09, não alegar deteção ativa: há registo, não há
+  alerta — e o nome da categoria em 2025 obriga a dizê-lo.
 - **Evidência que suporta:** `/seguranca/` (cabeçalhos e porquê), `/provas/`
-  (contrato de cabeçalhos, scan ao vivo, workflows), `static/public/_headers`.
+  (contrato de cabeçalhos, scan ao vivo, workflows, hash do commit),
+  `static/public/_headers`, `dynamic/worker/src/lib/` (`pwned.js`, `scan.js`,
+  `ratelimit.js`, `sanitize.js`).
 - **Formulação curta:** PT — «Os riscos do Top 10 que têm superfície neste site,
   e o controlo que lhes corresponde.» EN — «The Top 10 risks that have surface
   on this site, and the control that answers each.»
@@ -310,19 +325,24 @@ H2  Limites                                    | Limits
 > Onde não se aplica, está escrito não aplicável — ausência de superfície não é
 > controlo implementado.
 >
-> Versões usadas: OWASP Top 10 (2021), CIS Controls v8.1, CISA CPG v1.0.1,
-> MITRE ATT&CK Enterprise.
+> Versões usadas: OWASP Top 10:2025, CIS Controls v8.1, MITRE ATT&CK
+> Enterprise. As CISA CPG são referidas por objetivo e função, sem
+> identificador.
 
 **H2 · Mapa de controlos**
 
 | Framework | Área | Controlo observado no site | Evidência pública | Limite da alegação |
 |---|---|---|---|---|
-| OWASP Top 10 | A03 · Injeção (XSS) | CSP estrita: `script-src 'self'`, `style-src 'self'`, sem `unsafe-inline`; `require-trusted-types-for 'script'`; zero scripts de terceiros | Segurança → Cabeçalhos; Provas → scan ao vivo | Fecha a via principal de XSS. Não é prova de ausência de XSS. |
-| OWASP Top 10 | A05 · Configuração incorreta | Contrato de cabeçalhos versionado e verificado em produção a cada push | Provas → Contrato de cabeçalhos | Cobre a resposta HTTP servida. Não cobre a configuração da conta de infraestrutura. |
-| OWASP Top 10 | A06 · Componentes vulneráveis | OSV-Scanner sobre o lockfile, `npm audit` a falhar o build em high/critical, Renovate | Provas → Workflows | Cobre vulnerabilidades conhecidas e publicadas. Não cobre 0-day nem o código próprio. |
-| OWASP Top 10 | A08 · Integridade de software e dados | GitHub Actions pinadas por digest SHA, lockfile, Gitleaks, zizmor, sem CDN de terceiros | Provas → Workflows; hash do último commit | Cobre a cadeia de build deste repositório. Não há assinatura de artefactos. |
-| OWASP Top 10 | A09 · Registo e monitorização | Relatórios de violação de CSP, telemetria do honeypot, vigia de Certificate Transparency | Provas → Violações CSP e Vigia CT; Perímetro | Parcial. Sem SIEM, sem alerta contínuo, sem retenção longa. |
-| OWASP Top 10 | A01 e A07 · Acesso e autenticação | Site estático: sem contas, sem sessões, sem área privada | Segurança → Modelo de ameaça; projeto «Este site» | **Não aplicável.** Ausência de superfície, não controlo implementado. |
+| OWASP Top 10:2025 | A01 · Controlo de acesso | Site estático: sem contas, sem sessões, sem área privada | Segurança → Modelo de ameaça; projeto «Este site» | **Não aplicável.** Ausência de superfície, não controlo implementado. |
+| OWASP Top 10:2025 | A01 · SSRF (categoria própria até 2021, hoje aqui dentro) | Os pedidos de saída do Worker vão para destinos fixos, definidos em configuração; a rota do verificador de passwords só aceita cinco caracteres hexadecimais, o que a impede de servir de proxy aberto | Repositório: `dynamic/worker/src/lib/pwned.js` e `scan.js` | Leitura do código publicado, não resultado de teste. Cobre as rotas que existem hoje. |
+| OWASP Top 10:2025 | A02 · Configuração incorreta | Contrato de cabeçalhos versionado e verificado em produção a cada push | Provas → Contrato de cabeçalhos | Cobre a resposta HTTP servida. Não cobre a configuração da conta de infraestrutura. |
+| OWASP Top 10:2025 | A03 · Falhas na cadeia de fornecimento de software | OSV-Scanner sobre o lockfile (vulnerabilidades conhecidas e pacotes maliciosos), `npm audit` a falhar o build em high/critical, Renovate, GitHub Actions pinadas por digest SHA, zero scripts ou CDN de terceiros | Provas → Workflows | Cobre o que é conhecido e publicado. Não cobre 0-day nem comprometimento a montante ainda não divulgado. |
+| OWASP Top 10:2025 | A04 · Falhas criptográficas | HTTPS forçado por HSTS a dois anos; o verificador de passwords usa k-anonimato — o browser envia cinco caracteres do hash, nunca a password; os identificadores do rate limiting são hash com salt rotativo diário e não são associados a eventos | Segurança → Cabeçalhos e Privacidade; repositório | O TLS é gerido pelo edge, não por este repositório. Sem revisão criptográfica externa. |
+| OWASP Top 10:2025 | A05 · Injeção | CSP estrita: `script-src 'self'`, `style-src 'self'`, sem `unsafe-inline`; `require-trusted-types-for 'script'`; render sempre por `textContent`; SAST sobre sinks de DOM XSS; sanitização de todo o dado externo no Worker | Segurança → Cabeçalhos; Provas → scan ao vivo e Workflows | Fecha a via principal de XSS. Não é prova de ausência de XSS. |
+| OWASP Top 10:2025 | A07 · Falhas de autenticação | Não existe autenticação: sem contas, sem sessões, sem recuperação de palavra-passe | Segurança → Modelo de ameaça | **Não aplicável**, pela mesma razão do A01. |
+| OWASP Top 10:2025 | A08 · Falhas de integridade de software e dados | Hash do commit publicado e verificável, deteção de segredos sobre a história do PR, auditoria dos próprios workflows, verificação de que a CSP servida não diverge da versionada | Provas → último commit e Workflows | Não há assinatura de artefactos nem proveniência de build. |
+| OWASP Top 10:2025 | A09 · Falhas de registo e alerta | Relatórios de violação de CSP recolhidos, telemetria do honeypot, vigia de Certificate Transparency | Provas → Violações CSP e Vigia CT; Perímetro | **Parcial, e do lado certo da fronteira:** há registo, não há alerta. Sem SIEM e sem notificação automática. |
+| OWASP Top 10:2025 | A10 · Tratamento de condições excecionais | Quando o Worker falha, as secções que dependem dele degradam para um estado explícito em vez de partir a página; o honeypot devolve sempre um 404 indistinguível; o cap de escritas descarta em silêncio em vez de falhar | Projeto «Este site»; Perímetro, com o Worker em baixo | Comportamento observável, sem testes de falha sistemáticos. |
 | CIS Controls | 2 · Inventário de software | Lockfile versionado e atualizações geridas pelo Renovate | Repositório público | Inventário de um ativo, não de um parque. |
 | CIS Controls | 3 · Proteção de dados | Sem cookies, sem analytics, sem scripts de terceiros, sem base de dados; ferramentas client-side processam tudo no browser | Segurança → Privacidade e dados | Não cobre os logs de conexão da infraestrutura, que estão documentados. |
 | CIS Controls | 4 · Configuração segura | Cabeçalhos de segurança, HSTS a dois anos, Permissions-Policy a desligar APIs não usadas | Provas → cabeçalhos ao vivo | Aplica-se a um único ativo publicado. |
@@ -337,14 +357,21 @@ H2  Limites                                    | Limits
 
 **H2 · Por framework**
 
-*H3 · OWASP Top 10*
+*H3 · OWASP Top 10:2025*
 
 > É a única destas frameworks cuja unidade de análise é uma aplicação web, e por
-> isso é o eixo desta página. Cinco das dez categorias têm superfície aqui e
-> estão na tabela acima. Duas — controlo de acesso e autenticação — não têm
-> sujeito: um site estático sem contas nem sessões não implementa esses
-> controlos, apenas não tem onde os aplicar. A distinção é deliberada e está
-> escrita em cada linha.
+> isso é o eixo desta página. A edição de 2025 mudou três coisas que importam
+> aqui. «Componentes vulneráveis» deixou de ser categoria própria e passou a
+> estar dentro do A03, cadeia de fornecimento, que subiu a terceiro risco da
+> lista — é onde este site concentra mais controlos automatizados. O SSRF, que
+> tinha categoria própria, está agora dentro do A01. E o antigo A09 passou a
+> chamar-se registo **e alerta**, o que torna explícito um limite que já existia:
+> aqui há registo, não há alerta.
+>
+> Duas áreas não têm sujeito. Sem contas nem sessões, o controlo de acesso e a
+> autenticação não são controlos implementados — apenas não têm onde se aplicar,
+> e está escrito assim em cada linha. O A06, design inseguro, fica fora da
+> tabela: não é verificável de fora, e esta página só trabalha com o que é.
 
 *H3 · CIS Controls*
 
@@ -430,19 +457,23 @@ H2  Limites                                    | Limits
 > is partial, it says partial. Where something does not apply, it says not
 > applicable — absent surface is not an implemented control.
 >
-> Versions used: OWASP Top 10 (2021), CIS Controls v8.1, CISA CPG v1.0.1, MITRE
-> ATT&CK Enterprise.
+> Versions used: OWASP Top 10:2025, CIS Controls v8.1, MITRE ATT&CK Enterprise.
+> The CISA CPGs are referenced by goal and function, without identifiers.
 
 **H2 · Control map**
 
 | Framework | Area | Control observed on this site | Public evidence | Limit of the claim |
 |---|---|---|---|---|
-| OWASP Top 10 | A03 · Injection (XSS) | Strict CSP: `script-src 'self'`, `style-src 'self'`, no `unsafe-inline`; `require-trusted-types-for 'script'`; no third-party scripts | Security → Headers; Evidence → live scan | Closes the main XSS path. Not proof that no XSS exists. |
-| OWASP Top 10 | A05 · Security misconfiguration | Versioned header contract, verified against production on every push | Evidence → Header contract | Covers the served HTTP response. Does not cover infrastructure account settings. |
-| OWASP Top 10 | A06 · Vulnerable and outdated components | OSV-Scanner over the lockfile, `npm audit` failing the build on high/critical, Renovate | Evidence → Workflows | Covers known, published vulnerabilities. Not 0-day, not first-party code. |
-| OWASP Top 10 | A08 · Software and data integrity failures | GitHub Actions pinned by SHA digest, lockfile, Gitleaks, zizmor, no third-party CDN | Evidence → Workflows; latest commit hash | Covers this repository's build chain. There is no artefact signing. |
-| OWASP Top 10 | A09 · Security logging and monitoring | CSP violation reports, honeypot telemetry, Certificate Transparency watch | Evidence → CSP violations and CT watch; Perimeter | Partial. No SIEM, no continuous alerting, no long retention. |
-| OWASP Top 10 | A01 and A07 · Access and authentication | Static site: no accounts, no sessions, no private area | Security → Threat model; “This site” project | **Not applicable.** Absent surface, not an implemented control. |
+| OWASP Top 10:2025 | A01 · Access control | Static site: no accounts, no sessions, no private area | Security → Threat model; “This site” project | **Not applicable.** Absent surface, not an implemented control. |
+| OWASP Top 10:2025 | A01 · SSRF (its own category until 2021, now folded in here) | The Worker's outbound requests go to fixed, configured destinations; the password-checker route accepts only five hexadecimal characters, which stops it working as an open proxy | Repository: `dynamic/worker/src/lib/pwned.js` and `scan.js` | A reading of published code, not a test result. Covers the routes that exist today. |
+| OWASP Top 10:2025 | A02 · Security misconfiguration | Versioned header contract, verified against production on every push | Evidence → Header contract | Covers the served HTTP response. Does not cover infrastructure account settings. |
+| OWASP Top 10:2025 | A03 · Software supply chain failures | OSV-Scanner over the lockfile (known vulnerabilities and malicious packages), `npm audit` failing the build on high/critical, Renovate, GitHub Actions pinned by SHA digest, no third-party scripts or CDN | Evidence → Workflows | Covers what is known and published. Not 0-day, not an undisclosed upstream compromise. |
+| OWASP Top 10:2025 | A04 · Cryptographic failures | HTTPS forced by two-year HSTS; the password checker uses k-anonymity — the browser sends five characters of the hash, never the password; rate-limiting identifiers are hashed with a daily rotating salt and never tied to events | Security → Headers and Privacy; repository | TLS is managed at the edge, not by this repository. No external cryptographic review. |
+| OWASP Top 10:2025 | A05 · Injection | Strict CSP: `script-src 'self'`, `style-src 'self'`, no `unsafe-inline`; `require-trusted-types-for 'script'`; rendering always via `textContent`; SAST over DOM XSS sinks; sanitisation of all external data in the Worker | Security → Headers; Evidence → live scan and Workflows | Closes the main XSS path. Not proof that no XSS exists. |
+| OWASP Top 10:2025 | A07 · Authentication failures | There is no authentication: no accounts, no sessions, no password recovery | Security → Threat model | **Not applicable**, for the same reason as A01. |
+| OWASP Top 10:2025 | A08 · Software or data integrity failures | Published, verifiable commit hash, secret detection across the PR's history, auditing of the workflows themselves, and a check that the served CSP does not diverge from the versioned one | Evidence → latest commit and Workflows | No artefact signing and no build provenance. |
+| OWASP Top 10:2025 | A09 · Security logging and alerting failures | CSP violation reports collected, honeypot telemetry, Certificate Transparency watch | Evidence → CSP violations and CT watch; Perimeter | **Partial, and on the right side of the line:** there is logging, there is no alerting. No SIEM, no automatic notification. |
+| OWASP Top 10:2025 | A10 · Mishandling of exceptional conditions | When the Worker fails, the sections that depend on it degrade to an explicit state instead of breaking the page; the honeypot always returns an indistinguishable 404; the write cap drops silently rather than failing | “This site” project; Perimeter, with the Worker down | Observable behaviour, without systematic failure testing. |
 | CIS Controls | 2 · Software asset inventory | Versioned lockfile, updates handled by Renovate | Public repository | Inventory of one asset, not of an estate. |
 | CIS Controls | 3 · Data protection | No cookies, no analytics, no third-party scripts, no database; client-side tools process everything in the browser | Security → Privacy and data | Does not cover the infrastructure's connection logs, which are documented. |
 | CIS Controls | 4 · Secure configuration | Security headers, two-year HSTS, Permissions-Policy switching off unused APIs | Evidence → live headers | Applies to a single published asset. |
@@ -457,14 +488,21 @@ H2  Limites                                    | Limits
 
 **H2 · Framework by framework**
 
-*H3 · OWASP Top 10*
+*H3 · OWASP Top 10:2025*
 
 > It is the only one of these frameworks whose unit of analysis is a web
-> application, which is why it is this page's axis. Five of the ten categories
-> have surface here and appear in the table above. Two — access control and
-> authentication — have no subject: a static site with no accounts and no
-> sessions does not implement those controls, it simply has nowhere to apply
-> them. The distinction is deliberate and is written into every row.
+> application, which is why it is this page's axis. The 2025 edition changed
+> three things that matter here. “Vulnerable components” stopped being its own
+> category and now sits inside A03, supply chain, which rose to third on the
+> list — that is where this site concentrates most of its automated controls.
+> SSRF, previously its own category, now sits inside A01. And the old A09 was
+> renamed logging **and alerting**, which makes explicit a limit that already
+> existed: there is logging here, there is no alerting.
+>
+> Two areas have no subject. With no accounts and no sessions, access control
+> and authentication are not implemented controls — they simply have nowhere to
+> apply, and every row says so. A06, insecure design, stays out of the table: it
+> is not verifiable from the outside, and this page only works with what is.
 
 *H3 · CIS Controls*
 
@@ -614,13 +652,24 @@ começar em `ui.ts`; migrar só se e quando esse teste for escrito.
 | «Compliance» fora do título | cumprido, com justificação em §2 |
 | Fora do âmbito: Sobre, percurso profissional | cumprido — regra do sujeito em §1 |
 
-### Duas decisões a confirmar antes de implementar
+### Decisões tomadas
 
-1. **Versão do OWASP Top 10.** Esta proposta mapeia contra a edição de 2021. Se
-   se quiser mapear contra a edição mais recente, os identificadores das linhas
-   têm de ser revistos — e a página deve sempre escrever a edição que usa.
-2. **Identificadores numéricos das CISA CPG.** Esta proposta refere os objetivos
-   **por nome e por função** (Identificar/Proteger/Detetar/Responder) e não por
-   identificador alfanumérico. Acrescentar os identificadores é possível, mas só
-   depois de os verificar na versão publicada do CPG — inventar um identificador
-   errado numa página cujo argumento é o rigor seria o pior falhanço possível.
+1. **Versão do OWASP Top 10 — resolvido: edição 2025.** É a edição final mais
+   recente (`owasp.org/Top10/2025/`). Todas as linhas foram remapeadas: o antigo
+   A03 Injeção é hoje **A05**, o antigo A05 Configuração é hoje **A02**, o antigo
+   A06 Componentes vulneráveis foi absorvido pelo **A03 · cadeia de
+   fornecimento**, o SSRF passou a viver dentro do **A01**, e o A09 ganhou a
+   palavra *alerta* no nome. A página escreve sempre a edição que usa.
+2. **Identificadores numéricos das CISA CPG — adiado por decisão.** Os objetivos
+   ficam referidos **por nome e por função** (Identificar/Proteger/Detetar/
+   Responder). Os identificadores alfanuméricos podem ser acrescentados mais
+   tarde, depois de verificados na versão publicada do CPG — inventar um
+   identificador errado numa página cujo argumento é o rigor seria o pior
+   falhanço possível.
+
+### Ponta solta menor (não bloqueia)
+
+- **`CIS Controls v8.1`** — os *nomes* dos controlos 1 a 18 usados aqui são
+  estáveis entre v8 e v8.1, por isso o mapeamento é válido em qualquer das duas.
+  Confirmar o número de versão exato a escrever na página quando se
+  implementar; se houver dúvida, escrever apenas «CIS Controls v8».
