@@ -417,13 +417,21 @@ async function runScan(env) {
 // do teto de ~1.000 escritas/dia da conta inteira no plano Free, e
 // esgotá-lo apaga o orçamento de que honeypot/vitals/CSP/snapshot de
 // firewall dependem (todos escrevem no mesmo KV, mesma conta — descoberto
-// numa revisão de segurança, 2026-07). Passado este cap, o estado do rate
-// limit por-cliente deixa de ser atualizado: a proteção degrada (a janela
-// desse cliente fica "stale" e pode voltar a permitir pedidos antes do
-// previsto, pelo resto do dia) em vez de continuar a consumir o orçamento
-// de escrita de que as outras features precisam. Mesma troca consciente do
-// cap do honeypot: perde-se precisão sob abuso sustentado, não o
-// orçamento do core.
+// numa revisão de segurança, 2026-07).
+//
+// Passado este cap, `rateLimit()` FALHA FECHADO (achado de uma revisão de
+// segurança, 2026-07-29 — docs/security-review-2026-07-29.md, achado A1):
+// a versão anterior continuava a devolver `allowed: true` sem persistir o
+// estado por-cliente, o que congelava a janela desse cliente para sempre —
+// na prática, ~300 pedidos triviais (10 min de tráfego num único cliente
+// em /api/mirror+/api/vitals, sem distribuir por IPs) desligavam o rate
+// limit da rota inteira até à meia-noite UTC. Falhar fechado inverte o
+// trade-off: em vez de "todos os pedidos passam", a rota devolve 429 a
+// todos até o cap global re-abrir — sem gastar nenhuma escrita extra (o
+// 429 continua grátis, ver o teste "sem nenhum put no KV"). Só afeta as
+// rotas que aceitam input de visitante (mirror/vitals/csp-report/pwned/
+// refresh); as leituras públicas sem rate limit (honeypot/map/ticker/ct/
+// cf-stats sem refresh) continuam servidas da cache.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
 
 // Cap global de escritas dos refresh manuais (/api/scan?refresh=1 e
@@ -478,14 +486,21 @@ async function rateLimit(env, request, route, { windowMs, max }) {
     const capKey = `rlcap:${dayKey(now)}`;
     const capPrev = await getJSON(env, capKey);
     const { allowed: capAllowed, state: capState } = underCap(capPrev, { now, ...RATE_LIMIT_WRITE_CAP });
-    if (capAllowed) {
-      await Promise.all([
-        env.KV.put(key, JSON.stringify(state), { expirationTtl: Math.ceil(windowMs / 1000) + 1 }),
-        env.KV.put(capKey, JSON.stringify(capState), {
-          expirationTtl: Math.ceil(RATE_LIMIT_WRITE_CAP.windowMs / 1000) + 60,
-        }),
-      ]);
+    if (!capAllowed) {
+      // Orçamento de escrita do dia esgotado: falhar FECHADO (ver o
+      // comentário de RATE_LIMIT_WRITE_CAP acima) em vez de deixar
+      // `allowed: true` passar sem persistir estado — sem escrever nada,
+      // exatamente como um 429 normal.
+      console.error('ratelimit_write_cap_exhausted', route);
+      const capRetrySec = Math.max(1, Math.ceil((capState.windowStart + RATE_LIMIT_WRITE_CAP.windowMs - now) / 1000));
+      return { allowed: false, retryAfterSec: capRetrySec };
     }
+    await Promise.all([
+      env.KV.put(key, JSON.stringify(state), { expirationTtl: Math.ceil(windowMs / 1000) + 1 }),
+      env.KV.put(capKey, JSON.stringify(capState), {
+        expirationTtl: Math.ceil(RATE_LIMIT_WRITE_CAP.windowMs / 1000) + 60,
+      }),
+    ]);
   }
   return { allowed, retryAfterSec };
 }

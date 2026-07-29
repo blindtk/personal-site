@@ -11,6 +11,59 @@
 
 ## Decisões registadas
 
+- **2026-07-29 — Rate limit falha fechado quando o cap global de escrita
+  esgota** (achado de uma revisão de segurança, ver
+  `docs/security-review-2026-07-29.md` achado A1 e
+  `docs/adr/0003-rate-limit-kv-vs-nativo.md`): `rateLimit()` continuava a
+  devolver `allowed: true` quando `RATE_LIMIT_WRITE_CAP` (300 escritas/dia)
+  se esgotava — só deixava de persistir o estado por-cliente. Isso congelava
+  a janela desse cliente indefinidamente: ~300 pedidos triviais (10 min de
+  tráfego num único IP em `/api/mirror` ou `/api/vitals`) desligavam o rate
+  limit da rota inteira até à meia-noite UTC — um bypass barato e
+  determinístico, não um caso limite acidental. Corrigido para falhar
+  **fechado**: com o cap esgotado, a rota devolve 429 a todos os clientes
+  (sem gastar nenhuma escrita extra, como já acontecia para o rate limit
+  por-cliente), até o orçamento do dia reabrir. Log ruidoso
+  (`ratelimit_write_cap_exhausted`) no caminho, mesmo padrão do
+  `rate_salt_missing`. Teste de regressão em `test/logic.test.mjs` fixa o
+  novo comportamento (114 testes, 0 falhas). **Pendente (decisão manual,
+  fora do que um PR de código expressa):** substituir esta implementação
+  por uma regra nativa de Rate Limiting da Cloudflare (WAF, grátis no plano
+  Free) — elimina a dependência da consistência eventual do KV e liberta
+  ~300 escritas/dia para o resto do orçamento. Ver ADR 0003 para o
+  raciocínio completo.
+
+- **2026-07-29 — `npm ci --ignore-scripts` em `ci.yml` (static e worker)**:
+  nenhuma dependência corre postinstall arbitrário no `npm ci` de CI — o
+  vetor mais comum de compromisso de pacotes npm. Verificado antes de
+  aplicar: nem `astro build/check/test` nem `npm test` + `wrangler deploy
+  --dry-run` do Worker precisam de scripts de instalação; só `wrangler
+  dev`/`deploy` reais precisam (o binário do workerd), e esses continuam
+  manuais fora da CI.
+
+- **2026-07-29 — Workflow `supply-chain.yml` (semanal + manual): `npm audit
+  signatures` + SBOM (CycloneDX)**: verificação das assinaturas de registo
+  do npm (deteta um pacote servido sem a assinatura esperada — registo
+  comprometido, mirror adulterado) e geração de um SBOM real do que está
+  instalado, como artefacto do workflow. Corre semanalmente e por
+  `workflow_dispatch`, não em cada PR: o repositório está hoje acima da
+  quota de minutos do plano Free do GitHub Actions (ver
+  `docs/security-review-2026-07-29.md` §0.2), e acrescentar mais passos ao
+  caminho de cada PR piorava isso. `dynamic/worker/package.json` ganhou um
+  campo `version` (exigido pelo `npm sbom` para gerar um purl válido —
+  sem ele, `ESBOMPROBLEMS` porque o pacote-raiz fica com tipo "range").
+
+- **2026-07-29 — `check-headers.mjs` aceita um Access Service Token
+  opcional** (`ACCESS_CLIENT_ID`/`ACCESS_CLIENT_SECRET`, secrets do repo):
+  antes desta mudança, o único caminho para o workflow Headers voltar a
+  verificar produção era desligar a Cloudflare Access. Agora, configurar os
+  dois secrets (Service Token criado em Zero Trust → Access → Service Auth)
+  já é suficiente — sem eles, o comportamento fica idêntico ao atual
+  (`SET-ME`, aviso ruidoso, nada verificado). Segue o mesmo padrão de
+  `fetchSameOrigin` do `runScan()`: segue redirects só dentro da mesma
+  origem, para as credenciais da Access nunca seguirem um 3xx para fora do
+  domínio.
+
 - **2026-07 — Secção "Este Site" (observabilidade) — fases 2/3** (aprovado pelo
   dono do repo, na sequência do pedido "Este Site"): três adições ao Worker
   para alimentar a Threat Intelligence, os Logs e a Performance da nova secção.

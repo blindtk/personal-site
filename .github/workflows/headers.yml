@@ -35,4 +35,9 @@ jobs:
           # evita injeção de template (auditado pelo zizmor)
           TARGET_URL: ${{ inputs.url }}
           DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+          # Opcionais — Access Service Token (ver docs/cloudflare-deploy.md
+          # e o comentário no topo de check-headers.mjs). Secrets em falta
+          # chegam como string vazia, sem quebrar o comportamento atual.
+          ACCESS_CLIENT_ID: ${{ secrets.ACCESS_CLIENT_ID }}
+          ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
         run: node .github/scripts/check-headers.mjs

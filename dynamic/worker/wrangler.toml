@@ -94,6 +94,15 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # intencional, o botão de pânico contra abuso. A rotação diária do hash é
 # automática (salt = RATE_SALT + data UTC); esta é a rotação do próprio
 # segredo. Ver src/lib/ratelimit.js.
+#
+# Rotação do CF_API_TOKEN: sem cadência automática (ao contrário do
+# RATE_SALT) — é só leitura (Account/Zone Analytics:Read, mais os escopos de
+# firewall acima), sem o mesmo "botão de pânico" contra abuso ativo. Rodar
+# manualmente sempre que o token for exposto por engano (ex.: log, captura
+# de ecrã) ou, por disciplina, ~anualmente: revogar o antigo em
+# dash.cloudflare.com → Meu perfil → Tokens de API e `wrangler secret put
+# CF_API_TOKEN` com o novo. Achado numa revisão de segurança (2026-07-29):
+# faltava esta nota, ao contrário do RATE_SALT que já a tinha.
 
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
 # A cada 30 min: aquece ticker/scan/ct/cf-stats/threat-intel (para as visitas

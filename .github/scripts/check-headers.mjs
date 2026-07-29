@@ -12,6 +12,46 @@ const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-he
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
 const target = process.env.TARGET_URL || process.env.DEPLOY_URL || cfg.url;
 
+// Credenciais opcionais de um Cloudflare Access Service Token (ver
+// docs/cloudflare-deploy.md). Enquanto a Access continuar ativa à frente
+// do site, um pedido sem estas credenciais recebe a página de login em vez
+// da resposta real — daí `url` continuar SET-ME até uma das duas coisas
+// acontecer: a Access ser desligada no lançamento, OU estes dois secrets
+// serem configurados no repo (Settings → Secrets → Actions:
+// ACCESS_CLIENT_ID, ACCESS_CLIENT_SECRET — Service Token criado em
+// dash.cloudflare.com → Zero Trust → Access → Service Auth). Sem os
+// secrets, ambas ficam '' e o comportamento é idêntico ao anterior.
+const ACCESS_CLIENT_ID = process.env.ACCESS_CLIENT_ID || '';
+const ACCESS_CLIENT_SECRET = process.env.ACCESS_CLIENT_SECRET || '';
+const accessHeaders = ACCESS_CLIENT_ID && ACCESS_CLIENT_SECRET
+  ? { 'CF-Access-Client-Id': ACCESS_CLIENT_ID, 'CF-Access-Client-Secret': ACCESS_CLIENT_SECRET }
+  : {};
+
+/**
+ * fetch() que segue redirects à mão, só enquanto ficam na MESMA origem do
+ * pedido inicial — mesmo motivo e mesma lógica do fetchSameOrigin em
+ * dynamic/worker/src/index.js (runScan): ao contrário de Authorization, o
+ * Fetch spec não despe CF-Access-Client-Id/Secret em redirects
+ * cross-origin. Sem isto, um 3xx para outra origem reenviaria as
+ * credenciais da Access para esse destino. Sem Access Service Token
+ * configurado, `opts.headers` nunca as contém, por isso o risco só existe
+ * a partir do dia em que estes dois secrets forem definidos.
+ */
+async function fetchSameOrigin(url, opts, maxRedirects = 5) {
+  let current = new URL(url);
+  const originalOrigin = current.origin;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    // eslint-disable-next-line no-await-in-loop -- saltos são sequenciais (cada um depende do Location do anterior)
+    const res = await fetch(current, { ...opts, redirect: 'manual' });
+    const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+    if (!location) return res;
+    const next = new URL(location, current);
+    if (next.origin !== originalOrigin) return res; // não segue para fora da origem — credenciais da Access não vazam
+    current = next;
+  }
+  return fetch(current, { ...opts, redirect: 'manual' });
+}
+
 if (!target || target.startsWith('SET-ME')) {
   // ::warning:: (não ::notice::) de propósito — achado da revisão de
   // segurança 2026-07 (ronda 4, N3): este caminho corria em produção há 13
@@ -35,10 +75,9 @@ if (!target || target.startsWith('SET-ME')) {
   process.exit(0);
 }
 
-console.log(`A verificar ${target}`);
-const res = await fetch(target, {
-  redirect: 'follow',
-  headers: { 'user-agent': 'headers-check (GitHub Actions; personal-site)' },
+console.log(`A verificar ${target}${accessHeaders['CF-Access-Client-Id'] ? ' (com Access Service Token)' : ''}`);
+const res = await fetchSameOrigin(target, {
+  headers: { 'user-agent': 'headers-check (GitHub Actions; personal-site)', ...accessHeaders },
 });
 console.log(`HTTP ${res.status}`);
 if (!res.ok) {
