@@ -327,7 +327,8 @@ export const ui = {
       intro:
         'Agregado anónimo dos relatórios que quem visita escolhe enviar quando a Content-Security-Policy bloqueia algo. Deixou de ser automático: o browser só regista localmente (sessionStorage) e nada sai daqui sem um clique — poupa escritas no KV do Worker (plano Free, teto diário apertado). Serve dois papéis: canário de regressão da própria build e observatório do que uma CSP estrita apanha na prática — que é, sobretudo, ruído de extensões de browser.',
       queueEmpty: 'Sem violações CSP registadas nesta sessão.',
-      queueStatus: '{n} violação(ões) desta sessão por reportar.',
+      queueStatusOne: '1 violação desta sessão por reportar.',
+      queueStatus: '{n} violações desta sessão por reportar.',
       queueSend: 'Reportar',
       queueSending: 'A enviar…',
       queueSent: 'Reportado — obrigado.',
@@ -1295,7 +1296,8 @@ export const ui = {
       intro:
         "Anonymous aggregate of the reports visitors choose to send when the Content-Security-Policy blocks something. No longer automatic: the browser only records locally (sessionStorage), nothing leaves without a click — saves KV writes on the Worker (Free plan, tight daily cap). It plays two roles: a canary for build regressions, and an observatory of what a strict CSP actually catches in practice — which is, above all, browser-extension noise.",
       queueEmpty: 'No CSP violations recorded this session.',
-      queueStatus: '{n} violation(s) from this session, not yet reported.',
+      queueStatusOne: '1 violation from this session, not yet reported.',
+      queueStatus: '{n} violations from this session, not yet reported.',
       queueSend: 'Report',
       queueSending: 'Sending…',
       queueSent: 'Reported — thank you.',
