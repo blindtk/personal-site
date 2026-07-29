@@ -1,7 +1,7 @@
 // Regressão do controlo de segurança mais frágil do site: a CSP de
 // public/_headers contra o HTML REALMENTE construído em dist/.
 //
-// Porquê este teste existe (2026-07, revisão de segurança — ronda 3): o
+// Porquê este teste existe (2026-07, revisão de segurança — ronda 4): o
 // `_headers` traz um hash SHA-256 do único <script> inline do site (o bloco
 // JSON-LD do BaseLayout). Esse hash é escrito À MÃO e o conteúdo do bloco vem
 // de src/config.ts — logo, qualquer alteração a SITE.name/role/url/redes

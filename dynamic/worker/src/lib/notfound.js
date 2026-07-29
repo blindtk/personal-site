@@ -17,6 +17,10 @@
 export const NOT_FOUND_CSP = "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'";
 
 export function renderNotFoundHtml() {
+  // Os `{…}` deste template literal são blocos de CSS (`:root { … }`), não
+  // interpolações a que falte o `$`: o template não interpola nada, é HTML
+  // 100% estático (ver o comentário do topo do ficheiro).
+  // nosemgrep: javascript.lang.correctness.missing-template-string-indicator
   return `<!doctype html>
 <html lang="pt">
 <head>

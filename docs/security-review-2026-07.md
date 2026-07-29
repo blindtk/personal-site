@@ -28,14 +28,14 @@ corrigidas num PR de seguimento, com testes a comprovar cada uma. Resumo:
 | #1 rate limiter esgota a quota do KV | **Corrigido** — cap global diário (`RATE_LIMIT_WRITE_CAP`, mesmo padrão do honeypot/CSP/vitals) | 2 testes novos (`node --test`) |
 | #2 nenhum teste corre em CI | **Corrigido** — `npm run test`/`npm test` em jobs próprios (`build` e `worker` novo) | 105 testes do Worker + 68 do static, verdes |
 | #3 lockfile do Worker não é analisado | **Corrigido** — OSV a cobrir os dois lockfiles; `npm audit` também no job `worker` | Ver achado extra abaixo — encontrou uma vulnerabilidade real |
-| #4 cron de headers não verifica nada | **POR CORRIGIR** — corrigido na ronda 1 e **revertido na ronda 2** (a Access bloqueia o CI). A ronda 3 confirmou que o workflow nunca verificou produção nem uma vez: 13 execuções, todas `schedule`, todas verdes-vazias, zero `deployment_status`. Ver ronda 3, N3 | Histórico de execuções na API do GitHub |
+| #4 cron de headers não verifica nada | **POR CORRIGIR** — corrigido na ronda 1 e **revertido na ronda 2** (a Access bloqueia o CI). A ronda 4 confirmou que o workflow nunca verificou produção nem uma vez: 13 execuções, todas `schedule`, todas verdes-vazias, zero `deployment_status`. Ver ronda 4, N3 | Histórico de execuções na API do GitHub |
 | #5 `RATE_SALT` falha em silêncio | **Corrigido** — `console.error('rate_salt_missing', …)` quando o segredo falta | 1 teste novo |
 | #6 `compatibility_date` de 18 meses | **Corrigido**, com aviso — bump para `2026-01-01`; precisa da validação via deploy da branch (já documentada no `CLAUDE.md`) antes do merge | `wrangler deploy --dry-run` valida a config; o runtime real só se confirma com deploy |
 | #7 sem observabilidade no Worker | **Corrigido** — `[observability] enabled = true` | `wrangler deploy --dry-run` confirma que o TOML continua válido |
 | HSTS ausente nas respostas do Worker | **Corrigido** — adicionado a `RESPONSE_SECURITY_HEADERS` | testes existentes continuam verdes |
 | `wrangler deploy --dry-run` como gate de CI | **Adicionado** — funciona sem nenhum segredo da Cloudflare | Confirmado neste ambiente, sem credenciais |
 | `astro check` em CI | **Corrigido (ronda 2, PR #128)** — 37 erros reais resolvidos, script ligado ao `ci.yml` | 0 erros/0 warnings/0 hints, com reinstalação limpa |
-| Semgrep só a `ERROR` | **Não alterado** — precisa de uma passagem de triagem que não coube ainda | — |
+| Semgrep só a `ERROR` | **Corrigido (ronda 3)** — triagem completa feita, gate sobe para `ERROR` + `WARNING` | Scan sem filtro de severidade: 16 achados (2 ERROR / 8 WARNING / 6 INFO) → 0 depois da triagem; ver secção abaixo |
 
 ### Dois achados que não estavam na lista original
 
@@ -103,6 +103,97 @@ campos EXIF reais; chaves i18n na secção errada do dicionário —
 "**undefined**" real na página self-scan em produção; tuplos e uniões
 de literais alargados para tipos genéricos por falta de anotação).
 Ligado ao `ci.yml`. Resultado: 0 erros, 0 warnings, 0 hints.
+
+### Ronda 3: triagem do Semgrep e subida do gate para `WARNING`
+
+Fecha o item **#8** (*Semgrep só a `ERROR`*). O scan foi corrido sem filtro
+de severidade, contra exatamente o mesmo âmbito do CI (regras públicas de
+JS/TS + `.semgrep/`, mesmo conjunto de ficheiros: 205 alvos, 203 regras).
+
+**Volume real: 16 achados — 2 ERROR, 8 WARNING, 6 INFO — em 6 regras.**
+
+| Regra | Sev. | N.º | Onde | Veredito |
+|---|---|---|---|---|
+| `typescript.lang.correctness.useless-ternary` | ERROR | 2 | `lab-terminal.js` | **Verdadeiro positivo — corrigido** |
+| `javascript.lang.correctness.no-replaceall` | WARNING | 5 | `worker/src/lib/sanitize.js` | Não aplicável |
+| `javascript.lang.security.html-in-template-string` | WARNING | 2 | `lab-terminal.js` | Falso positivo |
+| `javascript.lang.security.audit.detect-non-literal-regexp` | WARNING | 1 | `worker/src/lib/ct.js` | Falso positivo |
+| `javascript.audit.detect-replaceall-sanitization` | INFO | 4 | `worker/src/lib/sanitize.js` | Não aplicável |
+| `javascript.lang.correctness.missing-template-string-indicator` | INFO | 2 | `worker/src/lib/notfound.js` | Falso positivo |
+
+**Os dois ERROR eram defeitos a sério**, não ruído: dois ternários mortos
+com os dois ramos literalmente iguais (`pt ? X : X`) — a mensagem do `sudo`
+(citação literal do `sudo(8)`, que fica em inglês nos dois idiomas) e a
+linha do `hash` no `help`. Corrigidos no código, não suprimidos: os
+ternários desapareceram e o comportamento é idêntico.
+
+Os restantes 14 foram suprimidos com `// nosemgrep: <rule-id>` no sítio,
+cada um com a justificação por cima (mesmo padrão de exceção do
+`osv-scanner.toml` e do `.github/npm-audit-allowlist.json`, mas **sem data
+de expiração** — não são vulnerabilidades de terceiros à espera de patch,
+são regras que não se aplicam a este código):
+
+- **`no-replaceall` / `detect-replaceall-sanitization`** (9 dos 14, todos na
+  mesma função `escapeHtml`): a primeira avisa que `replaceAll` falta em
+  browsers antigos — este ficheiro só corre no workerd e no Node dos testes;
+  a segunda pede DOMPurify/sanitize-html — o Worker não tem DOM, e `escapeHtml`
+  não é limpeza por lista de tags permitidas, é o escape completo dos cinco
+  caracteres. Trocar isto por uma dependência seria mais superfície, não menos.
+- **`html-in-template-string`**: `` `${cmd} <base64|url|hex> <texto>` `` não é
+  HTML — é notação de uso do terminal, apanhada só porque `<b` parece uma tag.
+  As linhas do terminal são impressas com `div.textContent`; não há sink.
+- **`detect-non-literal-regexp`**: o taint vem de `key`, parâmetro de uma
+  closure chamada só com `'O'` e `'CN'`. O texto do crt.sh é o *assunto* do
+  match, não o padrão, e o padrão é linear — não há ReDoS.
+- **`missing-template-string-indicator`**: os `{…}` são blocos de CSS dentro
+  do HTML estático do 404; o template não interpola nada.
+
+**Depois da triagem: 0 achados a qualquer severidade.**
+
+**Decisão: o gate sobe de `ERROR` para `ERROR` + `WARNING`.** Os números
+justificam-no dos dois lados:
+
+- O bucket WARNING tem 8 achados no repositório inteiro — triagem de uma
+  tarde, feita, e agora a zero. O custo marginal de o incluir é **zero
+  hoje**, e o custo de o manter é uma supressão justificada por caso novo.
+- 3 dos 8 WARNING são de categoria *security* (`html-in-template-string`,
+  `detect-non-literal-regexp`) — exatamente a classe de achado que o gate
+  existe para apanhar. Com `--severity ERROR` estavam a ser deitados fora
+  em silêncio: o Semgrep classifica a maioria das suas regras de XSS/injeção
+  em modo *audit* abaixo de ERROR, por serem confidence LOW/MEDIUM.
+- O ruído recorrente concentra-se numa única regra não-security
+  (`no-replaceall`, 5 dos 8) e num único sítio do código.
+
+**INFO fica de fora do gate** (continua a aparecer no relatório, sem falhar
+o build): as 6 ocorrências vêm de regras *audit* com confidence LOW cuja
+recomendação típica é acrescentar uma dependência de sanitização. Não é
+sinal que justifique parar um PR.
+
+Duas notas operacionais que saíram desta passagem:
+
+1. **`--severity` é um filtro de igualdade, não um mínimo.** Passar só
+   `--severity WARNING` faria os achados ERROR deixarem de contar — o gate
+   ficaria mais fraco, não mais forte. Daí as duas flags no `security.yml`.
+2. **`// nosemgrep` só suprime se o marcador estiver na linha imediatamente
+   anterior ao achado.** Num comentário de várias linhas, a justificação vai
+   primeiro e o `nosemgrep:` fica na última — não ao contrário. Para suprimir
+   duas regras no mesmo sítio, separam-se por vírgula na mesma linha.
+
+*Ressalva de método:* o scan de triagem foi corrido com as regras de JS/TS
+do repositório aberto `semgrep/semgrep-rules` (o registo `semgrep.dev` não
+era alcançável do ambiente onde a triagem correu), ou seja um **superconjunto**
+dos packs `p/typescript` + `p/javascript`. A prova de que é superconjunto:
+`useless-ternary` é ERROR na origem e as duas linhas que apanhou estavam no
+`main` desde o PR #74 com o job `semgrep` sempre verde — logo o pack do
+registo ou não traz essa regra, ou trá-la abaixo de ERROR. O risco residual
+era o inverso: uma regra que só existisse no registo podia aparecer como
+WARNING no primeiro CI depois desta mudança.
+
+**Confirmado no CI do PR #130:** o job `semgrep` com o gate novo passou
+verde à primeira, e o log dá a dimensão real dos packs — **76 regras (74 do
+registo + 2 nossas, de `.semgrep/`)** contra as 203 do superconjunto usado
+na triagem, com **0 achados**. A triagem foi portanto conservadora por uma
+margem larga: o que o CI corre é um subconjunto do que foi analisado à mão.
 
 ### CAA — confirmado em falta (verificação DNS ao vivo)
 
@@ -857,25 +948,30 @@ melhor do que o que a maioria das equipas produz.
 |---|---|---|---|---|---|
 | Segredos & cadeia de fornecimento | 20 | 16 | 18 | **19** | MFA confirmado (Yubikey principal + backup, Cloudflare e GitHub) |
 | Dependências | 15 | 11 | 14 | **14** | Sem alterações nesta ronda — já perto do máximo |
-| Análise estática & testes | 20 | 11 | 15 | **19** | `astro check` fechado: 37 erros reais corrigidos (incluindo um bug real de UI, texto "undefined" em produção), 0 erros/warnings/hints, ligado ao `ci.yml`. Só falta a triagem do Semgrep para `WARNING` |
+| Análise estática & testes | 20 | 11 | 15 | **19** | `astro check` fechado: 37 erros reais corrigidos (incluindo um bug real de UI, texto "undefined" em produção), 0 erros/warnings/hints, ligado ao `ci.yml`. (Ronda 3 fechou também a triagem do Semgrep — ver secção acima) |
 | CI/CD | 15 | 12 | 14 | **14** | Sem alterações — branch protection continua bloqueada pelo plano GitHub (privado, conta pessoal), confirmado no dashboard, não é um erro de configuração |
 | Runtime & Cloudflare | 20 | 12 | 16 | **18** | Deploy automático confirmado (Workers Builds); WAF fechado por decisão explícita e documentada; uma regressão real (Access + `expected-headers.json`) apanhada e corrigida antes de causar dano. Desconto: CAA confirmado em falta por consulta DNS ao vivo |
 | Modelação de ameaças & documentação | 10 | 10 | 10 | **10** | Sem alterações — já estava no máximo |
 
-> **Nota da ronda 3 (validação independente):** os 94/100 abaixo foram
+> **Nota da ronda 4 (validação independente):** os 94/100 abaixo foram
 > atribuídos contra a *tabela de correções*, não contra o código. Revalidado
 > a partir do código e da CI reais, o valor correto nesta data era **82/100**
-> — ver a secção "Ronda 3" no fim do documento para a repartição e para as
+> — ver a secção "Ronda 4" no fim do documento para a repartição e para as
 > três lacunas materiais que esta pontuação não refletia.
+>
+> (Numeração: esta secção do documento fala de uma "ronda 3" diferente — a
+> triagem do Semgrep, PR #130, mergeada em paralelo a este trabalho. As duas
+> foram feitas de forma independente e mereceram o mesmo número; a validação
+> abaixo ficou renumerada para "ronda 4" para não colidir com a já mergeada.)
 
 **94/100.** O que falta para os últimos 6 pontos, por ordem de esforço: CAA
-(sete linhas no DNS, cinco minutos — o mais barato de todos), triagem do
-Semgrep para `WARNING` (uma tarde), e branch protection/rate limiting nativo
-da zona (bloqueados por plano — Cloudflare Free não tem rate limiting de
-zona grátis além de 1 regra, GitHub privado não aplica proteção sem
-Team/Enterprise). Nenhum destes é um problema de ferramenta em falta; são,
-por esta ordem, uma tarefa de cinco minutos, uma tarde de triagem, e duas
-decisões de plano/custo que só o dono do repo pode tomar.
+(sete linhas no DNS, cinco minutos — o mais barato de todos) e branch
+protection/rate limiting nativo da zona (bloqueados por plano — Cloudflare
+Free não tem rate limiting de zona grátis além de 1 regra, GitHub privado
+não aplica proteção sem Team/Enterprise). A triagem do Semgrep, que estava
+nesta lista, foi feita na ronda 3 e o gate já cobre `WARNING`. Nenhum dos
+que restam é um problema de ferramenta em falta; são uma tarefa de cinco
+minutos e duas decisões de plano/custo que só o dono do repo pode tomar.
 
 ### Roteiro a 12 meses
 
@@ -887,8 +983,9 @@ MFA por hardware · DMARC/SPF/null MX.
 
 **Mês 2-3 — cobrir a fragilidade estrutural**
 Playwright para regressão de CSP · decidir sobre repo público → CodeQL ·
-escolher **um** revisor de IA · Semgrep a `WARNING` com triagem única ·
-regra Semgrep própria anti-PII (`cf-connecting-ip` → `KV.put`) ·
+escolher **um** revisor de IA · ~~Semgrep a `WARNING` com triagem única~~
+(feito, ronda 3) · regra Semgrep própria anti-PII (`cf-connecting-ip` →
+`KV.put`) ·
 `wrangler deploy --dry-run` em CI.
 
 **Mês 4-6 — runtime e conteúdo**
@@ -919,7 +1016,7 @@ esta foi a decisão certa.
 
 ---
 
-# Ronda 3 (2026-07-29) — validação cética e independente
+# Ronda 4 (2026-07-29) — validação cética e independente
 
 > Âmbito: **não** repetir a auditoria. Verificar, a partir do código e da CI
 > reais, se o que está registado como corrigido continua corrigido; encontrar
@@ -965,7 +1062,7 @@ CI é real e não está em causa em nenhum ponto deste documento.
 
 Não confiei na tabela. Fui ao código, uma por uma:
 
-| Lacuna | Registo | Verificação da ronda 3 |
+| Lacuna | Registo | Verificação da ronda 4 |
 |---|---|---|
 | #1 rate limiter esgota o KV | Corrigida | **Confirmada** — `RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 }` e `underCap` no caminho de escrita (`index.js:394-428`). Mas o padrão **não** foi aplicado a todos os caminhos de escrita — ver **N2** |
 | #2 nenhum teste corre em CI | Corrigida | **Confirmada** — jobs `build` e `worker` no `ci.yml`, 173 testes verdes |
@@ -977,7 +1074,7 @@ Não confiei na tabela. Fui ao código, uma por uma:
 | HSTS nas respostas do Worker | Corrigida | **Confirmada** — em `RESPONSE_SECURITY_HEADERS` (`index.js:448`) |
 | `wrangler deploy --dry-run` em CI | Adicionada | **Confirmada** — e funciona sem credenciais |
 | `astro check` em CI | Corrigida | **Confirmada** — 0/0/0 com reinstalação limpa |
-| Semgrep só a ERROR | Não alterada | **Confirmada como não alterada** |
+| Semgrep só a ERROR | Não alterada | **Verdade no momento em que esta ronda foi escrita.** Entretanto o PR #130 (trabalho independente, em paralelo) fez a triagem e subiu o gate para `ERROR` + `WARNING` — ver secção "Ronda 3: triagem do Semgrep" no início deste documento. Não corrigido por esta ronda; já não é uma lacuna |
 | Iscos: `routes` vs `DECOYS` | Nice-to-have | Listas **coincidem hoje**, mas há uma divergência de *forma* com consequência real — ver **N5** |
 
 **Nove das onze correções são reais e sólidas.** O trabalho das rondas 1 e 2
@@ -1210,10 +1307,10 @@ fan-out do threat-intel.
 
 ## 4. Os três itens "em falta" — estado confirmado
 
-| Item | Estado na ronda 3 |
+| Item | Estado na ronda 4 |
 |---|---|
 | **CAA no DNS** | **Não verificável a partir deste ambiente** — o proxy recusa DNS-over-HTTPS (`dns.google`, `cloudflare-dns.com`: 403) e não há resolver disponível. **Mantido na lista** com a confirmação da ronda 2 (2026-07-29, no mesmo dia): ausente. Não fabrico uma confirmação que não fiz |
-| **Triagem do Semgrep para `WARNING`** | **Continua por fazer**, e agora com um obstáculo a mais: não consigo medir o volume real de `WARNING` sem acesso a `semgrep.dev` (ver N4). A triagem e o pinning das regras devem ser feitos **na mesma passagem** — não faz sentido calibrar sobre regras que podem mudar sozinhas |
+| **Triagem do Semgrep para `WARNING`** | **Resolvido — mas não por esta ronda.** No momento em que esta secção foi escrita, continuava por fazer (e sem acesso a `semgrep.dev` deste ambiente para medir o volume, ver N4). Entretanto o PR #130, feito em paralelo, correu o scan sem filtro de severidade, triou os 16 achados e subiu o gate para `ERROR` + `WARNING` — ver "Ronda 3: triagem do Semgrep" no início do documento. Item fechado, por trabalho independente |
 | **Branch protection** | **Confirmado bloqueado, e a causa também.** Consultei a API: `"private": true`, `"owner.type": "User"`. Repositório privado em conta pessoal — GitHub exige Team/Enterprise. Não é erro de configuração, é limite de plano, tal como registado |
 
 ## 5. Cloudflare — o que mudou e o que não consegui ver
@@ -1238,7 +1335,7 @@ desde então"): **não sei, e ninguém pode saber a partir do repositório.** O
 que posso dizer é que nada no código contradiz o que está registado. As
 alterações de dashboard que interessa confirmar estão na lista da secção 8.
 
-## 6. Modelo de ameaça — o que a ronda 3 muda
+## 6. Modelo de ameaça — o que a ronda 4 muda
 
 A tabela da secção 7 continua boa. Três linhas mudam de estado, e uma é nova:
 
@@ -1272,7 +1369,7 @@ ligares**. Foi por isso que corri o controlo negativo no teste do N1.
 
 ## 7. Maturidade por área — reavaliada, com as discordâncias
 
-| Área | Ronda 2 | **Ronda 3** | Porquê discordo (ou não) |
+| Área | Ronda 2 | **Ronda 4** | Porquê discordo (ou não) |
 |---|---|---|---|
 | Gestão de segredos | 8 | **8** | Concordo. Sem segredos no repo, sem token CF no GitHub, MFA por hardware, gitleaks nos dois lados, `rate_salt_missing` a fazer barulho. Desconto pequeno: dois segredos da Access existem só no código (N7) |
 | Dependências | 9 | **9** | Concordo. Dois lockfiles cobertos, expiração obrigatória nas exceções, `check-npm-audit.mjs` a fazer cumprir a data. Reverificado do zero, verde |
@@ -1285,7 +1382,7 @@ ligares**. Foi por isso que corri o controlo negativo no teste do N1.
 
 ## 8. Pontuação final
 
-| Área | Peso | Ronda 2 (declarada) | **Real, antes da ronda 3** | **Depois da ronda 3** |
+| Área | Peso | Ronda 2 (declarada) | **Real, antes da ronda 4** | **Depois da ronda 4** |
 |---|---|---|---|---|
 | Segredos & cadeia de fornecimento | 20 | 19 | **17** | 17 |
 | Dependências | 15 | 14 | **14** | 14 |
@@ -1345,21 +1442,22 @@ entre este projeto e um repositório pessoal típico não é de grau, é de gén
 
 | # | O quê | Esforço | Impacto | Estado |
 |---|---|---|---|---|
-| 1 | **Hash da CSP + teste de regressão** (N1) | — | **Alto** | ✅ **Feito** (ronda 3) |
-| 2 | **`underCap` nos dois `?refresh=1`** (N2) | ~15 min | **Alto** | ✅ **Feito** (ronda 3.1) — testado; **falta a validação por deploy da branch antes do merge** (`CLAUDE.md`) |
-| 3 | **`/phpmyadmin/` por prefixo** (N5) | ~5 min | Médio | ✅ **Feito** (ronda 3.1) |
-| 4 | **Teste que compara `routes` ↔ `DECOYS`** | ~15 min | Médio | ✅ **Feito** (ronda 3.1) |
-| 5 | **Retry + documentar o não-pin do Semgrep** (N4) | ~30 min | Médio | ✅ **Feito** (ronda 3.1) — pin de facto continua impossível a partir do CLI OSS, ver ronda 3.1 |
-| 6 | **Redirects same-origin no `runScan` + documentar `ACCESS_CLIENT_*`** (N7) | ~10 min | Baixo | ✅ **Feito** (ronda 3.1) |
-| 7 | **`[limits] cpu_ms`** (N8) | ~2 min | Baixo | ✅ **Feito** (ronda 3.1) |
-| 8 | **Triagem do Semgrep para `WARNING`** | ~1 tarde | Médio | Por fazer — bloqueado neste ambiente (proxy sem acesso a semgrep.dev); precisa de ser feito num ambiente com rede |
-| 9 | **Registar a decisão do `.mcp.json` no `PLAN.md`** (N6) | ~15 min | Baixo-médio | ✅ **Registado** (ronda 3.1) — decisão de manter/podar continua por tomar |
+| 1 | **Hash da CSP + teste de regressão** (N1) | — | **Alto** | ✅ **Feito** (ronda 4) |
+| 2 | **`underCap` nos dois `?refresh=1`** (N2) | ~15 min | **Alto** | ✅ **Feito** (ronda 4.1) — testado; **falta a validação por deploy da branch antes do merge** (`CLAUDE.md`) |
+| 3 | **`/phpmyadmin/` por prefixo** (N5) | ~5 min | Médio | ✅ **Feito** (ronda 4.1) |
+| 4 | **Teste que compara `routes` ↔ `DECOYS`** | ~15 min | Médio | ✅ **Feito** (ronda 4.1) |
+| 5 | **Retry + documentar o não-pin do Semgrep** (N4) | ~30 min | Médio | ✅ **Feito** (ronda 4.1) — pin de facto continua impossível a partir do CLI OSS, ver ronda 4.1 |
+| 6 | **Redirects same-origin no `runScan` + documentar `ACCESS_CLIENT_*`** (N7) | ~10 min | Baixo | ✅ **Feito** (ronda 4.1) |
+| 7 | **`[limits] cpu_ms`** (N8) | ~2 min | Baixo | ✅ **Feito** (ronda 4.1) |
+| 8 | **Triagem do Semgrep para `WARNING`** | ~1 tarde | Médio | ✅ **Feito — pelo PR #130**, em paralelo (não por esta ronda; bloqueado neste ambiente por falta de rede até `semgrep.dev`) |
+| 9 | **Registar a decisão do `.mcp.json` no `PLAN.md`** (N6) | ~15 min | Baixo-médio | ✅ **Registado** (ronda 4.1) — decisão de manter/podar continua por tomar |
 
-Restam dois itens de código: a triagem do Semgrep (bloqueada pela rede
-deste ambiente, não pela dificuldade) e a decisão final do N6 (não é
-código, é escolher entre as opções já registadas no `PLAN.md`). Tudo o
-resto da tabela original de esforço/impacto está feito e testado — ver
-"Ronda 3.1" para o detalhe de cada correção e da verificação.
+Resta um item de código genuíno: a decisão final do N6 (não é código, é
+escolher entre as opções já registadas no `PLAN.md`). A triagem do Semgrep,
+que esta ronda não conseguiu fazer por falta de rede, fechou por trabalho
+independente (PR #130, mergeado em paralelo) — ver a nota na secção 4.
+Tudo o resto da tabela original de esforço/impacto está feito e testado —
+ver "Ronda 4.1" para o detalhe de cada correção e da verificação.
 
 ### B. Dashboard / DNS — só o dono do repo pode confirmar ou agir
 
@@ -1383,7 +1481,7 @@ resto da tabela original de esforço/impacto está feito e testado — ver
 
 ### O que continuo a recomendar que **não** faças
 
-Nada mudou aqui, e a ronda 3 reforça-o: continuas **saturado** em scanners de
+Nada mudou aqui, e a ronda 4 reforça-o: continuas **saturado** em scanners de
 dependências e SAST. A lição desta ronda é o oposto de instalar — três
 lacunas materiais, zero que uma ferramenta nova teria apanhado, e a que mais
 custou (N1) foi fechada com **28 linhas de `node --test` e nenhuma dependência
@@ -1397,9 +1495,9 @@ foi o ano certo.
 
 ---
 
-## Ronda 3.1 (2026-07-29, mesmo dia) — correção de todos os N1-N8
+## Ronda 4.1 (2026-07-29, mesmo dia) — correção de todos os N1-N8
 
-O dono do repo pediu para corrigir todos os achados N1-N8 da ronda 3.
+O dono do repo pediu para corrigir todos os achados N1-N8 da ronda 4.
 Sete dos oito têm componente de código; todos os sete foram corrigidos,
 com testes verificados nos dois sentidos (o teste falha com o código
 antigo, passa com o novo) onde a lacuna era comportamental. N3 e N6 têm
@@ -1408,7 +1506,7 @@ não escondido.
 
 | # | O que foi feito | Verificação |
 |---|---|---|
-| N1 | (já corrigido na ronda 3 original) hash da CSP + `csp-inline.test.mjs` | Controlo negativo: falha com o hash antigo |
+| N1 | (já corrigido na ronda 4 original) hash da CSP + `csp-inline.test.mjs` | Controlo negativo: falha com o hash antigo |
 | **N2** | `underCap` partilhado (`REFRESH_WRITE_CAP`, 20/dia) nos dois `?refresh=1` (`/api/scan`, `/api/cf-stats`) — esgotado, degrada para a cache existente em vez de escrever | 3 testes novos: cap ao teto não escreve nem chama o upstream; abaixo do teto escreve e o contador acumula; o contador é **partilhado** entre as duas rotas |
 | **N4** | `security.yml`: retry (3 tentativas, backoff) no passo do Semgrep, mas só em erro de configuração/rede (exit 2) — um achado real (exit 1) falha logo, sem repetir. Comentário novo documenta, com honestidade, que `p/typescript`/`p/javascript` não têm mecanismo de pin no Semgrep OSS (ao contrário de tudo o resto no repo) | Lógica de retry testada isoladamente com stubs (rede instável → repete e recupera; achado real → falha à primeira, sem retry). zizmor `--offline` continua limpo sobre o `security.yml` novo |
 | **N5** | `/phpmyadmin/` (e qualquer futuro isco com glob) passa a match por prefixo — novo `dynamic/worker/src/lib/decoys.js` (`isDecoy`), `techniqueForPath` alinhado com a mesma convenção | 2 testes novos de comportamento + **1 teste que lê `wrangler.toml` e compara as `routes` com `DECOYS`** (a "nice-to-have" original, nunca feita). Controlo negativo: os 3 testes falham com o match exato antigo |
@@ -1434,29 +1532,32 @@ não escondido.
 - **N6, decisão final** — fica registada a pergunta, não a resposta: manter
   os 7 servidores, podar aos de leitura, ou mover `cloudflare-bindings`
   para um connector pessoal.
-- **Triagem do Semgrep para `WARNING`** — continua sem medir o volume real
-  (o proxy deste ambiente não chega a `semgrep.dev`).
+- **Triagem do Semgrep para `WARNING`** — esta ronda não conseguiu medir o
+  volume real (o proxy deste ambiente não chega a `semgrep.dev`). **Fechado
+  entretanto por trabalho independente** (PR #130, mergeado em paralelo a
+  este) — ver a nota na secção 4. Já não está em aberto, só não foi esta
+  ronda que o fechou.
 - **CAA, branch protection** — inalterados, ver secções 4 e 8.
 
 ### Pontuação, revista
 
-Seis das oito lacunas fecharam com código testado; duas mantêm uma
+Seis das oito lacunas fecharam com código testado nesta ronda; uma sétima
+(Semgrep `WARNING`) fechou em paralelo, por outro PR; duas mantêm uma
 componente de dashboard/decisão que não é corrigível daqui. Reflete-se na
 pontuação por área (ver secção 8 para o histórico completo):
 
-| Área | Ronda 3 | **Ronda 3.1** | Porquê mudou |
+| Área | Ronda 4 | **Ronda 4.1** | Porquê mudou |
 |---|---|---|---|
 | Segredos & cadeia de fornecimento | 17 | **18** | N4 (retry + risco documentado, não escondido) e N6 (decisão registada, não escondida) |
 | Dependências | 14 | 14 | Sem alterações |
-| Análise estática & testes | 17 | **18** | N5 fechado com teste que a própria ronda 1 tinha pedido como nice-to-have e nunca foi feito |
+| Análise estática & testes | 17 | **19** | N5 fechado com teste que a própria ronda 1 tinha pedido como nice-to-have e nunca foi feito; triagem do Semgrep fechada em paralelo pelo PR #130 |
 | CI/CD | 12 | **13** | N3: deixa de ser silencioso, continua sem verificar produção |
 | Runtime & Cloudflare | 17 | **19** | N2 e N8 são correções concretas, testadas, na classe de risco mais alta desta ronda |
 | Modelação de ameaças & documentação | 9 | 9 | Sem alterações — a correção não apaga o facto de a versão original ter declarado controlos ativos que não estavam |
-| **Total** | **86** | **91** | |
+| **Total** | **86** | **92** | |
 
-**91/100**, com honestidade sobre o que resta: nenhum dos itens em aberto é
+**92/100**, com honestidade sobre o que resta: nenhum dos itens em aberto é
 código por fazer — são dashboard (N3), uma decisão de produto sobre um
-ficheiro de configuração (N6), uma medição bloqueada pela rede deste
-ambiente (Semgrep `WARNING`), e os dois de sempre (CAA, branch protection).
-O teto de 92-94 estimado na ronda 3 continua a ser a estimativa certa; esta
-ronda fechou a distância que era código.
+ficheiro de configuração (N6), e os dois de sempre (CAA, branch protection).
+O teto de 92-94 estimado na ronda 4 era a estimativa certa; entre esta
+ronda e o PR #130 (mergeado em paralelo), está feito o que era código.

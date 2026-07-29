@@ -85,7 +85,7 @@ test('attack-map: técnica por path-isco', () => {
 
 test('attack-map: técnica por prefixo para /phpmyadmin/* (mesma convenção do isDecoy)', () => {
   // wrangler.toml roteia danielmala.co/phpmyadmin/* — os paths que os
-  // scanners reais pedem (revisão de segurança 2026-07, ronda 3, N5).
+  // scanners reais pedem (revisão de segurança 2026-07, ronda 4, N5).
   assert.equal(techniqueForPath('/phpmyadmin/index.php'), 'T1190');
   assert.equal(techniqueForPath('/phpmyadmin/setup.php'), 'T1190');
   assert.equal(techniqueForPath('/admin/x'), null); // /admin é match exato, não glob
@@ -133,7 +133,7 @@ test('isDecoy: match exato para a maioria, prefixo para os iscos com glob no wra
 });
 
 test('decoys: DECOYS (index.js, via lib/decoys.js) bate certo com as rotas-isco do wrangler.toml', () => {
-  // Achado da revisão de segurança 2026-07 (ronda 3, N5): as duas listas já
+  // Achado da revisão de segurança 2026-07 (ronda 4, N5): as duas listas já
   // divergiram — /phpmyadmin/* era um glob no wrangler.toml mas string
   // exata em DECOYS, perdendo o sinal E denunciando o Worker (404 JSON em
   // vez do 404 HTML disfarçado) nos paths reais que os scanners pedem.
@@ -850,7 +850,7 @@ test('cache expirada serve o valor stale e renova em background', async () => {
 });
 
 // ---------- self-scan: segue redirects só na mesma origem (N7) ----------
-// Achado da revisão de segurança 2026-07 (ronda 3): CF-Access-Client-Id/
+// Achado da revisão de segurança 2026-07 (ronda 4): CF-Access-Client-Id/
 // Secret, ao contrário do Authorization, não são despidos pelo Fetch spec
 // em redirects cross-origin. Com `redirect: 'follow'` normal, um 3xx do
 // alvo do self-scan para outra origem reenviava as credenciais da Access
@@ -1706,7 +1706,7 @@ test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan
 });
 
 // ---------- cap partilhado dos refresh manuais (scan + cf-stats) ----------
-// Achado da revisão de segurança 2026-07 (ronda 3, N2): o rate limit por
+// Achado da revisão de segurança 2026-07 (ronda 4, N2): o rate limit por
 // cliente (3/10min) destas duas rotas ainda permite até 432 escritas/dia por
 // rota e por IP — sem cap global, a mesma classe de risco da lacuna #1
 // (rate limiter), só que aplicada tarde de mais a estes dois caminhos.

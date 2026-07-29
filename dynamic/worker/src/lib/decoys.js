@@ -3,7 +3,7 @@
 // Cloudflare decide que pedidos chegam ao Worker; aqui decide-se quais
 // desses pedidos contam como isco. As duas listas têm de bater certo (ver
 // test/logic.test.mjs, "decoys: DECOYS cobre as routes do wrangler.toml") —
-// já divergiram uma vez (revisão de segurança 2026-07, ronda 3, N5):
+// já divergiram uma vez (revisão de segurança 2026-07, ronda 4, N5):
 // `danielmala.co/phpmyadmin/*` é um glob no wrangler.toml (a Cloudflare
 // manda `/phpmyadmin/index.php`, `/phpmyadmin/setup.php` — os paths que os
 // scanners reais pedem — para o Worker), mas DECOYS tinha `/phpmyadmin/`

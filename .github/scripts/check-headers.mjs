@@ -14,7 +14,7 @@ const target = process.env.TARGET_URL || process.env.DEPLOY_URL || cfg.url;
 
 if (!target || target.startsWith('SET-ME')) {
   // ::warning:: (não ::notice::) de propósito — achado da revisão de
-  // segurança 2026-07 (ronda 3, N3): este caminho corria em produção há 13
+  // segurança 2026-07 (ronda 4, N3): este caminho corria em produção há 13
   // dias seguidos, sempre verde, sem verificar nada (a Access bloqueia
   // qualquer pedido não autenticado — ver docs/cloudflare-deploy.md). Um
   // ::notice:: não aparece na lista de anotações do run nem no resumo por

@@ -355,7 +355,7 @@
   sessão interativa do Claude Code CLI (`/mcp`).
 
 - **2026-07 — Servidores MCP da Cloudflare em `.mcp.json` (raiz do repo):
-  achado por confirmar** (revisão de segurança 2026-07, ronda 3, N6): o
+  achado por confirmar** (revisão de segurança 2026-07, ronda 4, N6): o
   `.mcp.json` foi adicionado no PR #127 para validar o `wrangler.toml`
   contra a conta real (ver entrada acima, "Validação do wrangler.toml…"),
   mas entrou **sem** passar pela mesma disciplina de decisão que este

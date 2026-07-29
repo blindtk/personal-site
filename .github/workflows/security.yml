@@ -84,8 +84,22 @@ jobs:
       - name: Instalar Semgrep
         run: pipx install semgrep==1.171.0
       - name: SAST
-        # --severity ERROR: só falhamos em achados de alta severidade
-        # (XSS/injeção/etc.), não em ruído de estilo das regras públicas.
+        # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07;
+        # ver docs/security-review-2026-07.md). O volume real medido contra
+        # este código, a correr sem filtro de severidade, foi de 16 achados:
+        # 2 ERROR (dois ternários mortos — corrigidos, não suprimidos),
+        # 8 WARNING (3 deles de categoria "security" — precisamente o que o
+        # gate existe para apanhar) e 6 INFO. Depois da triagem: 0 achados.
+        # O custo marginal de incluir WARNING é hoje zero e passa a cobrir as
+        # regras de segurança que o Semgrep classifica abaixo de ERROR.
+        #
+        # INFO fica de fora: são regras de "audit" com confidence LOW cuja
+        # recomendação típica é acrescentar uma dependência de sanitização —
+        # não é sinal que justifique parar um PR.
+        #
+        # ATENÇÃO: `--severity` é um filtro de igualdade, não um mínimo. Só
+        # com `--severity WARNING` os achados ERROR deixariam de contar — daí
+        # as duas flags.
         #
         # Pin (ou a falta dele): p/typescript e p/javascript NÃO estão
         # pinadas por versão/digest, ao contrário de tudo o resto neste
@@ -94,7 +108,7 @@ jobs:
         # registo público (semgrep.dev) são bundles geridos do lado do
         # servidor, sem equivalente ao "commit SHA" das actions nem ao
         # "==versão" do pip, através do CLI open-source. Descoberto numa
-        # revisão de segurança (2026-07, ronda 3, N4): o CI corre regras
+        # revisão de segurança (2026-07, ronda 4, N4): o CI corre regras
         # remotas e mutáveis a cada execução, e uma falha de rede a meio
         # (semgrep.dev inacessível) bloqueava todos os PRs sem distinguir
         # "sem achados" de "não consegui verificar". Mitigado por:
@@ -106,11 +120,12 @@ jobs:
         #       (exit 2 do semgrep — falha a obter `--config`), nunca num
         #       achado real (exit 1, com --error) — um 429/timeout
         #       transitório do semgrep.dev não bloqueia o merge, mas um
-        #       achado ERROR genuíno falha logo à primeira, sem mascarar.
+        #       achado ERROR/WARNING genuíno falha logo à primeira, sem
+        #       mascarar.
         run: |
           set +e
           for tentativa in 1 2 3; do
-            semgrep scan --metrics=off --error --severity ERROR --config p/typescript --config p/javascript --config .semgrep/
+            semgrep scan --metrics=off --error --severity ERROR --severity WARNING --config p/typescript --config p/javascript --config .semgrep/
             code=$?
             if [ "$code" -eq 0 ]; then exit 0; fi
             if [ "$code" -eq 1 ]; then exit 1; fi

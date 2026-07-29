@@ -114,7 +114,7 @@ crons = ["*/30 * * * *"]
 # patológico (ex.: o fan-out de 168 buckets horários do threat-intel, ver
 # readThreatBuckets em src/index.js) haveria de abortar em vez de continuar
 # a consumir tempo. Torna o teto do plano explícito, em vez de depender de
-# memória (revisão de segurança 2026-07, ronda 3, N8).
+# memória (revisão de segurança 2026-07, ronda 4, N8).
 [limits]
 cpu_ms = 10
 

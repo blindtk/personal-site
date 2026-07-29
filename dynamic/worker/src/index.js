@@ -360,7 +360,7 @@ const SCAN_MAX_REDIRECTS = 5;
  * Hoje o risco é baixo (SCAN_TARGET é uma var fixa do próprio domínio, não
  * input de visitante), mas passa a ser real no dia em que o alvo for
  * configurável ou o site tiver um open redirect (revisão de segurança
- * 2026-07, ronda 3, N7). Um `signal` de timeout partilhado por todos os
+ * 2026-07, ronda 4, N7). Um `signal` de timeout partilhado por todos os
  * saltos garante o mesmo teto de tempo total do fetch original.
  */
 async function fetchSameOrigin(url, opts, { maxRedirects = SCAN_MAX_REDIRECTS } = {}) {
@@ -389,7 +389,7 @@ async function runScan(env) {
   // à frente de SCAN_TARGET (ver docs/cloudflare-deploy.md) — sem eles o
   // self-scan recebe a página de login da Access em vez do site. Únicos
   // segredos do Worker que não aparecem em `[vars]`/comentário deste
-  // ficheiro (achado da ronda 3, N7): `wrangler secret put ACCESS_CLIENT_ID`
+  // ficheiro (achado da ronda 4, N7): `wrangler secret put ACCESS_CLIENT_ID`
   // / `ACCESS_CLIENT_SECRET`, com um Access Service Token criado em
   // dash.cloudflare.com → Zero Trust → Access → Service Auth.
   if (env.ACCESS_CLIENT_ID && env.ACCESS_CLIENT_SECRET) {
@@ -433,7 +433,7 @@ const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
 // 432 escritas/dia por rota e por IP — quase metade do teto diário da conta
 // SÓ NESTA ROTA, e mais que o dobro somando as duas. Partilhado entre as
 // duas (mesma capKey): é o mesmo orçamento de "atualizar agora", não dois
-// separados. Descoberto numa revisão de segurança (2026-07, ronda 3).
+// separados. Descoberto numa revisão de segurança (2026-07, ronda 4).
 const REFRESH_WRITE_CAP = { windowMs: DAY_MS, max: 20 };
 
 /**
