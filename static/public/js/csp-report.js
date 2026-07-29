@@ -28,14 +28,22 @@
   document.addEventListener('securitypolicyviolation', function (e) {
     var directive = e.effectiveDirective || e.violatedDirective || '';
     var blocked = e.blockedURI || '';
+    // sourceFile: o ficheiro de onde partiu o código bloqueado (call stack do
+    // JS engine). Para "inline"/"eval"/vazio isto é o único sinal que
+    // distingue uma regressão real da build (sourceFile vazio ou do próprio
+    // site) de uma extensão a injetar um <script> diretamente em vez de o
+    // carregar de um chrome-extension:// (nesse caso blockedURI também não
+    // revela nada — só sourceFile aponta para a extensão). O Worker só guarda
+    // o scheme, nunca o ficheiro/linha — ver normalizeViolation().
+    var source = e.sourceFile || '';
     var list = load();
-    var key = directive + '|' + blocked;
-    // Dedup: uma extensão barulhenta dispara o mesmo par diretiva/origem
-    // repetidamente por página — só a 1.ª ocorrência interessa à fila.
+    var key = directive + '|' + blocked + '|' + source;
+    // Dedup: uma extensão barulhenta dispara o mesmo trio repetidamente por
+    // página — só a 1.ª ocorrência interessa à fila.
     for (var i = 0; i < list.length; i++) {
-      if ((list[i].d + '|' + list[i].b) === key) return;
+      if ((list[i].d + '|' + list[i].b + '|' + (list[i].s || '')) === key) return;
     }
-    list.push({ d: directive, b: blocked, u: location.href });
+    list.push({ d: directive, b: blocked, u: location.href, s: source });
     save(list.slice(-MAX));
   });
 })();
