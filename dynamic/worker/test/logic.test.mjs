@@ -918,6 +918,24 @@ test('self-scan: segue redirect same-origin e reenvia as credenciais da Access a
   }
 });
 
+test('/api/scan: leitura simples não é cacheável pelo browser (no-store) — só a KV controla frescura', async () => {
+  // Achado: `Cache-Control: public, max-age=1800` aqui deixava o browser (e
+  // qualquer cache partilhada) devolver a resposta antiga por até 30 min
+  // depois de um refresh manual já ter atualizado a KV — a nota "congelava"
+  // na última resposta pública que o browser tinha guardado, mesmo com a
+  // KV já a refletir a nota nova.
+  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({ status: 200, headers: { get: () => null } });
+  try {
+    const res = await runFetch(fakeRequest('/api/scan'), env);
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get('cache-control'), 'no-store');
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
 // ---------- rate limit: pedido bloqueado não gasta escrita KV ----------
 
 test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
