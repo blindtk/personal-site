@@ -44,13 +44,24 @@ com ou sem elas, e §7 diz explicitamente o que muda em cada cenário.
 | Orçamento KV do plano Free | ~1.000 escritas/dia **para a conta inteira** | `dynamic/PLAN.md` |
 | Regras WAF personalizadas em uso | 5 | `docs/cloudflare-deploy.md` §5 |
 | Ação `Log` em Custom Rules no Free | **não disponível** | idem |
-| Regra WAF #5 | *Managed Challenge* a tudo fora de 27 países da UE | idem |
+| Regra WAF dedicada aos paths-isco | *Managed Challenge*, antes de qualquer política de país, para qualquer origem | idem, confirmado em produção 2026-07-29 |
+| Política geográfica (regras 4/5) | *Managed Challenge* para PT; **Block** (não desafio) para todo o resto do mundo | idem |
 | Cloudflare Access | ainda cobre `danielmala.co` inteiro (incl. iscos) | idem §3 |
 | Resposta dos iscos | 404 HTML byte-a-byte igual ao 404 real | `lib/notfound.js` |
 | `robots.txt` | `Allow: /`, sem `Disallow` | `static/src/pages/robots.txt.ts` |
 | Regras Sigma publicadas | 5 (1:1 com os iscos) | `content/detections.json` |
 
-**Cinco restrições estruturais** decorrem daqui, e condicionam tudo o que se
+> **Correção (2026-07-29):** uma versão anterior desta secção descrevia a
+> política de país como "catch-all geo, 27 países da UE" — era o desenho
+> planeado, não o que está em produção. As regras confirmadas diretamente no
+> dashboard são mais restritivas (só PT passa, e com desafio; o resto do
+> mundo é bloqueado, não desafiado) e incluem uma peça que o desenho original
+> não tinha: **uma regra dedicada, só para os paths-isco, que aplica Managed
+> Challenge antes mesmo de olhar para o país.** Isto muda a restrição #3
+> abaixo de forma material — não é um efeito colateral da política geo, é um
+> mecanismo escolhido de propósito para os iscos.
+
+**Seis restrições estruturais** decorrem daqui, e condicionam tudo o que se
 segue. Vale a pena lê-las antes de qualquer ideia de expansão:
 
 1. **O honeypot já está saturado à escrita, não à leitura.** O cap é de 60
@@ -62,17 +73,34 @@ segue. Vale a pena lê-las antes de qualquer ideia de expansão:
    personalizadas, as 5 já estão ocupadas, e o Free não tem ação `Log`. Uma
    regra WAF no Free ou **atua** (bloqueia/desafia) ou não existe. Não há
    "detetar no edge sem afetar tráfego".
-3. **A regra WAF #5 corta o honeypot antes de ele ver seja o que for.** Um
-   *Managed Challenge* a todo o tráfego fora da UE apanha a esmagadora maioria
-   do scanning automático da Internet — que vem de redes de cloud e botnets fora
-   da UE. O honeypot, tal como o perímetro está configurado, vai ver sobretudo
-   **o que a UE lhe manda**, e isso é um enviesamento que a página tem de
-   declarar (ver §7). É a diferença entre "o que a Internet tenta contra este
-   site" e "o que passou a política geo e depois tentou".
-4. **Enquanto a Access estiver ligada, o honeypot vê zero.** É o primeiro passo
+3. **Os paths-isco têm uma regra WAF dedicada que os desafia antes de
+   chegarem ao Worker — e é uma escolha deliberada do dono do repo, não um
+   acidente.** Um *Managed Challenge* existe para separar humanos de bots
+   automatizados. É a ferramenta certa para proteger uma aplicação real; é
+   estruturalmente a ferramenta errada para um honeypot, cujo propósito único
+   é observar precisamente esses bots. Enquanto esta regra estiver ativa, o
+   que o honeypot regista não é "scanning automático da Internet" — é "quem
+   consegue resolver um Managed Challenge e ainda assim insiste em pedir
+   `/wp-login.php`". Isto não é um bug a corrigir; é uma troca consciente
+   entre proteger o honeypot e deixá-lo ver o que existe para ver, e a página
+   tem de a declarar em vez de a esconder atrás de "scan automático" (ver
+   §9.6). Nota técnica: o Managed Challenge da Cloudflare é adaptativo — a
+   decisão de desafiar (e com que intensidade) depende do risk score interno
+   do pedido, não é um "tudo ou nada" determinístico; por isso esta análise
+   não afirma que a supressão é total, só que é o efeito dominante.
+4. **A política de país agrava o mesmo problema, sem ser a causa principal.**
+   Só PT passa (com desafio); todo o resto do mundo é **bloqueado**, não
+   desafiado — mais restritivo do que "detetar via challenge". Como a regra 3
+   já intercepta os iscos antes desta política, o efeito da geografia sobre o
+   honeypot está hoje sobretudo *dentro* do que a regra 3 deixa passar, não ao
+   lado dela. Mesmo assim, a página tem de declarar as duas coisas: quem
+   resolve o desafio e depois pede um isco só o consegue fazer vindo de PT
+   (ver §9.6).
+5. **Enquanto a Access estiver ligada, o honeypot vê zero.** É o primeiro passo
    operacional de qualquer coisa nesta análise: excluir os paths-isco da Access
-   (ou desligá-la no lançamento) — caso contrário todo o resto é teoria.
-5. **A discrição dos iscos não é sustentável.** A lista está no `wrangler.toml`,
+   (ou desligá-la no lançamento) — caso contrário todo o resto é teoria. E,
+   mesmo desligada, o ponto 3 continua a aplicar-se por cima.
+6. **A discrição dos iscos não é sustentável.** A lista está no `wrangler.toml`,
    no `index.js`, no `content/honeypot-attack.json`, no `detections.json` e no
    texto do projeto. Se o repositório passar a público, a lista é pública. Logo:
    **não desenhar nada que dependa de os paths serem secretos.** O valor do
@@ -410,15 +438,35 @@ contradizem.
   `Log`, 5 regras, todas ocupadas).
 - **Deve conter:** o que nunca deve chegar ao Worker (abuso volumétrico,
   política geográfica, exceções de bots verificados). O que já lá está.
-- **Não deve conter:** classificação de iscos. Uma regra WAF que bloqueie
-  scanners de iscos **destrói o sensor** — é exatamente o efeito que a regra #5
-  já tem hoje, sem intenção.
-- **A decisão explícita que falta:** o honeypot e a regra geo são incompatíveis
-  em objetivo. Ou se aceita que o honeypot mede tráfego pós-política (e a
-  página di-lo), ou se cria uma exceção para os paths-isco (que ficam
-  acessíveis ao mundo, com o cap de escrita como travão). **Recomendação:
-  aceitar e declarar**, na fase 1. Abrir os iscos ao mundo é a fase 2 e exige
-  primeiro resolver o orçamento de escrita.
+- **Não deve conter:** classificação de iscos — isso é trabalho do Worker
+  (família, técnica), não do WAF.
+- **A troca real, confirmada em produção, não é hipotética.** Existe uma
+  regra dedicada aos paths-isco que aplica *Managed Challenge* a qualquer
+  origem, antes de qualquer outra política — decisão explícita do dono do
+  repo: os iscos não ficam acessíveis ao mundo sem alguma barreira,
+  precisamente porque um honeypot aberto por definição recebe tráfego não
+  filtrado (é a razão de existir), e a Cloudflare no Free não oferece uma
+  barreira "sem impacto" (não há rate-limit gratuito neutro nem ação `Log`).
+  O trade-off tem de ser dito com todas as letras: **um Managed Challenge é a
+  ferramenta desenhada para travar bots — o honeypot existe para os medir.**
+  As duas coisas não coexistem sem perda. O que fica depois do desafio (mais
+  a política de país, que sobre os iscos exige adicionalmente vir de PT) não é
+  "scanning automático da Internet"; é uma fatia muito mais estreita — quem
+  ou o que resolve o desafio a partir de PT e ainda assim insiste no path.
+  **Recomendação: aceitar a troca como o dono a decidiu, e mudar a narrativa
+  editorial em conformidade** (ver §9.6) — não tentar contornar o Managed
+  Challenge só para engordar o volume de eventos, porque contorná-lo é
+  reabrir exatamente o risco que a regra existe para fechar.
+- **Alternativa a registar para decisão futura, não a implementar agora:**
+  Cloudflare tem regras de *Rate Limiting* como produto separado dos Custom
+  Rules, com alguma disponibilidade no plano Free — travam volume por
+  IP/janela sem exigir que o cliente resolva um desafio interativo, o que
+  preservaria mais sinal de bots comuns (que tipicamente não repetem a alta
+  cadência que um rate-limit apanharia) enquanto ainda protege contra abuso
+  sustentado. Não verificado neste documento se o Free atual do domínio tem
+  quota para isso, nem é uma expressão pronta a aplicar — só uma pista a
+  explorar se a troca atual (Managed Challenge) vier a parecer demasiado
+  cara para o honeypot.
 
 ### Cloudflare Worker
 
@@ -535,7 +583,7 @@ Isto é vantagem editorial, não desculpa.
 |---|---|---|
 | Números ao vivo, janelas, tendências | **Perímetro** (`ui.ts`) | é estado |
 | O que cada número significa e **não** significa | **Perímetro** (`ui.ts`), nota curta | limites junto ao dado |
-| Enviesamento da política geo | **Perímetro** (`ui.ts`) — **novo, em falta** | sem isto o painel induz em erro |
+| Enviesamento (Managed Challenge nos iscos + política de país) | **Perímetro** (`ui.ts`) — **novo, em falta** | sem isto o painel induz em erro |
 | Famílias de paths (conceito + exemplos) | **Deteções** (via `content/detections.json`) | é a unidade das regras |
 | Lista exaustiva de paths | **repositório**, mais nenhum sítio | não é conteúdo editorial |
 | Regras Sigma e conversão | **Deteções** | já está |
@@ -576,9 +624,9 @@ nos dois cenários:
 
 A única recomendação minha que a Opção C torna mais urgente é a **nota de
 enviesamento**: numa página que passa a ser *argumentativa e citável*, uma
-afirmação sobre "o que a Internet tenta contra este site" sem a ressalva da
-política geo deixa de ser um descuido de painel e passa a ser uma falha de
-tese.
+afirmação sobre "o que a Internet tenta contra este site" sem a ressalva do
+Managed Challenge dedicado aos iscos (e da política de país por cima) deixa de
+ser um descuido de painel e passa a ser uma falha de tese.
 
 ---
 
@@ -602,9 +650,9 @@ de não servir logins falsos vale mais do que qualquer painel.
    realismo mais importante
 6. `## Privacidade por construção` — mantém, encurtado (é a única secção que
    pode remeter para o teste)
-7. `## Limites deliberados` **(novo)** — cap de escritas do plano Free;
-   enviesamento da política geo; sem sequência por cliente; sem tarpits, e
-   porquê
+7. `## Limites deliberados` **(novo)** — cap de escritas do plano Free; o
+   Managed Challenge dedicado aos iscos e a política de país por cima; sem
+   sequência por cliente; sem tarpits, e porquê
 8. `## Correlação: honeypot ↔ ATT&CK ↔ KEV` — mantém, com a correção de
    técnicas de §3
 
@@ -716,9 +764,11 @@ Frases curtas. Sem linguagem de marketing. Nada aqui afirma números.
 >
 > Os limites são igualmente parte do desenho. O plano usado tem um teto diário
 > de escritas, por isso o honeypot descarta eventos acima de um cap — sob
-> varrimento intenso perde-se granularidade, nunca o site. A política de zona
-> desafia tráfego de fora da Europa antes de chegar aqui, o que enviesa a origem
-> do que se observa. E sem IP não há sequência por cliente: sabe-se o que foi
+> varrimento intenso perde-se granularidade, nunca o site. Antes de chegar
+> aqui, o pedido tem de resolver um desafio automático, e só passa depois
+> disso se vier de Portugal — uma barreira deliberada, para não deixar os
+> caminhos-isco abertos a qualquer um. Isso enviesa fortemente a origem do que
+> se observa. E sem IP não há sequência por cliente: sabe-se o que foi
 > tentado, não quem tentou o quê a seguir a quê. Nada disto se resolve com mais
 > paths.
 
@@ -729,10 +779,12 @@ Frases curtas. Sem linguagem de marketing. Nada aqui afirma números.
 >
 > The limits are part of the design too. The plan in use has a daily write
 > ceiling, so the honeypot drops events above a cap — under heavy scanning you
-> lose granularity, never the site. The zone policy challenges traffic from
-> outside Europe before it gets here, which biases the origins observed. And
-> without an IP there is no per-client sequence: you know what was tried, not
-> who tried what after what. None of this is fixed by adding more paths.
+> lose granularity, never the site. Before reaching here, the request must
+> clear an automatic challenge, and only gets through afterwards if it comes
+> from Portugal — a deliberate barrier, so the decoy paths aren't left open to
+> anyone. That heavily biases the origins observed. And without an IP there is
+> no per-client sequence: you know what was tried, not who tried what after
+> what. None of this is fixed by adding more paths.
 
 ### 9.5 Intro da página Perímetro → `static/src/i18n/ui.ts`, `perimeter.intro`
 
@@ -749,19 +801,33 @@ Frases curtas. Sem linguagem de marketing. Nada aqui afirma números.
 
 ### 9.6 Nota de enviesamento (nova) → `ui.ts`, chave nova `perimeter.biasNote`
 
-Esta é a adição de copy mais importante desta análise.
+Esta é a adição de copy mais importante desta análise. Corrigida para refletir
+o mecanismo real confirmado em produção (2026-07-29): não é só política
+geográfica — há uma regra dedicada aos paths-isco que aplica um desafio
+interativo (*Managed Challenge*) antes de qualquer coisa, e é essa regra que
+domina o enviesamento, não a geografia sozinha.
 
 **PT**
-> Estes números não são uma amostra neutra da Internet. A política da zona
-> desafia tráfego de fora da Europa antes de chegar ao isco, e o registo tem um
-> teto diário de eventos. O que se vê aqui é o que passou o perímetro e coube no
-> teto — não tudo o que foi tentado.
+> Estes números não são uma amostra neutra da Internet. Antes de chegar ao
+> isco, o pedido tem de resolver um desafio automático da Cloudflare — e, para
+> os paths-isco, só passa depois disso se vier de Portugal. É uma escolha
+> deliberada: não deixar os iscos completamente abertos ao mundo. A
+> consequência é que o que se regista aqui não é o scanning bruto da
+> Internet — é o que sobra depois de um filtro pensado para travar
+> precisamente esse tipo de tráfego. Junta-se a isso um teto diário de
+> eventos. O que se vê é o que passou o desafio, veio de Portugal e coube no
+> teto — não tudo o que foi tentado, e provavelmente uma fração pequena disso.
 
 **EN**
-> These numbers are not a neutral sample of the Internet. The zone policy
-> challenges traffic from outside Europe before it reaches the decoy, and
-> logging has a daily event ceiling. What you see here is what got past the
-> perimeter and fit under the ceiling — not everything that was tried.
+> These numbers are not a neutral sample of the Internet. Before reaching the
+> decoy, the request must clear an automatic Cloudflare challenge — and, for
+> the decoy paths, it only gets through afterwards if it comes from Portugal.
+> This is a deliberate choice: not leaving the decoys fully open to the world.
+> The consequence is that what gets logged here is not raw Internet
+> scanning — it is whatever survives a filter designed to stop exactly that
+> kind of traffic. On top of that, logging has a daily event ceiling. What you
+> see is what cleared the challenge, came from Portugal, and fit under the
+> ceiling — not everything that was tried, and likely a small fraction of it.
 
 ### 9.7 Intro da página Deteções → `static/src/i18n/ui.ts`, `detections.intro`
 
@@ -807,7 +873,7 @@ comportamento desejado), e é a ideia mais interessante do conjunto.
 
 | # | O quê | Porquê |
 |---|---|---|
-| 1 | **Excluir os iscos da Access (ou lançar).** | Sem isto, nada do resto produz um único evento. |
+| 1 | **Excluir os iscos da Access (ou lançar) — necessário, mas já não suficiente.** | Sem isto, nada do resto produz um único evento. Com a regra WAF dedicada confirmada em produção, mesmo lançado o honeypot só vê quem resolve o Managed Challenge a partir de PT — aceitar essa troca (§5/§9.6) é o passo seguinte, não uma falha a corrigir. |
 | 2 | **Método HTTP + família no evento; classificação por padrão em vez de path exato.** | Custo zero em KV, corrige o ATT&CK e desbloqueia tudo o resto. |
 | 3 | **Corrigir o mapeamento ATT&CK** (`T1595.003` onde hoje há `T1110`/`T1592`). | É a correção de rigor mais visível para quem percebe do assunto. |
 | 4 | **Rotas do `wrangler.toml` por prefixo, poucas.** | Deixa a taxonomia crescer em código e não em infraestrutura. |
@@ -840,11 +906,20 @@ comportamento desejado), e é a ideia mais interessante do conjunto.
   `content/`), **tradução** (regras Sigma). Que isso sejam duas páginas ou
   quatro é decisão de `docs/arquitetura-editorial-este-site.md` — nenhum
   conteúdo desta análise pede rota nova.
+- **O Managed Challenge nos paths-isco fica.** Confirmado com o dono do repo
+  (2026-07-29): é proteção deliberada, não um efeito colateral a corrigir. Não
+  desenhar nada nesta análise que assuma os iscos abertos ao mundo — a fase 2
+  abaixo respeita essa decisão.
 
 ### Segunda fase
 
-- **Abrir os iscos à política geo** (exceção no WAF) — só depois de resolver o
-  orçamento de escrita, porque o volume sobe de forma não trivial.
+- **Reconsiderar o mecanismo de proteção, não removê-lo.** Se o volume
+  observado ficar baixo demais para o objetivo do honeypot, a alternativa a
+  explorar é *Rate Limiting* (produto separado dos Custom Rules, ver §5) em
+  vez de Managed Challenge — trava abuso sustentado sem exigir resolução
+  interativa de todos os pedidos. Requer confirmar disponibilidade no plano
+  em uso; não é uma troca a fazer sem decisão explícita, pelo mesmo motivo
+  que a atual foi tomada com cuidado.
 - **Famílias 6–9** (cloud, CI/CD, inventário, APIs) — a 9 só com fronteira
   testada contra `/api/*` real.
 - **Score de confiança visível** com os critérios expostos.
@@ -866,9 +941,12 @@ comportamento desejado), e é a ideia mais interessante do conjunto.
 ### Uma nota final, honesta
 
 A tentação natural é medir a evolução do honeypot em número de paths. Com o cap
-de 60 eventos/dia e a política geo à frente, **mais paths não dão mais dados** —
-dão os mesmos dados repartidos por mais rótulos. As três coisas que mudam
-mesmo o que este projeto consegue dizer são, por ordem: tornar os iscos
-alcançáveis, enriquecer o evento que já se escreve, e declarar os limites do que
-se mede. Nenhuma delas é encenação, e é isso que as torna consistentes com o
+de 60 eventos/dia, o Managed Challenge dedicado aos iscos e a política de país
+à frente, **mais paths não dão mais dados** — dão os mesmos dados repartidos
+por mais rótulos, e essa fatia já de si é pequena antes de chegar a qualquer
+path. As três coisas que mudam mesmo o que este projeto consegue dizer são, por
+ordem: lançar o site e declarar honestamente o que a proteção deixa passar,
+enriquecer o evento que já se escreve, e explicitar os limites do que se mede
+em vez de deixar a copy implicar mais do que o dado sustenta. Nenhuma delas é
+encenação, e é isso que as torna consistentes com o
 resto do site.
