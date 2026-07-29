@@ -186,8 +186,14 @@ dos packs `p/typescript` + `p/javascript`. A prova de que é superconjunto:
 `useless-ternary` é ERROR na origem e as duas linhas que apanhou estavam no
 `main` desde o PR #74 com o job `semgrep` sempre verde — logo o pack do
 registo ou não traz essa regra, ou trá-la abaixo de ERROR. O risco residual
-é o inverso: uma regra que só exista no registo pode aparecer como WARNING
-no primeiro CI depois desta mudança. Se acontecer, triagem igual a esta.
+era o inverso: uma regra que só existisse no registo podia aparecer como
+WARNING no primeiro CI depois desta mudança.
+
+**Confirmado no CI do PR #130:** o job `semgrep` com o gate novo passou
+verde à primeira, e o log dá a dimensão real dos packs — **76 regras (74 do
+registo + 2 nossas, de `.semgrep/`)** contra as 203 do superconjunto usado
+na triagem, com **0 achados**. A triagem foi portanto conservadora por uma
+margem larga: o que o CI corre é um subconjunto do que foi analisado à mão.
 
 ### CAA — confirmado em falta (verificação DNS ao vivo)
 
