@@ -338,6 +338,22 @@
   página Provas e clicar. Revisitar se o teto do KV deixar de ser
   problema (upgrade de plano, ou amostragem em vez de corte total).
 
+- **2026-07 — Validação do `wrangler.toml` contra a conta Cloudflare real**
+  (via os MCP connectors da Cloudflare, `.mcp.json` na raiz do repo):
+  confirmado que os IDs de KV (`id`/`preview_id` do binding `KV`) e o nome
+  do Worker (`personal-site-worker`, `name` no topo do ficheiro e
+  `CF_WORKER_SCRIPT` em `[vars]`) batem certo com o que existe de facto na
+  conta — namespaces `HONEYPOT`/`HONEYPOT_PREVIEW` e o Worker deployado, sem
+  divergências. `CF_ZONE_TAG`/`CF_ACCOUNT_ID` e o estado de routes/bindings
+  do Worker deployado **não** foram validados ao vivo — o connector
+  disponível (Cloudflare Developer Platform, ligado via Settings →
+  Connectors na app) não expõe listagem de zonas nem detalhe de routes; os
+  outros servidores do `.mcp.json` (`cloudflare-dns-analytics`,
+  `cloudflare-graphql-analytics`, `cloudflare-builds`,
+  `cloudflare-observability`, `cloudflare-audit-logs`, `cloudflare-docs`)
+  não aparecem no diretório de connectors da app e só são autorizáveis numa
+  sessão interativa do Claude Code CLI (`/mcp`).
+
 ## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
 
 Propostas de 2026-07 que ficaram na gaveta por decisão do dono do repo —
