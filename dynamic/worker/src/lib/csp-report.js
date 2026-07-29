@@ -133,18 +133,25 @@ export function normalizeViolation(raw, siteOrigin) {
 
   const blocked = String(raw.blockedUri ?? '').trim();
 
-  // palavra-chave (inline/eval/self) ou vazio: bloqueio dentro da própria página.
-  // Isto NÃO prova que o código é nosso: uma extensão que injeta um <script>
-  // diretamente (em vez de o carregar de chrome-extension://) produz o mesmo
-  // blocked-uri "inline" — o browser não distingue pelo blocked-uri. O único
-  // sinal que sobra é sourceFile (o ficheiro de onde partiu a chamada, tirado
-  // da call stack do JS engine): se apontar para uma extensão, reclassifica
-  // como ruído em vez de acender o alerta de "regressão da build". Só o
-  // scheme é guardado (nunca o ficheiro/linha) — mesmo princípio de
-  // privacidade do resto desta função.
+  // sourceFile (de onde partiu a chamada, tirado da call stack do JS engine)
+  // é o único sinal que sobra para separar "candidata a regressão da build"
+  // de "ruído de extensão" nos DOIS casos que resolvem para category 'self'
+  // abaixo: nenhum dos dois prova que o código é nosso — uma extensão que
+  // injeta um <script> diretamente (blocked-uri "inline") ou que faz um
+  // fetch/carrega um recurso a partir do contexto da página (blocked-uri uma
+  // URL que calha ser da própria origem) produz exatamente o mesmo sinal que
+  // uma violação real. 'self' num script-src/connect-src já de si NUNCA
+  // deveria bloquear um pedido genuinamente same-origin — quando isso
+  // acontece mesmo assim, é ainda mais provável ser algo fora do nosso
+  // controlo (extensão) do que uma regressão. Só o scheme do sourceFile é
+  // guardado (nunca o ficheiro/linha) — mesmo princípio de privacidade do
+  // resto desta função.
+  const sourceScheme = schemeOf(raw.sourceFile);
+  const sourceIsExtension = EXTENSION_SCHEMES.has(sourceScheme);
+
+  // palavra-chave (inline/eval/self) ou vazio: bloqueio dentro da própria página
   if (blocked === '' || KEYWORD_BLOCKED.has(blocked.toLowerCase())) {
-    const sourceScheme = schemeOf(raw.sourceFile);
-    if (EXTENSION_SCHEMES.has(sourceScheme)) {
+    if (sourceIsExtension) {
       return { directive, category: 'extension', source: `${sourceScheme}://` };
     }
     return { directive, category: 'self', source: blocked === '' ? 'inline' : blocked.toLowerCase() };
@@ -165,6 +172,9 @@ export function normalizeViolation(raw, siteOrigin) {
     return { directive, category: 'other', source: 'unparsed' };
   }
   if (origin === siteOrigin) {
+    if (sourceIsExtension) {
+      return { directive, category: 'extension', source: `${sourceScheme}://` };
+    }
     return { directive, category: 'self', source: 'self' };
   }
   // origem terceira: guarda-se SÓ a origem (truncada por segurança extra)

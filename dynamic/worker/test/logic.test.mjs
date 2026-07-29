@@ -526,6 +526,29 @@ test('normalizeViolation: "inline" sem sourceFile ou com sourceFile do próprio 
   assert.equal(sourceFilePropio.category, 'self');
 });
 
+test('normalizeViolation: blocked-uri da própria origem com sourceFile de extensão também é ruído', () => {
+  // 'self' num script-src/connect-src nunca deveria bloquear um pedido
+  // genuinamente same-origin — quando o browser reporta isto mesmo assim,
+  // com sourceFile a apontar para uma extensão, é ela (não o nosso código)
+  // a fazer o pedido a partir do contexto da página.
+  const v = normalizeViolation(
+    {
+      documentUri: `${SITE}/`,
+      directive: 'connect-src',
+      blockedUri: `${SITE}/algum-caminho`,
+      sourceFile: 'moz-extension://uuid-que-identifica/content.js',
+    },
+    SITE,
+  );
+  assert.deepEqual(v, { directive: 'connect-src', category: 'extension', source: 'moz-extension://' });
+
+  const semExtensao = normalizeViolation(
+    { documentUri: `${SITE}/`, directive: 'connect-src', blockedUri: `${SITE}/algum-caminho` },
+    SITE,
+  );
+  assert.deepEqual(semExtensao, { directive: 'connect-src', category: 'self', source: 'self' });
+});
+
 test('addCspEvent: cap de cardinalidade — fontes a mais caem em ~other', () => {
   const b = emptyCspBucket();
   for (let i = 0; i < MAX_SOURCES_PER_BUCKET + 10; i += 1) {
