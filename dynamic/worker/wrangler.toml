@@ -117,15 +117,15 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 [triggers]
 crons = ["*/30 * * * *"]
 
-# Teto explícito de CPU por invocação. O plano Free já impõe 10ms como
-# limite físico da plataforma (não sobe sem upgrade de plano) — mas deixar
-# isso implícito significa que nada no código diz porque é que um caminho
-# patológico (ex.: o fan-out de 168 buckets horários do threat-intel, ver
-# readThreatBuckets em src/index.js) haveria de abortar em vez de continuar
-# a consumir tempo. Torna o teto do plano explícito, em vez de depender de
-# memória (revisão de segurança 2026-07, ronda 4, N8).
-[limits]
-cpu_ms = 10
+# NOTA (2026-07-29): a ronda 4 da revisão de segurança tinha adicionado aqui
+# um bloco [limits] cpu_ms = 10 para tornar explícito o teto que o plano Free
+# já impõe fisicamente. Revertido: a API da Cloudflare rejeita QUALQUER
+# `limits.cpu_ms` no plano Free ("CPU limits are not supported for the Free
+# plan", code 100328) — não é possível configurar isto sem upgrade de plano.
+# Isto partiu todos os deploys do Worker desde esse merge (dashboards da API
+# vazios em produção porque nenhum deploy seguinte chegou a publicar-se). Se
+# a conta subir para um plano pago, o teto pode voltar a ser tornado
+# explícito aqui.
 
 # Observabilidade dos logs do Worker (console.error/log): sem isto, os
 # `honeypot_write_failed`/`csp_report_write_failed`/`request_failed`/
