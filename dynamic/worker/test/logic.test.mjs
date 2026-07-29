@@ -944,8 +944,19 @@ test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
 // sem este cap, ~43 mil escritas/dia SÓ NESTA ROTA, muito acima do teto de
 // ~1.000/dia da conta inteira no plano Free, esgotando o orçamento que o
 // honeypot/vitals/CSP também precisam.
+//
+// ATUALIZADO 2026-07-29 (achado A1, docs/security-review-2026-07-29.md): a
+// versão original deste teste afirmava `res.status === 200` com o cap
+// esgotado — ou seja, com o orçamento de escrita no teto, QUALQUER pedido
+// nessa rota passava a ser aceite indefinidamente (o estado por-cliente
+// nunca mais era persistido, por isso a janela ficava congelada). Bastavam
+// ~300 pedidos triviais (10 min a 30/min num único IP em /api/mirror ou
+// /api/vitals, sem precisar de distribuir por várias origens) para desligar
+// o rate limit da rota inteira até à meia-noite UTC. Corrigido para falhar
+// FECHADO: com o cap esgotado, a rota devolve 429 (sem gastar nenhuma
+// escrita extra — o 429 continua "grátis") até o cap global reabrir.
 
-test('rate limit: cap global diário no teto não escreve mais nada, mas o pedido continua servido', async () => {
+test('rate limit: cap global diário no teto falha fechado (429) sem escrever nada', async () => {
   const kv = fakeKV();
   const env = { KV: kv };
   const now = Date.now();
@@ -958,9 +969,34 @@ test('rate limit: cap global diário no teto não escreve mais nada, mas o pedid
   const origPut = kv.put.bind(kv);
   kv.put = async (...args) => { puts += 1; return origPut(...args); };
 
-  const res = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.99' }), env);
-  assert.equal(res.status, 200); // allowed continua a vir de nextState, não do cap
+  const logs = [];
+  const origError = console.error;
+  console.error = (...a) => logs.push(a.map(String).join(' '));
+  let res;
+  try {
+    res = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.99' }), env);
+  } finally {
+    console.error = origError;
+  }
+  assert.equal(res.status, 429); // A1: falhar fechado, não deixar passar tudo
+  assert.ok(res.headers.get('retry-after'), 'devia trazer retry-after mesmo no caminho do cap global');
   assert.equal(puts, 0, 'com o cap global no teto, nenhuma escrita adicional (nem a do cap) deve acontecer');
+  assert.ok(logs.some((l) => l.includes('ratelimit_write_cap_exhausted')), 'devia avisar ruidosamente do cap esgotado');
+});
+
+test('rate limit: cap global esgotado bloqueia TODOS os clientes da rota, não só quem o esgotou', async () => {
+  // A1: o cap é global (não por-cliente) — um segundo IP, nunca antes visto
+  // nesta rota, também tem de ser recusado enquanto o orçamento do dia
+  // estiver esgotado. Prova que a falha fechada não depende do estado
+  // (inexistente) desse cliente específico.
+  const kv = fakeKV();
+  const env = { KV: kv };
+  const now = Date.now();
+  const capKey = `rlcap:d:${new Date(now).toISOString().slice(0, 10)}`;
+  kv.store.set(capKey, JSON.stringify({ count: 300, windowStart: now }));
+
+  const res = await runFetch(fakeRequest('/api/mirror', { ip: '198.51.100.200' }), env);
+  assert.equal(res.status, 429);
 });
 
 test('rate limit: abaixo do teto global escreve normalmente e o cap acumula', async () => {

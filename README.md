@@ -3,6 +3,7 @@
 [![CI](https://github.com/blindtk/personal-site/actions/workflows/ci.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/ci.yml)
 [![Security](https://github.com/blindtk/personal-site/actions/workflows/security.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security.yml)
 [![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
+[![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
 
 Site pessoal de Daniel Malaco — monorepo com três partes:
 
@@ -108,17 +109,41 @@ Cada push/PR passa por:
 | **Semgrep** | `security.yml` | SAST nas regras `p/typescript`/`p/javascript` + regras próprias para sinks de DOM XSS nos componentes `.astro` (`.semgrep/`). |
 | **zizmor** | `security.yml` | Os próprios workflows são auditados: pins em falta, permissions excessivas, injeção de template, credenciais persistidas. |
 | **Headers em produção** | `headers.yml` | Após cada deploy (e num cron diário), a produção é verificada contra `.github/expected-headers.json` — se um header de segurança faltar ou regredir, o workflow falha. |
+| **`npm audit signatures` + SBOM** | `supply-chain.yml` (semanal + manual) | Verifica as assinaturas de registo do npm (deteta um pacote servido sem a assinatura esperada) e gera um SBOM (CycloneDX) dos dois lockfiles, como artefacto. Semanal, não por PR — ver nota de quota abaixo. |
 
 Práticas transversais: todas as actions **pinadas por commit SHA** (o
 [Renovate](renovate.json5) mantém os digests e agrupa atualizações num PR
-semanal), `permissions: {}` por omissão com o mínimo por job, e
-`persist-credentials: false` em todos os checkouts. A CSP é uma linha
-estática em `static/public/_headers` (sem hashes: zero `<script>`/`<style>`
-inline no site — ver [docs/security-headers.md](docs/security-headers.md)).
-O plano DNS/TLS (CAA, HSTS preload, DNSSEC) vive em
-[docs/dns-tls.md](docs/dns-tls.md). O processo de deploy na Cloudflare
-(domínio, Pages, Worker, Access, WAF) e os problemas reais resolvidos estão
-em [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
+semanal), `permissions: {}` por omissão com o mínimo por job,
+`persist-credentials: false` em todos os checkouts, e `npm ci
+--ignore-scripts` em `ci.yml` (nenhuma dependência corre postinstall
+arbitrário em CI). A CSP é uma linha estática em `static/public/_headers`
+(sem hashes: zero `<script>`/`<style>` inline no site — ver
+[docs/security-headers.md](docs/security-headers.md) e
+[ADR 0001](docs/adr/0001-csp-sem-inline.md)). O plano DNS/TLS (CAA, HSTS
+preload, DNSSEC) vive em [docs/dns-tls.md](docs/dns-tls.md). O processo de
+deploy na Cloudflare (domínio, Pages, Worker, Access, WAF) e os problemas
+reais resolvidos estão em [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
+
+**Nota de quota:** o repositório é privado, o que conta os minutos de
+Actions contra a quota do plano Free (2.000 min/mês) e bloqueia o tier
+gratuito do CodeQL/Dependency Review/secret scanning/Scorecard. É por isto
+que verificações de baixa frequência (SBOM, assinaturas) vivem num workflow
+semanal em vez de correrem em cada PR. Detalhe completo em
+[docs/security-review-2026-07-29.md](docs/security-review-2026-07-29.md) §0.
+
+## Arquitetura e decisões
+
+- [`docs/architecture.md`](docs/architecture.md) — diagrama (Mermaid) de
+  como o site, o Worker, o KV e as APIs externas se ligam, e onde ficam as
+  fronteiras de confiança.
+- [`docs/threat-model.md`](docs/threat-model.md) — modelo de ameaça vivo:
+  ativos, superfícies de ataque, ataques mais prováveis/de maior impacto,
+  riscos residuais aceites.
+- [`docs/adr/`](docs/adr/) — ADRs (Architecture Decision Records): decisões
+  com trade-offs reais e porque se recusaram as alternativas óbvias.
+- [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) —
+  revisão de segurança e engenharia completa (maturidade, gap analysis,
+  avaliação de ferramentas, threat model, roadmap).
 
 ## Features de segurança (tema do site)
 

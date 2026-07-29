@@ -1,0 +1,83 @@
+# Verificações de supply-chain de baixa frequência: não correm em cada PR de
+# propósito (achado da revisão de segurança 2026-07-29,
+# docs/security-review-2026-07-29.md — o repositório está hoje ACIMA da
+# quota de minutos do plano Free do GitHub Actions com 7 jobs por PR ×
+# ~100 PRs/mês; acrescentar mais passos ao caminho de cada PR piora isso).
+# Em vez disso: semanal + à mão. Cobre os dois lockfiles (static/ e
+# dynamic/worker/), mesma lógica de "dois jobs" do osv-scanner/ci.yml.
+name: Supply chain
+
+on:
+  schedule:
+    # Segunda de madrugada, antes da janela do Renovate (before 8am on
+    # monday) — se o Renovate tiver mexido em algo no fim de semana, este
+    # workflow já corre sobre o lockfile atualizado.
+    - cron: '0 6 * * 1'
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: static
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: static/package-lock.json
+      - run: npm ci --ignore-scripts
+
+      # Verifica as assinaturas de registo do npm (e attestations de
+      # provenance, quando existem) contra as chaves públicas do próprio
+      # registo — deteta um pacote servido sem a assinatura esperada
+      # (registo comprometido, mirror adulterado, etc.). Independente do
+      # OSV-Scanner/gitleaks/Semgrep (que olham para vulnerabilidades e
+      # segredos, não para a integridade da distribuição).
+      - name: npm audit signatures
+        run: npm audit signatures
+
+      # SBOM (CycloneDX) do que está de facto instalado. `npm sbom` lê o
+      # lockfile + node_modules, por isso corre depois do `npm ci` acima.
+      - name: Gerar SBOM
+        run: npm sbom --sbom-format cyclonedx > sbom-static.cdx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-static
+          path: static/sbom-static.cdx.json
+          retention-days: 90
+
+  worker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: dynamic/worker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: dynamic/worker/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: npm audit signatures
+        run: npm audit signatures
+      - name: Gerar SBOM
+        run: npm sbom --sbom-format cyclonedx > sbom-worker.cdx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-worker
+          path: dynamic/worker/sbom-worker.cdx.json
+          retention-days: 90

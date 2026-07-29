@@ -32,7 +32,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: static/package-lock.json
 
-      - run: npm ci
+      # --ignore-scripts: nenhuma dependência (nem transitiva) corre código
+      # arbitrário no `npm ci` — o vetor mais comum de compromisso de pacotes
+      # npm (postinstall malicioso). Verificado (revisão de segurança
+      # 2026-07-29): nem o build/check/test do Astro nem `npm test` +
+      # `wrangler deploy --dry-run` do Worker precisam de scripts de
+      # instalação — só `wrangler dev`/`deploy` reais precisam (para obter o
+      # binário do workerd), e esses continuam a correr manualmente fora
+      # daqui (ver dynamic/PLAN.md). Se uma dependência futura passar a
+      # exigir um postinstall real para o build/test funcionar, este passo
+      # falha alto e explicitamente — nunca corre silenciosamente sem o
+      # `--ignore-scripts` "por engano".
+      - run: npm ci --ignore-scripts
 
       - run: npm run build
 
@@ -82,7 +93,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: dynamic/worker/package-lock.json
 
-      - run: npm ci
+      # --ignore-scripts: mesma proteção do job `build` (bloqueia postinstall
+      # arbitrário). `npm test` e `wrangler deploy --dry-run` (abaixo) não
+      # precisam de scripts de instalação — só `wrangler dev`/`deploy` reais
+      # precisam (o binário do workerd), e esses continuam manuais.
+      - run: npm ci --ignore-scripts
 
       # Lógica pura do Worker (sanitize, ratelimit, kvcap, aggregate, …) e
       # os testes de integração do fetch() sem rede — mesma lacuna do job
