@@ -46,6 +46,14 @@ export function floorToWindow(ms, windowMs) {
 
 /** Escapa os cinco caracteres perigosos em contexto HTML. */
 export function escapeHtml(str) {
+  // `detect-replaceall-sanitization` pede DOMPurify/sanitize-html: não se
+  // aplica — isto não é limpeza de HTML por lista de tags permitidas, é o
+  // escape completo dos cinco caracteres (`&` primeiro, logo sem duplo-escape).
+  // O Worker não tem DOM nem HTML de terceiros para higienizar, e meter uma
+  // biblioteca de sanitização no bundle seria mais superfície, não menos.
+  // `no-replaceall` avisa que `replaceAll` falta em browsers antigos: este
+  // ficheiro só corre no workerd (V8 recente) e no Node dos testes.
+  // nosemgrep: javascript.audit.detect-replaceall-sanitization, javascript.lang.correctness.no-replaceall
   return String(str)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')

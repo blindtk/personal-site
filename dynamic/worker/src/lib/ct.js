@@ -37,6 +37,12 @@ export function issuerLabel(dn) {
   if (typeof dn !== 'string') return '';
   const part = (key) => {
     // valor até à próxima vírgula; DNs do crt.sh não trazem vírgulas escapadas
+    // O taint que a regra assinala vem do parâmetro `key`, que nunca é entrada
+    // externa: `part` é local a esta função e só é chamada com os literais 'O'
+    // e 'CN' (logo abaixo). O texto do crt.sh entra como `dn` — o *assunto* do
+    // match, não o padrão — e o padrão gerado é linear (sem quantificadores
+    // aninhados), logo sem ReDoS.
+    // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp
     const m = dn.match(new RegExp(`(?:^|, ?)${key}=([^,]+)`));
     return m ? m[1].trim().replace(/^"|"$/g, '') : '';
   };
