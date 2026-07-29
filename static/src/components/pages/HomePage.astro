@@ -5,10 +5,14 @@ import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
-// content/ é a fonte de verdade: o nº de badges do painel stats vem daqui,
-// com o mesmo critério (verified !== false) da página Certificações.
+import { TOOLS } from '../../lib/tools';
+// content/ é a fonte de verdade: os stats de certificações e o painel do
+// honeypot vêm daqui, com o mesmo critério (verified !== false) da página
+// Certificações e a mesma contagem de paths-isco/regras da página Perímetro.
 import certs from '../../../../content/certs.json';
 import awards from '../../../../content/awards.json';
+import honeypotAttack from '../../../../content/honeypot-attack.json';
+import detections from '../../../../content/detections.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -22,8 +26,9 @@ const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) &&
 const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order);
 
-// As 6 ferramentas client-side — a lista completa, para o título
-// "Ferramentas · client-side" não prometer mais nem menos do que mostra.
+// Seleção de 6 ferramentas (de 11) para a Home — "em destaque", não "todas as
+// client-side", para não contradizer o total de 11 mostrado no widget de
+// stats do site.
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
   { slug: 'hashes', ...dict.tools.hashes },
@@ -35,22 +40,55 @@ const tools = [
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
-// Stats: sinais de competência, não de consumo (os 550 repos do catálogo
-// GitHub vivem na página Links, não aqui). Os nºs de certificações vêm do
-// certs.json para nunca divergir da página Certificações.
+// Certificações: nº de certs e de badges verificáveis vêm de certs.json
+// para nunca divergir da página Certificações — usados na linha de
+// credenciais do bloco de identidade, não no widget de stats do site.
 const certItems = certs.items as { verified?: boolean }[];
 const totalCerts = certItems.length;
 const verifiedBadges = certItems.filter((item) => item.verified !== false).length;
+
+// Stats do site: sinais estruturais (o que o site é/tem), não de consumo
+// (os 550 repos do catálogo GitHub vivem na página Links, não aqui) nem de
+// competência pessoal (isso ficou para o bloco de identidade). Ferramentas
+// e paths-isco/regras vêm de content/ e de lib/tools para nunca divergir das
+// páginas Ferramentas e Perímetro. Páginas e cabeçalhos verificados são
+// manuais — ver docs/home-revisao-editorial.md §7 para o porquê.
+const toolsClientCount = TOOLS.filter((tool) => tool.kind === 'client').length;
+const decoyCount = Object.keys(honeypotAttack.paths).length;
+const sigmaRuleCount = detections.rules.length;
+// Manual: contagem de rotas em routes.ts + rotas dinâmicas (ferramentas,
+// projetos, posts), por par PT/EN. Rever ao acrescentar rotas.
+const pageCount = 29;
+// Manual: lista de cabeçalhos pontuados em dynamic/worker/src/lib/scan.js
+// (fora do build estático — static/ não importa dynamic/). Rever os dois
+// lados juntos se a lista de scan.js mudar.
+const headerCount = 8;
 const statValues: Record<string, string> = {
+  pages: String(pageCount),
+  tools: String(TOOLS.length),
+  toolsClient: String(toolsClientCount),
+  headers: String(headerCount),
+  decoys: String(decoyCount),
+  sigma: String(sigmaRuleCount),
   certsTotal: String(totalCerts),
-  certs: String(verifiedBadges),
-  // O stat de CTFs vem de content/awards.json para nunca divergir da galeria
-  // de prémios na página Sobre (mesma lógica dos stats de certificações).
+  certsVerified: String(verifiedBadges),
+  // CTFs vencidos: mesmo comprimento de content/awards.json usado no chip
+  // "{awards} CTFs vencidos" — para nunca divergir da galeria de prémios
+  // na página Sobre.
   awards: String(awards.items.length),
 };
-const stats = dict.home.statsStatic.map((stat) =>
-  'key' in stat && stat.key in statValues ? { ...stat, n: statValues[stat.key] } : stat,
-);
+const fill = (text: string) => text.replace(/\{(\w+)\}/g, (_, key: string) => statValues[key] ?? `{${key}}`);
+const stats = dict.home.statsStatic.map((stat) => ({ ...stat, n: fill(stat.n), d: fill(stat.d) }));
+const credentialsText = fill(dict.home.credentials);
+
+// Cada tile liga à página que prova o número (ver docs/home-revisao-editorial.md §4).
+const statLinks: Record<string, string> = {
+  pages: routes.siteOverview[lang],
+  tools: routes.tools[lang],
+  headers: routes.evidence[lang],
+  decoys: routes.perimeter[lang],
+};
+const statLink = (key: string) => statLinks[key] ?? routes.siteOverview[lang];
 
 const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
@@ -73,8 +111,9 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       <div class="meta-row">
         {dict.home.meta.map((item) => <span>{item}</span>)}
       </div>
+      <a class="credentials-link" href={routes.certifications[lang]}>{credentialsText}</a>
       <div class="chip-row">
-        {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
+        {dict.home.chips.map((chip) => <span class="chip">{fill(chip)}</span>)}
       </div>
     </section>
 
@@ -85,22 +124,18 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       <div class="stats-grid">
         {stats.map((stat) => {
           const cls = `stat ${toneClass[stat.tone] ?? ''}`.trim();
-          // Os dois stats de certificações vêm de certs.json — ligá-los à
-          // página que os prova é o cruzamento natural (a mesma lógica
-          // "não acredites, verifica").
-          return 'key' in stat && (stat.key === 'certs' || stat.key === 'certsTotal') ? (
-            <a class={`${cls} stat-link`} href={routes.certifications[lang]}>
+          // Cada stat do site liga à página que o prova — a mesma lógica
+          // "não acredites, verifica" que já se aplicava aos stats de
+          // certificações.
+          return (
+            <a class={`${cls} stat-link`} href={statLink(stat.key)}>
               <div class="n">{stat.n}</div>
               <div class="l">{stat.d}</div>
             </a>
-          ) : (
-            <div class={cls}>
-              <div class="n">{stat.n}</div>
-              <div class="l">{stat.d}</div>
-            </div>
           );
         })}
       </div>
+      <p class="note">{dict.home.statsNoteBody} <a href={routes.siteOverview[lang]}>{dict.home.statsNoteCta}</a></p>
     </section>
   </div>
 

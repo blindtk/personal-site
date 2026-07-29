@@ -479,23 +479,31 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
-      statsLabel: 'stats',
+      statsLabel: 'stats do site',
       location: 'Porto, Portugal',
-      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
-      meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
-      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "Vencedor de CTF '22", 'ISO 27001', 'MITRE ATT&CK'],
-      // Sinais de competência (não de consumo). Números consistentes com as
-      // páginas que os detalham: 9+ = carreira em redes & segurança desde 2017
-      // (redes 2017–20 + segurança desde 2020); certsTotal e certs são
-      // calculados em build a partir de content/certs.json (comprimento total e
-      // critério verified!==false — mesmo critério da página Certificações);
-      // CTFs = comprimento de content/awards.json (key 'awards').
+      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes. Este site faz parte do trabalho: as ferramentas, o perímetro e as deteções estão públicos.',
+      meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '9+ anos em redes & segurança'],
+      // Credenciais: linha discreta ligada a /certificacoes/, com os nºs
+      // calculados em build a partir de content/certs.json (comprimento total
+      // e critério verified!==false — mesmo critério da página Certificações).
+      credentials: '{certsTotal} certificações · {certsVerified} verificáveis no Credly',
+      // {awards} = comprimento de content/awards.json — mesma lógica da
+      // galeria de prémios na página Sobre.
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', '{awards} CTFs vencidos', 'ISO 27001', 'MITRE ATT&CK'],
+      // Stats do site: sinais estruturais (o que o site é/tem), não métricas
+      // pessoais — essas migraram para `credentials` e `chips` acima. {pages}
+      // é manual (ver comentário em HomePage.astro); {tools}/{toolsClient} vêm
+      // de lib/tools.ts; {headers} é manual (lista em
+      // dynamic/worker/src/lib/scan.js, fora do build estático); {decoys} e
+      // {sigma} vêm de content/honeypot-attack.json e content/detections.json.
       statsStatic: [
-        { n: '9+', d: 'anos em redes & segurança', tone: 'green' },
-        { key: 'certsTotal', n: '31', d: 'certificações', tone: 'blue' },
-        { key: 'certs', n: '12', d: 'verificáveis · Credly', tone: 'amber' },
-        { key: 'awards', n: '4', d: 'CTFs vencidos', tone: 'green' },
+        { key: 'pages', n: '{pages}', d: 'páginas · cada uma em PT e EN', tone: 'green' },
+        { key: 'tools', n: '{tools}', d: 'ferramentas · {toolsClient} no browser', tone: 'green' },
+        { key: 'headers', n: '{headers}', d: 'cabeçalhos de segurança verificados', tone: 'blue' },
+        { key: 'decoys', n: '{decoys}', d: 'paths-isco → {sigma} regras Sigma', tone: 'amber' },
       ],
+      statsNoteBody: 'Números do build, não escritos à mão. Estado ao vivo em',
+      statsNoteCta: 'Este site →',
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
       journey: {
@@ -511,7 +519,7 @@ export const ui = {
       },
       latestPosts: 'Últimos posts',
       allPosts: 'todos os posts',
-      featuredTools: 'Ferramentas · client-side',
+      featuredTools: 'Ferramentas em destaque',
       allTools: 'todas as ferramentas',
       projects: 'Projetos',
       allProjects: 'todos os projetos',
@@ -1439,23 +1447,32 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
-      statsLabel: 'stats',
+      statsLabel: 'site stats',
       location: 'Porto, Portugal',
-      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
-      meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
-      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
-      // Competence signals (not consumption). Numbers kept consistent with
-      // the pages that detail them: 9+ = a networking & security career since
-      // 2017 (networking 2017–20 + security since 2020); certsTotal and certs
-      // are computed at build from content/certs.json (total length and the
-      // verified!==false criterion — same as the Certifications page);
-      // CTFs = length of content/awards.json (key 'awards').
+      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response. This site is part of the work: the tools, the perimeter, and the detections are public.',
+      meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '9+ years in networking & security'],
+      // Credentials: a discreet line linked to /certifications/, with the
+      // numbers computed at build from content/certs.json (total length and
+      // the verified!==false criterion — same as the Certifications page).
+      credentials: '{certsTotal} certifications · {certsVerified} verifiable on Credly',
+      // {awards} = length of content/awards.json — same logic as the awards
+      // gallery on the About page.
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', '{awards} CTFs won', 'ISO 27001', 'MITRE ATT&CK'],
+      // Site stats: structural signals (what the site is/has), not personal
+      // metrics — those moved to `credentials` and `chips` above. {pages} is
+      // manual (see comment in HomePage.astro); {tools}/{toolsClient} come
+      // from lib/tools.ts; {headers} is manual (list lives in
+      // dynamic/worker/src/lib/scan.js, outside the static build); {decoys}
+      // and {sigma} come from content/honeypot-attack.json and
+      // content/detections.json.
       statsStatic: [
-        { n: '9+', d: 'years in networking & security', tone: 'green' },
-        { key: 'certsTotal', n: '31', d: 'certifications', tone: 'blue' },
-        { key: 'certs', n: '12', d: 'verifiable · Credly', tone: 'amber' },
-        { key: 'awards', n: '4', d: 'CTFs won', tone: 'green' },
+        { key: 'pages', n: '{pages}', d: 'pages · each in PT and EN', tone: 'green' },
+        { key: 'tools', n: '{tools}', d: 'tools · {toolsClient} in-browser', tone: 'green' },
+        { key: 'headers', n: '{headers}', d: 'security headers verified', tone: 'blue' },
+        { key: 'decoys', n: '{decoys}', d: 'decoy paths → {sigma} Sigma rules', tone: 'amber' },
       ],
+      statsNoteBody: 'Numbers from the build, not hand-typed. Live status on',
+      statsNoteCta: 'This site →',
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).
       journey: {
@@ -1471,7 +1488,7 @@ export const ui = {
       },
       latestPosts: 'Latest posts',
       allPosts: 'all posts',
-      featuredTools: 'Tools · client-side',
+      featuredTools: 'Featured tools',
       allTools: 'all tools',
       projects: 'Projects',
       allProjects: 'all projects',
