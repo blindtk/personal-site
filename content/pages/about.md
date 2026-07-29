@@ -2,7 +2,7 @@
 title: 'About'
 ---
 
-I'm **Daniel Malaco**, an **Information Security Engineer** in Porto.
+I'm **Daniel Malaco**, an **Information Security Engineer** in Porto, Portugal.
 Since 2020 I've been at Ascendi, designing and operating the security
 architecture of critical road infrastructure: next-generation firewalls,
 SIEM, endpoint protection, identity management, threat intelligence and
@@ -146,3 +146,25 @@ native language: **[ATT&CK heatmap](/en/attack/)**.
 | Resilience | Business Continuity Planning (BCP) |
 | Languages | Python, Bash, PowerShell, Golang, C/C++ |
 | Platforms | Linux, Windows, AWS, Azure, Rapid7 InsightVM, ServiceNow |
+
+## Applied frameworks
+
+The frameworks below show up in the work as tools, not as goals. I use them
+to structure decisions, prioritise controls, and speak the same language as
+auditors, vendors and regulators. The table says where each one comes in and
+at what depth — none of them is explained here.
+
+| Framework | Where it comes into the work | Depth |
+| --- | --- | --- |
+| ISO 27001 | Reference for security policies and procedures, and for organising technical controls by domain. | Reference |
+| NIS2 | Regulatory context of the sector I work in — critical transport infrastructure; it informs control and reporting priorities. | Context |
+| CIS Controls & Benchmarks | Baseline for hardening systems and network equipment, and a reference when checking configurations. | Applied |
+| CISA CPG | Point of comparison for prioritising baseline controls in critical infrastructure. | Reference |
+| OWASP Top 10 | Common vocabulary for classifying findings from vulnerability assessment and internal testing, and for tuning WAF rules. | Applied |
+| MITRE ATT&CK | Mapping detection coverage and structuring incident analysis — technique by technique in the [heatmap](/en/attack/). | Applied |
+
+**On the depth column.** *Applied* — in regular use, in controls I operate.
+*Reference* — consulted during design and prioritisation, with no formal
+process attached. *Context* — the sector's regulatory backdrop, not a
+programme I run. No row implies certification, formal audit or declared
+compliance: it is only where the framework comes into the work.

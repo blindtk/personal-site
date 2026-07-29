@@ -2,7 +2,7 @@
 title: 'Sobre'
 ---
 
-Sou o **Daniel Malaco**, **Information Security Engineer** no Porto.
+Sou o **Daniel Malaco**, **Information Security Engineer** no Porto, Portugal.
 Desde 2020 estou na Ascendi, onde desenho e opero a arquitetura de segurança
 de infraestrutura crítica rodoviária: firewalls de nova geração, SIEM,
 proteção de endpoints, gestão de identidades, threat intelligence e resposta
@@ -145,3 +145,26 @@ linguagem nativa da indústria: **[Heatmap ATT&CK](/attack/)**.
 | Resiliência | Business Continuity Planning (BCP) |
 | Linguagens | Python, Bash, PowerShell, Golang, C/C++ |
 | Plataformas | Linux, Windows, AWS, Azure, Rapid7 InsightVM, ServiceNow |
+
+## Referenciais aplicados
+
+Os referenciais abaixo entram no trabalho como ferramenta, não como
+objetivo. Uso-os para estruturar decisões, priorizar controlos e falar a
+mesma língua de auditores, fornecedores e reguladores. A tabela diz onde
+cada um entra e com que profundidade — nenhum deles fica aqui explicado.
+
+| Referencial | Onde entra no trabalho | Profundidade |
+| --- | --- | --- |
+| ISO 27001 | Referência para políticas e procedimentos de segurança e para organizar controlos técnicos por domínio. | Referência |
+| NIS2 | Enquadramento regulatório do setor em que trabalho — infraestrutura crítica de transportes; informa prioridades de controlo e de reporte. | Enquadramento |
+| CIS Controls & Benchmarks | Base de hardening de sistemas e equipamentos de rede, e referência na verificação de configurações. | Aplicado |
+| CISA CPG | Termo de comparação para priorizar controlos de base em infraestrutura crítica. | Referência |
+| OWASP Top 10 | Vocabulário comum para classificar achados de análise de vulnerabilidades e testes internos, e para afinar regras de WAF. | Aplicado |
+| MITRE ATT&CK | Mapeamento de cobertura de deteção e estruturação da análise de incidentes — detalhe técnica a técnica no [heatmap](/attack/). | Aplicado |
+
+**Sobre a coluna de profundidade.** *Aplicado* — uso corrente em controlos
+que opero. *Referência* — consulta no desenho e na priorização, sem
+processo formal associado. *Enquadramento* — contexto regulatório do setor,
+não um programa que eu conduza. Nenhuma linha implica certificação,
+auditoria formal ou conformidade declarada: é só onde o referencial entra
+no trabalho.

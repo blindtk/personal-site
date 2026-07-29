@@ -200,7 +200,7 @@ export const ui = {
       title: 'Segurança',
       metaTitle: 'Postura de segurança',
       intro:
-        'A segurança é o foco deste site — no que diz e na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
+        'Este site foi desenhado para expor trabalho técnico sem acrescentar superfície desnecessária. Aqui fica o que está em vigor, para quem quiser verificar.',
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
@@ -211,7 +211,7 @@ export const ui = {
       headersTitle: 'Cabeçalhos e porquê',
       headersIntro: 'O que é enviado em cada resposta, e a razão de ser:',
       headers: [
-        { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline': zero JavaScript ou CSS inline no site inteiro, só código do próprio domínio executa. JavaScript injetado não executa. É a defesa real contra XSS." },
+        { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline': zero JavaScript ou CSS inline no site inteiro, só código do próprio domínio executa. JavaScript injetado não executa. É uma das defesas centrais contra XSS." },
         { name: 'Strict-Transport-Security', why: 'Força HTTPS no browser durante 2 anos, mesmo que alguém tente rebaixar para HTTP.' },
         { name: 'X-Frame-Options: DENY', why: 'Impede que o site seja embebido noutro (anti-clickjacking), a par de frame-ancestors na CSP — para browsers antigos que não suportem a diretiva.' },
         { name: 'X-Content-Type-Options: nosniff', why: 'Impede o browser de adivinhar o tipo de um ficheiro e executá-lo como algo que não é.' },
@@ -479,23 +479,31 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
-      statsLabel: 'stats',
-      location: 'Porto, PT',
-      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes.',
-      meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '6+ anos em segurança'],
-      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
-      // Sinais de competência (não de consumo). Números consistentes com as
-      // páginas que os detalham: 9+ = carreira em redes & segurança desde 2017
-      // (redes 2017–20 + segurança desde 2020); certsTotal e certs são
-      // calculados em build a partir de content/certs.json (comprimento total e
-      // critério verified!==false — mesmo critério da página Certificações);
-      // CTFs = comprimento de content/awards.json (key 'awards').
+      statsLabel: 'stats do site',
+      location: 'Porto, Portugal',
+      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes. Este site faz parte do trabalho: as ferramentas, o perímetro e as deteções estão públicos.',
+      meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '9+ anos em redes & segurança'],
+      // Credenciais: linha discreta ligada a /certificacoes/, com os nºs
+      // calculados em build a partir de content/certs.json (comprimento total
+      // e critério verified!==false — mesmo critério da página Certificações).
+      credentials: '{certsTotal} certificações · {certsVerified} verificáveis no Credly',
+      // {awards} = comprimento de content/awards.json — mesma lógica da
+      // galeria de prémios na página Sobre.
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', '{awards} CTFs vencidos', 'ISO 27001', 'MITRE ATT&CK'],
+      // Stats do site: sinais estruturais (o que o site é/tem), não métricas
+      // pessoais — essas migraram para `credentials` e `chips` acima. {pages}
+      // é manual (ver comentário em HomePage.astro); {tools}/{toolsClient} vêm
+      // de lib/tools.ts; {headers} é manual (lista em
+      // dynamic/worker/src/lib/scan.js, fora do build estático); {decoys} e
+      // {sigma} vêm de content/honeypot-attack.json e content/detections.json.
       statsStatic: [
-        { n: '9+', d: 'anos em redes & segurança', tone: 'green' },
-        { key: 'certsTotal', n: '31', d: 'certificações', tone: 'blue' },
-        { key: 'certs', n: '12', d: 'verificáveis · Credly', tone: 'amber' },
-        { key: 'awards', n: '4', d: 'CTFs vencidos', tone: 'green' },
+        { key: 'pages', n: '{pages}', d: 'páginas · cada uma em PT e EN', tone: 'green' },
+        { key: 'tools', n: '{tools}', d: 'ferramentas · {toolsClient} no browser', tone: 'green' },
+        { key: 'headers', n: '{headers}', d: 'cabeçalhos de segurança verificados', tone: 'blue' },
+        { key: 'decoys', n: '{decoys}', d: 'paths-isco → {sigma} regras Sigma', tone: 'amber' },
       ],
+      statsNoteBody: 'Números do build, não escritos à mão. Estado ao vivo em',
+      statsNoteCta: 'Este site →',
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
       journey: {
@@ -511,7 +519,7 @@ export const ui = {
       },
       latestPosts: 'Últimos posts',
       allPosts: 'todos os posts',
-      featuredTools: 'Ferramentas · client-side',
+      featuredTools: 'Ferramentas em destaque',
       allTools: 'todas as ferramentas',
       projects: 'Projetos',
       allProjects: 'todos os projetos',
@@ -900,7 +908,7 @@ export const ui = {
     },
     contact: {
       title: 'Contactos',
-      intro: 'A forma mais rápida de me apanhar é por email. Também estou por aí:',
+      intro: 'A forma mais rápida de me apanhar é por email. Os restantes perfis públicos estão ligados abaixo:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
@@ -920,7 +928,7 @@ export const ui = {
     lab: {
       title: 'Lab',
       mobileTitle: 'O Lab quer um ecrã maior',
-      mobileBody: 'O Lab é um desktop interativo — janelas, taskbar e um terminal a sério. Em ecrãs pequenos a experiência não presta, por isso preferi não fingir. Abre num computador, ou usa as ferramentas em formato normal:',
+      mobileBody: 'O Lab é um desktop interativo — janelas, barra de tarefas e um terminal a sério. Em ecrãs pequenos a experiência não presta, por isso preferi não fingir. Abre num computador, ou usa as ferramentas em formato normal:',
       mobileCta: 'Ir para as ferramentas',
       desktopHint: 'Duplo clique (ou toque) nos ícones para abrir. Experimenta o terminal: `help`.',
       icons: {
@@ -1160,7 +1168,7 @@ export const ui = {
       title: 'Security',
       metaTitle: 'Security posture',
       intro:
-        'Security is the focus of this site — in what it says and in how it\'s served. Here\'s what\'s in place, for anyone who wants to check.',
+        'This site was designed to expose technical work without adding unnecessary surface area. Here\'s what\'s in place, for anyone who wants to check.',
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
@@ -1171,7 +1179,7 @@ export const ui = {
       headersTitle: 'Headers and why',
       headersIntro: 'What is sent on every response, and the reason for it:',
       headers: [
-        { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline': zero inline JavaScript or CSS anywhere on the site, only code from the site's own origin runs. Injected JavaScript does not run. The real defence against XSS." },
+        { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline': zero inline JavaScript or CSS anywhere on the site, only code from the site's own origin runs. Injected JavaScript does not run. One of the main defences against XSS on this site." },
         { name: 'Strict-Transport-Security', why: 'Forces HTTPS in the browser for 2 years, even if someone tries to downgrade to HTTP.' },
         { name: 'X-Frame-Options: DENY', why: 'Stops the site being embedded in another (anti-clickjacking), alongside frame-ancestors in the CSP — for older browsers that do not support the directive.' },
         { name: 'X-Content-Type-Options: nosniff', why: 'Stops the browser guessing a file’s type and running it as something it is not.' },
@@ -1439,23 +1447,32 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
-      statsLabel: 'stats',
-      location: 'Porto, PT',
-      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response.',
-      meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '6+ years in security'],
-      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', "CTF Winner '22", 'ISO 27001', 'MITRE ATT&CK'],
-      // Competence signals (not consumption). Numbers kept consistent with
-      // the pages that detail them: 9+ = a networking & security career since
-      // 2017 (networking 2017–20 + security since 2020); certsTotal and certs
-      // are computed at build from content/certs.json (total length and the
-      // verified!==false criterion — same as the Certifications page);
-      // CTFs = length of content/awards.json (key 'awards').
+      statsLabel: 'site stats',
+      location: 'Porto, Portugal',
+      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response. This site is part of the work: the tools, the perimeter, and the detections are public.',
+      meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '9+ years in networking & security'],
+      // Credentials: a discreet line linked to /certifications/, with the
+      // numbers computed at build from content/certs.json (total length and
+      // the verified!==false criterion — same as the Certifications page).
+      credentials: '{certsTotal} certifications · {certsVerified} verifiable on Credly',
+      // {awards} = length of content/awards.json — same logic as the awards
+      // gallery on the About page.
+      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', '{awards} CTFs won', 'ISO 27001', 'MITRE ATT&CK'],
+      // Site stats: structural signals (what the site is/has), not personal
+      // metrics — those moved to `credentials` and `chips` above. {pages} is
+      // manual (see comment in HomePage.astro); {tools}/{toolsClient} come
+      // from lib/tools.ts; {headers} is manual (list lives in
+      // dynamic/worker/src/lib/scan.js, outside the static build); {decoys}
+      // and {sigma} come from content/honeypot-attack.json and
+      // content/detections.json.
       statsStatic: [
-        { n: '9+', d: 'years in networking & security', tone: 'green' },
-        { key: 'certsTotal', n: '31', d: 'certifications', tone: 'blue' },
-        { key: 'certs', n: '12', d: 'verifiable · Credly', tone: 'amber' },
-        { key: 'awards', n: '4', d: 'CTFs won', tone: 'green' },
+        { key: 'pages', n: '{pages}', d: 'pages · each in PT and EN', tone: 'green' },
+        { key: 'tools', n: '{tools}', d: 'tools · {toolsClient} in-browser', tone: 'green' },
+        { key: 'headers', n: '{headers}', d: 'security headers verified', tone: 'blue' },
+        { key: 'decoys', n: '{decoys}', d: 'decoy paths → {sigma} Sigma rules', tone: 'amber' },
       ],
+      statsNoteBody: 'Numbers from the build, not hand-typed. Live status on',
+      statsNoteCta: 'This site →',
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).
       journey: {
@@ -1471,7 +1488,7 @@ export const ui = {
       },
       latestPosts: 'Latest posts',
       allPosts: 'all posts',
-      featuredTools: 'Tools · client-side',
+      featuredTools: 'Featured tools',
       allTools: 'all tools',
       projects: 'Projects',
       allProjects: 'all projects',
@@ -1860,7 +1877,7 @@ export const ui = {
     },
     contact: {
       title: 'Contact',
-      intro: 'The fastest way to reach me is email. I am also around here:',
+      intro: 'The fastest way to reach me is email. Other public profiles are linked below:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',

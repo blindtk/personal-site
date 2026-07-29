@@ -3,25 +3,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, toolUrl } from '../../i18n/routes';
+import { TOOLS } from '../../lib/tools';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const dict = t(lang);
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
-const tools = [
-  { slug: 'subnets', kind: 'client', ...dict.tools.subnets },
-  { slug: 'hashes', kind: 'client', ...dict.tools.hashes },
-  { slug: 'encoder', kind: 'client', ...dict.tools.encoder },
-  { slug: 'passwords', kind: 'client', ...dict.tools.passwords },
-  { slug: 'email-headers', kind: 'client', ...dict.tools['email-headers'] },
-  { slug: 'exif', kind: 'client', ...dict.tools.exif },
-  { slug: 'csp', kind: 'client', ...dict.tools.csp },
-  { slug: 'passkeys', kind: 'client', ...dict.tools.passkeys },
-  { slug: 'pwned', kind: 'server', ...dict.tools.pwned },
-  { slug: 'self-scan', kind: 'server', ...dict.tools['self-scan'] },
-  { slug: 'mirror', kind: 'server', ...dict.tools.mirror },
-] as const;
+const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug as keyof typeof dict.tools] }));
 ---
 
 <BaseLayout lang={lang} title={dict.tools.title} altUrl={routes.tools[other]} active="tools">

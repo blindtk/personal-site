@@ -708,6 +708,20 @@ a.card:hover {
   color: var(--muted);
 }
 
+.credentials-link {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-decoration: none;
+  margin-top: 0.5rem;
+}
+.credentials-link:hover,
+.credentials-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;

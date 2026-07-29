@@ -7,7 +7,7 @@ order: 1
 
 Site pessoal bilingue construído com Astro: calculadora de subnets, gerador
 de hashes e mais — as ferramentas correm no browser, e o pouco que precisa
-mesmo de servidor vive num Worker isolado, à parte.
+mesmo de servidor vive num Cloudflare Worker isolado, à parte.
 
 Bilingue por construção: o conteúdo (markdown/JSON) vive separado do código
 e alimenta as duas versões (PT/EN) a partir das mesmas componentes — sem
@@ -26,7 +26,7 @@ omissão — as páginas nascem sem JavaScript, e as ilhas que precisam de
 interatividade (as ferramentas de rede, o Lab) não carregam runtime de
 hidratação nenhum. Isto não é só uma escolha de performance: torna a CSP
 estrita sem `'unsafe-inline'` fácil de manter, porque não há um framework a
-injetar estilo ou script inline em tempo de execução por trás das costas —
+injetar estilo ou script inline em tempo de execução de forma invisível —
 e porque escrevo os meus próprios `<script>` como ficheiros externos, nunca
 inline, `script-src 'self'` e `style-src 'self'` chegam sem precisar de uma
 única hash. (Já tentei o caminho inverso — hashes SHA-256 por script/estilo

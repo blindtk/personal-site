@@ -5,7 +5,7 @@ tags: ['github', 'automation', 'curation']
 order: 3
 ---
 
-A tool that turns the chaotic GitHub star list into a catalog organised by
+A tool that turns the chaotic list of GitHub stars into a catalog organised by
 category. It emits `catalog/catalog.json`, which feeds the browsable
 library in this site's [Links](/en/links/) tab.
 
