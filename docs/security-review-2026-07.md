@@ -34,8 +34,8 @@ corrigidas num PR de seguimento, com testes a comprovar cada uma. Resumo:
 | #7 sem observabilidade no Worker | **Corrigido** — `[observability] enabled = true` | `wrangler deploy --dry-run` confirma que o TOML continua válido |
 | HSTS ausente nas respostas do Worker | **Corrigido** — adicionado a `RESPONSE_SECURITY_HEADERS` | testes existentes continuam verdes |
 | `wrangler deploy --dry-run` como gate de CI | **Adicionado** — funciona sem nenhum segredo da Cloudflare | Confirmado neste ambiente, sem credenciais |
-| `astro check` em CI | **Não aplicado** — ver nota abaixo | `npx astro check` correu localmente |
-| Semgrep só a `ERROR` | **Não alterado** — precisa de uma passagem de triagem que não coube neste PR | — |
+| `astro check` em CI | **Corrigido (ronda 2, PR #128)** — 37 erros reais resolvidos, script ligado ao `ci.yml` | 0 erros/0 warnings/0 hints, com reinstalação limpa |
+| Semgrep só a `ERROR` | **Não alterado** — precisa de uma passagem de triagem que não coube ainda | — |
 
 ### Dois achados que não estavam na lista original
 
@@ -64,18 +64,60 @@ OSV-Scanner. Corrigido com `.github/scripts/check-npm-audit.mjs` +
 `.github/npm-audit-allowlist.json`, que replica o padrão do
 `osv-scanner.toml` (justificação + `ignoreUntil`) para esta gate.
 
-### Porque não `astro check` em CI
+### Ronda 2 (PR #128): validação direta no dashboard + `astro check` fechado
 
-`npx astro check` (depois de instalar `@astrojs/check` + `typescript`, que
-o `package.json` não tinha) devolve **36 erros de tipo pré-existentes**,
-espalhados por `ExifTool.astro`, `PasskeyLab.astro`, `SubnetCalc.astro` e
-outros — nada relacionado com as lacunas de segurança desta revisão.
-Adicionar isto como gate de CI agora bloquearia todos os PRs futuros por
-dívida técnica não relacionada, o que é o mesmo anti-padrão criticado no
-ZAP/Nuclei mais abaixo: uma gate que começa vermelha treina toda a gente a
-ignorá-la. Por isso não se instalaram as dependências nem se ligou o
-`check` — fica registado como follow-up: corrigir os 36 erros primeiro
-(PR à parte, sem relação com segurança), só depois gate em CI.
+Depois da ronda 1, o dono do repo validou diretamente três pontos no
+dashboard da Cloudflare/GitHub que eu só tinha conseguido apontar, não
+confirmar — e isso apanhou uma regressão real que a ronda 1 tinha
+introduzido:
+
+- **Deploy automático confirmado**: Workers Builds está ligado
+  (`blindtk/personal-site`, root `dynamic/worker`, branch `main`) — as
+  correções de código chegam a produção sozinhas a cada push, à
+  semelhança do Pages. Ajuste: o "Build watch paths" está em `*`
+  (dispara em qualquer commit ao repo, não só em `dynamic/worker/**`) —
+  fica como sugestão de afinação, não correção.
+- **Branch protection confirmado ausente**: nem o sistema clássico nem
+  os Rulesets se aplicam neste repo (privado, conta pessoal) — GitHub
+  exige Team/Enterprise para isso em repos privados. Não é um erro de
+  configuração; é um limite da plataforma que só se resolve tornando o
+  repo público ou pagando o upgrade.
+- **Regressão apanhada a tempo**: o PR #126 tinha apontado o `url` do
+  `expected-headers.json` para produção, partindo do princípio de que o
+  site era publicamente acessível. Confirmado que a **Cloudflare Access
+  continua ativa** — o cron diário do `Headers` ia falhar sempre contra
+  a página de login da Access, não por regressão de headers real.
+  Revertido para `SET-ME`, com as duas formas de o ativar antes do
+  lançamento documentadas em `docs/cloudflare-deploy.md`.
+- **WAF fechado por decisão explícita**: as regras "Previews sociais" e
+  "O dono sempre" do desenho original nunca existiram, confirmado nos
+  screenshots — Known Bots (regra 1) já cobre os crawlers de preview
+  social, e só PT passar com Managed Challenge é o desenho final aceite
+  (mesmo sujeitando o dono a Block fora de PT). Documentado.
+
+Depois disso, `astro check` foi corrigido: 37 erros reais (não 36 —
+o número exato depende de qual commit se conta), quase todos por 5-6
+causas raiz repetidas (`parseExif()` sem `@returns` a esconder todos os
+campos EXIF reais; chaves i18n na secção errada do dicionário —
+`dict.security` em vez de `dict.evidence`, que causava texto
+"**undefined**" real na página self-scan em produção; tuplos e uniões
+de literais alargados para tipos genéricos por falta de anotação).
+Ligado ao `ci.yml`. Resultado: 0 erros, 0 warnings, 0 hints.
+
+### CAA — confirmado em falta (verificação DNS ao vivo)
+
+Consulta direta aos registos DNS de produção (2026-07-29): **SPF e
+DMARC estão excelentes** (`v=spf1 ... -all`; DMARC com `p=reject;
+sp=reject; adkim=s; aspf=s` — mais estrito do que a maioria dos sites
+profissionais) e o MX confirma uma Cloudflare Email Routing real (não
+precisa de "null MX", ao contrário do que a ronda 1 sugeriu como
+opção condicional). **Mas não existe nenhum registo CAA** — a consulta
+devolve sem resposta, apesar de `docs/dns-tls.md` já ter os registos
+prontos a copiar. Enquanto isto ficar por fazer, qualquer CA
+publicamente confiada pode emitir um certificado para o domínio, sem
+restrição nenhuma. É uma ação de dashboard (DNS → Records → Add
+record → CAA, sete linhas), não de código — documentado com a data da
+confirmação em `docs/dns-tls.md`.
 
 ---
 
@@ -809,24 +851,25 @@ Nota máxima na modelação de ameaças e documentação: o `PLAN.md`, com
 decisões datadas, custos registados e correções de conclusões erradas, é
 melhor do que o que a maioria das equipas produz.
 
-### Reavaliação pós-correção: **87/100** (+15)
+### Reavaliação — ronda 1 (PR #126): 87/100 → ronda 2 (PR #128): **94/100**
 
-| Área | Peso | Nota antes | Nota agora | Porquê mudou |
-|---|---|---|---|---|
-| Segredos & cadeia de fornecimento | 20 | 16 | **18** | `RATE_SALT` já não falha em silêncio; `zizmor` já não corre numa versão retirada por segurança |
-| Dependências | 15 | 11 | **14** | Os dois lockfiles cobertos por OSV + `npm audit`; uma vulnerabilidade high **real** no lockfile do Worker (sharp/libvips) corrigida com upgrade, não com exceção |
-| Análise estática & testes | 20 | 11 | **15** | 173 testes (105 Worker + 68 static) agora correm em CI; Semgrep continua só a `ERROR` (por triagem), `astro check` continua por ligar (36 erros pré-existentes, ver acima) |
-| CI/CD | 15 | 12 | **14** | Gate `wrangler deploy --dry-run` sem segredos; `npm audit --audit-level=high`, que estava a falhar no `main` por um falso positivo sem exceção possível, tem agora o mesmo mecanismo de exceção justificada do OSV |
-| Runtime & Cloudflare | 20 | 12 | **16** | O achado principal (rate limiter a esgotar a quota do KV) está corrigido; `[observability]` ligado; HSTS nas respostas do Worker; `compatibility_date` atualizada (ainda por validar com deploy real da branch) |
-| Modelação de ameaças & documentação | 10 | 10 | **10** | Sem alterações — já estava no máximo |
+| Área | Peso | Inicial | Ronda 1 | Ronda 2 | Porquê mudou na ronda 2 |
+|---|---|---|---|---|---|
+| Segredos & cadeia de fornecimento | 20 | 16 | 18 | **19** | MFA confirmado (Yubikey principal + backup, Cloudflare e GitHub) |
+| Dependências | 15 | 11 | 14 | **14** | Sem alterações nesta ronda — já perto do máximo |
+| Análise estática & testes | 20 | 11 | 15 | **19** | `astro check` fechado: 37 erros reais corrigidos (incluindo um bug real de UI, texto "undefined" em produção), 0 erros/warnings/hints, ligado ao `ci.yml`. Só falta a triagem do Semgrep para `WARNING` |
+| CI/CD | 15 | 12 | 14 | **14** | Sem alterações — branch protection continua bloqueada pelo plano GitHub (privado, conta pessoal), confirmado no dashboard, não é um erro de configuração |
+| Runtime & Cloudflare | 20 | 12 | 16 | **18** | Deploy automático confirmado (Workers Builds); WAF fechado por decisão explícita e documentada; uma regressão real (Access + `expected-headers.json`) apanhada e corrigida antes de causar dano. Desconto: CAA confirmado em falta por consulta DNS ao vivo |
+| Modelação de ameaças & documentação | 10 | 10 | 10 | **10** | Sem alterações — já estava no máximo |
 
-O salto de 72 para 87 não veio de ferramenta nenhuma nova — veio de **ligar
-o que já existia** e de **corrigir, não ignorar**, dois problemas reais
-encontrados ao validar as correções (o `sharp`/libvips e o `zizmor`
-retirado). Falta para os 95+: fechar os 36 erros de tipo do `astro check`
-e ligá-lo, triar o Semgrep para `WARNING`, e — fora do repositório — MFA por
-hardware e DMARC/SPF. Nenhum desses precisa de ferramenta nova; precisa de
-tempo dedicado à dívida que já foi identificada.
+**94/100.** O que falta para os últimos 6 pontos, por ordem de esforço: CAA
+(sete linhas no DNS, cinco minutos — o mais barato de todos), triagem do
+Semgrep para `WARNING` (uma tarde), e branch protection/rate limiting nativo
+da zona (bloqueados por plano — Cloudflare Free não tem rate limiting de
+zona grátis além de 1 regra, GitHub privado não aplica proteção sem
+Team/Enterprise). Nenhum destes é um problema de ferramenta em falta; são,
+por esta ordem, uma tarefa de cinco minutos, uma tarde de triagem, e duas
+decisões de plano/custo que só o dono do repo pode tomar.
 
 ### Roteiro a 12 meses
 
