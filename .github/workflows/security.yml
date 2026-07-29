@@ -84,9 +84,23 @@ jobs:
       - name: Instalar Semgrep
         run: pipx install semgrep==1.171.0
       - name: SAST
-        # --severity ERROR: só falhamos em achados de alta severidade
-        # (XSS/injeção/etc.), não em ruído de estilo das regras públicas.
-        run: semgrep scan --metrics=off --error --severity ERROR --config p/typescript --config p/javascript --config .semgrep/
+        # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07;
+        # ver docs/security-review-2026-07.md). O volume real medido contra
+        # este código, a correr sem filtro de severidade, foi de 16 achados:
+        # 2 ERROR (dois ternários mortos — corrigidos, não suprimidos),
+        # 8 WARNING (3 deles de categoria "security" — precisamente o que o
+        # gate existe para apanhar) e 6 INFO. Depois da triagem: 0 achados.
+        # O custo marginal de incluir WARNING é hoje zero e passa a cobrir as
+        # regras de segurança que o Semgrep classifica abaixo de ERROR.
+        #
+        # INFO fica de fora: são regras de "audit" com confidence LOW cuja
+        # recomendação típica é acrescentar uma dependência de sanitização —
+        # não é sinal que justifique parar um PR.
+        #
+        # ATENÇÃO: `--severity` é um filtro de igualdade, não um mínimo. Só
+        # com `--severity WARNING` os achados ERROR deixariam de contar — daí
+        # as duas flags.
+        run: semgrep scan --metrics=off --error --severity ERROR --severity WARNING --config p/typescript --config p/javascript --config .semgrep/
 
   # Auditoria dos próprios workflows: pins em falta, permissions excessivas,
   # injeção de template em run:, credenciais persistidas, tags impostoras.

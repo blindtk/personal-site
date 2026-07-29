@@ -34,14 +34,16 @@ export function createTerminal(ctx) {
     encodeErr: pt ? 'entrada inválida para este formato' : 'invalid input for this format',
     catNotFound: (c) => (pt ? `categoria não encontrada: ${c}` : `category not found: ${c}`),
     opening: (app) => (pt ? `a abrir ${app}…` : `opening ${app}…`),
-    sudo: pt ? 'daniel is not in the sudoers file. This incident will be reported. 🙃' : 'daniel is not in the sudoers file. This incident will be reported. 🙃',
+    // citação literal do sudo(8) — fica em inglês nos dois idiomas de propósito,
+    // por isso não leva ternário (os dois ramos eram idênticos)
+    sudo: 'daniel is not in the sudoers file. This incident will be reported. 🙃',
     help: [
       pt ? 'comandos disponíveis:' : 'available commands:',
       '  whoami                     ' + (pt ? '— quem sou' : '— who I am'),
       '  ls [-la]                   ' + (pt ? '— listar ficheiros' : '— list files'),
       `  cat <${pt ? 'ficheiro' : 'file'}>              ` + (pt ? '— mostrar um ficheiro' : '— print a file'),
       '  subnet <ip/cidr>           ' + (pt ? '— calcular subnet (ex: subnet 10.0.0.1/20)' : '— subnet math (e.g. subnet 10.0.0.1/20)'),
-      '  hash <alg> <texto>         ' + (pt ? '— md5 | sha1 | sha256 | sha512' : '— md5 | sha1 | sha256 | sha512'),
+      '  hash <alg> <texto>         — md5 | sha1 | sha256 | sha512',
       '  encode <fmt> <texto>       — base64 | url | hex',
       '  decode <fmt> <texto>       — base64 | url | hex',
       '  stars [categoria]          ' + (pt ? '— catálogo de estrelas do GitHub' : '— GitHub stars catalog'),
@@ -122,8 +124,14 @@ export function createTerminal(ctx) {
       case 'decode': {
         const [fmt, ...txt] = rest;
         const text = txt.join(' ');
+        // Não é HTML: `<base64|url|hex>` é notação de uso do terminal, e a regra
+        // só a apanha porque `<b` parece uma tag. As linhas do terminal são
+        // impressas com `div.textContent` (função `print` em LabDesktop.astro),
+        // nunca como markup — não há sink de HTML neste caminho.
+        // nosemgrep: javascript.lang.security.html-in-template-string
         if (!fmt || !text) return { lines: [t.usage(`${cmd} <base64|url|hex> <texto>`)] };
         const codec = codecs[fmt.toLowerCase()];
+        // nosemgrep: javascript.lang.security.html-in-template-string -- ver acima
         if (!codec) return { lines: [t.usage(`${cmd} <base64|url|hex> <texto>`)] };
         try {
           return { lines: [codec[cmd === 'encode' ? 'encode' : 'decode'](text)] };

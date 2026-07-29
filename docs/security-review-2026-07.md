@@ -35,7 +35,7 @@ corrigidas num PR de seguimento, com testes a comprovar cada uma. Resumo:
 | HSTS ausente nas respostas do Worker | **Corrigido** — adicionado a `RESPONSE_SECURITY_HEADERS` | testes existentes continuam verdes |
 | `wrangler deploy --dry-run` como gate de CI | **Adicionado** — funciona sem nenhum segredo da Cloudflare | Confirmado neste ambiente, sem credenciais |
 | `astro check` em CI | **Corrigido (ronda 2, PR #128)** — 37 erros reais resolvidos, script ligado ao `ci.yml` | 0 erros/0 warnings/0 hints, com reinstalação limpa |
-| Semgrep só a `ERROR` | **Não alterado** — precisa de uma passagem de triagem que não coube ainda | — |
+| Semgrep só a `ERROR` | **Corrigido (ronda 3)** — triagem completa feita, gate sobe para `ERROR` + `WARNING` | Scan sem filtro de severidade: 16 achados (2 ERROR / 8 WARNING / 6 INFO) → 0 depois da triagem; ver secção abaixo |
 
 ### Dois achados que não estavam na lista original
 
@@ -103,6 +103,97 @@ campos EXIF reais; chaves i18n na secção errada do dicionário —
 "**undefined**" real na página self-scan em produção; tuplos e uniões
 de literais alargados para tipos genéricos por falta de anotação).
 Ligado ao `ci.yml`. Resultado: 0 erros, 0 warnings, 0 hints.
+
+### Ronda 3: triagem do Semgrep e subida do gate para `WARNING`
+
+Fecha o item **#8** (*Semgrep só a `ERROR`*). O scan foi corrido sem filtro
+de severidade, contra exatamente o mesmo âmbito do CI (regras públicas de
+JS/TS + `.semgrep/`, mesmo conjunto de ficheiros: 205 alvos, 203 regras).
+
+**Volume real: 16 achados — 2 ERROR, 8 WARNING, 6 INFO — em 6 regras.**
+
+| Regra | Sev. | N.º | Onde | Veredito |
+|---|---|---|---|---|
+| `typescript.lang.correctness.useless-ternary` | ERROR | 2 | `lab-terminal.js` | **Verdadeiro positivo — corrigido** |
+| `javascript.lang.correctness.no-replaceall` | WARNING | 5 | `worker/src/lib/sanitize.js` | Não aplicável |
+| `javascript.lang.security.html-in-template-string` | WARNING | 2 | `lab-terminal.js` | Falso positivo |
+| `javascript.lang.security.audit.detect-non-literal-regexp` | WARNING | 1 | `worker/src/lib/ct.js` | Falso positivo |
+| `javascript.audit.detect-replaceall-sanitization` | INFO | 4 | `worker/src/lib/sanitize.js` | Não aplicável |
+| `javascript.lang.correctness.missing-template-string-indicator` | INFO | 2 | `worker/src/lib/notfound.js` | Falso positivo |
+
+**Os dois ERROR eram defeitos a sério**, não ruído: dois ternários mortos
+com os dois ramos literalmente iguais (`pt ? X : X`) — a mensagem do `sudo`
+(citação literal do `sudo(8)`, que fica em inglês nos dois idiomas) e a
+linha do `hash` no `help`. Corrigidos no código, não suprimidos: os
+ternários desapareceram e o comportamento é idêntico.
+
+Os restantes 14 foram suprimidos com `// nosemgrep: <rule-id>` no sítio,
+cada um com a justificação por cima (mesmo padrão de exceção do
+`osv-scanner.toml` e do `.github/npm-audit-allowlist.json`, mas **sem data
+de expiração** — não são vulnerabilidades de terceiros à espera de patch,
+são regras que não se aplicam a este código):
+
+- **`no-replaceall` / `detect-replaceall-sanitization`** (9 dos 14, todos na
+  mesma função `escapeHtml`): a primeira avisa que `replaceAll` falta em
+  browsers antigos — este ficheiro só corre no workerd e no Node dos testes;
+  a segunda pede DOMPurify/sanitize-html — o Worker não tem DOM, e `escapeHtml`
+  não é limpeza por lista de tags permitidas, é o escape completo dos cinco
+  caracteres. Trocar isto por uma dependência seria mais superfície, não menos.
+- **`html-in-template-string`**: `` `${cmd} <base64|url|hex> <texto>` `` não é
+  HTML — é notação de uso do terminal, apanhada só porque `<b` parece uma tag.
+  As linhas do terminal são impressas com `div.textContent`; não há sink.
+- **`detect-non-literal-regexp`**: o taint vem de `key`, parâmetro de uma
+  closure chamada só com `'O'` e `'CN'`. O texto do crt.sh é o *assunto* do
+  match, não o padrão, e o padrão é linear — não há ReDoS.
+- **`missing-template-string-indicator`**: os `{…}` são blocos de CSS dentro
+  do HTML estático do 404; o template não interpola nada.
+
+**Depois da triagem: 0 achados a qualquer severidade.**
+
+**Decisão: o gate sobe de `ERROR` para `ERROR` + `WARNING`.** Os números
+justificam-no dos dois lados:
+
+- O bucket WARNING tem 8 achados no repositório inteiro — triagem de uma
+  tarde, feita, e agora a zero. O custo marginal de o incluir é **zero
+  hoje**, e o custo de o manter é uma supressão justificada por caso novo.
+- 3 dos 8 WARNING são de categoria *security* (`html-in-template-string`,
+  `detect-non-literal-regexp`) — exatamente a classe de achado que o gate
+  existe para apanhar. Com `--severity ERROR` estavam a ser deitados fora
+  em silêncio: o Semgrep classifica a maioria das suas regras de XSS/injeção
+  em modo *audit* abaixo de ERROR, por serem confidence LOW/MEDIUM.
+- O ruído recorrente concentra-se numa única regra não-security
+  (`no-replaceall`, 5 dos 8) e num único sítio do código.
+
+**INFO fica de fora do gate** (continua a aparecer no relatório, sem falhar
+o build): as 6 ocorrências vêm de regras *audit* com confidence LOW cuja
+recomendação típica é acrescentar uma dependência de sanitização. Não é
+sinal que justifique parar um PR.
+
+Duas notas operacionais que saíram desta passagem:
+
+1. **`--severity` é um filtro de igualdade, não um mínimo.** Passar só
+   `--severity WARNING` faria os achados ERROR deixarem de contar — o gate
+   ficaria mais fraco, não mais forte. Daí as duas flags no `security.yml`.
+2. **`// nosemgrep` só suprime se o marcador estiver na linha imediatamente
+   anterior ao achado.** Num comentário de várias linhas, a justificação vai
+   primeiro e o `nosemgrep:` fica na última — não ao contrário. Para suprimir
+   duas regras no mesmo sítio, separam-se por vírgula na mesma linha.
+
+*Ressalva de método:* o scan de triagem foi corrido com as regras de JS/TS
+do repositório aberto `semgrep/semgrep-rules` (o registo `semgrep.dev` não
+era alcançável do ambiente onde a triagem correu), ou seja um **superconjunto**
+dos packs `p/typescript` + `p/javascript`. A prova de que é superconjunto:
+`useless-ternary` é ERROR na origem e as duas linhas que apanhou estavam no
+`main` desde o PR #74 com o job `semgrep` sempre verde — logo o pack do
+registo ou não traz essa regra, ou trá-la abaixo de ERROR. O risco residual
+era o inverso: uma regra que só existisse no registo podia aparecer como
+WARNING no primeiro CI depois desta mudança.
+
+**Confirmado no CI do PR #130:** o job `semgrep` com o gate novo passou
+verde à primeira, e o log dá a dimensão real dos packs — **76 regras (74 do
+registo + 2 nossas, de `.semgrep/`)** contra as 203 do superconjunto usado
+na triagem, com **0 achados**. A triagem foi portanto conservadora por uma
+margem larga: o que o CI corre é um subconjunto do que foi analisado à mão.
 
 ### CAA — confirmado em falta (verificação DNS ao vivo)
 
@@ -857,19 +948,19 @@ melhor do que o que a maioria das equipas produz.
 |---|---|---|---|---|---|
 | Segredos & cadeia de fornecimento | 20 | 16 | 18 | **19** | MFA confirmado (Yubikey principal + backup, Cloudflare e GitHub) |
 | Dependências | 15 | 11 | 14 | **14** | Sem alterações nesta ronda — já perto do máximo |
-| Análise estática & testes | 20 | 11 | 15 | **19** | `astro check` fechado: 37 erros reais corrigidos (incluindo um bug real de UI, texto "undefined" em produção), 0 erros/warnings/hints, ligado ao `ci.yml`. Só falta a triagem do Semgrep para `WARNING` |
+| Análise estática & testes | 20 | 11 | 15 | **19** | `astro check` fechado: 37 erros reais corrigidos (incluindo um bug real de UI, texto "undefined" em produção), 0 erros/warnings/hints, ligado ao `ci.yml`. (Ronda 3 fechou também a triagem do Semgrep — ver secção acima) |
 | CI/CD | 15 | 12 | 14 | **14** | Sem alterações — branch protection continua bloqueada pelo plano GitHub (privado, conta pessoal), confirmado no dashboard, não é um erro de configuração |
 | Runtime & Cloudflare | 20 | 12 | 16 | **18** | Deploy automático confirmado (Workers Builds); WAF fechado por decisão explícita e documentada; uma regressão real (Access + `expected-headers.json`) apanhada e corrigida antes de causar dano. Desconto: CAA confirmado em falta por consulta DNS ao vivo |
 | Modelação de ameaças & documentação | 10 | 10 | 10 | **10** | Sem alterações — já estava no máximo |
 
 **94/100.** O que falta para os últimos 6 pontos, por ordem de esforço: CAA
-(sete linhas no DNS, cinco minutos — o mais barato de todos), triagem do
-Semgrep para `WARNING` (uma tarde), e branch protection/rate limiting nativo
-da zona (bloqueados por plano — Cloudflare Free não tem rate limiting de
-zona grátis além de 1 regra, GitHub privado não aplica proteção sem
-Team/Enterprise). Nenhum destes é um problema de ferramenta em falta; são,
-por esta ordem, uma tarefa de cinco minutos, uma tarde de triagem, e duas
-decisões de plano/custo que só o dono do repo pode tomar.
+(sete linhas no DNS, cinco minutos — o mais barato de todos) e branch
+protection/rate limiting nativo da zona (bloqueados por plano — Cloudflare
+Free não tem rate limiting de zona grátis além de 1 regra, GitHub privado
+não aplica proteção sem Team/Enterprise). A triagem do Semgrep, que estava
+nesta lista, foi feita na ronda 3 e o gate já cobre `WARNING`. Nenhum dos
+que restam é um problema de ferramenta em falta; são uma tarefa de cinco
+minutos e duas decisões de plano/custo que só o dono do repo pode tomar.
 
 ### Roteiro a 12 meses
 
@@ -881,8 +972,9 @@ MFA por hardware · DMARC/SPF/null MX.
 
 **Mês 2-3 — cobrir a fragilidade estrutural**
 Playwright para regressão de CSP · decidir sobre repo público → CodeQL ·
-escolher **um** revisor de IA · Semgrep a `WARNING` com triagem única ·
-regra Semgrep própria anti-PII (`cf-connecting-ip` → `KV.put`) ·
+escolher **um** revisor de IA · ~~Semgrep a `WARNING` com triagem única~~
+(feito, ronda 3) · regra Semgrep própria anti-PII (`cf-connecting-ip` →
+`KV.put`) ·
 `wrangler deploy --dry-run` em CI.
 
 **Mês 4-6 — runtime e conteúdo**
