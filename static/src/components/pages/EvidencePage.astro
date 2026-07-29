@@ -38,6 +38,7 @@ const commitDate = commit
   ? new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', {
       dateStyle: 'medium',
       timeStyle: 'short',
+      timeZone: 'Europe/Lisbon',
     }).format(new Date(commit.date))
   : '';
 
