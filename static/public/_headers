@@ -28,7 +28,7 @@
 # segundo hash — não crescerá por página, só por variante de conteúdo (ver
 # docs/security-headers.md para o comando de cálculo).
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-0BTdAeq88K+MWdoaEIXoW7FrmFBFgz2f/m7l28Mn4AA='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-/RztAGp2rIIt3aqLYwLYPT9MWtDrHCcQxZQBSY9sugY='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
   # Força HTTPS por 2 anos (sem "preload" para manter reversível enquanto o
   # domínio é provisório; acrescenta "; preload" e submete em hstspreload.org
   # quando o domínio final estiver fixo).

@@ -37,10 +37,7 @@ import { serverView } from './lib/mirror.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from './lib/notfound.js';
-
-// Paths que só existem para apanhar scanners. Devolvem 404 como qualquer
-// path inexistente — a diferença é que registamos a tentativa.
-const DECOYS = new Set(['/wp-login.php', '/.env', '/admin', '/phpmyadmin/', '/.git/config']);
+import { isDecoy } from './lib/decoys.js';
 
 const HOUR_MS = 3600_000;
 const DAY_MS = 86400_000;
@@ -351,6 +348,36 @@ async function cached(env, ctx, key, ttlSec, producer) {
 
 // ---------- self-scan ----------
 
+// Máximo de saltos que o self-scan segue manualmente — ver fetchSameOrigin.
+const SCAN_MAX_REDIRECTS = 5;
+
+/**
+ * fetch() que segue redirects À MÃO, e só enquanto ficam na MESMA origem do
+ * pedido inicial. Existe só por causa dos headers CF-Access-Client-Id/
+ * Secret: ao contrário do Authorization, o Fetch spec não os despe em
+ * redirects cross-origin — com `redirect: 'follow'` normal, um 3xx para
+ * outra origem reenviava as credenciais da Access para esse destino.
+ * Hoje o risco é baixo (SCAN_TARGET é uma var fixa do próprio domínio, não
+ * input de visitante), mas passa a ser real no dia em que o alvo for
+ * configurável ou o site tiver um open redirect (revisão de segurança
+ * 2026-07, ronda 4, N7). Um `signal` de timeout partilhado por todos os
+ * saltos garante o mesmo teto de tempo total do fetch original.
+ */
+async function fetchSameOrigin(url, opts, { maxRedirects = SCAN_MAX_REDIRECTS } = {}) {
+  let current = new URL(url);
+  const originalOrigin = current.origin;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    // eslint-disable-next-line no-await-in-loop -- saltos são sequenciais por natureza (cada um depende do Location do anterior)
+    const res = await fetch(current, { ...opts, redirect: 'manual' });
+    const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+    if (!location) return res;
+    const next = new URL(location, current);
+    if (next.origin !== originalOrigin) return res; // não segue para fora da origem — credenciais da Access não vazam
+    current = next;
+  }
+  return fetch(current, { ...opts, redirect: 'manual' }); // esgotou os saltos: última tentativa, sem seguir mais nada
+}
+
 async function runScan(env) {
   const target = env.SCAN_TARGET || 'https://danielmala.co/';
 
@@ -358,13 +385,19 @@ async function runScan(env) {
     'user-agent': 'personal-site-worker (self-scan)',
   };
 
+  // Secrets opcionais, só necessários se a Cloudflare Access estiver ativa
+  // à frente de SCAN_TARGET (ver docs/cloudflare-deploy.md) — sem eles o
+  // self-scan recebe a página de login da Access em vez do site. Únicos
+  // segredos do Worker que não aparecem em `[vars]`/comentário deste
+  // ficheiro (achado da ronda 4, N7): `wrangler secret put ACCESS_CLIENT_ID`
+  // / `ACCESS_CLIENT_SECRET`, com um Access Service Token criado em
+  // dash.cloudflare.com → Zero Trust → Access → Service Auth.
   if (env.ACCESS_CLIENT_ID && env.ACCESS_CLIENT_SECRET) {
     headers['CF-Access-Client-Id'] = env.ACCESS_CLIENT_ID;
     headers['CF-Access-Client-Secret'] = env.ACCESS_CLIENT_SECRET;
   }
 
-  const res = await fetch(target, {
-    redirect: 'follow',
+  const res = await fetchSameOrigin(target, {
     headers,
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   });
@@ -392,6 +425,34 @@ async function runScan(env) {
 // cap do honeypot: perde-se precisão sob abuso sustentado, não o
 // orçamento do core.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
+
+// Cap global de escritas dos refresh manuais (/api/scan?refresh=1 e
+// /api/cf-stats?refresh=1) — mesma classe de risco da lacuna #1 (rate
+// limiter), descoberta tarde de mais e aplicada só ao rate limiter na altura:
+// o rate limit por cliente destas duas rotas (3/10min) ainda permite até
+// 432 escritas/dia por rota e por IP — quase metade do teto diário da conta
+// SÓ NESTA ROTA, e mais que o dobro somando as duas. Partilhado entre as
+// duas (mesma capKey): é o mesmo orçamento de "atualizar agora", não dois
+// separados. Descoberto numa revisão de segurança (2026-07, ronda 4).
+const REFRESH_WRITE_CAP = { windowMs: DAY_MS, max: 20 };
+
+/**
+ * Consome uma unidade do cap partilhado dos refresh manuais. Devolve
+ * `true` se a escrita cabe no orçamento do dia (e já regista o consumo);
+ * `false` se o cap já foi atingido — o chamador deve degradar para a cache
+ * existente em vez de gastar mais orçamento.
+ */
+async function underRefreshCap(env, now) {
+  const capKey = `refreshcap:${dayKey(now)}`;
+  const capPrev = await getJSON(env, capKey);
+  const { allowed, state } = underCap(capPrev, { now, ...REFRESH_WRITE_CAP });
+  if (allowed) {
+    await env.KV.put(capKey, JSON.stringify(state), {
+      expirationTtl: Math.ceil(REFRESH_WRITE_CAP.windowMs / 1000) + 60,
+    });
+  }
+  return allowed;
+}
 
 async function rateLimit(env, request, route, { windowMs, max }) {
   if (!env.RATE_SALT) {
@@ -489,7 +550,7 @@ export default {
     // endpoints-isco: registar (em background) e devolver um 404 visualmente
     // igual ao 404 real do site (lib/notfound.js) — texto simples era um
     // "tell" mais fácil de distinguir do resto do site, não mais difícil.
-    if (DECOYS.has(path)) {
+    if (isDecoy(path)) {
       ctx.waitUntil(
         // Falha de escrita loga-se server-side (sem IP: recordHoneypot não o
         // vê) e nunca chega ao cliente — a resposta é sempre o mesmo 404.
@@ -636,6 +697,13 @@ export default {
               extra: { 'retry-after': String(retryAfterSec) },
             });
           }
+          // Cap global partilhado (ver REFRESH_WRITE_CAP): esgotado, degrada
+          // para a cache existente em vez de gastar mais orçamento de
+          // escrita — o botão continua a responder, só deixa de forçar.
+          if (!(await underRefreshCap(env, Date.now()))) {
+            const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
+            return json(data, request, env, { maxAge: 1800 });
+          }
           const data = await runScan(env);
           await env.KV.put('cache:scan', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
             expirationTtl: 6 * 3600 + 60,
@@ -738,6 +806,11 @@ export default {
               status: 429,
               extra: { 'retry-after': String(retryAfterSec) },
             });
+          }
+          // Mesmo cap partilhado do /api/scan?refresh=1 (ver REFRESH_WRITE_CAP).
+          if (!(await underRefreshCap(env, Date.now()))) {
+            const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
+            return json(data, request, env, { maxAge: 1800 });
           }
           const data = await fetchCfStats(env);
           await env.KV.put('cache:cfstats', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {

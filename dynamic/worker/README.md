@@ -203,6 +203,13 @@ npx wrangler kv namespace create HONEYPOT --preview
 
 npx wrangler secret put RATE_SALT     # qualquer string longa aleatória
 npx wrangler secret put NVD_API_KEY   # opcional (sobe o rate limit do NVD)
+
+# Só necessários se a Cloudflare Access estiver ativa à frente de
+# SCAN_TARGET (ver docs/cloudflare-deploy.md) — sem eles o self-scan recebe
+# a página de login da Access em vez do site. Criar o Access Service Token
+# em dash.cloudflare.com → Zero Trust → Access → Service Auth.
+npx wrangler secret put ACCESS_CLIENT_ID
+npx wrangler secret put ACCESS_CLIENT_SECRET
 ```
 
 ### 2a. Deploy no domínio próprio (o que está em produção)
@@ -239,6 +246,8 @@ mudar.
 | `RATE_SALT` | secret | `wrangler secret put` | hash de rate limit; rodar SEMANALMENTE (invalida limites acumulados de propósito) |
 | `NVD_API_KEY` | secret | `wrangler secret put` | opcional, rate limit do NVD |
 | `CF_API_TOKEN` | secret | `wrangler secret put` | token Analytics:Read (zona + conta) + Firewall/WAF:Read (zona + conta), p/ `/api/cf-stats` — ver secção "Estado da Cloudflare" acima |
+| `ACCESS_CLIENT_ID` | secret | `wrangler secret put` | opcional — Access Service Token, só se a Access estiver ativa à frente de `SCAN_TARGET` |
+| `ACCESS_CLIENT_SECRET` | secret | `wrangler secret put` | idem, par do `ACCESS_CLIENT_ID` |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (só no modo 2b) |
 | `SCAN_TARGET` | var | wrangler.toml | URL que o self-scan inspeciona |
 | `DEPLOY_TS` | var | `--var` no deploy | "tempo até 1.º scan" (opcional) |

@@ -100,7 +100,39 @@ jobs:
         # ATENÇÃO: `--severity` é um filtro de igualdade, não um mínimo. Só
         # com `--severity WARNING` os achados ERROR deixariam de contar — daí
         # as duas flags.
-        run: semgrep scan --metrics=off --error --severity ERROR --severity WARNING --config p/typescript --config p/javascript --config .semgrep/
+        #
+        # Pin (ou a falta dele): p/typescript e p/javascript NÃO estão
+        # pinadas por versão/digest, ao contrário de tudo o resto neste
+        # ficheiro (actions por SHA, semgrep/zizmor por versão exata). Não é
+        # descuido — é um limite real do Semgrep OSS: os pacotes `p/…` do
+        # registo público (semgrep.dev) são bundles geridos do lado do
+        # servidor, sem equivalente ao "commit SHA" das actions nem ao
+        # "==versão" do pip, através do CLI open-source. Descoberto numa
+        # revisão de segurança (2026-07, ronda 4, N4): o CI corre regras
+        # remotas e mutáveis a cada execução, e uma falha de rede a meio
+        # (semgrep.dev inacessível) bloqueava todos os PRs sem distinguir
+        # "sem achados" de "não consegui verificar". Mitigado por:
+        #   (a) as regras próprias em .semgrep/ (offline, ficheiro
+        #       versionado, pinado com o resto do repo) cobrem o sink
+        #       concreto que mais importa aqui (DOM XSS via innerHTML/
+        #       outerHTML/document.write/insertAdjacentHTML);
+        #   (b) o retry abaixo: só repete em erro de configuração/rede
+        #       (exit 2 do semgrep — falha a obter `--config`), nunca num
+        #       achado real (exit 1, com --error) — um 429/timeout
+        #       transitório do semgrep.dev não bloqueia o merge, mas um
+        #       achado ERROR/WARNING genuíno falha logo à primeira, sem
+        #       mascarar.
+        run: |
+          set +e
+          for tentativa in 1 2 3; do
+            semgrep scan --metrics=off --error --severity ERROR --severity WARNING --config p/typescript --config p/javascript --config .semgrep/
+            code=$?
+            if [ "$code" -eq 0 ]; then exit 0; fi
+            if [ "$code" -eq 1 ]; then exit 1; fi
+            echo "::warning::semgrep: erro de configuração/rede (tentativa ${tentativa}/3, exit=${code}) — a repetir…"
+            sleep $((tentativa * 15))
+          done
+          exit "$code"
 
   # Auditoria dos próprios workflows: pins em falta, permissions excessivas,
   # injeção de template em run:, credenciais persistidas, tags impostoras.

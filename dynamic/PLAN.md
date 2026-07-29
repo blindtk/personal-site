@@ -354,6 +354,48 @@
   não aparecem no diretório de connectors da app e só são autorizáveis numa
   sessão interativa do Claude Code CLI (`/mcp`).
 
+- **2026-07 — Servidores MCP da Cloudflare em `.mcp.json` (raiz do repo):
+  achado por confirmar** (revisão de segurança 2026-07, ronda 4, N6): o
+  `.mcp.json` foi adicionado no PR #127 para validar o `wrangler.toml`
+  contra a conta real (ver entrada acima, "Validação do wrangler.toml…"),
+  mas entrou **sem** passar pela mesma disciplina de decisão que este
+  ficheiro impõe a tudo o resto — não está mencionado em lado nenhum da
+  revisão de segurança original nem no modelo de ameaça.
+
+  Regista sete servidores MCP remotos, **de âmbito de projeto** (versionados
+  no repo, portanto propostos a qualquer sessão — humana ou de agente — que
+  o abra): `cloudflare-audit-logs`, `cloudflare-graphql-analytics`,
+  `cloudflare-dns-analytics`, `cloudflare-observability`,
+  `cloudflare-bindings`, `cloudflare-builds`, `cloudflare-docs`. Todos
+  exigem OAuth interativo antes de qualquer chamada — o `.mcp.json` por si
+  só não concede acesso, só o propõe.
+
+  **O que merece atenção, por ordem de risco:**
+  1. `cloudflare-bindings` — o único de **escrita**: cria e apaga
+     namespaces KV, bases D1 e buckets R2. É um caminho de escrita na conta
+     Cloudflare a partir do contexto do repositório, por OAuth, paralelo ao
+     "não existe token da Cloudflare nos segredos do GitHub" que a secção 1
+     da revisão elogia como o detalhe que "quase ninguém acerta". O token
+     do GitHub Actions continua a não existir (isso mantém-se correto) —
+     mas há agora um segundo caminho, fora do CI, que o modelo de ameaça
+     original não contemplava.
+  2. `cloudflare-audit-logs` — lê os registos de auditoria da conta
+     (histórico de ações administrativas). Não é destrutivo, mas é
+     informação sensível sobre a própria conta.
+  3. Os restantes cinco (`graphql-analytics`, `dns-analytics`,
+     `observability`, `builds`, `docs`) são de leitura e de baixo risco —
+     o mesmo tipo de dado que já é lido manualmente no dashboard.
+
+  **Não removido nesta entrada**: não há visibilidade, a partir do repo,
+  sobre quais destes sete são de facto usados em sessões reais (a entrada
+  "Validação do wrangler.toml" acima usou antes um connector *pessoal*
+  diferente — "Cloudflare Developer Platform", ligado via Settings →
+  Connectors na app — não os do `.mcp.json`). Decisão do dono do repo:
+  manter os sete, reduzir aos de leitura, ou mover `cloudflare-bindings`
+  para um connector pessoal (fora do repo, não proposto a toda a gente que
+  o clone) se a escrita continuar a ser necessária. Fica registado o
+  achado; a decisão de manter/podar não foi tomada aqui.
+
 ## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
 
 Propostas de 2026-07 que ficaram na gaveta por decisão do dono do repo —

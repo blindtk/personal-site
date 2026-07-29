@@ -18,9 +18,19 @@ export const PATH_TECHNIQUE = {
   '/phpmyadmin/': 'T1190',
 };
 
-/** Técnica de um path-isco, ou null se o path não estiver mapeado. */
+/**
+ * Técnica de um path-isco, ou null se o path não estiver mapeado. Mesma
+ * convenção de prefixo do lib/decoys.js: uma chave terminada em '/' cobre
+ * também tudo por baixo dela (ex.: '/phpmyadmin/' cobre
+ * '/phpmyadmin/index.php') — os dois têm de concordar, senão um evento
+ * fica marcado como isco mas sem técnica ATT&CK associada.
+ */
 export function techniqueForPath(path) {
-  return PATH_TECHNIQUE[path] ?? null;
+  if (Object.hasOwn(PATH_TECHNIQUE, path)) return PATH_TECHNIQUE[path];
+  for (const [decoy, technique] of Object.entries(PATH_TECHNIQUE)) {
+    if (decoy.endsWith('/') && path.startsWith(decoy)) return technique;
+  }
+  return null;
 }
 
 // Heurística conservadora: só se atribui técnica a um CVE quando o texto
