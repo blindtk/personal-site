@@ -11,6 +11,25 @@
 
 ## Decisões registadas
 
+- **2026-07-29 — TEMPORÁRIO: expõe o pathname nas violações CSP self/self**
+  (pedido direto do dono do repo, para diagnóstico): painel "Violações CSP"
+  continuava a mostrar novas violações `script-src-elem`/`self` e
+  `connect-src`/`self` mesmo depois dos fixes de hash do JSON-LD e de
+  deteção de extensão via `sourceFile` — 'self' num script-src/connect-src
+  nunca deveria bloquear um pedido genuinamente same-origin, e sem o path o
+  dashboard não dizia PARA ONDE. Suspeita principal: o desafio/managed
+  challenge da própria Cloudflare (visto no `fw:` do KV do mesmo dia, e no
+  HTML devolvido a um `curl` automatizado contra o domínio), cujo
+  script/fetch injetado corre como se fosse da própria página — não tem
+  scheme de extensão para o `sourceFile` denunciar.
+  `DEBUG_EXPOSE_SELF_PATH` (`dynamic/worker/src/lib/csp-report.js`) liga
+  temporariamente o pathname (nunca query/fragmento) no bucket `self` só
+  para este diagnóstico. Risco de exposição mínimo enquanto isto ficar
+  ligado: produção continua atrás de Cloudflare Access (`docs/public-repo-
+  decision.md` — "não carrega para ninguém" exceto o dono).
+  **Reverter (`DEBUG_EXPOSE_SELF_PATH = false` e os 2 testes que dependem
+  do path) assim que a causa das violações self/self for confirmada.**
+
 - **2026-07-29 — Workflow `invariants.yml`: fecha o loop deteção → alerta**
   (discutido com o dono do repo depois da revisão de segurança do mesmo
   dia): os dashboards do honeypot/threat-intel/CT/CF-stats são só **pull**
