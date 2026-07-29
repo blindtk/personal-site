@@ -717,7 +717,7 @@ export default {
           // escrita — o botão continua a responder, só deixa de forçar.
           if (!(await underRefreshCap(env, Date.now()))) {
             const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
-            return json(data, request, env, { maxAge: 1800 });
+            return json(data, request, env);
           }
           const data = await runScan(env);
           await env.KV.put('cache:scan', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
@@ -725,8 +725,19 @@ export default {
           });
           return json(data, request, env);
         }
+        // Sem `maxAge`: a KV (`cached()`, SWR, 6h) já é a única fonte de
+        // frescura. Um `Cache-Control: public, max-age=…` aqui deixava o
+        // browser (e qualquer cache partilhada) servir a resposta antiga
+        // por até 30 min DEPOIS de um refresh manual já ter atualizado a
+        // KV — o botão "correr scan agora" mudava a nota na hora, mas ao
+        // voltar à página (novo load(), mesmo URL sem query) o browser
+        // devolvia do seu próprio cache em vez de perguntar ao Worker,
+        // e a nota "congelava" na última resposta pública que tinha
+        // guardado. Sem cache HTTP, cada load() bate no Worker, que por
+        // sua vez responde da KV (leitura barata, sem novo fetch ao
+        // upstream salvo quando o TTL de facto expirou).
         const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
-        return json(data, request, env, { maxAge: 1800 });
+        return json(data, request, env);
       }
 
       // Relay k-anónimo do HIBP: o cliente só manda os 5 primeiros hex do
