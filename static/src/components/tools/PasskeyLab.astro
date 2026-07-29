@@ -78,7 +78,7 @@ const jsStrings = { ...s, host, fake };
   const msgEl = $('pk-msg');
 
   // Estado da credencial criada (só em memória, nunca persistido).
-  let stored: { rawId: Uint8Array; publicKey: ArrayBuffer | null; alg: number } | null = null;
+  let stored: { rawId: Uint8Array<ArrayBuffer>; publicKey: ArrayBuffer | null; alg: number } | null = null;
 
   const rand = (n: number) => crypto.getRandomValues(new Uint8Array(n));
   const showMsg = (text: string) => { msgEl.textContent = text; msgEl.hidden = false; };

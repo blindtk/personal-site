@@ -23,6 +23,7 @@ export const COUNTRY_COORDS = {
 // próximo dele, não por um datacenter fixo). O ponto fica perto da Europa
 // só por legibilidade do mapa; o rótulo (ver i18n) identifica o domínio, não
 // uma cidade — para não sugerir que o servidor "está" nalgum sítio.
+/** @type {[number, number]} */
 export const DESTINATION = [-8.6, 41.1];
 
 /** Projeção equirectangular de [lon,lat] para [x,y] numa tela w×h. */

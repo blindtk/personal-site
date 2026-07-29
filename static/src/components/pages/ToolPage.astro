@@ -64,8 +64,8 @@ const host = new URL(SITE_URL).host;
 const scanners =
   tool === 'self-scan'
     ? [
-        { label: dict.security.headersScanLabel, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
-        { label: dict.security.observatoryLabel, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
+        { label: dict.evidence.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
+        { label: dict.evidence.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
       ]
     : [];
 ---

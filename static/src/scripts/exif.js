@@ -94,6 +94,17 @@ function readIfd(view, tiffStart, ifdOffsetAbs, little, tagMap) {
 /**
  * Extrai os metadados EXIF de um JPEG. `bytes` é o ficheiro completo.
  * Devolve `null` se não for JPEG ou não tiver segmento APP1 Exif.
+ * @returns {{
+ *   make?: string, model?: string, orientation?: number, software?: string,
+ *   dateTime?: string, dateTimeOriginal?: string, dateTimeDigitized?: string,
+ *   lensModel?: string, fNumber?: number, exposureTime?: number, iso?: number,
+ *   focalLength?: number, focalLengthIn35mm?: number,
+ *   pixelXDimension?: number, pixelYDimension?: number,
+ *   gps: {
+ *     latRef?: string, lat?: number[], lonRef?: string, lon?: number[],
+ *     altRef?: number, alt?: number, dateStamp?: string,
+ *   } | null,
+ * } | null}
  */
 export function parseExif(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);

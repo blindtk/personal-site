@@ -36,6 +36,15 @@ jobs:
 
       - run: npm run build
 
+      # Verificação de tipos (Astro + TypeScript) — `npm run build` transpila
+      # mas não falha em erros de tipo (é build rápido vs. type-check, opt-in
+      # de propósito no Astro, tal como tsc build vs. tsc --noEmit). Ninguém
+      # corria isto: apanhou 37 erros reais na primeira vez que se ligou —
+      # incluindo strings de i18n em falta que ficavam "undefined" no HTML de
+      # produção (ToolPage.astro, self-scan) e chaves i18n corretas mas
+      # referenciadas do objeto errado (dict.security em vez de dict.evidence).
+      - run: npm run check
+
       # Lógica pura (SubnetCalc, EXIF, MD5, encoding, geo, password, …) já
       # tinha testes escritos (node --test) que nenhum workflow corria — só
       # o pull_request_template.md pedia ao humano que confirmasse à mão.
