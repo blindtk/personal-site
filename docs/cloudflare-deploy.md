@@ -134,12 +134,73 @@ contorno temporário — deixou de ser necessário depois do fix.
 
 ## 5. WAF — regras da zona `danielmala.co`
 
-`Security → WAF → Custom rules` (zona, não o Worker/Pages). Preparadas com
-antecedência, com a Access (secção 3) como proteção real enquanto isso —
-por isso a regra final ficou já na ação definitiva (`Managed Challenge`),
-sem risco, já que ninguém de fora consegue lá chegar de qualquer forma.
+`Security → WAF → Custom rules` (zona, não o Worker/Pages).
 
-Ordem exata (as `Skip` têm de vir antes da regra catch-all):
+> **Atualizado 2026-07-29** com as regras confirmadas em produção — divergem
+> do desenho original abaixo descrito (catch-all geo com lista de 27 países da
+> UE, sem regra dedicada aos paths-isco). O que mudou e porquê está na nota no
+> fim desta secção.
+
+Ordem exata das regras em produção (as `Skip` vêm antes; a regra do honeypot
+vem antes da política de país, e cada regra que atua **para a evolução**):
+
+| # | Regra | Condição (resumo) | Ação |
+|---|---|---|---|
+| 1 | Bots verificados | `cf.client.bot` (bots verificados pela Cloudflare) | Skip |
+| 2 | CI headers check | User-Agent contém `headers-check` | Skip |
+| 3 | Honeypot Paths | Path é `/.env`, `/.git/config`, `/wp-login.php`, `/admin` ou começa por `/phpmyadmin` | **Managed Challenge**, pára a avaliação |
+| 4 | Allowed Countries - Site | fora dos paths acima **e** país é PT | **Managed Challenge**, pára a avaliação |
+| 5 | Blocked Countries - Site | fora dos paths acima **e** país não é PT | **Block**, pára a avaliação |
+
+Porquê cada regra:
+- **2**: `.github/workflows/headers.yml` faz `fetch` à produção a partir de
+  runners do GitHub (normalmente fora de PT) com o User-Agent
+  `headers-check` (`check-headers.mjs`) — sem esta regra o workflow falha
+  depois do lançamento.
+- **3**: os cinco paths-isco do honeypot (`dynamic/worker/`, `DECOYS` em
+  `src/index.js`) recebem `Managed Challenge` em vez de passarem direto ao
+  Worker, para qualquer visitante — decisão explícita do dono do repo: os
+  iscos não ficam abertos ao mundo sem alguma barreira, mesmo sendo apenas
+  um sensor que devolve 404. **Consequência a assumir, não um efeito
+  colateral:** um Managed Challenge existe para filtrar bots automatizados —
+  é exatamente o tráfego que o honeypot existe para observar. Enquanto esta
+  regra estiver ativa, o honeypot só regista quem *resolve* o desafio (um
+  browser real com JS, nalguns casos scanners avançados com automação
+  tipo-browser), não o scanning de massa indiscriminado que domina a
+  Internet. Ver `docs/honeypot-analise-evolucao.md` §0/§9.6 para a análise
+  completa desta troca (proteção vs. observabilidade) e para a copy que a
+  declara publicamente.
+- **4/5**: a política geográfica endureceu de "27 países da UE, Managed
+  Challenge" (desenho original abaixo) para "só PT passa, com desafio; todo o
+  resto é bloqueado" — mais restritivo do que o planeado, e sem a
+  aproximação por `ip.geoip.is_in_european_union` (esse campo continua a
+  exigir plano Business+, não está disponível no Free; deixou de ser
+  relevante porque a lista já não tenta aproximar a UE).
+- A ação **Log** (para observar sem afetar tráfego) continua **indisponível
+  no Free** para Custom Rules — só `Managed Challenge`/`Block`/etc.
+
+**Nota (2026-07-29) — divergência entre o plano original e a produção.** O
+desenho abaixo (bots + previews sociais + CI + IP do dono a *Skip*, catch-all
+de 27 países UE a `Managed Challenge`) foi o que ficou preparado com
+antecedência, com a Access (secção 3) como proteção real enquanto isso — a
+ideia registada era que a regra final ficaria já na ação definitiva sem
+risco, porque ninguém de fora conseguia lá chegar de qualquer forma. As
+regras hoje em produção são mais restritivas nalguns pontos (país único em
+vez de 27, `Block` em vez de `Managed Challenge` para o resto do mundo) e têm
+uma peça nova e deliberada (regra 3, dedicada ao honeypot) que o plano
+original não previa. Não ficou registado neste documento se as regras
+"Previews sociais" (bots do LinkedIn/Twitter/Facebook) e "O dono sempre" (skip
+por IP) do plano original chegaram a ser criadas e foram depois removidas, ou
+se nunca chegaram a sair do plano — confirmar antes do checklist da secção 7,
+para não assumir uma proteção (o IP do dono sempre passar) que pode não
+existir.
+
+### Desenho original (histórico, substituído pela tabela acima)
+
+Preparado com antecedência, com a Access (secção 3) como proteção real
+enquanto isso — por isso a regra final ficou já na ação definitiva (`Managed
+Challenge`), sem risco, já que ninguém de fora conseguia lá chegar de
+qualquer forma.
 
 | # | Regra | Expressão | Ação |
 |---|---|---|---|
@@ -148,22 +209,6 @@ Ordem exata (as `Skip` têm de vir antes da regra catch-all):
 | 3 | CI do GitHub Actions | `(http.user_agent contains "headers-check")` | Skip |
 | 4 | O dono sempre | `(ip.src eq <IP>)` | Skip |
 | 5 | Catch-all geo | `not (ip.geoip.country in {"PT" "AT" "BE" "BG" "HR" "CY" "CZ" "DK" "EE" "FI" "FR" "DE" "GR" "HU" "IE" "IT" "LV" "LT" "LU" "MT" "NL" "PL" "RO" "SK" "SI" "ES" "SE"})` | Managed Challenge |
-
-Porquê cada regra:
-- **2**: `SITE_URL`/Open Graph é para ser partilhado no LinkedIn — o bot que
-  gera a prévia do link corre fora da UE.
-- **3**: `.github/workflows/headers.yml` faz `fetch` à produção a partir de
-  runners do GitHub (normalmente fora da UE) com o User-Agent
-  `headers-check` (`check-headers.mjs`) — sem esta regra o workflow falha
-  depois do lançamento.
-- **5**: lista fixa de códigos de país, não `ip.geoip.is_in_european_union`
-  — esse campo **exige plano Business+**, não está disponível no Free. A
-  desvantagem é que a lista não se atualiza sozinha se a UE mudar de
-  composição (ex.: Brexit); rever manualmente se isso acontecer.
-- A ação **Log** (para observar sem afetar tráfego) também **não está
-  disponível no Free** para Custom Rules — só `Managed Challenge`/`Block`/
-  etc. Como a Access já bloqueia tudo enquanto isto não é o lançamento a
-  sério, não há risco em já ter a ação definitiva.
 
 ## 6. Repositório GitHub
 
@@ -177,8 +222,14 @@ branch protection, secret scanning) fica para quando for decidido.
 
 ## 7. Checklist do que falta / decisões pendentes
 
-- [ ] Lançamento (Fase 3): desligar/ajustar a Access + confirmar que a
-  regra WAF catch-all está mesmo a fazer o trabalho sozinha.
+- [ ] Lançamento (Fase 3): desligar/ajustar a Access + confirmar que as
+  regras WAF (secção 5) fazem mesmo o trabalho sozinhas.
+- [ ] Confirmar se as regras "Previews sociais" (skip para
+  LinkedInBot/Twitterbot/facebookexternalhit) e "O dono sempre" (skip por
+  IP) do desenho original chegaram a existir em produção — não aparecem nas
+  regras confirmadas em 2026-07-29 (secção 5). Se não existirem, o dono e os
+  bots de preview social ficam sujeitos às mesmas regras 4/5 que todo o
+  resto do tráfego (Managed Challenge se vier de PT, Block caso contrário).
 - [ ] `.github/expected-headers.json` → `url` continua `SET-ME` de propósito
   (apontar para produção agora falharia o workflow `Headers`, porque a
   Access intercetava o pedido não autenticado do CI) — atualizar no
