@@ -11,6 +11,24 @@
 
 ## Decisões registadas
 
+- **2026-07-29 — Workflow `invariants.yml`: fecha o loop deteção → alerta**
+  (discutido com o dono do repo depois da revisão de segurança do mesmo
+  dia): os dashboards do honeypot/threat-intel/CT/CF-stats são só **pull**
+  — mostram dados quando alguém abre a página de propósito, mas nada avisa
+  ninguém quando algo parte (achado "Observabilidade 5/10" da revisão). Um
+  workflow diário (`.github/scripts/check-invariants.mjs`) verifica
+  `/api/health` (único invariante crítico — não depende de nenhum upstream
+  de terceiros) e as rotas de leitura do Worker (informativas: uma só a
+  falhar é tratado como upstream instável, `429` é tratado como a proteção
+  a funcionar, não uma falha; duas ou mais ao mesmo tempo já conta como
+  falha, sinal de que o Worker em si partiu). Ao falhar, abre uma Issue
+  (label `automated-alert`, criada em runtime) — ou comenta na que já
+  estiver aberta, em vez de duplicar; ao voltar a passar, fecha-a sozinha.
+  Usa `gh` (já instalado no runner) em vez de acrescentar mais uma action
+  de terceiros só para isto. Mesma convenção `SET-ME`/Access Service Token
+  opcional do `check-headers.mjs` — enquanto a Access bloquear produção,
+  este workflow também fica em no-op avisado, não a falhar às cegas.
+
 - **2026-07-29 — Rate limit falha fechado quando o cap global de escrita
   esgota** (achado de uma revisão de segurança, ver
   `docs/security-review-2026-07-29.md` achado A1 e

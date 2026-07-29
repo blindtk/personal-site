@@ -4,6 +4,7 @@
 [![Security](https://github.com/blindtk/personal-site/actions/workflows/security.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security.yml)
 [![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
 [![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
+[![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
 
 Site pessoal de Daniel Malaco — monorepo com três partes:
 
@@ -110,6 +111,7 @@ Cada push/PR passa por:
 | **zizmor** | `security.yml` | Os próprios workflows são auditados: pins em falta, permissions excessivas, injeção de template, credenciais persistidas. |
 | **Headers em produção** | `headers.yml` | Após cada deploy (e num cron diário), a produção é verificada contra `.github/expected-headers.json` — se um header de segurança faltar ou regredir, o workflow falha. |
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (semanal + manual) | Verifica as assinaturas de registo do npm (deteta um pacote servido sem a assinatura esperada) e gera um SBOM (CycloneDX) dos dois lockfiles, como artefacto. Semanal, não por PR — ver nota de quota abaixo. |
+| **Invariantes de produção** | `invariants.yml` (diário + manual) | Verifica `/api/health` e as rotas de leitura do Worker; se algo estiver genuinamente partido, abre uma Issue (fecha-se sozinha quando volta a passar). É o alerta que falta aos dashboards do honeypot/threat-intel — só pull, sem isto ninguém era avisado sem ir olhar. |
 
 Práticas transversais: todas as actions **pinadas por commit SHA** (o
 [Renovate](renovate.json5) mantém os digests e agrupa atualizações num PR
