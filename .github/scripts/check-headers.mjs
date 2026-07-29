@@ -4,7 +4,7 @@
 //   1. TARGET_URL  — input manual do workflow_dispatch
 //   2. DEPLOY_URL  — environment_url do evento deployment_status (Pages)
 //   3. url         — valor versionado no expected-headers.json
-import { readFileSync } from 'node:fs';
+import { readFileSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,7 +13,25 @@ const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
 const target = process.env.TARGET_URL || process.env.DEPLOY_URL || cfg.url;
 
 if (!target || target.startsWith('SET-ME')) {
-  console.log('::notice::check-headers: URL de produção por definir em .github/expected-headers.json — verificação ignorada.');
+  // ::warning:: (não ::notice::) de propósito — achado da revisão de
+  // segurança 2026-07 (ronda 3, N3): este caminho corria em produção há 13
+  // dias seguidos, sempre verde, sem verificar nada (a Access bloqueia
+  // qualquer pedido não autenticado — ver docs/cloudflare-deploy.md). Um
+  // ::notice:: não aparece na lista de anotações do run nem no resumo por
+  // omissão; um ::warning:: sim (triângulo amarelo, visível na lista de
+  // execuções). Não resolve a causa raiz (precisa de um Access Service
+  // Token para o CI, ou desligar a Access — decisão do dono do repo, ver
+  // docs/cloudflare-deploy.md), mas impede que o job continue a passar por
+  // "tudo bem" quando não verificou nada.
+  console.log('::warning::check-headers: URL de produção por definir em .github/expected-headers.json — verificação IGNORADA (nada foi verificado nesta execução).');
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    appendFileSync(
+      process.env.GITHUB_STEP_SUMMARY,
+      '## ⚠️ check-headers: nada foi verificado\n\n' +
+        `\`url\` em \`.github/expected-headers.json\` continua \`SET-ME\` — este job saiu sem tocar em produção. ` +
+        'Ver docs/cloudflare-deploy.md (Access Service Token, ou desligar a Access no lançamento).\n',
+    );
+  }
   process.exit(0);
 }
 

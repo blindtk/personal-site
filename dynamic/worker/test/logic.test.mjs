@@ -31,6 +31,7 @@ import {
 import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import { serverView } from '../src/lib/mirror.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from '../src/lib/notfound.js';
+import { DECOYS, isDecoy } from '../src/lib/decoys.js';
 import worker from '../src/index.js';
 
 test('clampInt', () => {
@@ -82,6 +83,14 @@ test('attack-map: técnica por path-isco', () => {
   assert.equal(techniqueForPath('/robots.txt'), null);
 });
 
+test('attack-map: técnica por prefixo para /phpmyadmin/* (mesma convenção do isDecoy)', () => {
+  // wrangler.toml roteia danielmala.co/phpmyadmin/* — os paths que os
+  // scanners reais pedem (revisão de segurança 2026-07, ronda 3, N5).
+  assert.equal(techniqueForPath('/phpmyadmin/index.php'), 'T1190');
+  assert.equal(techniqueForPath('/phpmyadmin/setup.php'), 'T1190');
+  assert.equal(techniqueForPath('/admin/x'), null); // /admin é match exato, não glob
+});
+
 test('attack-map: técnicas por texto de CVE (heurística conservadora)', () => {
   assert.deepEqual(techniquesForText('Ivanti Connect Secure authentication bypass'), ['T1110']);
   assert.deepEqual(techniquesForText('Apache Struts remote code execution'), ['T1190']);
@@ -111,6 +120,46 @@ test('detections.json sincroniza com os paths-isco e as técnicas', () => {
     for (const field of ['title:', 'id:', 'logsource:', 'detection:', 'condition:', 'level:']) {
       assert.ok(yamlText.includes(field), `${r.slug}: falta ${field}`);
     }
+  }
+});
+
+test('isDecoy: match exato para a maioria, prefixo para os iscos com glob no wrangler.toml', () => {
+  assert.equal(isDecoy('/admin'), true);
+  assert.equal(isDecoy('/admin/x'), false); // /admin é rota exata, não glob
+  assert.equal(isDecoy('/phpmyadmin/'), true);
+  assert.equal(isDecoy('/phpmyadmin/index.php'), true); // o que os scanners reais pedem
+  assert.equal(isDecoy('/phpmyadmindiferente'), false); // não é um sub-path, não conta
+  assert.equal(isDecoy('/nao-existe'), false);
+});
+
+test('decoys: DECOYS (index.js, via lib/decoys.js) bate certo com as rotas-isco do wrangler.toml', () => {
+  // Achado da revisão de segurança 2026-07 (ronda 3, N5): as duas listas já
+  // divergiram — /phpmyadmin/* era um glob no wrangler.toml mas string
+  // exata em DECOYS, perdendo o sinal E denunciando o Worker (404 JSON em
+  // vez do 404 HTML disfarçado) nos paths reais que os scanners pedem.
+  const url = new URL('../wrangler.toml', import.meta.url);
+  const toml = readFileSync(fileURLToPath(url), 'utf8');
+  const routePaths = [...toml.matchAll(/pattern = "danielmala\.co([^"]*)"/g)]
+    .map((m) => m[1])
+    .filter((p) => !p.startsWith('/api/')); // /api/* é a API real, não um isco
+  assert.ok(routePaths.length > 0, 'não encontrou nenhuma rota-isco em wrangler.toml — regex desatualizado?');
+
+  // toda rota-isco do wrangler.toml tem de ser reconhecida como isco
+  for (const routePath of routePaths) {
+    const probe = routePath.endsWith('*') ? `${routePath.slice(0, -1)}sonda-real-de-scanner` : routePath;
+    assert.ok(
+      isDecoy(probe),
+      `wrangler.toml roteia '${routePath}' para o Worker mas isDecoy('${probe}') é false — ` +
+        'o pedido cairia no 404 JSON da API, não no 404 HTML disfarçado, e o evento perdia-se do honeypot.',
+    );
+  }
+
+  // e o inverso: todo isco reconhecido em DECOYS tem de estar coberto por
+  // alguma rota real — senão a Cloudflare nunca entrega esses pedidos ao
+  // Worker e a entrada em DECOYS é morta.
+  for (const decoy of DECOYS) {
+    const covered = routePaths.some((r) => (r.endsWith('*') ? decoy.startsWith(r.slice(0, -1)) : r === decoy));
+    assert.ok(covered, `DECOYS tem '${decoy}' mas nenhuma rota do wrangler.toml o cobre`);
   }
 });
 
@@ -798,6 +847,75 @@ test('cache expirada serve o valor stale e renova em background', async () => {
   const refreshed = JSON.parse(env.KV.store.get('cache:honeypot'));
   assert.ok(refreshed.exp > now, 'refresh em background devia ter renovado o exp');
   assert.equal(refreshed.data.attempts24h, 0); // buckets vazios → 0
+});
+
+// ---------- self-scan: segue redirects só na mesma origem (N7) ----------
+// Achado da revisão de segurança 2026-07 (ronda 3): CF-Access-Client-Id/
+// Secret, ao contrário do Authorization, não são despidos pelo Fetch spec
+// em redirects cross-origin. Com `redirect: 'follow'` normal, um 3xx do
+// alvo do self-scan para outra origem reenviava as credenciais da Access
+// para esse destino.
+
+test('self-scan: NÃO segue redirect para outra origem, e não reenvia as credenciais da Access', async () => {
+  const env = {
+    KV: fakeKV(),
+    SCAN_TARGET: 'https://danielmala.co/',
+    ACCESS_CLIENT_ID: 'cid',
+    ACCESS_CLIENT_SECRET: 'csecret',
+  };
+  const calls = [];
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url: String(url), headers: opts?.headers ?? {} });
+    if (String(url) === 'https://danielmala.co/') {
+      return {
+        status: 302,
+        headers: { get: (h) => (h.toLowerCase() === 'location' ? 'https://evil.example/' : null) },
+      };
+    }
+    return { status: 200, headers: { get: () => null } }; // não devia ser chamado
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/scan'), env);
+    assert.equal(res.status, 200); // a rota devolve sempre 200 com o grade calculado
+    assert.equal(calls.length, 1, 'não deve seguir o redirect para fora da origem');
+    assert.equal(calls[0].headers['CF-Access-Client-Id'], 'cid'); // o pedido same-origin inicial leva as credenciais
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('self-scan: segue redirect same-origin e reenvia as credenciais da Access ao destino final', async () => {
+  const env = {
+    KV: fakeKV(),
+    SCAN_TARGET: 'https://danielmala.co/',
+    ACCESS_CLIENT_ID: 'cid',
+    ACCESS_CLIENT_SECRET: 'csecret',
+  };
+  const calls = [];
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    calls.push({ url: String(url), headers: opts?.headers ?? {} });
+    if (String(url) === 'https://danielmala.co/') {
+      return {
+        status: 301,
+        headers: { get: (h) => (h.toLowerCase() === 'location' ? 'https://danielmala.co/pt/' : null) },
+      };
+    }
+    return {
+      status: 200,
+      headers: { get: (h) => (h.toLowerCase() === 'x-content-type-options' ? 'nosniff' : null) },
+    };
+  };
+  try {
+    const res = await runFetch(fakeRequest('/api/scan'), env);
+    assert.equal(res.status, 200);
+    assert.equal(calls.length, 2, 'deve seguir o redirect same-origin');
+    assert.equal(calls[1].url, 'https://danielmala.co/pt/');
+    assert.equal(calls[1].headers['CF-Access-Client-Id'], 'cid'); // credenciais seguem no salto same-origin
+  } finally {
+    globalThis.fetch = orig;
+  }
 });
 
 // ---------- rate limit: pedido bloqueado não gasta escrita KV ----------
@@ -1585,6 +1703,89 @@ test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan
   assert.equal(res.status, 429);
   assert.ok(res.headers.get('retry-after'));
   assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
+});
+
+// ---------- cap partilhado dos refresh manuais (scan + cf-stats) ----------
+// Achado da revisão de segurança 2026-07 (ronda 3, N2): o rate limit por
+// cliente (3/10min) destas duas rotas ainda permite até 432 escritas/dia por
+// rota e por IP — sem cap global, a mesma classe de risco da lacuna #1
+// (rate limiter), só que aplicada tarde de mais a estes dois caminhos.
+
+test('/api/scan?refresh=1: cap partilhado no teto degrada para a cache existente, sem novo self-scan', async () => {
+  const env = { KV: fakeKV() };
+  const now = Date.now();
+  const capKey = `refreshcap:d:${new Date(now).toISOString().slice(0, 10)}`;
+  env.KV.store.set(capKey, JSON.stringify({ count: 20, windowStart: now })); // cap já no teto (max=20)
+  env.KV.store.set('cache:scan', JSON.stringify({ data: { grade: 'A', scannedAt: 1 }, exp: now + 3600_000 }));
+
+  const orig = globalThis.fetch;
+  let fetched = false;
+  globalThis.fetch = async () => { fetched = true; return { headers: { get: () => null } }; };
+  try {
+    const res = await runFetch(fakeRequest('/api/scan?refresh=1', { ip: '203.0.113.201' }), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.grade, 'A'); // veio da cache existente, não de um scan novo
+    assert.equal(fetched, false, 'com o cap partilhado no teto, não deve repetir o self-scan');
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats?refresh=1: cap partilhado no teto degrada para a cache existente, sem novo pedido à GraphQL API', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const now = Date.now();
+  const capKey = `refreshcap:d:${new Date(now).toISOString().slice(0, 10)}`;
+  env.KV.store.set(capKey, JSON.stringify({ count: 20, windowStart: now }));
+  env.KV.store.set('cache:cfstats', JSON.stringify({
+    data: { zone: { requests: 7 }, worker: {}, fetchedAt: 1 },
+    exp: now + 3600_000,
+  }));
+
+  const orig = globalThis.fetch;
+  let fetched = false;
+  globalThis.fetch = async () => { fetched = true; return { ok: true, json: async () => graphqlFixture({}) }; };
+  try {
+    const res = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.204' }), env);
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.zone.requests, 7); // veio da cache existente
+    assert.equal(fetched, false, 'com o cap partilhado no teto, não deve repetir o pedido à GraphQL API');
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('cap dos refresh manuais: partilhado entre /api/scan e /api/cf-stats — consumir num afeta o outro', async () => {
+  const env = {
+    KV: fakeKV(),
+    CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+  };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('graphql')) return { ok: true, json: async () => graphqlFixture({}) };
+    return { headers: { get: () => null } }; // self-scan
+  };
+  try {
+    const r1 = await runFetch(fakeRequest('/api/scan?refresh=1', { ip: '203.0.113.202' }), env);
+    assert.equal(r1.status, 200);
+    const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('refreshcap:'));
+    assert.ok(capKey, 'devia ter criado o contador partilhado do cap de refresh');
+    assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+
+    const r2 = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.203' }), env);
+    assert.equal(r2.status, 200);
+    assert.equal(
+      JSON.parse(env.KV.store.get(capKey)).count,
+      2,
+      'o mesmo contador de refresh acumula entre as duas rotas',
+    );
+  } finally {
+    globalThis.fetch = orig;
+  }
 });
 
 // ---------- Espelho (/api/mirror) ----------

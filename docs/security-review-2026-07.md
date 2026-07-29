@@ -1345,18 +1345,21 @@ entre este projeto e um repositório pessoal típico não é de grau, é de gén
 
 | # | O quê | Esforço | Impacto | Estado |
 |---|---|---|---|---|
-| 1 | **Hash da CSP + teste de regressão** (N1) | — | **Alto** | ✅ **Feito nesta ronda** |
-| 2 | **`underCap` nos dois `?refresh=1`** (N2) | ~15 min | **Alto** | Por fazer — precisa de deploy da branch para validar |
-| 3 | **`/phpmyadmin/` por prefixo** (N5) | ~5 min | Médio | Por fazer |
-| 4 | **Teste que compara `routes` ↔ `DECOYS`** | ~15 min | Médio | Por fazer — impede o N5 de voltar |
-| 5 | **Pinar/versionar as regras do Semgrep** (N4) | ~30 min | Médio | Por fazer — fazer junto com a triagem `WARNING` |
-| 6 | **`redirect: 'manual'` no `runScan` + documentar `ACCESS_CLIENT_*`** (N7) | ~10 min | Baixo | Por fazer |
-| 7 | **`[limits] cpu_ms`** (N8) | ~2 min | Baixo | Por fazer |
-| 8 | **Triagem do Semgrep para `WARNING`** | ~1 tarde | Médio | Por fazer — o item antigo, agora com o N4 acoplado |
-| 9 | **Registar a decisão do `.mcp.json` no `PLAN.md`** (N6) | ~15 min | Baixo-médio | Por fazer |
+| 1 | **Hash da CSP + teste de regressão** (N1) | — | **Alto** | ✅ **Feito** (ronda 3) |
+| 2 | **`underCap` nos dois `?refresh=1`** (N2) | ~15 min | **Alto** | ✅ **Feito** (ronda 3.1) — testado; **falta a validação por deploy da branch antes do merge** (`CLAUDE.md`) |
+| 3 | **`/phpmyadmin/` por prefixo** (N5) | ~5 min | Médio | ✅ **Feito** (ronda 3.1) |
+| 4 | **Teste que compara `routes` ↔ `DECOYS`** | ~15 min | Médio | ✅ **Feito** (ronda 3.1) |
+| 5 | **Retry + documentar o não-pin do Semgrep** (N4) | ~30 min | Médio | ✅ **Feito** (ronda 3.1) — pin de facto continua impossível a partir do CLI OSS, ver ronda 3.1 |
+| 6 | **Redirects same-origin no `runScan` + documentar `ACCESS_CLIENT_*`** (N7) | ~10 min | Baixo | ✅ **Feito** (ronda 3.1) |
+| 7 | **`[limits] cpu_ms`** (N8) | ~2 min | Baixo | ✅ **Feito** (ronda 3.1) |
+| 8 | **Triagem do Semgrep para `WARNING`** | ~1 tarde | Médio | Por fazer — bloqueado neste ambiente (proxy sem acesso a semgrep.dev); precisa de ser feito num ambiente com rede |
+| 9 | **Registar a decisão do `.mcp.json` no `PLAN.md`** (N6) | ~15 min | Baixo-médio | ✅ **Registado** (ronda 3.1) — decisão de manter/podar continua por tomar |
 
-Os itens 2 a 7 juntos são **menos de uma hora e meia** e fecham três das
-quatro lacunas novas com peso. Se só fizeres um, faz o **2**.
+Restam dois itens de código: a triagem do Semgrep (bloqueada pela rede
+deste ambiente, não pela dificuldade) e a decisão final do N6 (não é
+código, é escolher entre as opções já registadas no `PLAN.md`). Tudo o
+resto da tabela original de esforço/impacto está feito e testado — ver
+"Ronda 3.1" para o detalhe de cada correção e da verificação.
 
 ### B. Dashboard / DNS — só o dono do repo pode confirmar ou agir
 
@@ -1391,3 +1394,69 @@ Se em julho de 2027 este repo tiver exatamente as mesmas ferramentas de hoje,
 mais uns quantos testes pequenos como este a defender cada controlo que
 importa — e cada um deles verificado com um controlo negativo, não presumido —
 foi o ano certo.
+
+---
+
+## Ronda 3.1 (2026-07-29, mesmo dia) — correção de todos os N1-N8
+
+O dono do repo pediu para corrigir todos os achados N1-N8 da ronda 3.
+Sete dos oito têm componente de código; todos os sete foram corrigidos,
+com testes verificados nos dois sentidos (o teste falha com o código
+antigo, passa com o novo) onde a lacuna era comportamental. N3 e N6 têm
+uma parte de dashboard/decisão que fica por resolver — documentado abaixo,
+não escondido.
+
+| # | O que foi feito | Verificação |
+|---|---|---|
+| N1 | (já corrigido na ronda 3 original) hash da CSP + `csp-inline.test.mjs` | Controlo negativo: falha com o hash antigo |
+| **N2** | `underCap` partilhado (`REFRESH_WRITE_CAP`, 20/dia) nos dois `?refresh=1` (`/api/scan`, `/api/cf-stats`) — esgotado, degrada para a cache existente em vez de escrever | 3 testes novos: cap ao teto não escreve nem chama o upstream; abaixo do teto escreve e o contador acumula; o contador é **partilhado** entre as duas rotas |
+| **N4** | `security.yml`: retry (3 tentativas, backoff) no passo do Semgrep, mas só em erro de configuração/rede (exit 2) — um achado real (exit 1) falha logo, sem repetir. Comentário novo documenta, com honestidade, que `p/typescript`/`p/javascript` não têm mecanismo de pin no Semgrep OSS (ao contrário de tudo o resto no repo) | Lógica de retry testada isoladamente com stubs (rede instável → repete e recupera; achado real → falha à primeira, sem retry). zizmor `--offline` continua limpo sobre o `security.yml` novo |
+| **N5** | `/phpmyadmin/` (e qualquer futuro isco com glob) passa a match por prefixo — novo `dynamic/worker/src/lib/decoys.js` (`isDecoy`), `techniqueForPath` alinhado com a mesma convenção | 2 testes novos de comportamento + **1 teste que lê `wrangler.toml` e compara as `routes` com `DECOYS`** (a "nice-to-have" original, nunca feita). Controlo negativo: os 3 testes falham com o match exato antigo |
+| **N6** | Decisão registada em `dynamic/PLAN.md` — os 7 servidores MCP, o único de escrita (`cloudflare-bindings`), o achado de que a validação anterior usou um connector *pessoal* diferente. **Não removido**: sem visibilidade a partir do repo sobre uso real, a poda é decisão do dono | — (documentação, não código) |
+| **N7** | `fetchSameOrigin()`: o self-scan passa a seguir redirects à mão, só dentro da mesma origem — para de reenviar `CF-Access-Client-Id/Secret` num salto cross-origin. `ACCESS_CLIENT_ID`/`ACCESS_CLIENT_SECRET` documentados no `README.md` (secrets + tabela) | 2 testes novos. Controlo negativo: com a verificação de origem removida por mutação, o teste "não segue cross-origin" falha |
+| **N8** | `[limits] cpu_ms = 10` no `wrangler.toml` — torna explícito o teto que o plano Free já impõe | `wrangler deploy --dry-run` continua a validar o Worker |
+| N3 | **Só a parte de código**: `check-headers.mjs` passa de `::notice::` (silencioso) a `::warning::` + entrada no `GITHUB_STEP_SUMMARY` quando `url` é `SET-ME` — o job deixa de sair "tudo bem" sem aviso visível quando não verifica nada. **A causa raiz (porque o `deployment_status` nunca dispara) continua por investigar no dashboard** — não é corrigível a partir do repositório | Testado localmente (`GITHUB_STEP_SUMMARY` simulado): produz o aviso e a entrada de resumo |
+
+### O que fica genuinamente por resolver
+
+- **N3, causa raiz** — só o dono do repo, no dashboard, pode confirmar se o
+  Pages está a criar `deployment_status` events no GitHub, e decidir entre
+  Access Service Token para o CI ou desligar a Access no lançamento.
+- **N4, medida completa** — o retry evita que uma falha de rede transitória
+  bloqueie o merge, mas não substitui pinar as regras. Pinar de facto
+  exigiria vendorizar os ficheiros das regras a partir do
+  `semgrep/semgrep-rules` — não fiz isso: não há forma de reconstruir, a
+  partir do repositório público, exatamente o mesmo conjunto de regras que
+  `p/typescript`/`p/javascript` representam no registo do semgrep.dev (são
+  bundles geridos do lado do servidor, não uma pasta 1:1 no repo OSS).
+  Fazê-lo às cegas arriscava reduzir a cobertura de forma silenciosa — pior
+  do que o risco documentado que existe hoje.
+- **N6, decisão final** — fica registada a pergunta, não a resposta: manter
+  os 7 servidores, podar aos de leitura, ou mover `cloudflare-bindings`
+  para um connector pessoal.
+- **Triagem do Semgrep para `WARNING`** — continua sem medir o volume real
+  (o proxy deste ambiente não chega a `semgrep.dev`).
+- **CAA, branch protection** — inalterados, ver secções 4 e 8.
+
+### Pontuação, revista
+
+Seis das oito lacunas fecharam com código testado; duas mantêm uma
+componente de dashboard/decisão que não é corrigível daqui. Reflete-se na
+pontuação por área (ver secção 8 para o histórico completo):
+
+| Área | Ronda 3 | **Ronda 3.1** | Porquê mudou |
+|---|---|---|---|
+| Segredos & cadeia de fornecimento | 17 | **18** | N4 (retry + risco documentado, não escondido) e N6 (decisão registada, não escondida) |
+| Dependências | 14 | 14 | Sem alterações |
+| Análise estática & testes | 17 | **18** | N5 fechado com teste que a própria ronda 1 tinha pedido como nice-to-have e nunca foi feito |
+| CI/CD | 12 | **13** | N3: deixa de ser silencioso, continua sem verificar produção |
+| Runtime & Cloudflare | 17 | **19** | N2 e N8 são correções concretas, testadas, na classe de risco mais alta desta ronda |
+| Modelação de ameaças & documentação | 9 | 9 | Sem alterações — a correção não apaga o facto de a versão original ter declarado controlos ativos que não estavam |
+| **Total** | **86** | **91** | |
+
+**91/100**, com honestidade sobre o que resta: nenhum dos itens em aberto é
+código por fazer — são dashboard (N3), uma decisão de produto sobre um
+ficheiro de configuração (N6), uma medição bloqueada pela rede deste
+ambiente (Semgrep `WARNING`), e os dois de sempre (CAA, branch protection).
+O teto de 92-94 estimado na ronda 3 continua a ser a estimativa certa; esta
+ronda fechou a distância que era código.

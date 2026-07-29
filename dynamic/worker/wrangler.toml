@@ -108,6 +108,16 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 [triggers]
 crons = ["*/30 * * * *"]
 
+# Teto explícito de CPU por invocação. O plano Free já impõe 10ms como
+# limite físico da plataforma (não sobe sem upgrade de plano) — mas deixar
+# isso implícito significa que nada no código diz porque é que um caminho
+# patológico (ex.: o fan-out de 168 buckets horários do threat-intel, ver
+# readThreatBuckets em src/index.js) haveria de abortar em vez de continuar
+# a consumir tempo. Torna o teto do plano explícito, em vez de depender de
+# memória (revisão de segurança 2026-07, ronda 3, N8).
+[limits]
+cpu_ms = 10
+
 # Observabilidade dos logs do Worker (console.error/log): sem isto, os
 # `honeypot_write_failed`/`csp_report_write_failed`/`request_failed`/
 # `rate_salt_missing` nunca ficam retidos em lado nenhum — não há resposta a
