@@ -200,7 +200,7 @@ export const ui = {
       title: 'Segurança',
       metaTitle: 'Postura de segurança',
       intro:
-        'A segurança é o foco deste site — no que diz e na forma como é servido. Aqui fica o que está em vigor, para quem quiser verificar.',
+        'Este site foi desenhado para expor trabalho técnico sem acrescentar superfície desnecessária. Aqui fica o que está em vigor, para quem quiser verificar.',
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
@@ -211,7 +211,7 @@ export const ui = {
       headersTitle: 'Cabeçalhos e porquê',
       headersIntro: 'O que é enviado em cada resposta, e a razão de ser:',
       headers: [
-        { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline': zero JavaScript ou CSS inline no site inteiro, só código do próprio domínio executa. JavaScript injetado não executa. É a defesa real contra XSS." },
+        { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline': zero JavaScript ou CSS inline no site inteiro, só código do próprio domínio executa. JavaScript injetado não executa. É uma das defesas centrais contra XSS." },
         { name: 'Strict-Transport-Security', why: 'Força HTTPS no browser durante 2 anos, mesmo que alguém tente rebaixar para HTTP.' },
         { name: 'X-Frame-Options: DENY', why: 'Impede que o site seja embebido noutro (anti-clickjacking), a par de frame-ancestors na CSP — para browsers antigos que não suportem a diretiva.' },
         { name: 'X-Content-Type-Options: nosniff', why: 'Impede o browser de adivinhar o tipo de um ficheiro e executá-lo como algo que não é.' },
@@ -480,7 +480,7 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
       statsLabel: 'stats do site',
-      location: 'Porto, PT',
+      location: 'Porto, Portugal',
       bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes. Este site faz parte do trabalho: as ferramentas, o perímetro e as deteções estão públicos.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '9+ anos em redes & segurança'],
       // Credenciais: linha discreta ligada a /certificacoes/, com os nºs
@@ -908,7 +908,7 @@ export const ui = {
     },
     contact: {
       title: 'Contactos',
-      intro: 'A forma mais rápida de me apanhar é por email. Também estou por aí:',
+      intro: 'A forma mais rápida de me apanhar é por email. Os restantes perfis públicos estão ligados abaixo:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
@@ -928,7 +928,7 @@ export const ui = {
     lab: {
       title: 'Lab',
       mobileTitle: 'O Lab quer um ecrã maior',
-      mobileBody: 'O Lab é um desktop interativo — janelas, taskbar e um terminal a sério. Em ecrãs pequenos a experiência não presta, por isso preferi não fingir. Abre num computador, ou usa as ferramentas em formato normal:',
+      mobileBody: 'O Lab é um desktop interativo — janelas, barra de tarefas e um terminal a sério. Em ecrãs pequenos a experiência não presta, por isso preferi não fingir. Abre num computador, ou usa as ferramentas em formato normal:',
       mobileCta: 'Ir para as ferramentas',
       desktopHint: 'Duplo clique (ou toque) nos ícones para abrir. Experimenta o terminal: `help`.',
       icons: {
@@ -1168,7 +1168,7 @@ export const ui = {
       title: 'Security',
       metaTitle: 'Security posture',
       intro:
-        'Security is the focus of this site — in what it says and in how it\'s served. Here\'s what\'s in place, for anyone who wants to check.',
+        'This site was designed to expose technical work without adding unnecessary surface area. Here\'s what\'s in place, for anyone who wants to check.',
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
@@ -1179,7 +1179,7 @@ export const ui = {
       headersTitle: 'Headers and why',
       headersIntro: 'What is sent on every response, and the reason for it:',
       headers: [
-        { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline': zero inline JavaScript or CSS anywhere on the site, only code from the site's own origin runs. Injected JavaScript does not run. The real defence against XSS." },
+        { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline': zero inline JavaScript or CSS anywhere on the site, only code from the site's own origin runs. Injected JavaScript does not run. One of the main defences against XSS on this site." },
         { name: 'Strict-Transport-Security', why: 'Forces HTTPS in the browser for 2 years, even if someone tries to downgrade to HTTP.' },
         { name: 'X-Frame-Options: DENY', why: 'Stops the site being embedded in another (anti-clickjacking), alongside frame-ancestors in the CSP — for older browsers that do not support the directive.' },
         { name: 'X-Content-Type-Options: nosniff', why: 'Stops the browser guessing a file’s type and running it as something it is not.' },
@@ -1448,7 +1448,7 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
       statsLabel: 'site stats',
-      location: 'Porto, PT',
+      location: 'Porto, Portugal',
       bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response. This site is part of the work: the tools, the perimeter, and the detections are public.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '9+ years in networking & security'],
       // Credentials: a discreet line linked to /certifications/, with the
@@ -1877,7 +1877,7 @@ export const ui = {
     },
     contact: {
       title: 'Contact',
-      intro: 'The fastest way to reach me is email. I am also around here:',
+      intro: 'The fastest way to reach me is email. Other public profiles are linked below:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',

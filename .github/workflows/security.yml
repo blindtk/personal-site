@@ -31,7 +31,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: OSV-Scanner
@@ -57,7 +57,7 @@ jobs:
       # pull_request — sem isto responde 403 "Resource not accessible"
       pull-requests: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -74,11 +74,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Instalar Semgrep
-        run: pipx install semgrep==1.170.0
+        run: pipx install semgrep==1.171.0
       - name: SAST
         # --severity ERROR: só falhamos em achados de alta severidade
         # (XSS/injeção/etc.), não em ruído de estilo das regras públicas.
@@ -91,11 +91,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Instalar zizmor
-        run: pipx install zizmor==1.27.0
+        run: pipx install zizmor==1.28.0
       - name: Auditar workflows
         env:
           # permite as auditorias online (ex.: deteção de commits impostores)
