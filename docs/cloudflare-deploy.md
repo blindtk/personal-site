@@ -147,16 +147,29 @@ vem antes da política de país, e cada regra que atua **para a evolução**):
 | # | Regra | Condição (resumo) | Ação |
 |---|---|---|---|
 | 1 | Bots verificados | `cf.client.bot` (bots verificados pela Cloudflare) | Skip |
-| 2 | CI headers check | User-Agent contém `headers-check` | Skip |
+| 2 | CI headers check | User-Agent contém `headers-check` (**a migrar** para `X-Ci-Waf-Token` — ver nota 2026-07-30 abaixo) | Skip |
 | 3 | Honeypot Paths | Path é `/.env`, `/.git/config`, `/wp-login.php`, `/admin` ou começa por `/phpmyadmin` | **Managed Challenge**, pára a avaliação |
 | 4 | Allowed Countries - Site | fora dos paths acima **e** país é PT | **Managed Challenge**, pára a avaliação |
 | 5 | Blocked Countries - Site | fora dos paths acima **e** país não é PT | **Block**, pára a avaliação |
 
 Porquê cada regra:
-- **2**: `.github/workflows/headers.yml` faz `fetch` à produção a partir de
-  runners do GitHub (normalmente fora de PT) com o User-Agent
-  `headers-check` (`check-headers.mjs`) — sem esta regra o workflow falha
-  depois do lançamento.
+- **2**: `.github/workflows/headers.yml` e `.github/workflows/invariants.yml`
+  fazem `fetch` à produção a partir de runners do GitHub (normalmente fora de
+  PT) — sem esta regra, ambos os workflows caem na política de país (regras
+  4/5) depois do lançamento e passam a reportar produção partida por causa
+  do próprio WAF, não de uma regressão real.
+  > **Nota (2026-07-30):** o match original ("User-Agent contém
+  > `headers-check`") é uma string pública, documentada neste próprio
+  > ficheiro — qualquer pedido de fora do mundo podia copiá-la e saltar a
+  > política de país (achado de uma sessão de validação de lançamento). Os
+  > scripts (`check-headers.mjs`, `check-invariants.mjs`) e os workflows já
+  > enviam um segredo `CI_WAF_TOKEN` (GitHub Actions secret) no header
+  > `X-Ci-Waf-Token` quando configurado. **Falta migrar esta regra no
+  > dashboard** para `http.request.headers["x-ci-waf-token"][0] eq
+  > "<mesmo valor do secret>"` — depois disso, o match por User-Agent pode
+  > sair da condição por completo. Rotação: mudar o valor no GitHub Actions
+  > (Settings → Secrets → Actions → `CI_WAF_TOKEN`) e na regra WAF ao mesmo
+  > tempo, mesma disciplina do `RATE_SALT`/`CF_API_TOKEN`.
 - **3**: os cinco paths-isco do honeypot (`dynamic/worker/`, `DECOYS` em
   `src/index.js`) recebem `Managed Challenge` em vez de passarem direto ao
   Worker, para qualquer visitante — decisão explícita do dono do repo: os

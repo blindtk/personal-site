@@ -40,4 +40,8 @@ jobs:
           # chegam como string vazia, sem quebrar o comportamento atual.
           ACCESS_CLIENT_ID: ${{ secrets.ACCESS_CLIENT_ID }}
           ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
+          # Segredo do bypass da regra WAF "CI headers check" (docs/
+          # cloudflare-deploy.md §5, regra 2) — substitui o match por
+          # User-Agent, que era uma string pública e spoofable.
+          CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
         run: node .github/scripts/check-headers.mjs

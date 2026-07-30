@@ -48,6 +48,9 @@ jobs:
           # Opcionais — ver check-headers.mjs para a mesma convenção.
           ACCESS_CLIENT_ID: ${{ secrets.ACCESS_CLIENT_ID }}
           ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
+          # Mesmo segredo do bypass WAF usado em headers.yml — ver
+          # check-headers.mjs.
+          CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
         run: node .github/scripts/check-invariants.mjs
 
       # Falhou: abre uma Issue nova, ou comenta na que já estiver aberta

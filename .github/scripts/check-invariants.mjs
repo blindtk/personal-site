@@ -34,6 +34,16 @@ const accessHeaders = ACCESS_CLIENT_ID && ACCESS_CLIENT_SECRET
   ? { 'CF-Access-Client-Id': ACCESS_CLIENT_ID, 'CF-Access-Client-Secret': ACCESS_CLIENT_SECRET }
   : {};
 
+// Segredo do bypass da regra WAF "CI headers check" (docs/cloudflare-
+// deploy.md §5, regra 2) — ver o comentário equivalente em
+// check-headers.mjs. Esta cobertura era o achado que faltava: a regra WAF
+// só reconhecia o User-Agent "headers-check" (só check-headers.mjs), nunca
+// o deste script — depois do lançamento, este workflow cairia na política
+// de país e passaria a reportar produção partida por causa do próprio WAF,
+// não de um invariante real. O mesmo segredo cobre os dois scripts.
+const CI_WAF_TOKEN = process.env.CI_WAF_TOKEN || '';
+const wafHeaders = CI_WAF_TOKEN ? { 'x-ci-waf-token': CI_WAF_TOKEN } : {};
+
 // Mesma razão e mesma lógica do fetchSameOrigin em check-headers.mjs /
 // dynamic/worker/src/index.js (runScan): CF-Access-Client-Id/Secret não são
 // despidos pelo Fetch spec em redirects cross-origin, ao contrário de
@@ -54,7 +64,7 @@ async function fetchSameOrigin(url, opts, maxRedirects = 5) {
 }
 
 const UPSTREAM_TIMEOUT_MS = 8000;
-const headers = { 'user-agent': 'check-invariants (GitHub Actions; personal-site)', ...accessHeaders };
+const headers = { 'user-agent': 'check-invariants (GitHub Actions; personal-site)', ...accessHeaders, ...wafHeaders };
 
 async function checkJson(path) {
   const url = new URL(path, target);
