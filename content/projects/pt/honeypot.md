@@ -35,7 +35,7 @@ nunca ligado aos eventos. Isto não é uma promessa: está coberto por teste
 ## Correlação: honeypot ↔ ATT&CK ↔ threat intel
 
 Cada path-isco está classificado com a técnica MITRE ATT&CK que melhor o
-descreve — os mesmos IDs do heatmap em [Attack](/attack/). E quando uma dessas
+descreve — os mesmos IDs do [heatmap ATT&CK](/attack/). E quando uma dessas
 técnicas aparece a ser explorada agora no catálogo CISA KEV, o painel acende a
 correlação: o alvejamento automático que este site apanha deixa de ser teórico
 e liga-se a um CVE ativo. É a mesma ideia do resto do site — não acredites,

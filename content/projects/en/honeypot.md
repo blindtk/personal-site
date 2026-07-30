@@ -36,7 +36,7 @@ and never tied to the events. This isn't a promise: it's covered by a test
 ## Correlation: honeypot ↔ ATT&CK ↔ threat intel
 
 Each decoy path is classified with the MITRE ATT&CK technique that best
-describes it — the same IDs as the heatmap on [Attack](/en/attack/). And when
+describes it — the same IDs as the [ATT&CK heatmap](/en/attack/). And when
 one of those techniques shows up being exploited right now in the CISA KEV
 catalog, the panel lights the correlation: the automated targeting this site
 catches stops being theoretical and links to an active CVE. It's the same idea

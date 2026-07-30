@@ -30,6 +30,13 @@
   **Reverter (`DEBUG_EXPOSE_SELF_PATH = false` e os 2 testes que dependem
   do path) assim que a causa das violações self/self for confirmada.**
 
+  **2026-07-30 — confirmado com o dono do repo** (preparação do repositório
+  para público, `docs/prompt-repo-publico.md`): diagnóstico ainda a
+  decorrer, flag mantém-se `true`. Reavaliar este ponto antes do repositório
+  ficar público, já que a mitigação assume produção atrás da Cloudflare
+  Access — se essa premissa mudar antes da causa ser confirmada, reverter
+  primeiro.
+
 - **2026-07-29 — Workflow `invariants.yml`: fecha o loop deteção → alerta**
   (discutido com o dono do repo depois da revisão de segurança do mesmo
   dia): os dashboards do honeypot/threat-intel/CT/CF-stats são só **pull**
@@ -483,8 +490,14 @@
   Connectors na app — não os do `.mcp.json`). Decisão do dono do repo:
   manter os sete, reduzir aos de leitura, ou mover `cloudflare-bindings`
   para um connector pessoal (fora do repo, não proposto a toda a gente que
-  o clone) se a escrita continuar a ser necessária. Fica registado o
-  achado; a decisão de manter/podar não foi tomada aqui.
+  o clone) se a escrita continuar a ser necessária.
+
+  **Resolvido (2026-07-30, preparação do repositório para público):**
+  decisão do dono foi reduzir aos de leitura. `cloudflare-bindings` (o único
+  de escrita) foi removido de `.mcp.json`; os seis restantes
+  (`cloudflare-audit-logs`, `cloudflare-graphql-analytics`,
+  `cloudflare-dns-analytics`, `cloudflare-observability`, `cloudflare-builds`,
+  `cloudflare-docs`) ficam, confirmados como leitura pela análise acima.
 
 ## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
 

@@ -44,8 +44,8 @@ interessa aqui é a relação entre o cluster e a produção, não um inventári
 Não há uma lista fixa — é essa a natureza de um terreno de testes: passam por
 lá as ferramentas deste site antes de irem para o browser de outra pessoa,
 configurações que quero validar antes de as levar para o trabalho, e
-montagens de infraestrutura ofensiva para lab e CTFs (o heatmap em
-[Attack](/attack/) mapeia essa prática à técnica *Acquire Infrastructure* do
+montagens de infraestrutura ofensiva para lab e CTFs (o
+[heatmap ATT&CK](/attack/) mapeia essa prática à técnica *Acquire Infrastructure* do
 MITRE ATT&CK, ao nível "experiência pontual / lab"). O denominador comum é
 sempre o mesmo: nada toca produção sem primeiro passar por aqui.
 

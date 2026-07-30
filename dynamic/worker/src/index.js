@@ -26,7 +26,7 @@ import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, cspStats,
   REPORT_CONTENT_TYPES, MAX_REPORTS_PER_REQUEST,
 } from './lib/csp-report.js';
-import { gradeFromHeaders, SECURITY_HEADERS } from './lib/scan.js';
+import { gradeFromHeaders } from './lib/scan.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
@@ -922,5 +922,3 @@ export default {
   },
 };
 
-// reexport para uso em testes de fumo, se necessário
-export { SECURITY_HEADERS };

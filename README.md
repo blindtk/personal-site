@@ -6,196 +6,261 @@
 [![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
 [![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
 
-Site pessoal de Daniel Malaco — monorepo com três partes:
+Daniel Malaco's personal site — and, more to the point, a working demonstration
+of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
+treats its own build chain as attack surface, and a live honeypot generating
+real data for the dashboards it feeds. 191 tests, six CI workflows, four ADRs,
+for a personal site. That is deliberate, not accidental — see
+["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
-| Pasta | O que é | Estado |
+> 🇵🇹 **Nota em português:** este README está em inglês porque a maioria de
+> quem o lê profissionalmente (recrutadores, engenheiros) não lê português — o
+> site em si é bilingue por construção, PT em `/` e EN em `/en/`, e todo o
+> conteúdo editorial (`content/`) existe nos dois idiomas. Ver
+> [`CLAUDE.md`](CLAUDE.md) para as convenções do projeto (em português, como o
+> resto de `docs/`).
+
+## What this is
+
+| Folder | What it is | Status |
 | --- | --- | --- |
-| `content/` | Todo o conteúdo em markdown (posts, sobre, projetos, links) — **a fonte única de verdade** | ✅ ativo |
-| `static/` | O site estático (Astro): blog, ferramentas client-side, páginas | ✅ ativo |
-| `dynamic/` | Backend em Cloudflare Worker: honeypot, mapa de tráfego hostil, self-scan e ticker SOC (`dynamic/worker/`); DNS/whois ainda planeados | ✅ em produção — ver [`dynamic/worker/README.md`](dynamic/worker/README.md) e [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `content/` | All editorial content in markdown/JSON (posts, about, projects, links, ATT&CK/detection data) — **the single source of truth** | ✅ active |
+| `static/` | The static site (Astro): blog, 11 security tools, all pages | ✅ active |
+| `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, self-scan, SOC ticker, CSP-violation pipeline | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
-O site é bilingue: PT em `/` e EN em `/en/`.
+## Architecture and the three decisions worth reading
 
----
+Start with [`docs/architecture.md`](docs/architecture.md) — a diagram of how
+the site, the Worker, KV, and external APIs connect, and where the trust
+boundaries sit. Then, of the four ADRs in [`docs/adr/`](docs/adr/), these three
+say the most about how this repository actually thinks:
 
-## Desenvolver localmente
+1. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
+   The honeypot and analytics never store the visitor's IP — not because the
+   plan doesn't allow it, but because the data wasn't needed for the
+   aggregates the dashboards show. A privacy decision made against the
+   author's own convenience, on a project with no external pressure to make it.
+2. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
+   Rather than hash every inline `<script>`/`<style>` Astro emits, the site
+   eliminates inline output entirely, so the CSP is one static line with no
+   `unsafe-inline` and no hash list to keep in sync as pages change.
+3. **[ADR 0003 — rate limiting in KV, with fail-closed, as a deliberate stopgap](docs/adr/0003-rate-limit-kv-vs-nativo.md).**
+   A hand-rolled rate limiter with a documented migration path to a native
+   Cloudflare rule, plus the incident that shaped it: the honeypot came close
+   to the Workers KV free-tier daily write ceiling before launch, diagnosed
+   and fixed by aligning cache TTLs to the cron interval rather than by
+   reaching for a bigger plan.
 
-Precisas do [Node.js](https://nodejs.org) 22.12 ou superior (o site é construído com Node 24, a LTS atual).
+[`docs/threat-model.md`](docs/threat-model.md) is the living threat model:
+assets, attack surfaces, most-likely/highest-impact attacks, accepted residual
+risk — including "the site's own security claims" as a breakable asset, which
+is the reason every verifiable claim in this README is checked against the
+code, not asserted from memory.
+
+## Why so much for a personal site?
+
+A personal site with a threat model, four ADRs, six CI workflows, and 191
+tests is disproportionate for what it does — unless the disproportion *is* the
+point. It is: this repository exists to demonstrate security-engineering
+practice at a scale where the controls become meaningful, not to serve a blog
+efficiently. The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
+`/phpmyadmin/`, `/.git/config`) are published on purpose, not despite being a
+honeypot — they're the standard paths every commodity scanner already probes
+blindly, so explaining them costs nothing and demonstrates the technique
+instead of hiding it. If any of the above sounds interesting to talk through,
+that's the intent — every decision here is meant to survive being asked about.
+
+## Run it locally
+
+Requires [Node.js](https://nodejs.org) 22.12+ (built with Node 24, the current LTS).
 
 ```bash
 cd static
-npm install        # só na primeira vez
-npm run dev        # abre http://localhost:4321
+npm install        # first time only
+npm run dev        # http://localhost:4321
 ```
 
-O `npm run dev` fica a correr e recarrega o browser automaticamente sempre que
-gravas um ficheiro — tanto código em `static/src/` como markdown em `content/`.
+`npm run dev` hot-reloads on save, for both `static/src/` code and `content/`
+markdown.
 
-Para gerar a versão final (a que vai para produção):
+To build the production bundle:
 
 ```bash
 cd static
-npm run build      # gera static/dist/
-npm run preview    # serve o dist/ localmente para conferir
+npm run build      # → static/dist/
+npm run preview    # serve dist/ locally
 ```
 
-## Editar conteúdo (sem tocar em código)
+## Edit content (no code required)
 
-- **Novo post:** cria `content/blog/pt/o-meu-post.md` (e opcionalmente o gémeo
-  em `content/blog/en/` com o mesmo nome de ficheiro, para a versão inglesa).
-  O post de exemplo `hello-world.md` mostra o formato do cabeçalho e podes
-  apagá-lo quando tiveres o teu.
-- **Página "Sobre":** edita `content/pages/sobre.md` e `content/pages/about.md`.
-- **Projetos:** um ficheiro por projeto em `content/projects/pt/` + `en/`.
-- **Links:** edita `content/links.json`.
-- **Nome/handle, email, redes, domínio:** tudo em `static/src/config.ts`.
+- **New post:** create `content/blog/pt/my-post.md` (and optionally its
+  English twin in `content/blog/en/` with the same filename). Use
+  `draft: true` in the frontmatter until it's ready to publish.
+- **About page:** `content/pages/sobre.md` (PT) and `content/pages/about.md` (EN).
+- **Projects:** one file per project in `content/projects/pt/` + `en/`.
+- **Links:** `content/links.json`.
+- **Structured data that feeds real pages:** `content/attack.json` (ATT&CK
+  heatmap, `/attack`), `content/certs.json` (Certifications page),
+  `content/awards.json` (CTF/awards list on About and Home), `content/detections.json`
+  (Sigma-style rules shown on the Perimeter page), `content/honeypot-attack.json`
+  (decoy-path → technique mapping), `content/catalog.json` (curated list on
+  the Links page).
+- **Name/handle, email, socials, domain:** all in `static/src/config.ts`.
 
-## Publicar (deploy) — Cloudflare Pages
+## Deploy — Cloudflare Pages
 
-Passos exatos, do zero, para quem nunca fez deploy:
+Exact steps for a first-time deploy:
 
-1. **Cria conta na Cloudflare** (grátis): <https://dash.cloudflare.com/sign-up>.
-2. No painel da Cloudflare, vai a **Workers & Pages → Create → Pages →
-   Connect to Git**.
-3. Autoriza a Cloudflare a aceder ao teu GitHub e escolhe o repositório
-   `personal-site`.
-4. No ecrã de configuração do build, preenche **exatamente** assim:
+1. **Create a free Cloudflare account:** <https://dash.cloudflare.com/sign-up>.
+2. In the dashboard: **Workers & Pages → Create → Pages → Connect to Git**.
+3. Authorize Cloudflare against your GitHub and pick the `personal-site` repo.
+4. In the build configuration screen, set **exactly**:
    - **Production branch:** `main`
    - **Framework preset:** `Astro`
    - **Build command:** `npm run build`
    - **Build output directory:** `dist`
-   - **Root directory (advanced):** `static` ← importante! O projeto Astro
-     vive na subpasta `static/`, não na raiz.
-5. Clica **Save and Deploy**. A Cloudflare instala as dependências, corre o
-   build e publica. Em ~2 minutos tens o site num endereço tipo
-   `https://personal-site-abc.pages.dev`.
-6. A partir daqui, **cada push para `main` publica automaticamente**. Pushes
-   para outros branches criam pré-visualizações com URL próprio (útil para
-   rever PRs).
+   - **Root directory (advanced):** `static` ← important! The Astro project
+     lives in the `static/` subfolder, not the repo root.
+5. Click **Save and Deploy**. Cloudflare installs dependencies, builds, and
+   publishes — about 2 minutes to a `https://personal-site-abc.pages.dev` URL.
+6. From then on, **every push to `main` deploys automatically**. Pushes to
+   other branches get their own preview URL (handy for reviewing PRs).
 
-### Domínio próprio
+### Custom domain
 
-O site já corre em `danielmala.co` (comprado no Namecheap, DNS gerido pela
-Cloudflare — nameservers trocados no registrar). `SITE_URL` em
-`static/src/config.ts` já aponta para lá. Para o processo completo (troca de
-nameservers, ligar o Worker, Access durante o desenvolvimento, regras de
-WAF), ver [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
+The live site runs on `danielmala.co` (registered at Namecheap, DNS on
+Cloudflare — nameservers switched at the registrar). `SITE_URL` in
+`static/src/config.ts` already points there. For the full process (nameserver
+switch, wiring the Worker, Access during development, WAF rules), see
+[`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
-### Alternativa: servir a partir da tua VPS (Cloudflare como proxy)
+### Alternative: serve from your own VPS (Cloudflare as proxy)
 
-Se preferires alojar na tua VPS com a Cloudflare à frente (DNS + proxy):
+1. `npm run build` and copy `static/dist/` to the VPS, e.g.
+   `rsync -avz --delete static/dist/ user@vps:/var/www/site/`.
+2. Serve the folder with nginx/Caddy — it's a 100% static site, any file
+   server works.
+3. On Cloudflare: **DNS → Add record** → type `A`, name `@`, the VPS IP, with
+   the **orange cloud** (proxied) for CDN + TLS + IP masking.
 
-1. Corre `npm run build` e copia `static/dist/` para a VPS, por exemplo:
-   `rsync -avz --delete static/dist/ user@vps:/var/www/site/`
-2. Serve a pasta com nginx/Caddy (é um site 100% estático — qualquer servidor
-   de ficheiros serve).
-3. Na Cloudflare: **DNS → Add record** → tipo `A`, nome `@`, IP da VPS, com o
-   ícone da nuvem **laranja** (proxied) para teres CDN + TLS + ocultar o IP.
+Pages is simpler (zero maintenance) and is what's actually in production —
+the `dynamic/` backend already runs on its own Worker, separate from wherever
+the static site is served, so the VPS route stays a real alternative, not a
+requirement.
 
-A opção Pages é mais simples (zero manutenção) e é a que está em produção —
-o backend em `dynamic/` já corre num Worker à parte (não na mesma máquina do
-site estático), por isso a VPS continua a ser só uma alternativa possível,
-não uma necessidade.
+## Build pipeline security
 
-## Segurança do pipeline
+The repository treats its own build chain as attack surface. Every push/PR
+goes through:
 
-O repositório trata a própria cadeia de build como superfície de ataque.
-Cada push/PR passa por:
-
-| Verificação | Onde | O que garante |
+| Check | Where | What it guarantees |
 | --- | --- | --- |
-| **Build + `npm audit`** | `ci.yml` | O site compila sem erros e sem advisories high/critical nas dependências. |
-| **OSV-Scanner** | `security.yml` | O `package-lock.json` não tem vulnerabilidades conhecidas (base [OSV.dev](https://osv.dev), inclui GHSA); falha o CI em qualquer *advisory* conhecido. |
-| **gitleaks** | `security.yml` + hook local | Nenhum segredo (tokens Cloudflare, chaves) entra na história do git. Localmente: `pipx install pre-commit && pre-commit install`. |
-| **Semgrep** | `security.yml` | SAST nas regras `p/typescript`/`p/javascript` + regras próprias para sinks de DOM XSS nos componentes `.astro` (`.semgrep/`). |
-| **zizmor** | `security.yml` | Os próprios workflows são auditados: pins em falta, permissions excessivas, injeção de template, credenciais persistidas. |
-| **Headers em produção** | `headers.yml` | Após cada deploy (e num cron diário), a produção é verificada contra `.github/expected-headers.json` — se um header de segurança faltar ou regredir, o workflow falha. |
-| **`npm audit signatures` + SBOM** | `supply-chain.yml` (semanal + manual) | Verifica as assinaturas de registo do npm (deteta um pacote servido sem a assinatura esperada) e gera um SBOM (CycloneDX) dos dois lockfiles, como artefacto. Semanal, não por PR — ver nota de quota abaixo. |
-| **Invariantes de produção** | `invariants.yml` (diário + manual) | Verifica `/api/health` e as rotas de leitura do Worker; se algo estiver genuinamente partido, abre uma Issue (fecha-se sozinha quando volta a passar). É o alerta que falta aos dashboards do honeypot/threat-intel — só pull, sem isto ninguém era avisado sem ir olhar. |
+| **Build + `npm audit`** | `ci.yml` | The site builds clean, no high/critical advisories in dependencies. |
+| **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
+| **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
+| **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
+| **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
+| **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
+| **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
+| **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
 
-Práticas transversais: todas as actions **pinadas por commit SHA** (o
-[Renovate](renovate.json5) mantém os digests e agrupa atualizações num PR
-semanal), `permissions: {}` por omissão com o mínimo por job,
-`persist-credentials: false` em todos os checkouts, e `npm ci
---ignore-scripts` em `ci.yml` (nenhuma dependência corre postinstall
-arbitrário em CI). A CSP é uma linha estática em `static/public/_headers`
-(sem hashes: zero `<script>`/`<style>` inline no site — ver
-[docs/security-headers.md](docs/security-headers.md) e
-[ADR 0001](docs/adr/0001-csp-sem-inline.md)). O plano DNS/TLS (CAA, HSTS
-preload, DNSSEC) vive em [docs/dns-tls.md](docs/dns-tls.md). O processo de
-deploy na Cloudflare (domínio, Pages, Worker, Access, WAF) e os problemas
-reais resolvidos estão em [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
+Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
+keeps the digests current and batches updates into a weekly PR),
+`permissions: {}` by default with least-privilege per job, `persist-credentials: false`
+on every checkout, and `npm ci --ignore-scripts` in `ci.yml` (no dependency
+runs an arbitrary postinstall in CI). The CSP is one static line in
+`static/public/_headers` — no hashes, because there is zero inline
+`<script>`/`<style>` on the site (see [docs/security-headers.md](docs/security-headers.md)
+and [ADR 0001](docs/adr/0001-csp-sem-inline.md)). The DNS/TLS plan (CAA, HSTS
+preload, DNSSEC) lives in [docs/dns-tls.md](docs/dns-tls.md). The Cloudflare
+deploy process (domain, Pages, Worker, Access, WAF) and the real incidents hit
+along the way are in [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
 
-**Nota de quota:** o repositório é privado, o que conta os minutos de
-Actions contra a quota do plano Free (2.000 min/mês) e bloqueia o tier
-gratuito do CodeQL/Dependency Review/secret scanning/Scorecard. É por isto
-que verificações de baixa frequência (SBOM, assinaturas) vivem num workflow
-semanal em vez de correrem em cada PR. Detalhe completo em
+**On cadence:** the weekly-not-per-PR schedule for SBOM/signature verification
+predates this repo going public, when Actions minutes were metered against
+the private-repo free tier (2,000 min/month). Public repos get unlimited
+Actions minutes, but the weekly cadence stays — SBOM drift and signature
+checks don't need per-PR granularity, and there was no reason to change a
+schedule that was working. Full context in
 [docs/security-review-2026-07-29.md](docs/security-review-2026-07-29.md) §0.
 
-## Arquitetura e decisões
+## Security features (the site's actual subject matter)
 
-- [`docs/architecture.md`](docs/architecture.md) — diagrama (Mermaid) de
-  como o site, o Worker, o KV e as APIs externas se ligam, e onde ficam as
-  fronteiras de confiança.
-- [`docs/threat-model.md`](docs/threat-model.md) — modelo de ameaça vivo:
-  ativos, superfícies de ataque, ataques mais prováveis/de maior impacto,
-  riscos residuais aceites.
-- [`docs/adr/`](docs/adr/) — ADRs (Architecture Decision Records): decisões
-  com trade-offs reais e porque se recusaram as alternativas óbvias.
-- [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) —
-  revisão de segurança e engenharia completa (maturidade, gap analysis,
-  avaliação de ferramentas, threat model, roadmap).
+Beyond the client-side tools, the site has several live cybersecurity showcases:
 
-## Features de segurança (tema do site)
-
-Além das ferramentas client-side, o site tem cinco vitrines de cibersegurança:
-
-| Feature | Onde | Depende do Worker? |
+| Feature | Where | Needs the Worker? |
 | --- | --- | --- |
-| **Heatmap MITRE ATT&CK** | `/attack` | Não — 100% estático (`content/attack.json`) |
-| **Self-scan de cabeçalhos** | página Segurança | Sim — `/api/scan` |
-| **Ticker SOC** (CISA KEV + NVD) | topo da Segurança | Sim — `/api/ticker` |
-| **Painel do honeypot** | `/honeypot` | Sim — `/api/honeypot` |
-| **Mapa de tráfego hostil** | `/honeypot` | Sim — `/api/map` |
+| **MITRE ATT&CK heatmap** | `/attack` | No — 100% static (`content/attack.json`) |
+| **Perimeter** (honeypot panel, hostile-traffic map, detection rules, Cloudflare stats, trends, logs) | `/perimetro/` (`/en/perimeter/`) | Yes — `/api/honeypot`, `/api/map`, `/api/cf-stats`, `/api/threat-intel`, `/api/ct` |
+| **Self-scan of security headers** | Security page | Yes — `/api/scan` |
+| **SOC ticker** (CISA KEV + NVD) | top of Security page | Yes — `/api/ticker` |
 
-As quatro que dependem do Worker degradam com graça quando ele não está
-publicado (mostram uma nota em vez de partir). O backend, os endpoints, a
-privacidade (nenhum IP armazenado) e o deploy estão em
-[`dynamic/worker/README.md`](dynamic/worker/README.md). O heatmap ATT&CK
-funciona sempre, por ser estático.
+The Worker-backed features degrade gracefully when it isn't reachable (they
+show a fallback note instead of breaking). The backend, its endpoints, its
+privacy stance (no IP ever stored), and its deploy are documented in
+[`dynamic/worker/README.md`](dynamic/worker/README.md). The ATT&CK heatmap
+always works, since it's fully static.
 
-## Estrutura do código
+**Note on the honeypot's decoys being public:** see
+["Why so much for a personal site?"](#why-so-much-for-a-personal-site) above —
+this is a deliberate stance, not an oversight.
+
+## Security tools
+
+`/ferramentas/` (`/en/tools/`) has **11 tools**: 8 run entirely client-side
+(subnet calculator, hash functions, encoder/decoder, password strength,
+email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
+no network calls, no backend dependency), and 3 talk to the Worker because the
+check genuinely can't run in a browser (`pwned` — k-anonymity breach check,
+`self-scan` — header analysis of an arbitrary target, `mirror` — what the
+server sees about you). The three server-backed ones are marked with a
+"requires server" badge on the tools index; they are never hidden as if they
+were client-side.
+
+## Code structure
 
 ```
-content/               ← markdown: blog/, pages/, projects/, links.json
+content/               ← markdown/JSON: blog/, pages/, projects/, links.json, attack.json, …
 static/
   src/
-    config.ts          ← nome, handle, email, redes, SITE_URL
-    content.config.ts  ← schemas das coleções (lê de ../content)
-    i18n/              ← strings de UI (ui.ts) e mapa de rotas (routes.ts)
-    layouts/           ← BaseLayout (nav, footer, <head>)
+    config.ts          ← name, handle, email, socials, SITE_URL
+    content.config.ts  ← collection schemas (reads from ../content)
+    i18n/               ← UI strings (ui.ts) and route map (routes.ts)
+    layouts/            ← BaseLayout (nav, footer, <head>)
     components/
-      pages/           ← uma componente por página, partilhada por PT/EN
-      tools/           ← as 4 ferramentas client-side
-    scripts/           ← lógica pura das ferramentas (testável em Node)
-    pages/             ← rotas finas: / (PT) e /en/ (EN)
-  public/              ← favicon e ficheiros estáticos servidos tal-e-qual
-dynamic/               ← PLAN.md (roadmap da futura app com backend)
+      pages/            ← one component per page, shared by PT/EN
+      tools/            ← the 11 security tools
+    scripts/            ← pure tool logic (testable in Node)
+    pages/              ← thin routes: / (PT) and /en/ (EN)
+  public/               ← favicon and static files served as-is
+dynamic/
+  worker/               ← Cloudflare Worker in production — honeypot, traffic
+                          map, self-scan, SOC ticker, CSP-violation pipeline
+  PLAN.md               ← decisions log and what's still planned (DNS/whois tools)
 ```
 
-Convenções de desenvolvimento: ver [CLAUDE.md](CLAUDE.md).
+Development conventions: see [CLAUDE.md](CLAUDE.md).
 
-## Segurança
+## AI-assisted development
 
-Para reportar uma vulnerabilidade, ver [SECURITY.md](.github/SECURITY.md) ou o
-[`security.txt`](static/public/.well-known/security.txt) do site
-([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)). Reporta sempre em
-privado, nunca numa Issue pública.
+Built with heavy use of Claude Code — the branch names in the merge commits
+already say so, on every PR. Architecture, threat model, security decisions,
+and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
+trade-offs and the alternatives rejected. Every security-relevant change is
+covered by tests (`npm test`, 191 across the Worker and the site) and by the
+scanners in [`.github/workflows/`](.github/workflows/). I can walk through any
+decision in this repository.
 
-## Licença
+## Security
 
-O **código** deste repositório está sob a licença [MIT](LICENSE) — reutiliza à
-vontade, mantendo o aviso de copyright. O **conteúdo editorial** (textos do
-blog e das páginas em `content/`, bio e materiais pessoais) e os elementos de
-marca não estão cobertos pela MIT: continuam "todos os direitos reservados".
+To report a vulnerability, see [SECURITY.md](.github/SECURITY.md) or the
+site's [`security.txt`](static/public/.well-known/security.txt)
+([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)). Always report privately,
+never in a public Issue.
+
+## License
+
+The **code** in this repository is [MIT](LICENSE) — reuse freely, keep the
+copyright notice. **Editorial content** (blog posts and page copy in
+`content/`, bio, and personal material) and brand elements are not covered by
+the MIT license: all rights reserved.

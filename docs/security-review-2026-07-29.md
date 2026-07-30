@@ -5,6 +5,11 @@
 > kind of artefact a reviewer (hiring manager, security engineer) is most likely
 > to read. The rest of `docs/` is in Portuguese. Happy to translate on request.
 
+> **Relation to the other security review.** This is the current snapshot,
+> linked from `README.md`. [`security-review-2026-07.md`](security-review-2026-07.md)
+> (Portuguese) is the earlier, round-by-round working log the findings here
+> were partly drawn from — kept for the fix history, not superseded.
+
 Reviewer posture: Principal AppSec Engineer / Cloud Security Architect /
 DevSecOps Lead / Staff Engineer. Scope: the repository as it stands at
 `9ee07d0`, the Worker in `dynamic/worker/`, the Astro site in `static/`, and the

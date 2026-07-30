@@ -20,7 +20,7 @@ danielmala.co.  IN  CAA  0 issue "ssl.com"
 danielmala.co.  IN  CAA  0 issuewild "letsencrypt.org"
 danielmala.co.  IN  CAA  0 issuewild "pki.goog; cansignhttpexchanges=yes"
 danielmala.co.  IN  CAA  0 issuewild "ssl.com"
-danielmala.co.  IN  CAA  0 iodef "mailto:daniel_malaco@hotmail.com"
+danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 ```
 
 - Criar no dashboard: **DNS → Records → Add record → CAA** (um por linha).

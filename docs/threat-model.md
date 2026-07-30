@@ -24,15 +24,16 @@ ficheiro). Origem: análise inicial em
 ## Fronteiras de confiança
 
 Internet → borda Cloudflare (WAF/Access) → Worker → KV/APIs a montante.
-Laptop do developer → GitHub → *(lacuna: manual)* → Cloudflare (ver
-`docs/architecture.md`). Registo npm → lockfile → build → artefacto
-deployado. Feeds a montante (NVD, CISA KEV, crt.sh, HIBP) → Worker → DOM do
-browser. Browser → endpoints POST → KV.
+Laptop do developer → GitHub → Cloudflare Workers Builds (deploy automático,
+sem proveniência verificável nem gate de revisor — *lacuna real, ver H3*) →
+produção (ver `docs/architecture.md`). Registo npm → lockfile → build →
+artefacto deployado. Feeds a montante (NVD, CISA KEV, crt.sh, HIBP) → Worker →
+DOM do browser. Browser → endpoints POST → KV.
 
 ## Superfícies de ataque
 
-11 endpoints GET (a maioria sem input); 2 endpoints POST não-autenticados
-(`/api/csp-report`, `/api/vitals`); 6 rotas-isco; o site estático; as
+12 endpoints GET (a maioria sem input); 2 endpoints POST não-autenticados
+(`/api/csp-report`, `/api/vitals`); 5 rotas-isco; o site estático; as
 ferramentas client-side (todas locais exceto `pwned`, `self-scan`, `mirror`);
 a cadeia de supply-chain do GitHub Actions; a árvore de dependências npm; as
 credenciais da dashboard/API da Cloudflare.
@@ -86,8 +87,15 @@ uma vez fechado o achado H3 (deploy via CI), o token de deploy passa a ser um
 novo secret de alto valor que tem de viver num Environment protegido.
 
 ### B3 — Comprometimento do laptop do developer
-**Hoje, o único caminho para produção do Worker** (`wrangler deploy` manual).
-Ver `docs/architecture.md` e o achado H3 em `docs/security-review-2026-07-29.md`.
+O caminho normal para produção do Worker é automático (Workers Builds, no
+push a `main` — ver `docs/architecture.md`), não o laptop. Mas continua a
+existir um caminho manual secundário (`npx wrangler deploy` a partir do
+laptop, usado para testar uma branch antes do merge, `CLAUDE.md`) que aponta
+para o mesmo Worker de produção — um laptop comprometido continua a poder
+publicar diretamente, sem passar pelo GitHub. Ver o achado H3 em
+`docs/security-review-2026-07-29.md`: a lacuna real não é "deploy manual",
+é a ausência de proveniência verificável e de um gate de revisor em
+qualquer um dos dois caminhos.
 
 ## Casos de abuso
 
@@ -128,4 +136,9 @@ aceite deliberadamente, decisão correta para um site pessoal.
 ---
 
 **Última revisão:** 2026-07-29 (criação deste documento, a partir da revisão
-de segurança do mesmo dia).
+de segurança do mesmo dia). **2026-07-30:** corrigidas contagens de
+superfície de ataque (12 endpoints GET, não 11; 5 rotas-isco, não 6) e a
+descrição do deploy do Worker (é automático via Cloudflare Workers Builds,
+não manual — o achado H3 continua aberto pela falta de proveniência/gate de
+revisor, não pela falta de automação), no âmbito da preparação do
+repositório para público.

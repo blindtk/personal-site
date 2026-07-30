@@ -243,9 +243,13 @@ branch protection, secret scanning) fica para quando for decidido.
   Access → Service Auth) e adicionar `CF-Access-Client-Id`/
   `CF-Access-Client-Secret` como secrets do GitHub + headers no
   `check-headers.mjs`; (b) esperar pela Fase 3 (Access desligada) e só
-  então apontar o `url`.
+  então apontar o `url`. **Decidido (2026-07-30, preparação do repo para
+  público):** via (b) — mantém-se `SET-ME` até a Access ser desligada na
+  Fase 3.
 - [ ] CAA, HSTS preload, DNSSEC — checklist em `docs/dns-tls.md`, por
   executar/confirmar.
-- [ ] Alias de email (`hello@danielmala.co`) em vez do Hotmail pessoal —
-  nota em `static/src/config.ts`.
+- [x] Alias de email (`me@danielmala.co`) em vez do Hotmail pessoal — feito
+  em `static/src/config.ts` e `docs/dns-tls.md` (2026-07-30). Nota: o
+  endereço antigo continua no histórico do git; a mitigação real é o alias
+  ser rotável.
 - [ ] Repo público — checklist na secção 6, sem prazo definido.

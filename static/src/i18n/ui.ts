@@ -218,12 +218,11 @@ export const ui = {
         { name: 'Referrer-Policy', why: 'Não vaza o caminho completo desta página para sites externos ao seguir uma ligação.' },
         { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
         { name: 'COOP / COEP / CORP', why: 'O trio cross-origin completo: isola o contexto de navegação e os recursos de outras origens — os mesmos três exigidos no contrato de cabeçalhos das Provas.' },
-        { name: 'Reporting-Endpoints', why: 'Quando a CSP bloqueia algo, o browser reporta a violação a este site — agregada de forma anónima nas Provas. Uma CSP estrita sem reporting é um alarme sem sirene.' },
       ],
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, self-scan) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF, análise de CSP, laboratório de passkeys) processam tudo no teu browser — nenhum dado sai da máquina. As três ferramentas que falam com o Worker (verificador de passwords, self-scan, espelho) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -956,9 +955,9 @@ export const ui = {
         '      deste site já existe: /ferramentas/self-scan/)',
         '  [ ] Verificação de blacklists de IP',
         '',
-        'As ferramentas deste Lab correm 100% no teu browser; as duas',
-        'que falam com o Worker (pwned, self-scan) estão marcadas com',
-        '«requer servidor» nas Ferramentas.',
+        'As ferramentas deste Lab correm 100% no teu browser; as três',
+        'que falam com o Worker (pwned, self-scan, espelho) estão marcadas',
+        'com «requer servidor» nas Ferramentas.',
       ],
       termWelcome: [
         'daniel@lab — sessão iniciada.',
@@ -1187,12 +1186,11 @@ export const ui = {
         { name: 'Referrer-Policy', why: 'Does not leak this page’s full path to external sites when following a link.' },
         { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
         { name: 'COOP / COEP / CORP', why: 'The full cross-origin trio: isolates the browsing context and resources from other origins — the same three required by the header contract on Evidence.' },
-        { name: 'Reporting-Endpoints', why: 'When the CSP blocks something, the browser reports the violation back to this site — aggregated anonymously on Evidence. A strict CSP without reporting is an alarm without a siren.' },
       ],
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
       privacyBody:
-        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, self-scan) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
+        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF, CSP analyser, passkey lab) process everything in your browser — no data leaves your machine. The three tools that talk to the Worker (password checker, self-scan, mirror) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -1926,8 +1924,8 @@ export const ui = {
         '      self-scan already exists: /en/tools/self-scan/)',
         '  [ ] IP blacklist checks',
         '',
-        'The tools in this Lab run 100% in your browser; the two that',
-        'talk to the Worker (pwned, self-scan) are flagged with',
+        'The tools in this Lab run 100% in your browser; the three that',
+        'talk to the Worker (pwned, self-scan, mirror) are flagged with',
         '“requires server” on the Tools page.',
       ],
       termWelcome: [
