@@ -318,6 +318,37 @@ que os cinco SVGs continuam a ser gerados antes de confiar no cron
 semanal — é exatamente o aviso do prompt: "um workflow endurecido que
 deixou de funcionar é uma regressão, não um controlo."
 
+### Addendum: dois problemas reais só apanhados pelo CI real
+
+A validação local (`--offline`, sem `GH_TOKEN`) não é o CI real, e o CI do
+PR apanhou dois problemas que a validação local não conseguia ver:
+
+1. **Pin errado por confundir tag anotada com commit.** O SHA usado para
+   `github/codeql-action/upload-sarif@…` em `scorecard.yml` era o *objeto*
+   da tag anotada `v3.37.4` (`dfbc6164…`), não o commit para onde ela
+   aponta (`a2983b8b…`) — só a auditoria `ref-version-mismatch`, que
+   precisa de rede/`GH_TOKEN` para consultar a API, apanhou isto. `uses:`
+   tem de apontar para o commit, não para o objeto da tag; confirmado com
+   `git ls-remote --tags` a olhar para a linha `^{}` de deref (que a
+   verificação inicial, com um `grep` demasiado apertado, tinha ignorado
+   para este caso específico). Corrigido no commit `e5c7952`.
+2. **O achado `artipacked` aceite conscientemente (checkout do job
+   `commit`, credenciais persistidas de propósito) fazia o zizmor sair
+   sempre com erro** — o `--min-severity medium` não distingue "achado por
+   rever" de "achado revisto e aceite". Sem uma exceção documentada, o
+   check `zizmor` ficaria vermelho para sempre por um risco já entendido,
+   o que ensina a ignorar o check em vez de o ler — exatamente o
+   contrário do que uma revisão de segurança deve produzir. Corrigido com
+   um `.github/zizmor.yml` novo (mesmo padrão do `osv-scanner.toml`/
+   `.semgrep/` deste repo: exceção datada e justificada, não silenciosa),
+   commit `cea5eec`. Confirmado localmente: `zizmor` passa a sair com
+   código 0 ("1 ignored, 12 suppressed").
+
+Depois destas duas correções, os quatro checks do PR do `blindtk/blindtk`
+(`zizmor`, `gitleaks`, `CodeQL`, `Analyze (actions)` — os dois últimos já
+existiam antes desta revisão, código scanning nativo do GitHub) estão
+verdes.
+
 ---
 
 ## 10. Fase 6 — só o dono pode fazer
