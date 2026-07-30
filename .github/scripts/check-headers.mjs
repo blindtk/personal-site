@@ -27,6 +27,18 @@ const accessHeaders = ACCESS_CLIENT_ID && ACCESS_CLIENT_SECRET
   ? { 'CF-Access-Client-Id': ACCESS_CLIENT_ID, 'CF-Access-Client-Secret': ACCESS_CLIENT_SECRET }
   : {};
 
+// Segredo do bypass da regra WAF "CI headers check" (docs/cloudflare-
+// deploy.md §5, regra 2) — substitui o match por User-Agent
+// ("headers-check"), que era uma string pública documentada no próprio
+// repo: qualquer pedido de fora podia copiá-la e saltar a política de país
+// (regras 4/5), a única proteção real depois do lançamento. Um segredo
+// rodável fecha isso. Sem ele, o header não é enviado e o comportamento é
+// idêntico ao anterior (a regra WAF, uma vez migrada para verificar este
+// header, deixa de dar Skip — o pedido volta a cair na política de país,
+// exatamente como qualquer outro visitante).
+const CI_WAF_TOKEN = process.env.CI_WAF_TOKEN || '';
+const wafHeaders = CI_WAF_TOKEN ? { 'x-ci-waf-token': CI_WAF_TOKEN } : {};
+
 /**
  * fetch() que segue redirects à mão, só enquanto ficam na MESMA origem do
  * pedido inicial — mesmo motivo e mesma lógica do fetchSameOrigin em
@@ -75,9 +87,9 @@ if (!target || target.startsWith('SET-ME')) {
   process.exit(0);
 }
 
-console.log(`A verificar ${target}${accessHeaders['CF-Access-Client-Id'] ? ' (com Access Service Token)' : ''}`);
+console.log(`A verificar ${target}${accessHeaders['CF-Access-Client-Id'] ? ' (com Access Service Token)' : ''}${wafHeaders['x-ci-waf-token'] ? ' (com CI_WAF_TOKEN)' : ''}`);
 const res = await fetchSameOrigin(target, {
-  headers: { 'user-agent': 'headers-check (GitHub Actions; personal-site)', ...accessHeaders },
+  headers: { 'user-agent': 'headers-check (GitHub Actions; personal-site)', ...accessHeaders, ...wafHeaders },
 });
 console.log(`HTTP ${res.status}`);
 if (!res.ok) {
