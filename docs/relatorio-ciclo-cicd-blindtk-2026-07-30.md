@@ -80,6 +80,14 @@ fazem push; o token do contador de estrelas movido para `env:`) e deixado
 seis achados de "unpinned-uses" explicitamente em aberto, por falta de
 acesso de leitura aos repositórios externos nessa altura.
 
+**Correção ao inventário:** o `CodeQL` que aparece nos checks do PR
+(`CodeQL` / `Analyze (actions)`) não é um workflow deste repositório — é o
+*default setup* nativo do GitHub (Security → Code scanning), que já estava
+ligado antes desta revisão e cobre a linguagem "GitHub Actions" (as
+próprias workflows). Não corre de um ficheiro em `.github/workflows/`, por
+isso não entrava na contagem "dois — agora quatro — workflows" acima; é um
+quinto controlo, mas configurado fora do YAML.
+
 ---
 
 ## 2. Tabela de decisão (Fase 1) — candidatos do `personal-site`
@@ -269,18 +277,20 @@ forma mensurável.
 `GITHUB_TOKEN` com `contents: write` que o workflow inteiro herdava → push
 direto para `main`.**
 
-**Ficou fechada.** Depois desta revisão: essa dependência está pinada por
-SHA (não por tag), o código dela corre num job com `contents: read` (não
-`write`), e mesmo que o token dele seja lido, as permissões do Deno estão
-reduzidas ao que o script realmente usa. A escrita no repo (`contents:
-write`) está isolada num segundo job que não corre nenhum código de
-terceiros, só faz checkout + download de artefacto + commit + push.
+**Ficou fechada, e já está em `main`** (commit `59dc1d9`, ver Addendum 2).
+Essa dependência está pinada por SHA (não por tag), o código dela corre
+num job com `contents: read` (não `write`), e mesmo que o token dele seja
+lido, as permissões do Deno estão reduzidas ao que o script realmente usa.
+A escrita no repo (`contents: write`) está isolada num segundo job que não
+corre nenhum código de terceiros, só faz checkout + download de
+artefacto + commit + push.
 
 **O que fica aberto, por decisão, não por descuido:** o `git push` final
-continua sem revisão humana (secção 6 — decisão do dono); o badge do
-`visitorbadge.io` continua no README (secção 4 — decisão do dono); e as
-definições de repo da Fase 6 (branch protection, allowlist de Actions,
-secret scanning) continuam por confirmar/ligar fora deste PR.
+continua sem revisão humana — o ruleset do `main` já existe mas ainda não
+tem a regra de PR obrigatório (secção 6 e Addendum 2 — decisão do dono); o
+badge do `visitorbadge.io` continua no README (secção 4 — decisão do
+dono); e secret scanning/push protection/allowlist de Actions (Fase 6,
+itens 2 e 3) continuam por confirmar/ligar fora deste PR.
 
 ---
 
@@ -349,25 +359,99 @@ Depois destas duas correções, os quatro checks do PR do `blindtk/blindtk`
 existiam antes desta revisão, código scanning nativo do GitHub) estão
 verdes.
 
+### Addendum 2: merge, PRs automáticas reconciliadas, e o ruleset já em vigor
+
+**Merge:** `blindtk/blindtk#2` foi integrado em `main` (squash, commit
+`59dc1d9`). Todas as alterações desta secção estão em produção.
+
+**PRs automáticas pendentes, verificadas e resolvidas** (o dono pediu para
+confirmar isto antes do merge — não estava coberto pelo âmbito original da
+Fase 1/2, mas é consequência direta da decisão #10 da tabela):
+
+- **Dependabot #1 — "Bump actions/checkout from 4 to 7".** Fechada sem
+  merge. Duas razões: (a) fica superseded pela remoção do
+  `dependabot.yml` nesta PR (a ecossistema `github-actions` passa a ser
+  gerido só pelo Renovate); (b) mesmo que não fosse, um salto de major
+  (`v4` → `v7`, com mudanças de comportamento documentadas — defaults
+  novos de `pull_request_target`, `allow-unsafe-pr-checkout`) não é uma
+  decisão para tomar na mesma PR que está a reduzir superfície de ataque —
+  fica para uma PR do Renovate à parte, quando o dono quiser avaliar.
+- **Renovate #3 — "Configure Renovate" (onboarding).** Isto revelou um
+  facto que corrige o item #4 da checklist original da Fase 6: **a app
+  Renovate já estava instalada neste repositório antes desta revisão** —
+  não precisava de ser instalada, só não tinha nenhum `renovate.json`/
+  `renovate.json5` para trabalhar a partir de, por isso o Renovate abriu a
+  PR de onboarding com a sua config genérica por omissão. Fechada sem
+  merge (mergear criaria um segundo ficheiro de config, `renovate.json`, a
+  conflituar com o `renovate.json5` desta PR, já em `main`). O Renovate
+  deve reconhecer o config existente na próxima execução agendada.
+
+**Ruleset do `main` — confirmado pelo dono, avaliado:**
+
+```json
+{
+  "name": "Main",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": { "ref_name": { "include": ["~DEFAULT_BRANCH"], "exclude": [] } },
+  "rules": [{ "type": "deletion" }, { "type": "non_fast_forward" }],
+  "bypass_actors": []
+}
+```
+
+Só tem `deletion` (impede apagar o `main`) e `non_fast_forward` (impede
+force-push/reescrever história). **Isto não fecha o achado #7 da Fase
+2/secção 6** — não há regra "Require a pull request before merging", por
+isso um push direto e fast-forward (exatamente o que o job `commit` de
+`update-profile-widgets.yml` faz todas as semanas) continua a passar sem
+qualquer revisão. É proteção real contra dois cenários (apagar o branch,
+reescrever história), mas não contra o cenário que a Fase 0 desenhou
+(escrita não revista). Para fechar isso falta acrescentar a regra de PR
+obrigatório — o que, por sua vez, obriga a escolher uma das três opções da
+secção 6 para o push semanal do bot (hoje `bypass_actors` está vazio; sem
+um bypass para `github-actions[bot]`, ativar essa regra parte o workflow).
+Decisão do dono, não tomada aqui.
+
+**Configurações de segurança do repositório (secret scanning, push
+protection, Dependabot alerts):** não verificadas nesta revisão — as
+ferramentas disponíveis nesta sessão não expõem `Settings → Code security`
+por API. Ficam por confirmar pelo dono (item 2 da checklist abaixo).
+
+**Sobre a lista de workflows de "Code scanning" do GitHub (perguntada
+antes do merge):** nenhum se aplica além do que já foi decidido nesta
+revisão. `CodeQL Analysis` já está ativo (default setup nativo, ver nota
+na Fase 0). `OSSF Scorecard` está coberto pelo `scorecard.yml` desta PR —
+**não ativar também o template do GitHub para o mesmo**, duplicaria o
+SARIF publicado, um dos dois sem pin. Todo o resto da lista (Snyk,
+SonarQube, Checkmarx, Trivy, Bandit, RuboCop, ESLint, tfsec, Fortify,
+Veracode, …) é scanner de linguagem/IaC sem superfície neste repositório —
+mesma lógica de INAPLICÁVEL da tabela da Fase 1.
+
 ---
 
 ## 10. Fase 6 — só o dono pode fazer
 
-Checklist, por ordem de valor. Nada disto foi executado nesta revisão.
+Checklist, por ordem de valor. Estado atualizado depois do merge.
 
-1. **Branch protection / ruleset no `main`** — e decidir uma das três
-   opções da secção 6 para o push do bot semanal.
+1. **Branch protection / ruleset no `main`** — **parcialmente feito**. O
+   ruleset "Main" já existe (`deletion` + `non_fast_forward`), mas falta a
+   regra de PR obrigatório para fechar o achado #7; e falta decidir uma
+   das três opções da secção 6 para o push do bot semanal antes de a
+   ativar (ver Addendum 2).
 2. **Secret scanning + push protection** — grátis em repositório público;
-   compensa o gitleaks local com deteção nativa do GitHub.
+   compensa o gitleaks local com deteção nativa do GitHub. **Não
+   verificado** nesta revisão (sem acesso de API a `Settings → Code
+   security` nesta sessão) — confirmar manualmente.
 3. **Allowlist de Actions + "pin por SHA obrigatório"** nas definições do
    repositório — sem isto, nada impede que uma alteração futura reintroduza
    uma action sem pin. O `personal-site` já tem os dois ligados; ver o
    comentário do job `osv-scanner` em `security.yml` para o efeito prático
    (obrigou a chamar a action do OSV diretamente em vez do workflow
    reutilizável oficial, que traz dependências transitivas sem pin).
-4. **Confirmar/instalar a app Renovate** neste repositório — o
-   `renovate.json5` novo só tem efeito se a app tiver acesso a
-   `blindtk/blindtk` (hoje só cobre o `personal-site`, presumivelmente).
+4. ~~Confirmar/instalar a app Renovate neste repositório~~ — **já estava
+   instalada** (confirmado pela PR de onboarding #3, ver Addendum 2); só
+   faltava o ficheiro de configuração, que esta PR já adiciona. Sem ação
+   pendente aqui.
 5. **Rever o âmbito por omissão do `GITHUB_TOKEN`** nas definições da conta
    (read-only por omissão, subindo só onde declarado — já é o que os
    workflows fazem explicitamente, isto é a rede de segurança se algum dia
