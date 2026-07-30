@@ -479,6 +479,56 @@ SonarQube, Checkmarx, Trivy, Bandit, RuboCop, ESLint, tfsec, Fortify,
 Veracode, …) é scanner de linguagem/IaC sem superfície neste repositório —
 mesma lógica de INAPLICÁVEL da tabela da Fase 1.
 
+### Addendum 4: o impasse da auto-aprovação, o `blindtk/blindtk#4`, e o primeiro resultado do Scorecard
+
+**O impasse.** Ao tentar aprovar o `blindtk/blindtk#4` (a PR que implementa
+a opção escolhida no Addendum 3), o dono não conseguiu — a PR tinha sido
+aberta com as credenciais da própria sessão, portanto o autor registado
+era o próprio dono. O GitHub bloqueia sempre auto-aprovação, é uma regra
+da plataforma, não configurável — e com "Required approvals: 1" isto
+significa que **nenhuma PR alguma vez aberta pelo dono (ou por uma
+ferramenta a agir em nome dele) pode ser aprovada**, só a PR do bot
+(`github-actions[bot]`, identidade diferente) consegue. Resolvido baixando
+"Required approvals" para 0, mantendo "Require a pull request before
+merging" — continua tudo a passar por PR + checks obrigatórios, só deixa
+de exigir um clique de aprovação estruturalmente impossível de satisfazer
+num repositório de um só dono.
+
+**`blindtk/blindtk#4` mergeado** com essa correção: o job `commit` de
+`update-profile-widgets.yml` abre PR (`automated/profile-widgets`) em vez
+de dar push direto; badge do OpenSSF Scorecard adicionado ao README;
+`pull_request_template.md` novo.
+
+**Primeiro resultado do Scorecard: 6.4/10** — o `scorecard.yml` nunca
+tinha corrido antes desta PR (só `schedule`/`workflow_dispatch`, nada
+disparou desde o merge do `#2`); disparado manualmente para confirmar o
+badge. Detalhe por check, e o que é ou não corrigível para um repo de
+perfil de um só dono:
+
+| Check | Nota | Motivo | Corrigível aqui? |
+|---|---|---|---|
+| `Dangerous-Workflow`, `Binary-Artifacts`, `Token-Permissions`, `Dependency-Update-Tool`, `Security-Policy`, `Vulnerabilities`, `SAST`, `CI-Tests` | 10 | Já ao máximo | — |
+| `Packaging`, `Signed-Releases` | N/A (`-1`) | Sem releases/publicação — não conta contra o repo | — |
+| `License` | 0 → **corrigido** | Faltava `LICENSE` (ao contrário do `personal-site`) | Sim — `blindtk/blindtk#5` |
+| `Pinned-Dependencies` | 8 → **corrigido** | `pip install zizmor==1.28.0` só pinado por versão, não por hash | Sim — `blindtk/blindtk#5`, `.github/zizmor-requirements.txt` com os 11 hashes publicados no PyPI para 1.28.0, `pip install --require-hashes` |
+| `Maintained` | 0 | Scorecard recusa-se a pontuar repos com <90 dias — sobe sozinho | Não precisa de ação |
+| `Code-Review` | 0 | "0/11 approved changesets" — mede aprovação de **outra pessoa** | **Não** — precisa de um segundo humano real |
+| `Contributors` | 0 | Exige contribuidores de 3+ organizações diferentes | **Não** — repo de um só dono |
+| `Branch-Protection` | 4 (não 10) | Avisos são todos "requires approvers"/"codeowners"/"last push approval" — a mesma limitação do `Code-Review` | **Não**, sem um segundo revisor |
+| `Fuzzing` | 0 | Sem código de aplicação para fazer fuzzing | **Não** — forçar seria teatro |
+| `CII-Best-Practices` | 0 | Programa externo (`bestpractices.dev`), candidatura + critérios, não é código | Opcional, fora do âmbito de uma PR |
+
+**`blindtk/blindtk#5`** implementa os dois corrigíveis (`LICENSE` +
+`.github/zizmor-requirements.txt` com `--require-hashes`, mais
+`renovate.json5` a ganhar `pip_requirements.managerFilePatterns` para o
+Renovate manter o hash sincronizado com a versão, e o `paths` filter do
+`lint-actions.yml` alargado para incluir o novo ficheiro).
+
+**Teto honesto:** mesmo com tudo isto, o `Code-Review`/`Contributors`/
+`Branch-Protection` mantêm o score bem abaixo de 10 — medem literalmente
+"há uma equipa a rever o teu trabalho", que este repositório não tem por
+desenho. Um 10/10 exigiria fingir uma governação que não existe.
+
 ---
 
 ## 10. Fase 6 — só o dono pode fazer
@@ -486,16 +536,17 @@ mesma lógica de INAPLICÁVEL da tabela da Fase 1.
 Checklist, por ordem de valor. Estado atualizado depois do merge.
 
 1. ~~Branch protection / ruleset no `main`~~ — **feito**. "Require a pull
-   request before merging" (1 aprovação) está ativo, `bypass_actors`
-   continua vazio (ver Addendum 3); `blindtk/blindtk#4` adapta o job
-   `commit` para abrir PR em vez de dar push direto. Falta só um
-   requisito operacional para essa PR funcionar — **"Allow GitHub Actions
-   to create pull requests"** em `Settings → Actions → General → Workflow
-   permissions` — e, como observação à parte (não bloqueia nada, mas
-   fecha uma lacuna real): considerar acrescentar **"Require status
-   checks to pass before merging"** ao mesmo ruleset, para os checks
-   (`zizmor`/`gitleaks`/`CodeQL`) passarem a impedir merge quando
-   vermelhos, não só a informar.
+   request before merging" está ativo; "Required approvals" acabou em
+   **0** (não 1 — baixado depois do impasse de auto-aprovação, ver
+   Addendum 4), `bypass_actors` continua vazio. "Require status checks to
+   pass before merging" também ligado, com `gitleaks` e `CodeQL` como
+   checks obrigatórios (`zizmor` fica de fora de propósito — tem `paths:`
+   filtrado e ficaria pendente para sempre numa PR que só mexe em
+   `assets/`). `blindtk/blindtk#4` adapta o job `commit` para abrir PR em
+   vez de dar push direto — mergeado. Falta só o requisito operacional
+   **"Allow GitHub Actions to create pull requests"** em
+   `Settings → Actions → General → Workflow permissions`, sem o qual o
+   `gh pr create` falha.
 2. ~~Secret scanning + push protection~~ — **confirmado ativo** pelo dono
    (Addendum 3).
 3. **Allowlist de Actions + "pin por SHA obrigatório"** nas definições do
