@@ -1,5 +1,13 @@
 # Revisão de postura de segurança — 2026-07
 
+> **Nota (2026-07-30):** este documento é o **log de trabalho**, por rondas
+> (1-4), da revisão original — achados, correções aplicadas e a evolução do
+> pensamento ao longo do processo. O retrato **atual**, pensado para leitura
+> por um revisor externo (o repositório vai ficar público), é
+> [`security-review-2026-07-29.md`](security-review-2026-07-29.md). Mantêm-se
+> os dois: este preserva o histórico de achados e correções; o outro é o que
+> se linka a partir do `README.md`.
+
 > Avaliação crítica do repositório e da infraestrutura, na perspetiva de
 > *Principal AppSec / DevSecOps*. Âmbito: `static/` (Astro no Pages),
 > `dynamic/worker/` (Cloudflare Worker), `.github/` (CI/CD) e a zona

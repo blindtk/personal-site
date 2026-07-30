@@ -16,9 +16,13 @@ CSP. Um só Cloudflare Worker + um namespace KV.
 | `GET /api/honeypot` | Stats agregadas + últimas 30 tentativas | 60 s | — |
 | `GET /api/map` | Origens por país (24 h / 7 d) | 60 s | — |
 | `GET /api/scan` | Nota + checklist dos cabeçalhos do próprio site | 6 h | `?refresh=1`: 3/10 min |
+| `GET /api/pwned-range` | Proxy k-anonimato para a Have I Been Pwned range API (ferramenta `pwned`) — só o prefixo de 5 carateres do hash sai do browser | — | — |
 | `GET /api/ticker` | CISA KEV + NVD críticos, sanitizados | 1 h | — |
 | `POST /api/csp-report` | Recetor de violações CSP — envio **manual** (botão na página Provas), não `report-uri`/`report-to` automático (removidos da CSP em 2026-07, ver `docs/security-headers.md`) | — | 10/min por cliente + cap global 300/h |
 | `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
+| `GET /api/threat-intel` | Heatmap, hora-do-dia, tops (país/ASN/técnica) e eventos recentes (painel Perímetro) | 6 h | — |
+| `POST /api/vitals` | Recetor de Web Vitals (LCP/CLS/etc.) — beacon first-party não-autenticado | — | mesmo padrão do `/api/csp-report` |
+| `GET /api/vitals` | Agregados de Web Vitals (p75 + classificação, por histograma) | 120 s | — |
 | `GET /api/ct` | Vigia CT: certificados emitidos p/ o domínio (logs de Certificate Transparency, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona (+ top países por ameaças) + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Espelho: a "vista do servidor" deste pedido (TLS/ASN/país/UA, **nunca o IP**) | — (per-request, `no-store`) | 30/min por cliente |

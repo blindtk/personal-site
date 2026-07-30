@@ -490,8 +490,14 @@
   Connectors na app — não os do `.mcp.json`). Decisão do dono do repo:
   manter os sete, reduzir aos de leitura, ou mover `cloudflare-bindings`
   para um connector pessoal (fora do repo, não proposto a toda a gente que
-  o clone) se a escrita continuar a ser necessária. Fica registado o
-  achado; a decisão de manter/podar não foi tomada aqui.
+  o clone) se a escrita continuar a ser necessária.
+
+  **Resolvido (2026-07-30, preparação do repositório para público):**
+  decisão do dono foi reduzir aos de leitura. `cloudflare-bindings` (o único
+  de escrita) foi removido de `.mcp.json`; os seis restantes
+  (`cloudflare-audit-logs`, `cloudflare-graphql-analytics`,
+  `cloudflare-dns-analytics`, `cloudflare-observability`, `cloudflare-builds`,
+  `cloudflare-docs`) ficam, confirmados como leitura pela análise acima.
 
 ## Ideias guardadas (apresentadas, **não aprovadas** para implementação)
 

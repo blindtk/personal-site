@@ -44,7 +44,8 @@ flowchart TB
 
     laptop -->|push| gh
     gh -->|"npm ci --ignore-scripts,\nbuild, test, SAST"| gh
-    laptop -.->|"wrangler deploy\n(MANUAL — ver ADR 0003\ne security-review §H3)"| worker
+    laptop -.->|"wrangler deploy\n(manual, só para testar\nbranch antes do merge —\nver CLAUDE.md)"| worker
+    gh -.->|"Workers Builds: deploy\nautomático no push a main"| worker
     gh -.->|"Pages: deploy automático\nno push a main"| pages
 ```
 
@@ -54,12 +55,20 @@ flowchart TB
    antes de chegar a Pages ou ao Worker. Nada na aplicação confia em headers
    de cliente sem validar (`normalizeCountry`, `normalizeAsn`, etc. em
    `sanitize.js`).
-2. **Laptop do developer → produção.** A única fronteira sem controlo
-   automatizado hoje: o deploy do Worker é manual (`npx wrangler deploy`).
-   O Pages é automático (push a `main` → build → deploy), mas o Worker não
-   tem esse mesmo caminho — ver `docs/security-review-2026-07-29.md` (achado
-   H3) para o plano de fechar esta lacuna com um Environment do GitHub +
-   token com escopo mínimo + `attest-build-provenance`.
+2. **GitHub → produção (Worker e Pages).** Ambos automáticos: push a `main`
+   dispara o build/deploy do Pages (integração Git nativa da Cloudflare) e,
+   em paralelo, o deploy do Worker via **Workers Builds** (a mesma
+   integração Git, configurada no dashboard da Cloudflare — ver
+   `docs/cloudflare-deploy.md` §4). Não há passo manual no caminho normal.
+   Falta, ainda assim, o que o achado H3 de
+   `docs/security-review-2026-07-29.md` pede: proveniência verificável entre
+   commit e artefacto deployado (`attest-build-provenance`) e um gate de
+   revisor num GitHub Environment — o Workers Builds automatiza o deploy,
+   mas não dá nenhuma das duas coisas, porque corre inteiramente do lado da
+   Cloudflare, fora do GitHub Actions. Existe também um caminho manual
+   secundário (`npx wrangler deploy` a partir do laptop do developer),
+   documentado em `CLAUDE.md` como forma de testar uma branch antes do
+   merge — aponta para o mesmo Worker de produção se corrido sem cuidado.
 3. **Worker → APIs externas.** Todas as chamadas são unidirecionais
    (o Worker só lê), com timeout (`AbortSignal.timeout`), e o self-scan usa
    `fetchSameOrigin` para nunca deixar as credenciais da Access seguirem um
@@ -70,10 +79,11 @@ flowchart TB
 | | Trigger | Automatizado? |
 | --- | --- | --- |
 | `static/` (Pages) | push a `main` | Sim — integração Git nativa da Cloudflare |
-| `dynamic/worker/` | `npx wrangler deploy` a partir do laptop | Não (ver acima) |
+| `dynamic/worker/` | push a `main` (Workers Builds) | Sim — mesma integração Git, configurada à parte no dashboard (ver `docs/cloudflare-deploy.md` §4) |
 
-Isto não é uma inconsistência acidental — está documentado em
-`dynamic/PLAN.md` e no topo de `wrangler.toml` como o fluxo atual ("validar
-com o fluxo já documentado no CLAUDE.md antes de fazer merge"). É, no
-entanto, a maior lacuna de proveniência do repositório, e fica assinalada
-como tal.
+Os dois caminhos são automáticos, mas nenhum passa pelo GitHub Actions — a
+lacuna real (achado H3) não é "deploy manual", é **ausência de proveniência
+verificável e de um gate de revisor** entre o commit em `main` e o que fica a
+correr na Cloudflare. Um `npx wrangler deploy` manual a partir do laptop
+continua possível como via secundária (testar uma branch antes do merge,
+`CLAUDE.md`) e aponta para o mesmo Worker de produção.

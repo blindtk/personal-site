@@ -7,7 +7,7 @@ import SelfScan from '../tools/SelfScan.astro';
 import CtWatch from '../CtWatch.astro';
 import CspViolations from '../CspViolations.astro';
 import SiteLayers from '../SiteLayers.astro';
-import { SITE_URL, type Lang } from '../../config';
+import { SITE, SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
 
@@ -79,7 +79,7 @@ const scanners = [
             <tbody>
               <tr>
                 <th class="mono">{ev.commitHashLabel}</th>
-                <td><span class="hl">{commit.full}</span></td>
+                <td><a class="hl mono" href={`${SITE.repo}/commit/${commit.full}`} rel="noopener">{commit.full}</a></td>
               </tr>
               <tr>
                 <th class="mono">{ev.commitSubjectLabel}</th>
@@ -169,7 +169,9 @@ const scanners = [
     </div>
     <p class="note">{ev.pipelineNote}</p>
     <ul class="ev-links mono">
-      {workflows.map((wf) => <li>{wf}</li>)}
+      {workflows.map((wf) => (
+        <li><a href={`${SITE.repo}/actions/workflows/${wf}`} rel="noopener">→ {wf}</a></li>
+      ))}
     </ul>
   </section>
 
@@ -202,6 +204,12 @@ const scanners = [
     text-decoration: none;
   }
   .ev-links a:hover {
+    text-decoration: underline;
+  }
+  .result-table td a.hl {
+    text-decoration: none;
+  }
+  .result-table td a.hl:hover {
     text-decoration: underline;
   }
   /* A coluna "exige" alinha os requisitos como chips; os valores são curtos

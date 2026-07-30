@@ -45,7 +45,7 @@ inventory.*
 There's no fixed list — that's the nature of a testing ground: this site's
 tools pass through before they reach someone else's browser, configs I want
 to validate before taking them to work, and attack-infrastructure setups for
-lab and CTF practice (the heatmap on [Attack](/en/attack/) maps that practice
+lab and CTF practice (the [ATT&CK heatmap](/en/attack/) maps that practice
 to MITRE ATT&CK's *Acquire Infrastructure* technique, at the "occasional
 experience / lab" level). The common thread is always the same: nothing
 touches production without going through here first.
