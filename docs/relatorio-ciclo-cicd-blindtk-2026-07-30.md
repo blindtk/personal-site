@@ -399,23 +399,75 @@ Fase 1/2, mas é consequência direta da decisão #10 da tabela):
 }
 ```
 
-Só tem `deletion` (impede apagar o `main`) e `non_fast_forward` (impede
-force-push/reescrever história). **Isto não fecha o achado #7 da Fase
-2/secção 6** — não há regra "Require a pull request before merging", por
-isso um push direto e fast-forward (exatamente o que o job `commit` de
-`update-profile-widgets.yml` faz todas as semanas) continua a passar sem
-qualquer revisão. É proteção real contra dois cenários (apagar o branch,
-reescrever história), mas não contra o cenário que a Fase 0 desenhou
-(escrita não revista). Para fechar isso falta acrescentar a regra de PR
-obrigatório — o que, por sua vez, obriga a escolher uma das três opções da
-secção 6 para o push semanal do bot (hoje `bypass_actors` está vazio; sem
-um bypass para `github-actions[bot]`, ativar essa regra parte o workflow).
-Decisão do dono, não tomada aqui.
+Só tinha `deletion` (impede apagar o `main`) e `non_fast_forward` (impede
+force-push/reescrever história) — **não fechava o achado #7**, porque não
+havia regra "Require a pull request before merging".
 
-**Configurações de segurança do repositório (secret scanning, push
-protection, Dependabot alerts):** não verificadas nesta revisão — as
-ferramentas disponíveis nesta sessão não expõem `Settings → Code security`
-por API. Ficam por confirmar pelo dono (item 2 da checklist abaixo).
+### Addendum 3: o dono ligou "Require a pull request", o bot passou a abrir PR
+
+O dono ativou entretanto **"Require a pull request before merging"** (1
+aprovação obrigatória, `bypass_actors` continua vazio). Isto fecha de facto
+o achado #7 para qualquer escrita humana — mas tem uma consequência direta
+sobre o job `commit`: um `git push` direto deixa de ser possível para
+**qualquer** ator sem bypass, incluindo o `GITHUB_TOKEN` do workflow. Sem
+alteração, a próxima execução agendada (segunda-feira 06:00 UTC) falharia
+com erro de branch protegido.
+
+Três opções foram postas à mesa (mesmas da secção 6): bypass para
+`github-actions[bot]`; PR com auto-merge; ou PR com aprovação manual. O
+dono escolheu a terceira, e com boa razão — com "Required approvals: 1" já
+ativo, o auto-merge deixou de ser prático: o GitHub bloqueia
+auto-aprovação (o autor de uma PR não se pode aprovar a si próprio), por
+isso "auto-merge" precisaria ou de uma aprovação manual semanal na mesma
+(anulando o ganho de automação) ou de uma segunda identidade/token só para
+aprovar — mais um segredo, mais superfície, o oposto do que esta revisão
+anda a reduzir. O bypass, por outro lado, deixaria o `main` protegido só
+para humanos, não para o caminho automático.
+
+**Implementado em `blindtk/blindtk#4`:** o job `commit` deixa de fazer
+`git push` para `main`. Cria (ou força-atualiza) um branch fixo
+`automated/profile-widgets` — fixo e não datado, para que uma PR de uma
+semana anterior nunca aprovada seja substituída pelos dados mais recentes
+em vez de se acumularem várias PRs por resolver — e abre PR com
+`gh pr create` (só se não houver já uma aberta para esse branch).
+`permissions` do job ganha `pull-requests: write`, além do `contents:
+write` que já tinha. Um humano aprova e mergeia sempre; nada entra em
+`main` por essa via sem essa ação.
+
+**Passo manual que falta, sem o qual isto não corre:** a definição de
+repositório **"Allow GitHub Actions to create pull requests"**
+(`Settings → Actions → General → Workflow permissions`) tem de estar
+ligada — é uma guarda separada que o GitHub acrescentou especificamente
+para este cenário (workflow a abrir PRs), e sem ela o `gh pr create` falha
+mesmo com `pull-requests: write` declarado no YAML.
+
+**Observação à parte, ainda por decidir:** o ruleset tem "Require a pull
+request" mas, pelo que é visível, não tem **"Require status checks to
+pass before merging"** — uma PR (incluindo a do bot) pode hoje ser
+mergeada mesmo que `zizmor`/`gitleaks`/`CodeQL` estejam vermelhos. Vale a
+pena adicionar essa regra para os checks passarem a ser um gate real, não
+só informativo.
+
+**Configurações de segurança do repositório:** o dono confirmou
+diretamente que **secret scanning e push protection estão ativos** — item
+2 da checklist fica fechado. Dependabot alerts não foi confirmado
+explicitamente; assume-se coberto pelo mesmo painel, mas não verificado
+por esta revisão.
+
+**Duas lacunas de "aparência" fechadas na mesma PR** (o dono reparou que
+faltava a primeira ao rever o README):
+
+- **Badge do OpenSSF Scorecard em falta.** O `scorecard.yml` corre desde
+  o merge de #2, mas nada no README apontava para o resultado — o
+  controlo existia, mas não era visível. Adicionado
+  `[![OpenSSF Scorecard](...)]` na secção de estatísticas, com uma frase a
+  ligar o badge ao próprio `scorecard.yml` (o repositório a aplicar a si
+  próprio o que descreve fazer no `personal-site`).
+- **`.github/pull_request_template.md` novo.** Agora que existe um fluxo
+  de PR real e recorrente (a PR semanal do bot), um lembrete barato e
+  específico — confirmar visualmente os 5 SVGs no separador "Files
+  changed" antes de aprovar, porque os checks confirmam que o workflow
+  correu, não que o conteúdo gerado é o correto.
 
 **Sobre a lista de workflows de "Code scanning" do GitHub (perguntada
 antes do merge):** nenhum se aplica além do que já foi decidido nesta
@@ -433,15 +485,19 @@ mesma lógica de INAPLICÁVEL da tabela da Fase 1.
 
 Checklist, por ordem de valor. Estado atualizado depois do merge.
 
-1. **Branch protection / ruleset no `main`** — **parcialmente feito**. O
-   ruleset "Main" já existe (`deletion` + `non_fast_forward`), mas falta a
-   regra de PR obrigatório para fechar o achado #7; e falta decidir uma
-   das três opções da secção 6 para o push do bot semanal antes de a
-   ativar (ver Addendum 2).
-2. **Secret scanning + push protection** — grátis em repositório público;
-   compensa o gitleaks local com deteção nativa do GitHub. **Não
-   verificado** nesta revisão (sem acesso de API a `Settings → Code
-   security` nesta sessão) — confirmar manualmente.
+1. ~~Branch protection / ruleset no `main`~~ — **feito**. "Require a pull
+   request before merging" (1 aprovação) está ativo, `bypass_actors`
+   continua vazio (ver Addendum 3); `blindtk/blindtk#4` adapta o job
+   `commit` para abrir PR em vez de dar push direto. Falta só um
+   requisito operacional para essa PR funcionar — **"Allow GitHub Actions
+   to create pull requests"** em `Settings → Actions → General → Workflow
+   permissions` — e, como observação à parte (não bloqueia nada, mas
+   fecha uma lacuna real): considerar acrescentar **"Require status
+   checks to pass before merging"** ao mesmo ruleset, para os checks
+   (`zizmor`/`gitleaks`/`CodeQL`) passarem a impedir merge quando
+   vermelhos, não só a informar.
+2. ~~Secret scanning + push protection~~ — **confirmado ativo** pelo dono
+   (Addendum 3).
 3. **Allowlist de Actions + "pin por SHA obrigatório"** nas definições do
    repositório — sem isto, nada impede que uma alteração futura reintroduza
    uma action sem pin. O `personal-site` já tem os dois ligados; ver o
