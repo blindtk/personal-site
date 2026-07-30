@@ -30,6 +30,13 @@
   **Reverter (`DEBUG_EXPOSE_SELF_PATH = false` e os 2 testes que dependem
   do path) assim que a causa das violações self/self for confirmada.**
 
+  **2026-07-30 — confirmado com o dono do repo** (preparação do repositório
+  para público, `docs/prompt-repo-publico.md`): diagnóstico ainda a
+  decorrer, flag mantém-se `true`. Reavaliar este ponto antes do repositório
+  ficar público, já que a mitigação assume produção atrás da Cloudflare
+  Access — se essa premissa mudar antes da causa ser confirmada, reverter
+  primeiro.
+
 - **2026-07-29 — Workflow `invariants.yml`: fecha o loop deteção → alerta**
   (discutido com o dono do repo depois da revisão de segurança do mesmo
   dia): os dashboards do honeypot/threat-intel/CT/CF-stats são só **pull**

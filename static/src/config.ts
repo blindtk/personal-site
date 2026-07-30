@@ -21,10 +21,7 @@ export const SITE = {
     en: 'Personal site of Daniel Malaco — Information Security Engineer. Blog, projects, and networking/security tools.',
   },
   /** Contactos e redes. Deixa vazio ('') para esconder. */
-  // Recomendação: quando o domínio estiver ativo, cria um alias (ex.:
-  // hello@danielmala.co) e troca aqui — o hotmail deixa de estar exposto
-  // e podes rodar o alias se começar a receber spam.
-  email: 'daniel_malaco@hotmail.com',
+  email: 'me@danielmala.co',
   github: 'https://github.com/blindtk',
   /** Repositório deste site — usado para deep-links verificáveis (commit,
    *  workflows) na página Provas. Troca se moveres o repo. */
