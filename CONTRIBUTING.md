@@ -1,54 +1,54 @@
-# Contribuir
+# Contributing
 
-Este é um projeto pessoal com um único mantenedor (Daniel Malaco), mas o
-repositório é público e contribuições são bem-vindas — desde uma correção
-de typo até uma sugestão de arquitetura.
+This is a personal project with a single maintainer (Daniel Malaco), but
+the repository is public and contributions are welcome — from a typo fix
+to an architecture suggestion.
 
-## Antes de mexer em código
+## Before touching code
 
-Lê o [`CLAUDE.md`](CLAUDE.md): define as convenções do projeto (as três
-áreas do monorepo — `content/`, `static/`, `dynamic/` —, a regra
-bilingue PT/EN, onde vivem as strings de UI, etc.). Uma alteração que não
-siga essas convenções não vai ser aceite tal como está, mesmo que a lógica
-esteja correta.
+Read [`CLAUDE.md`](CLAUDE.md): it defines the project's conventions (the
+monorepo's three areas — `content/`, `static/`, `dynamic/` —, the PT/EN
+bilingual rule, where UI strings live, etc.). A change that doesn't follow
+those conventions won't be accepted as-is, even if the logic is correct.
 
-## Reportar um bug
+## Reporting a bug
 
-Abre uma [Issue](https://github.com/blindtk/personal-site/issues) com:
+Open an [Issue](https://github.com/blindtk/personal-site/issues) with:
 
-- o que esperavas que acontecesse vs. o que aconteceu;
-- passos para reproduzir;
-- se for visual, um screenshot ajuda mais do que uma descrição longa.
+- what you expected to happen vs. what happened;
+- steps to reproduce;
+- if it's visual, a screenshot helps more than a long description.
 
-**Vulnerabilidades de segurança nunca vão numa Issue pública** — segue o
-processo em [`.github/SECURITY.md`](.github/SECURITY.md).
+**Security vulnerabilities never go in a public Issue** — follow the
+process in [`.github/SECURITY.md`](.github/SECURITY.md).
 
-## Propor uma alteração
+## Proposing a change
 
-1. Faz fork do repositório e cria uma branch a partir de `main`.
-2. Faz a alteração seguindo as convenções do `CLAUDE.md`.
-3. Corre `cd static && npm run build` — tem de passar sem erros nem
-   warnings novos antes de abrires o PR.
-4. Se mexeste em `dynamic/worker/` ou nas ferramentas de `/ferramentas/`,
-   corre também `node --test` e valida a lógica com vetores conhecidos.
-5. Se mexeste em `dynamic/worker/src/lib/csp-report.js` ou `sanitize.js`,
-   corre também os harnesses de fuzzing localmente (`.clusterfuzzlite/fuzz/`)
-   por alguns segundos, para confirmar que continuam a compilar e a correr
-   sem crashar:
+1. Fork the repository and create a branch from `main`.
+2. Make the change following `CLAUDE.md`'s conventions.
+3. Run `cd static && npm run build` — it has to pass with no errors or
+   new warnings before you open the PR.
+4. If you touched `dynamic/worker/` or the tools in `/ferramentas/`, also
+   run `node --test` and validate the logic with known vectors.
+5. If you touched `dynamic/worker/src/lib/csp-report.js` or
+   `sanitize.js`, also run the fuzzing harnesses locally
+   (`.clusterfuzzlite/fuzz/`) for a few seconds, to confirm they still
+   compile and run without crashing:
    ```bash
    npx --yes -p @jazzer.js/core jazzer .clusterfuzzlite/fuzz/csp_report_fuzz.js --sync -- -max_total_time=5
    npx --yes -p @jazzer.js/core jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=5
    ```
-6. Abre o Pull Request — o modelo (`.github/pull_request_template.md`)
-   guia o que incluir. A CI (build, testes, análise estática) corre
-   automaticamente; tem de passar antes de qualquer merge.
+6. Open the Pull Request — the template
+   (`.github/pull_request_template.md`) guides what to include. CI
+   (build, tests, static analysis) runs automatically; it has to pass
+   before any merge.
 
-Não há um processo de CLA nem de aprovação prévia para começar a
-trabalhar — mas para alterações grandes ou que mudem arquitetura, abre
-uma Issue primeiro a propor a ideia, para não haver trabalho desperdiçado
-se a direção não for a pretendida.
+There's no CLA process or prior approval required to start working — but
+for large changes or ones that shift architecture, open an Issue first to
+propose the idea, so no work is wasted if the direction isn't the intended
+one.
 
-## Licença
+## License
 
-Ao contribuir, aceitas que a tua contribuição seja distribuída sob a
-mesma licença do projeto ([MIT](LICENSE)).
+By contributing, you agree that your contribution is distributed under
+the project's own license ([MIT](LICENSE)).

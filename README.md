@@ -262,9 +262,9 @@ decision in this repository.
 ## Contributing
 
 Single-maintainer project, but the repo is public and contributions are
-welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process (in
-Portuguese, like the rest of `docs/`) — bug reports, PR conventions, and
-where the project's own conventions live (`CLAUDE.md`).
+welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process — bug
+reports, PR conventions, and where the project's own conventions live
+(`CLAUDE.md`, in Portuguese, like the rest of `docs/`).
 
 ## Security
 
