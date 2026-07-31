@@ -22,13 +22,15 @@ jobs:
   #
   # Chamamos a *action* diretamente em vez do workflow reutilizável oficial:
   # esse workflow, por dentro, usa actions/download-artifact e
-  # github/codeql-action/upload-sarif (para publicar SARIF em Security → Code
-  # scanning, que exige o GitHub Advanced Security — indisponível neste repo).
-  # Com a allowlist de Actions e o "pin por SHA obrigatório" ativos no repo,
-  # essas actions transitivas (uma delas pinada por tag) fazem o CI recusar o
-  # workflow. A action direta, pinada por SHA e coberta pela allowlist
-  # (google/osv-scanner-action/*), mantém a deteção sem SARIF nem essas
-  # dependências.
+  # github/codeql-action/upload-sarif, pinadas por tag (não por SHA) do lado
+  # do próprio workflow reutilizável — a allowlist de Actions e o "pin por
+  # SHA obrigatório" deste repo fariam o CI recusar essas transitivas. A
+  # action direta, pinada por SHA e coberta pela allowlist
+  # (google/osv-scanner-action/*), mantém a deteção sem essa dependência.
+  # (Nota histórica: até o repo ficar público, havia uma segunda razão — o
+  # upload de SARIF para Security → Code scanning exigia GitHub Advanced
+  # Security. Já não se aplica; ver codeql.yml e scorecard.yml, que publicam
+  # SARIF diretamente.)
   osv-scanner:
     runs-on: ubuntu-latest
     permissions:

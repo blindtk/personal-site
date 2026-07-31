@@ -1,0 +1,63 @@
+# Configuração da CodeRabbit — revisão de PR por IA (grátis em repositório
+# público). Ver docs/security-review-2026-07-29.md §4 "CodeRabbit —
+# Recommended": por omissão é verbosa e comenta em decisões de estilo já
+# tomadas ("Needs a .coderabbit.yaml to be tolerable") — este ficheiro é
+# essa calibração.
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+
+language: "en-US"
+
+reviews:
+  profile: chill
+  high_level_summary: true
+  poem: false
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    # conteúdo editorial (markdown/JSON), não código — regra do CLAUDE.md
+    # ("content/ nunca tem código")
+    - "!content/**"
+    - "!**/package-lock.json"
+    - "!**/*.svg"
+    - "!**/*.png"
+    - "!**/*.jpg"
+
+  path_instructions:
+    - path: "dynamic/worker/**"
+      instructions: >
+        Worker Cloudflare com orçamento de escrita KV apertado (~1000/dia no
+        plano Free, ver dynamic/PLAN.md) e um princípio zero-PII estrito
+        (docs/threat-model.md, ADR 0004): nunca guardar IP nem qualquer
+        campo que possa identificar um visitante. Lógica pura em
+        src/lib/*.js precisa de testes em test/logic.test.mjs com vetores
+        conhecidos. Falha fechada (fail-closed), nunca aberta, em rate
+        limit e caps de escrita.
+
+    - path: "static/src/scripts/**"
+      instructions: >
+        Lógica pura das ferramentas em /ferramentas/ (sem DOM, testável em
+        Node) — precisa de testes com vetores conhecidos (CLAUDE.md,
+        secção "Ferramentas"). Sinks de DOM XSS (innerHTML, outerHTML,
+        document.write, insertAdjacentHTML) são proibidos — ver
+        .semgrep/astro-dom.yml.
+
+    - path: ".github/workflows/**"
+      instructions: >
+        Todas as actions pinadas por commit SHA (não por tag), permissions
+        mínimas por job (nada por omissão a nível de workflow), sem
+        pull_request_target nem workflow_run. Auditado por
+        `zizmor --min-severity medium` no próprio CI.
+
+    - path: "static/src/i18n/**"
+      instructions: >
+        PT e EN têm de manter paridade de chaves — nunca adicionar uma
+        string só num idioma.
+
+    - path: "static/src/pages/**"
+      instructions: >
+        Rotas finas por design (CLAUDE.md): 3 linhas, importam uma
+        componente de src/components/pages/ e passam lang. Lógica nunca
+        deve viver aqui.

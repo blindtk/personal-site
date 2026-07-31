@@ -1,0 +1,50 @@
+# Análise semântica de dataflow (CodeQL) para JavaScript/TypeScript — cobre
+# o Worker (dynamic/worker/src/lib/*.js) e a lógica pura do site
+# (static/src/scripts/*.js, static/src/lib/*.ts). Complementa o Semgrep
+# (security.yml): o Semgrep faz pattern-matching, o CodeQL segue dataflow
+# interprocedural (input em string → sinks de URL/fetch/KV). Nenhum dos
+# dois analisa bem os <script> dentro de componentes .astro — para isso
+# continua a valer a regra própria em .semgrep/astro-dom.yml.
+#
+# Só possível gratuitamente com o repositório público (upload de SARIF para
+# Security → Code scanning exige GitHub Advanced Security em repo privado —
+# ver docs/security-review-2026-07-29.md §4 "CodeQL").
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Segunda de madrugada, antes do Supply chain (0 6 * * 1) e depois da
+    # janela do Headers (17 6) — scan completo com security-extended, mais
+    # lento do que o gate de PR/push (que usa o pack por omissão).
+    - cron: '30 5 * * 1'
+
+permissions: {}
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
+        with:
+          languages: javascript-typescript
+          # security-extended só no cron semanal (mais queries, mais lento);
+          # no gate de PR/push fica-se pelo pack por omissão, para não
+          # atrasar o feedback do PR.
+          queries: ${{ github.event_name == 'schedule' && 'security-extended' || '' }}
+
+      # JS/TypeScript não precisa de passo de build: o CodeQL extrai
+      # diretamente do código-fonte.
+      - name: Analisar
+        uses: github/codeql-action/analyze@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
