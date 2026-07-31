@@ -12,6 +12,7 @@ const jsStrings = {
   noGps: s.noGps,
   openMapBase: 'https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=16/{lat}/{lon}',
   filenameDemo: s.filenameDemo,
+  downloadFilename: s.downloadFilename,
   invalidFile: s.invalidFile,
   rowMake: s.rowMake,
   rowModel: s.rowModel,
@@ -226,7 +227,7 @@ const jsStrings = {
         if (!blob) return;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'sem-metadados.jpg';
+        a.download = S.downloadFilename;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       }, 'image/jpeg', 0.92);

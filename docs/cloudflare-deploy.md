@@ -188,7 +188,7 @@ Porquê cada regra:
   regra estiver ativa, o honeypot só regista quem *resolve* o desafio (um
   browser real com JS, nalguns casos scanners avançados com automação
   tipo-browser), não o scanning de massa indiscriminado que domina a
-  Internet. Ver `docs/honeypot-analise-evolucao.md` §0/§9.6 para a análise
+  Internet. Ver `docs/proposals/honeypot-analise-evolucao.md` §0/§9.6 para a análise
   completa desta troca (proteção vs. observabilidade) e para a copy que a
   declara publicamente.
 - **4/5**: a política geográfica endureceu de "27 países da UE, Managed

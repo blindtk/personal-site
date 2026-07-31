@@ -22,7 +22,7 @@ const jsStrings = { error: s.error, copy: s.copy, copied: s.copied };
   </div>
   <div class="field">
     <label for="enc-input">{s.inputLabel}</label>
-    <textarea id="enc-input" spellcheck="false" placeholder="olá, mundo"></textarea>
+    <textarea id="enc-input" spellcheck="false" placeholder={s.inputPlaceholder}></textarea>
   </div>
   <div class="btn-row">
     <button type="button" class="btn" id="enc-encode">{s.encode}</button>

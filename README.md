@@ -8,10 +8,15 @@
 [![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
+Two of the nine workflows in [`.github/workflows/`](.github/workflows/) have
+no badge above: `dependency-review.yml` (PR-scoped, listed in the build
+pipeline table below) and `labeler.yml` (applies area labels to PRs — repo
+hygiene, not a security check).
+
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 190 tests, six CI workflows, four ADRs,
+real data for the dashboards it feeds. 233 tests, nine CI workflows, four ADRs,
 for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
@@ -61,7 +66,7 @@ code, not asserted from memory.
 
 ## Why so much for a personal site?
 
-A personal site with a threat model, four ADRs, six CI workflows, and 190
+A personal site with a threat model, four ADRs, nine CI workflows, and 233
 tests is disproportionate for what it does — unless the disproportion *is* the
 point. It is: this repository exists to demonstrate security-engineering
 practice at a scale where the controls become meaningful, not to serve a blog
@@ -158,6 +163,7 @@ goes through:
 | Check | Where | What it guarantees |
 | --- | --- | --- |
 | **Build + `npm audit`** | `ci.yml` | The site builds clean, no high/critical advisories in dependencies. |
+| **Dependency Review** | `dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (the GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
 | **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
 | **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
 | **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
@@ -249,7 +255,7 @@ Built with heavy use of Claude Code — the branch names in the merge commits
 already say so, on every PR. Architecture, threat model, security decisions,
 and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
 trade-offs and the alternatives rejected. Every security-relevant change is
-covered by tests (`npm test`, 190 across the Worker and the site) and by the
+covered by tests (`npm test`, 233 across the Worker and the site) and by the
 scanners in [`.github/workflows/`](.github/workflows/). I can walk through any
 decision in this repository.
 

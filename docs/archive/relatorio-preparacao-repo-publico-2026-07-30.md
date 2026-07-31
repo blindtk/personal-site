@@ -1,6 +1,6 @@
 # Relatório — preparação do repositório para público (2026-07-30)
 
-Execução de [`prompt-repo-publico.md`](prompt-repo-publico.md), na branch
+Execução de [`prompt-repo-publico.md`](../prompts/prompt-repo-publico.md), na branch
 `claude/execute-public-repo-prompt-3th3el`. Três decisões preliminares foram
 confirmadas com o dono do repo antes de qualquer alteração (ver §3).
 
@@ -10,7 +10,7 @@ confirmadas com o dono do repo antes de qualquer alteração (ver §3).
 
 ### Fase 1 — bloqueadores
 
-- **Email pessoal.** `static/src/config.ts:27` (`daniel_malaco@hotmail.com`)
+- **Email pessoal.** `static/src/config.ts:27` (`[endereço pessoal antigo removido]`)
   → `me@danielmala.co`, alias confirmado pelo dono como já ativo. Mesma troca
   em `docs/dns-tls.md:23` (registo CAA `iodef`). `docs/cloudflare-deploy.md:249`
   marcado `[x]`.

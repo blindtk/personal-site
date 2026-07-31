@@ -1,5 +1,10 @@
 # Arquitetura editorial — secção «Este Site»
 
+> **Proposta, não implementada (confirmado 2026-07-31).** `PerimeterPage.astro`
+> continua com as 5 tabs originais que este documento propõe substituir por 3
+> páginas — ver `docs/auditoria-repo-publico-2026-07-31.md`. Movido para
+> `docs/proposals/` para não ser lido como estado atual do site.
+
 Análise da subpágina **Perímetro** e proposta de reorganização. Documento
 editorial: não contém código, componentes nem TypeScript. Todo o texto citado
 aqui vive (ou passará a viver) em `static/src/i18n/ui.ts`, PT e EN lado a lado.

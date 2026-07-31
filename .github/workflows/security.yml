@@ -87,7 +87,7 @@ jobs:
         run: pipx install semgrep==1.171.0
       - name: SAST
         # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07;
-        # ver docs/security-review-2026-07.md). O volume real medido contra
+        # ver docs/archive/security-review-2026-07.md). O volume real medido contra
         # este código, a correr sem filtro de severidade, foi de 16 achados:
         # 2 ERROR (dois ternários mortos — corrigidos, não suprimidos),
         # 8 WARNING (3 deles de categoria "security" — precisamente o que o

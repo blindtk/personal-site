@@ -1,5 +1,10 @@
 # Proposta — subpágina «Mapeamento de controlos» (secção Este Site)
 
+> **Proposta, não implementada (confirmado 2026-07-31).** Nenhuma rota, chave
+> `ui.ts` ou componente correspondente existe — ver
+> `docs/auditoria-repo-publico-2026-07-31.md`. Movido para `docs/proposals/`
+> para não ser lido como estado atual do site.
+
 Análise editorial, recomendação e **copy final PT/EN pronta a implementar** para
 uma nova subpágina dentro da secção *Este Site* / *This Site*.
 

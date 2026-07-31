@@ -1,5 +1,10 @@
 # Honeypot — análise técnica e editorial, e proposta de evolução
 
+> **Proposta, não implementada (confirmado 2026-07-31).** `content/honeypot-attack.json`
+> continua com a taxonomia ATT&CK original que este documento propõe
+> substituir — ver `docs/auditoria-repo-publico-2026-07-31.md`. Movido para
+> `docs/proposals/` para não ser lido como estado atual do site.
+
 Análise ao honeypot (`dynamic/worker/`) e às páginas que o explicam
 (`/perimetro/`, `/attack/`, projeto Honeypot). **Não contém código, nem
 expressões WAF prontas a usar, nem payloads.** É desenho, taxonomia, critérios
@@ -18,12 +23,12 @@ tráfego real nesta análise — o painel ainda não está exposto (ver §0).
 
 **Documentos relacionados, já em `main`:**
 
-- `docs/arquitetura-editorial-este-site.md` — analisa a *arquitetura de páginas*
+- `docs/proposals/arquitetura-editorial-este-site.md` — analisa a *arquitetura de páginas*
   da secção «Este Site» e recomenda a **Opção C** (Perímetro passa a página
   editorial; Deteções e Telemetria ganham rota própria). Trata do **continente**;
   este documento trata do **conteúdo**. Onde havia sobreposição, §7 e §8 abaixo
   foram alinhados com essa recomendação — ver a nota em §7.
-- `docs/pagina-mapeamento-controlos.md` — propõe a subpágina «Mapeamento de
+- `docs/proposals/pagina-mapeamento-controlos.md` — propõe a subpágina «Mapeamento de
   controlos» e fixa uma regra que este documento adota: **ATT&CK só entra onde
   há deteção**, e nunca a descrever a defesa do site.
 
@@ -519,7 +524,7 @@ contradizem.
   *o que tentaram contra mim*. São coisas diferentes e a página não as deve
   fundir. Os links do honeypot devem apontar para lá; as contagens do honeypot
   não devem acender células do heatmap pessoal. É a mesma fronteira que
-  `docs/pagina-mapeamento-controlos.md` fixa — *ATT&CK só entra onde há
+  `docs/proposals/pagina-mapeamento-controlos.md` fixa — *ATT&CK só entra onde há
   deteção* — e esta análise adota-a sem alterações.
 
 ### Fluxo, em uma linha
@@ -602,7 +607,7 @@ família na tabela + dois parágrafos no projeto*; a taxonomia é conteúdo de
 Deteções; os limites são conteúdo do projeto. Uma página "Spider traps" ou
 "Taxonomia" repartiria ainda mais um assunto já esticado.
 
-**Nota de reconciliação com `docs/arquitetura-editorial-este-site.md`.** Esse
+**Nota de reconciliação com `docs/proposals/arquitetura-editorial-este-site.md`.** Esse
 documento — escrito em paralelo com este e já em `main` — recomenda a **Opção
 C**: Perímetro passa a página editorial e estável, e criam-se duas rotas novas
 (**Deteções** e **Telemetria**, esta última a recolher todos os painéis ao
@@ -665,7 +670,7 @@ de não servir logins falsos vale mais do que qualquer painel.
 que já foi travado antes de chegar". Nada de arquitetura.
 
 **Tabs propostas** — reordenadas por *pergunta*, não por fonte de dados.
-Aplica-se **só se a Opção C de `docs/arquitetura-editorial-este-site.md` não
+Aplica-se **só se a Opção C de `docs/proposals/arquitetura-editorial-este-site.md` não
 avançar**; se avançar, as tabs desaparecem e vale a tabela de mapeamento de §7:
 
 | Tab hoje | Proposta | Nota |
@@ -904,7 +909,7 @@ comportamento desejado), e é a ideia mais interessante do conjunto.
 - Um Worker, um namespace KV, agregação on-read pura e testada.
 - Três registos, um por sítio: **estado** (painel), **explicação** (projeto em
   `content/`), **tradução** (regras Sigma). Que isso sejam duas páginas ou
-  quatro é decisão de `docs/arquitetura-editorial-este-site.md` — nenhum
+  quatro é decisão de `docs/proposals/arquitetura-editorial-este-site.md` — nenhum
   conteúdo desta análise pede rota nova.
 - **O Managed Challenge nos paths-isco fica.** Confirmado com o dono do repo
   (2026-07-29): é proteção deliberada, não um efeito colateral a corrigir. Não

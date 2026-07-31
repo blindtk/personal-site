@@ -1,6 +1,6 @@
 ---
 title: 'star-organizer'
-description: 'Organises GitHub stars into a browsable catalog by category — markdown and JSON, updated automatically.'
+description: 'Organises GitHub stars into a browsable catalog by category — generated automatically in the source repo, hand-vendored into this site.'
 tags: ['github', 'automation', 'curation']
 order: 3
 ---

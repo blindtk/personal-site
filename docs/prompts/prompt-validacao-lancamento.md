@@ -13,11 +13,11 @@ Cloudflare Access desde o início do desenvolvimento (`docs/cloudflare-deploy.md
 Ver `docs/public-repo-decision.md` §9: lançar o site vem primeiro.
 
 Contexto de partida a ler antes de tocar em nada:
-[`docs/cloudflare-deploy.md`](cloudflare-deploy.md) (especialmente §3 Access,
-§5 WAF, §7 checklist), [`docs/dns-tls.md`](dns-tls.md),
-[`docs/threat-model.md`](threat-model.md), [`dynamic/PLAN.md`](../dynamic/PLAN.md)
+[`docs/cloudflare-deploy.md`](../cloudflare-deploy.md) (especialmente §3 Access,
+§5 WAF, §7 checklist), [`docs/dns-tls.md`](../dns-tls.md),
+[`docs/threat-model.md`](../threat-model.md), [`dynamic/PLAN.md`](../../dynamic/PLAN.md)
 e o relatório mais recente de preparação para público,
-[`relatorio-preparacao-repo-publico-2026-07-30.md`](relatorio-preparacao-repo-publico-2026-07-30.md)
+[`relatorio-preparacao-repo-publico-2026-07-30.md`](../archive/relatorio-preparacao-repo-publico-2026-07-30.md)
 (secção 5, checklist "só o dono pode fazer" — este prompt valida os itens
 "No flip" e "Antes do flip" ligados ao lançamento, não à publicação do
 repo).

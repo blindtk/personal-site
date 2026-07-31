@@ -222,11 +222,11 @@ test('gradeFromHeaders: A+ com tudo, F com nada', () => {
 });
 
 test('gradeFromHeaders: nota intermédia sem CSP (peso 3 em falta)', () => {
-  // tudo presente menos a CSP (peso 3 de 11) → 8/11 ≈ 0.727 < 0.75 → C
+  // tudo presente menos a CSP (peso 3 de 12) → 9/12 = 0.75 → B
   const g = gradeFromHeaders((n) => (n === 'content-security-policy' ? null : 'v'));
-  assert.equal(g.score, 8);
-  assert.equal(g.max, 11);
-  assert.equal(g.grade, 'C');
+  assert.equal(g.score, 9);
+  assert.equal(g.max, 12);
+  assert.equal(g.grade, 'B');
 });
 
 test('rate limit: janela fixa bloqueia ao atingir o máximo', () => {

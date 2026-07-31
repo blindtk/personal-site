@@ -6,7 +6,7 @@
 > to read. The rest of `docs/` is in Portuguese. Happy to translate on request.
 
 > **Relation to the other security review.** This is the current snapshot,
-> linked from `README.md`. [`security-review-2026-07.md`](security-review-2026-07.md)
+> linked from `README.md`. [`security-review-2026-07.md`](archive/security-review-2026-07.md)
 > (Portuguese) is the earlier, round-by-round working log the findings here
 > were partly drawn from — kept for the fix history, not superseded.
 
@@ -158,7 +158,7 @@ actually the path to production.
 
 **Static analysis (7).** Running Semgrep at both ERROR *and* WARNING after an
 evidence-based triage (16 findings → 0, documented in
-`docs/security-review-2026-07.md`) is better practice than most commercial
+`docs/archive/security-review-2026-07.md`) is better practice than most commercial
 setups. The custom `.semgrep/astro-dom.yml` rules targeting DOM XSS sinks in
 `.astro` `<script>` blocks — a file type public rulesets don't parse — is
 exactly the right instinct. The retry loop distinguishing exit 1 (real finding,

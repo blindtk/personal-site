@@ -31,7 +31,7 @@
   do path) assim que a causa das violações self/self for confirmada.**
 
   **2026-07-30 — confirmado com o dono do repo** (preparação do repositório
-  para público, `docs/prompt-repo-publico.md`): diagnóstico ainda a
+  para público, `docs/prompts/prompt-repo-publico.md`): diagnóstico ainda a
   decorrer, flag mantém-se `true`. Reavaliar este ponto antes do repositório
   ficar público, já que a mitigação assume produção atrás da Cloudflare
   Access — se essa premissa mudar antes da causa ser confirmada, reverter
