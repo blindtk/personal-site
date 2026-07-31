@@ -6,9 +6,11 @@
 [![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
 [![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
 [![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
+[![Fuzzing](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml)
+[![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Two of the nine workflows in [`.github/workflows/`](.github/workflows/) have
+Two of the eleven workflows in [`.github/workflows/`](.github/workflows/) have
 no badge above: `dependency-review.yml` (PR-scoped, listed in the build
 pipeline table below) and `labeler.yml` (applies area labels to PRs — repo
 hygiene, not a security check).
@@ -16,8 +18,8 @@ hygiene, not a security check).
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 233 tests, nine CI workflows, four ADRs,
-for a personal site. That is deliberate, not accidental — see
+real data for the dashboards it feeds. 233 tests, eleven CI workflows, four
+ADRs, for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
 > **Note:** this README is in English because most people who read it
@@ -66,7 +68,7 @@ code, not asserted from memory.
 
 ## Why so much for a personal site?
 
-A personal site with a threat model, four ADRs, nine CI workflows, and 233
+A personal site with a threat model, four ADRs, eleven CI workflows, and 233
 tests is disproportionate for what it does — unless the disproportion *is* the
 point. It is: this repository exists to demonstrate security-engineering
 practice at a scale where the controls become meaningful, not to serve a blog
@@ -171,6 +173,8 @@ goes through:
 | **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
 | **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
+| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (weekly + manual) | Fuzzes the two Worker functions that parse untrusted network input — CSP-report parsing and the output sanitizers — since those, unlike the client-side tools, are a real trust boundary. |
+| **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
 
 Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
 keeps the digests current and batches updates into a weekly PR),
