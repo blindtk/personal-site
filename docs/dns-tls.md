@@ -73,6 +73,13 @@ abaixo). Quando estiver:
   registo DS no registrar (automático se o registrar for a própria
   Cloudflare). Protege a resolução do domínio contra spoofing.
 
+> **Confirmado ativo (2026-07-30, validação de lançamento):** `DNSKEY`
+> devolvido por dois resolvedores validadores independentes (Cloudflare
+> `1.1.1.1` e Google `8.8.8.8`, ambos com `AD: true`), com o `DS`
+> correspondente já registado na zona pai `.co`. DNSSEC está a validar
+> corretamente — este item já não é uma pendência, ao contrário do que a
+> secção acima sugere.
+
 ## Relação com o resto do repo
 
 - Os headers servidos (incluindo HSTS) são verificados em produção pelo

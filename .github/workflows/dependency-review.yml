@@ -1,0 +1,30 @@
+# Bloqueia PRs que introduzam uma dependência nova com vulnerabilidade
+# conhecida — usa o Dependency Graph do GitHub (grátis em público) para
+# comparar só o que o PR muda, ao contrário do OSV-Scanner/security.yml
+# (que varre os dois lockfiles inteiros a cada push/PR). Complementar, não
+# redundante: isto é o gate rápido no diff; o OSV é a rede de segurança
+# completa.
+name: Dependency Review
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Dependency Review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          # só vulnerabilidades — sem gate de licença: o repo é MIT e não
+          # distribui nada, uma licença "problemática" numa devDependency
+          # não é um risco real aqui (mesmo raciocínio do osv-scanner.toml).
+          fail-on-severity: moderate
