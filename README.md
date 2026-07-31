@@ -116,46 +116,13 @@ npm run preview    # serve dist/ locally
   the Links page).
 - **Name/handle, email, socials, domain:** all in `static/src/config.ts`.
 
-## Deploy — Cloudflare Pages
+## Deploy
 
-Exact steps for a first-time deploy:
-
-1. **Create a free Cloudflare account:** <https://dash.cloudflare.com/sign-up>.
-2. In the dashboard: **Workers & Pages → Create → Pages → Connect to Git**.
-3. Authorize Cloudflare against your GitHub and pick the `personal-site` repo.
-4. In the build configuration screen, set **exactly**:
-   - **Production branch:** `main`
-   - **Framework preset:** `Astro`
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Root directory (advanced):** `static` ← important! The Astro project
-     lives in the `static/` subfolder, not the repo root.
-5. Click **Save and Deploy**. Cloudflare installs dependencies, builds, and
-   publishes — about 2 minutes to a `https://personal-site-abc.pages.dev` URL.
-6. From then on, **every push to `main` deploys automatically**. Pushes to
-   other branches get their own preview URL (handy for reviewing PRs).
-
-### Custom domain
-
-The live site runs on `danielmala.co` (registered at Namecheap, DNS on
-Cloudflare — nameservers switched at the registrar). `SITE_URL` in
-`static/src/config.ts` already points there. For the full process (nameserver
-switch, wiring the Worker, Access during development, WAF rules), see
-[`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
-
-### Alternative: serve from your own VPS (Cloudflare as proxy)
-
-1. `npm run build` and copy `static/dist/` to the VPS, e.g.
-   `rsync -avz --delete static/dist/ user@vps:/var/www/site/`.
-2. Serve the folder with nginx/Caddy — it's a 100% static site, any file
-   server works.
-3. On Cloudflare: **DNS → Add record** → type `A`, name `@`, the VPS IP, with
-   the **orange cloud** (proxied) for CDN + TLS + IP masking.
-
-Pages is simpler (zero maintenance) and is what's actually in production —
-the `dynamic/` backend already runs on its own Worker, separate from wherever
-the static site is served, so the VPS route stays a real alternative, not a
-requirement.
+The static site runs on Cloudflare Pages and the backend on a Cloudflare
+Worker (`dynamic/worker/`), both connected via Git — every push to `main`
+deploys automatically. `SITE_URL` in `static/src/config.ts` points at the
+production domain. The deploy process this repo actually follows is
+documented in [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
 ## Build pipeline security
 
