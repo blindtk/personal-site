@@ -238,7 +238,7 @@ export const ui = {
       // ----- Provas -----
       evidenceTitle: 'Transparência verificável',
       evidenceBody:
-        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o scan aos cabeçalhos ao vivo (CSP incluída) e os workflows que correm a cada push.',
+        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o scan aos cabeçalhos ao vivo (CSP incluída) e os workflows de CI, por push, cron ou tag.',
       evidenceCta: 'Ver a página Provas →',
       // ----- Projeto (narrativa) -----
       projectBody:
@@ -270,16 +270,22 @@ export const ui = {
       contractRequires: 'exige',
       workflowsTitle: 'Workflows',
       workflowsIntro:
-        'A cada push para main, estes workflows correm no GitHub Actions. Verdes = build limpo, sem vulnerabilidades conhecidas, e segredos + SAST a passar.',
+        'Estes workflows correm no GitHub Actions — a maioria a cada push para main, alguns em cron (diário/semanal) ou só numa tag de release. Verdes = build limpo, sem vulnerabilidades conhecidas, e segredos + SAST a passar.',
       pipelineIntro: 'As camadas que correm — cada uma falha o CI se encontrar algo:',
       pipelineToolCol: 'ferramenta',
       pipelineCatchesCol: 'o que apanha',
       pipeline: [
         { tool: 'Renovate', catches: 'Mantém as dependências atualizadas e pina as GitHub Actions por digest SHA (proteção contra tags movidas). Corre numa janela semanal.' },
+        { tool: 'Dependency Review', catches: 'Bloqueia PRs que introduzem uma dependência nova com vulnerabilidade conhecida, no diff do próprio PR — o gate rápido, complementar ao OSV-Scanner abaixo.' },
         { tool: 'OSV-Scanner', catches: 'Dependências com vulnerabilidades conhecidas ou marcadas como maliciosas (base OSV.dev + advisories do GitHub), lidas do lockfile.' },
         { tool: 'Gitleaks', catches: 'Segredos committados — tokens, chaves privadas — sobre a história completa do PR. Também como hook local antes de cada commit.' },
+        { tool: 'CodeQL', catches: 'Análise semântica de segurança (SAST) do JavaScript/TypeScript — complementar ao Semgrep, outra classe de padrões.' },
         { tool: 'Semgrep', catches: 'SAST: sinks de DOM XSS (innerHTML, document.write) nos scripts do lado do cliente e no terminal do Lab.' },
         { tool: 'zizmor', catches: 'Auditoria dos próprios workflows: pins em falta, permissões excessivas, injeção de template em run:.' },
+        { tool: 'Supply chain', catches: 'Verifica as assinaturas do registo npm e gera um SBOM (CycloneDX) dos dois lockfiles, como artefacto — semanal.' },
+        { tool: 'Invariants', catches: 'Verifica /api/health e as rotas de leitura do Worker em produção; abre uma Issue automática se algo partir — diário.' },
+        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Fuzzing das duas funções do Worker que processam bytes não confiáveis — parsing de relatórios CSP e os sanitizadores de output — semanal.' },
+        { tool: 'Signed releases', catches: 'Assina a proveniência (Sigstore) dos artefactos de build e gera SBOM, numa GitHub Release — só ao criar uma tag v*.' },
       ],
       pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
       verifyTitle: 'Verifica tu mesmo',
@@ -1212,7 +1218,7 @@ export const ui = {
       // ----- Evidence -----
       evidenceTitle: 'Verifiable transparency',
       evidenceBody:
-        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the live header scan (CSP included), and the workflows that run on every push.",
+        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the live header scan (CSP included), and the CI workflows, on push, cron, or tag.",
       evidenceCta: 'See the Evidence page →',
       // ----- Project (narrative) -----
       projectBody:
@@ -1244,16 +1250,22 @@ export const ui = {
       contractRequires: 'requires',
       workflowsTitle: 'Workflows',
       workflowsIntro:
-        'On every push to main, these workflows run on GitHub Actions. Green = clean build, no known vulnerabilities, and secrets + SAST passing.',
+        'These workflows run on GitHub Actions — most on every push to main, some on a cron (daily/weekly), some only on a release tag. Green = clean build, no known vulnerabilities, and secrets + SAST passing.',
       pipelineIntro: 'The layers that run — each one fails CI if it finds something:',
       pipelineToolCol: 'tool',
       pipelineCatchesCol: 'what it catches',
       pipeline: [
         { tool: 'Renovate', catches: 'Keeps dependencies up to date and pins the GitHub Actions by SHA digest (protection against moved tags). Runs on a weekly window.' },
+        { tool: 'Dependency Review', catches: "Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's own diff — the fast gate, complementary to the OSV-Scanner sweep below." },
         { tool: 'OSV-Scanner', catches: 'Dependencies with known vulnerabilities or flagged as malicious (OSV.dev database + GitHub advisories), read from the lockfile.' },
         { tool: 'Gitleaks', catches: 'Committed secrets — tokens, private keys — across the full PR history. Also as a local hook before every commit.' },
+        { tool: 'CodeQL', catches: 'Semantic security analysis (SAST) of the JavaScript/TypeScript — complementary to Semgrep, a different class of patterns.' },
         { tool: 'Semgrep', catches: 'SAST: DOM XSS sinks (innerHTML, document.write) in the client-side scripts and the Lab terminal.' },
         { tool: 'zizmor', catches: 'Audit of the workflows themselves: missing pins, excessive permissions, template injection in run:.' },
+        { tool: 'Supply chain', catches: 'Verifies npm registry signatures and generates a CycloneDX SBOM for both lockfiles, as an artifact — weekly.' },
+        { tool: 'Invariants', catches: "Checks /api/health and the Worker's read routes in production; opens an automatic Issue if something breaks — daily." },
+        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Fuzzes the two Worker functions that parse untrusted network input — CSP-report parsing and the output sanitizers — weekly.' },
+        { tool: 'Signed releases', catches: 'Signs the provenance (Sigstore) of build artefacts and generates an SBOM, on a GitHub Release — only when a v* tag is created.' },
       ],
       pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
       verifyTitle: 'Check for yourself',

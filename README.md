@@ -137,6 +137,7 @@ goes through:
 | **Dependency Review** | `dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (the GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
 | **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
 | **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
+| **CodeQL** | `codeql.yml` | Semantic SAST for the JavaScript/TypeScript — a different analysis class from Semgrep's pattern-matching, run separately. |
 | **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
 | **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
 | **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
