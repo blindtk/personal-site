@@ -118,11 +118,13 @@ npm run preview    # serve dist/ locally
 
 ## Deploy
 
-The static site runs on Cloudflare Pages and the backend on a Cloudflare
-Worker (`dynamic/worker/`), both connected via Git — every push to `main`
-deploys automatically. `SITE_URL` in `static/src/config.ts` points at the
-production domain. The deploy process this repo actually follows is
-documented in [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
+The static site runs on Cloudflare Pages and deploys automatically from
+Git — every push to `main` publishes it. The backend runs on a Cloudflare
+Worker (`dynamic/worker/`); its production deploy stays manual (`npx
+wrangler deploy`, see `dynamic/PLAN.md`). `SITE_URL` in
+`static/src/config.ts` points at the production domain. The deploy process
+this repo actually follows is documented in
+[`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
 ## Build pipeline security
 
@@ -140,7 +142,7 @@ goes through:
 | **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
 | **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
-| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (weekly + manual) | Fuzzes the two Worker functions that parse untrusted network input — CSP-report parsing and the output sanitizers — since those, unlike the client-side tools, are a real trust boundary. |
+| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (weekly + manual) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
 | **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
 
 Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
