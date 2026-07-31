@@ -253,6 +253,13 @@ covered by tests (`npm test`, 191 across the Worker and the site) and by the
 scanners in [`.github/workflows/`](.github/workflows/). I can walk through any
 decision in this repository.
 
+## Contributing
+
+Single-maintainer project, but the repo is public and contributions are
+welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process (in
+Portuguese, like the rest of `docs/`) — bug reports, PR conventions, and
+where the project's own conventions live (`CLAUDE.md`).
+
 ## Security
 
 To report a vulnerability, see [SECURITY.md](.github/SECURITY.md) or the
