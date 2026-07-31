@@ -188,9 +188,9 @@ Porquê cada regra:
   regra estiver ativa, o honeypot só regista quem *resolve* o desafio (um
   browser real com JS, nalguns casos scanners avançados com automação
   tipo-browser), não o scanning de massa indiscriminado que domina a
-  Internet. Ver `docs/proposals/honeypot-analise-evolucao.md` §0/§9.6 para a análise
-  completa desta troca (proteção vs. observabilidade) e para a copy que a
-  declara publicamente.
+  Internet. Ver `docs/backlog.md` para um resumo da análise desta troca
+  (proteção vs. observabilidade) — o detalhe completo ficou no histórico do
+  git depois de `docs/proposals/` ser consolidado em 2026-07-31.
 - **4/5**: a política geográfica endureceu de "27 países da UE, Managed
   Challenge" (desenho original abaixo) para "só PT passa, com desafio; todo o
   resto é bloqueado" — mais restritivo do que o planeado, e sem a
@@ -236,8 +236,8 @@ qualquer forma.
 Ficou **privado** durante o desenvolvimento — a Cloudflare Pages/Workers
 Builds funcionam com repo privado (a GitHub App tem acesso concedido
 explicitamente, "Only select repositories"; ao contrário do GitHub Pages,
-não exige repo público). **Atualização: o repositório já é público** (ver
-`docs/archive/auditoria-repo-publico-2026-07-31.md`). Checklist que devia
+não exige repo público). **Atualização: o repositório já é público**
+(2026-07-31). Checklist que devia
 ter sido confirmada antes disso — scan de segredos ao histórico completo,
 permissões de Actions para PRs de forks, branch protection, secret
 scanning — **não foi reverificada por este agente** (fora do alcance de
