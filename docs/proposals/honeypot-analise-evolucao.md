@@ -2,7 +2,7 @@
 
 > **Proposta, não implementada (confirmado 2026-07-31).** `content/honeypot-attack.json`
 > continua com a taxonomia ATT&CK original que este documento propõe
-> substituir — ver `docs/auditoria-repo-publico-2026-07-31.md`. Movido para
+> substituir — ver `docs/archive/auditoria-repo-publico-2026-07-31.md`. Movido para
 > `docs/proposals/` para não ser lido como estado atual do site.
 
 Análise ao honeypot (`dynamic/worker/`) e às páginas que o explicam

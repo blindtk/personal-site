@@ -8,8 +8,16 @@ FROM gcr.io/oss-fuzz-base/base-builder-javascript
 # no repo) e o build aqui dentro do container.
 COPY dynamic/worker/package.json $SRC/repo/dynamic/worker/package.json
 COPY dynamic/worker/src/lib $SRC/repo/dynamic/worker/src/lib
-COPY .clusterfuzzlite/package.json $SRC/repo/.clusterfuzzlite/package.json
 COPY .clusterfuzzlite/fuzz $SRC/repo/.clusterfuzzlite/fuzz
+
+# package.json/package-lock.json na raiz do "repo" sintético (não dentro de
+# .clusterfuzzlite/): é onde o compile_javascript_fuzzer espera encontrar
+# node_modules/@jazzer.js/core depois do `npm ci` no build.sh. O
+# "type": "module" aqui já cobre .clusterfuzzlite/fuzz/*.js por herança
+# (nearest ancestor package.json), tal como dynamic/worker/package.json
+# cobre dynamic/worker/src/lib/*.js.
+COPY .clusterfuzzlite/package.json $SRC/repo/package.json
+COPY .clusterfuzzlite/package-lock.json $SRC/repo/package-lock.json
 COPY .clusterfuzzlite/build.sh $SRC/
 
 WORKDIR $SRC/repo

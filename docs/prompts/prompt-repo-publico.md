@@ -19,8 +19,8 @@ Contexto de partida já escrito e a ler antes de tocar em nada:
 [`security-review-2026-07-29.md`](../security-review-2026-07-29.md) e
 [`security-review-2026-07.md`](../archive/security-review-2026-07.md) (as duas revisões),
 [`cloudflare-deploy.md`](../cloudflare-deploy.md) §7 (checklist de lançamento),
-[`../dynamic/PLAN.md`](../../dynamic/PLAN.md) (decisões registadas e pendências do
-Worker) e [`../CLAUDE.md`](../../CLAUDE.md) (regras do projeto, que continuam a
+[`../../dynamic/PLAN.md`](../../dynamic/PLAN.md) (decisões registadas e pendências do
+Worker) e [`../../CLAUDE.md`](../../CLAUDE.md) (regras do projeto, que continuam a
 valer para tudo o que for alterado).
 
 Copia o bloco abaixo como pedido ao agente.

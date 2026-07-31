@@ -254,10 +254,11 @@ Development conventions: see [CLAUDE.md](CLAUDE.md).
 Built with heavy use of Claude Code — the branch names in the merge commits
 already say so, on every PR. Architecture, threat model, security decisions,
 and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
-trade-offs and the alternatives rejected. Every security-relevant change is
-covered by tests (`npm test`, 233 across the Worker and the site) and by the
-scanners in [`.github/workflows/`](.github/workflows/). I can walk through any
-decision in this repository.
+trade-offs and the alternatives rejected. Security-relevant changes are
+checked by tests (`npm test`, 233 across the Worker and the site) and by the
+scanners in [`.github/workflows/`](.github/workflows/) — not a measured
+coverage guarantee, but the gate every PR has to clear. I can walk through
+any decision in this repository.
 
 ## Contributing
 

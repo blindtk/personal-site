@@ -29,14 +29,17 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
 3. Run `cd static && npm run build` — it has to pass with no errors or
    new warnings before you open the PR.
 4. If you touched `dynamic/worker/` or the tools in `/ferramentas/`, also
-   run `node --test` and validate the logic with known vectors.
+   run `node --test` and validate the logic with known vectors. If the
+   change was specifically in `dynamic/worker/`, also confirm it still
+   packages with `cd dynamic/worker && npx wrangler deploy --dry-run` (see
+   [`dynamic/PLAN.md`](dynamic/PLAN.md) — the real deploy stays manual).
 5. If you touched `dynamic/worker/src/lib/csp-report.js` or
    `sanitize.js`, also run the fuzzing harnesses locally
    (`.clusterfuzzlite/fuzz/`) for a few seconds, to confirm they still
    compile and run without crashing:
    ```bash
-   npx --yes -p @jazzer.js/core jazzer .clusterfuzzlite/fuzz/csp_report_fuzz.js --sync -- -max_total_time=5
-   npx --yes -p @jazzer.js/core jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=5
+   npx --yes -p @jazzer.js/core@4.0.0 jazzer .clusterfuzzlite/fuzz/csp_report_fuzz.js --sync -- -max_total_time=5
+   npx --yes -p @jazzer.js/core@4.0.0 jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=5
    ```
 6. Open the Pull Request — the template
    (`.github/pull_request_template.md`) guides what to include. CI
