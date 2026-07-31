@@ -4,7 +4,7 @@
 > (1-4), da revisão original — achados, correções aplicadas e a evolução do
 > pensamento ao longo do processo. O retrato **atual**, pensado para leitura
 > por um revisor externo (o repositório vai ficar público), é
-> [`security-review-2026-07-29.md`](security-review-2026-07-29.md). Mantêm-se
+> [`security-review-2026-07-29.md`](../security-review-2026-07-29.md). Mantêm-se
 > os dois: este preserva o histórico de achados e correções; o outro é o que
 > se linka a partir do `README.md`.
 

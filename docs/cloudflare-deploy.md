@@ -49,8 +49,16 @@ application** (secção 3), não com WAF.
 
 ## 3. Cloudflare Access — lockdown durante o desenvolvimento
 
-Enquanto o site não está pronto para lançamento público, fica atrás de
-login por email (One-Time PIN) via Cloudflare Access — cobre `*.pages.dev`
+> **Atualização (2026-07-31, confirmado pelo dono do repo):** a Access
+> deixou de bloquear `danielmala.co`/`www.danielmala.co` — a política WAF
+> geo (secção 5) é agora a proteção real para a produção, tal como previsto
+> abaixo. **`*.pages.dev` continua atrás de Access** (confirmado) — só a
+> aplicação/destination da produção foi ajustada; o resto desta secção
+> descreve o lockdown tal como foi configurado durante o desenvolvimento e
+> continua a aplicar-se às previews.
+
+Enquanto o site não estava pronto para lançamento público, ficava atrás de
+login por email (One-Time PIN) via Cloudflare Access — cobria `*.pages.dev`
 **e** `danielmala.co`/`www.danielmala.co` ao mesmo tempo, ao contrário do
 WAF de zona.
 
@@ -147,7 +155,7 @@ vem antes da política de país, e cada regra que atua **para a evolução**):
 | # | Regra | Condição (resumo) | Ação |
 |---|---|---|---|
 | 1 | Bots verificados | `cf.client.bot` (bots verificados pela Cloudflare) | Skip |
-| 2 | CI headers check | User-Agent contém `headers-check` (**a migrar** para `X-Ci-Waf-Token` — ver nota 2026-07-30 abaixo) | Skip |
+| 2 | CI headers check | `http.request.headers["x-ci-waf-token"][0] eq "<valor do secret CI_WAF_TOKEN>"` (migrado 2026-07-31 — ver nota abaixo) | Skip |
 | 3 | Honeypot Paths | Path é `/.env`, `/.git/config`, `/wp-login.php`, `/admin` ou começa por `/phpmyadmin` | **Managed Challenge**, pára a avaliação |
 | 4 | Allowed Countries - Site | fora dos paths acima **e** país é PT | **Managed Challenge**, pára a avaliação |
 | 5 | Blocked Countries - Site | fora dos paths acima **e** país não é PT | **Block**, pára a avaliação |
@@ -159,15 +167,15 @@ Porquê cada regra:
   4/5) depois do lançamento e passam a reportar produção partida por causa
   do próprio WAF, não de uma regressão real.
   > **Nota (2026-07-30):** o match original ("User-Agent contém
-  > `headers-check`") é uma string pública, documentada neste próprio
+  > `headers-check`") era uma string pública, documentada neste próprio
   > ficheiro — qualquer pedido de fora do mundo podia copiá-la e saltar a
-  > política de país (achado de uma sessão de validação de lançamento). Os
-  > scripts (`check-headers.mjs`, `check-invariants.mjs`) e os workflows já
-  > enviam um segredo `CI_WAF_TOKEN` (GitHub Actions secret) no header
-  > `X-Ci-Waf-Token` quando configurado. **Falta migrar esta regra no
-  > dashboard** para `http.request.headers["x-ci-waf-token"][0] eq
-  > "<mesmo valor do secret>"` — depois disso, o match por User-Agent pode
-  > sair da condição por completo. Rotação: mudar o valor no GitHub Actions
+  > política de país (achado de uma sessão de validação de lançamento).
+  > **Resolvido (2026-07-31, confirmado pelo dono do repo):** a regra no
+  > dashboard já faz match pelo header assinado `X-Ci-Waf-Token`
+  > (`http.request.headers["x-ci-waf-token"][0] eq "<valor do secret>"`),
+  > não pelo User-Agent — os scripts (`check-headers.mjs`,
+  > `check-invariants.mjs`) já enviavam o segredo `CI_WAF_TOKEN` (GitHub
+  > Actions secret) neste header. Rotação: mudar o valor no GitHub Actions
   > (Settings → Secrets → Actions → `CI_WAF_TOKEN`) e na regra WAF ao mesmo
   > tempo, mesma disciplina do `RATE_SALT`/`CF_API_TOKEN`.
 - **3**: os cinco paths-isco do honeypot (`dynamic/worker/`, `DECOYS` em
@@ -180,7 +188,7 @@ Porquê cada regra:
   regra estiver ativa, o honeypot só regista quem *resolve* o desafio (um
   browser real com JS, nalguns casos scanners avançados com automação
   tipo-browser), não o scanning de massa indiscriminado que domina a
-  Internet. Ver `docs/honeypot-analise-evolucao.md` §0/§9.6 para a análise
+  Internet. Ver `docs/proposals/honeypot-analise-evolucao.md` §0/§9.6 para a análise
   completa desta troca (proteção vs. observabilidade) e para a copy que a
   declara publicamente.
 - **4/5**: a política geográfica endureceu de "27 países da UE, Managed
@@ -225,18 +233,24 @@ qualquer forma.
 
 ## 6. Repositório GitHub
 
-Fica **privado** durante todo este processo — a Cloudflare Pages/Workers
+Ficou **privado** durante o desenvolvimento — a Cloudflare Pages/Workers
 Builds funcionam com repo privado (a GitHub App tem acesso concedido
 explicitamente, "Only select repositories"; ao contrário do GitHub Pages,
-não exige repo público). Tornar o repo público é uma decisão à parte, sem
-prazo ligado ao lançamento do site — checklist antes de o fazer (scan de
-segredos ao histórico completo, permissões de Actions para PRs de forks,
-branch protection, secret scanning) fica para quando for decidido.
+não exige repo público). **Atualização: o repositório já é público** (ver
+`docs/archive/auditoria-repo-publico-2026-07-31.md`). Checklist que devia
+ter sido confirmada antes disso — scan de segredos ao histórico completo,
+permissões de Actions para PRs de forks, branch protection, secret
+scanning — **não foi reverificada por este agente** (fora do alcance de
+uma sessão sem acesso às definições do repositório no GitHub); vale a pena
+confirmar manualmente que ficou feita.
 
 ## 7. Checklist do que falta / decisões pendentes
 
-- [ ] Lançamento (Fase 3): desligar/ajustar a Access + confirmar que as
-  regras WAF (secção 5) fazem mesmo o trabalho sozinhas.
+- [x] **Lançamento (Fase 3) (2026-07-31, confirmado pelo dono do repo):** a
+  Access deixou de bloquear `danielmala.co`/`www.danielmala.co`; a regra 2
+  do WAF ("CI headers check") já faz match pelo header assinado
+  `X-Ci-Waf-Token` em vez do User-Agent público (secção 5). `*.pages.dev`
+  continua atrás de Access, por desenho.
 - [x] **Confirmado (2026-07-29, decisão do dono do repo):** as regras
   "Previews sociais" e "O dono sempre" do desenho original **não** foram
   criadas, **por escolha, não por esquecimento**. Os bots de preview social
@@ -246,23 +260,17 @@ branch protection, secret scanning) fica para quando for decidido.
   redundante. Quanto ao dono: aceite que viajar para fora de PT o sujeita
   à regra 5 (Block) como qualquer visitante — só PT passa (com Managed
   Challenge), decisão mantida de propósito.
-- [ ] `.github/expected-headers.json` → `url` **voltou** a `SET-ME`
-  (2026-07-29): tinha sido apontado para `https://danielmala.co/` numa
-  revisão de segurança, mas a Access (secção 3) continua ativa — o cron
-  diário do `Headers` passaria a falhar sempre por causa da página de login
-  da Access, não de uma regressão real de headers, mascarando o sinal que
-  interessa. Duas formas de ativar antes do lançamento, se quiseres o
-  cron a verificar já: (a) criar um **Access Service Token** (Zero Trust →
-  Access → Service Auth) e adicionar `CF-Access-Client-Id`/
-  `CF-Access-Client-Secret` como secrets do GitHub + headers no
-  `check-headers.mjs`; (b) esperar pela Fase 3 (Access desligada) e só
-  então apontar o `url`. **Decidido (2026-07-30, preparação do repo para
-  público):** via (b) — mantém-se `SET-ME` até a Access ser desligada na
-  Fase 3.
+- [x] `.github/expected-headers.json` → `url` esteve `SET-ME` enquanto a
+  Access (secção 3) bloqueava produção — o cron diário do `Headers` teria
+  falhado sempre por causa da página de login da Access, não de uma
+  regressão real de headers. **Resolvido (2026-07-31):** via a opção (b) já
+  prevista aqui — a Access foi desligada/ajustada na Fase 3, `url` aponta
+  agora para `https://danielmala.co/`.
 - [ ] CAA, HSTS preload, DNSSEC — checklist em `docs/dns-tls.md`, por
   executar/confirmar.
 - [x] Alias de email (`me@danielmala.co`) em vez do Hotmail pessoal — feito
   em `static/src/config.ts` e `docs/dns-tls.md` (2026-07-30). Nota: o
   endereço antigo continua no histórico do git; a mitigação real é o alias
   ser rotável.
-- [ ] Repo público — checklist na secção 6, sem prazo definido.
+- [x] Repo público — já aconteceu; checklist de pré-requisitos da secção 6
+  não reverificada nesta sessão, confirmar manualmente.

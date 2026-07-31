@@ -1,6 +1,6 @@
 # Relatório — validação de prontidão para o lançamento (Fase 3, 2026-07-30)
 
-Execução de [`prompt-validacao-lancamento.md`](prompt-validacao-lancamento.md)
+Execução de [`prompt-validacao-lancamento.md`](../prompts/prompt-validacao-lancamento.md)
 (nome de trabalho — o pedido original chegou como prompt solto, não como
 ficheiro no repo), na branch `claude/site-launch-validation-3ynlvd`, a partir
 do commit `da77869` (`main`). **Tarefa de validação, não de execução** —

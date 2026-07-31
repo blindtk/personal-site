@@ -1,6 +1,6 @@
 ---
 title: 'star-organizer'
-description: 'Organiza as estrelas do GitHub num catálogo navegável por categorias — markdown e JSON, atualizado automaticamente.'
+description: 'Organiza as estrelas do GitHub num catálogo navegável por categorias — gerado automaticamente no repo de origem, vendorizado à mão para este site.'
 tags: ['github', 'automação', 'curadoria']
 order: 3
 ---

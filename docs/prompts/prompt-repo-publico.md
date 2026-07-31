@@ -15,12 +15,12 @@ ficam listados na **Fase 5**, para o agente entregar como checklist — nunca
 para inventar que os fez.
 
 Contexto de partida já escrito e a ler antes de tocar em nada:
-[`public-repo-decision.md`](public-repo-decision.md) (a decisão e o porquê),
-[`security-review-2026-07-29.md`](security-review-2026-07-29.md) e
-[`security-review-2026-07.md`](security-review-2026-07.md) (as duas revisões),
-[`cloudflare-deploy.md`](cloudflare-deploy.md) §7 (checklist de lançamento),
-[`../dynamic/PLAN.md`](../dynamic/PLAN.md) (decisões registadas e pendências do
-Worker) e [`../CLAUDE.md`](../CLAUDE.md) (regras do projeto, que continuam a
+[`public-repo-decision.md`](../public-repo-decision.md) (a decisão e o porquê),
+[`security-review-2026-07-29.md`](../security-review-2026-07-29.md) e
+[`security-review-2026-07.md`](../archive/security-review-2026-07.md) (as duas revisões),
+[`cloudflare-deploy.md`](../cloudflare-deploy.md) §7 (checklist de lançamento),
+[`../dynamic/PLAN.md`](../../dynamic/PLAN.md) (decisões registadas e pendências do
+Worker) e [`../CLAUDE.md`](../../CLAUDE.md) (regras do projeto, que continuam a
 valer para tudo o que for alterado).
 
 Copia o bloco abaixo como pedido ao agente.
@@ -96,7 +96,7 @@ Copia o bloco abaixo como pedido ao agente.
 > Confirma e resolve:
 >
 > 1. **Email pessoal exposto.** `static/src/config.ts:27` tem
->    `daniel_malaco@hotmail.com`, com um comentário no próprio ficheiro a
+>    `[endereço pessoal antigo removido]`, com um comentário no próprio ficheiro a
 >    recomendar um alias. Também aparece em `docs/dns-tls.md`. Substitui pelo
 >    alias de domínio (`hello@danielmala.co` ou o que o dono indicar) nos dois
 >    sítios. **Nota importante a escrever no relatório:** trocar aqui não

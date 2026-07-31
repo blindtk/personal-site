@@ -121,15 +121,14 @@ function schemeOf(value) {
  *   source    — bucket da origem bloqueada, NUNCA um URL completo:
  *               'chrome-extension://' | 'self' | 'inline' | 'https://host' | 'data:' …
  */
-// TEMPORÁRIO (debug, pedido direto do dono do repo — ver dynamic/PLAN.md):
-// enquanto isto for `true`, o caso "self" abaixo passa a incluir o pathname
-// (nunca query/fragmento, que é onde vivem tokens) do recurso bloqueado, para
-// diagnosticar as violações script-src-elem/self e connect-src/self
-// inesperadas em produção (source normalmente seria só 'self', sem dizer
-// PARA ONDE). O site está atrás de Cloudflare Access (só o dono o visita),
-// por isso o risco de expor path é mínimo enquanto isto ficar ligado — mas é
-// para reverter assim que a causa for identificada, não para ficar.
-const DEBUG_EXPOSE_SELF_PATH = true;
+// Revertido (2026-07-31, ver dynamic/PLAN.md): ligou temporariamente o
+// pathname (nunca query/fragmento) do bucket "self", para diagnosticar
+// violações script-src-elem/self e connect-src/self inesperadas em
+// produção. A mitigação de risco assumia produção atrás de Cloudflare
+// Access (só o dono a visitava); essa premissa mudou (Access desligada)
+// antes de a causa ser confirmada, e a própria decisão registada em
+// dynamic/PLAN.md já previa reverter primeiro nesse cenário.
+const DEBUG_EXPOSE_SELF_PATH = false;
 
 export function normalizeViolation(raw, siteOrigin) {
   if (!raw || typeof raw !== 'object') return null;

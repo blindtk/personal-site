@@ -222,11 +222,11 @@ test('gradeFromHeaders: A+ com tudo, F com nada', () => {
 });
 
 test('gradeFromHeaders: nota intermédia sem CSP (peso 3 em falta)', () => {
-  // tudo presente menos a CSP (peso 3 de 11) → 8/11 ≈ 0.727 < 0.75 → C
+  // tudo presente menos a CSP (peso 3 de 12) → 9/12 = 0.75 → B
   const g = gradeFromHeaders((n) => (n === 'content-security-policy' ? null : 'v'));
-  assert.equal(g.score, 8);
-  assert.equal(g.max, 11);
-  assert.equal(g.grade, 'C');
+  assert.equal(g.score, 9);
+  assert.equal(g.max, 12);
+  assert.equal(g.grade, 'B');
 });
 
 test('rate limit: janela fixa bloqueia ao atingir o máximo', () => {
@@ -493,9 +493,7 @@ test('normalizeViolation: inline/eval/vazio e origem própria são categoria sel
   assert.deepEqual(mk('inline'), { directive: 'script-src', category: 'self', source: 'inline' });
   assert.deepEqual(mk('eval'), { directive: 'script-src', category: 'self', source: 'eval' });
   assert.deepEqual(mk(''), { directive: 'script-src', category: 'self', source: 'inline' });
-  // DEBUG_EXPOSE_SELF_PATH ligado temporariamente — ver nota no teste
-  // "DEBUG_EXPOSE_SELF_PATH" abaixo; reverter para source: 'self' depois.
-  assert.deepEqual(mk(`${SITE}/js/x.js`), { directive: 'script-src', category: 'self', source: 'self:/js/x.js' });
+  assert.deepEqual(mk(`${SITE}/js/x.js`), { directive: 'script-src', category: 'self', source: 'self' });
 });
 
 test('normalizeViolation: "inline" com sourceFile de extensão é ruído, não self', () => {
@@ -544,25 +542,11 @@ test('normalizeViolation: blocked-uri da própria origem com sourceFile de exten
   );
   assert.deepEqual(v, { directive: 'connect-src', category: 'extension', source: 'moz-extension://' });
 
-  // DEBUG_EXPOSE_SELF_PATH está ligado temporariamente (ver csp-report.js) —
-  // o pathname aparece no source em vez do bucket genérico 'self', só para
-  // diagnosticar as violações self/self inesperadas em produção. Reverter
-  // este teste (para source: 'self') quando essa flag voltar a false.
   const semExtensao = normalizeViolation(
     { documentUri: `${SITE}/`, directive: 'connect-src', blockedUri: `${SITE}/algum-caminho` },
     SITE,
   );
-  assert.deepEqual(semExtensao, { directive: 'connect-src', category: 'self', source: 'self:/algum-caminho' });
-});
-
-test('normalizeViolation: DEBUG_EXPOSE_SELF_PATH nunca inclui query/fragmento, só pathname', () => {
-  const v = normalizeViolation(
-    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: `${SITE}/cdn-cgi/challenge-platform/h/g/orchestrate/jsch/v1?token=SECRET#frag` },
-    SITE,
-  );
-  assert.equal(v.source, 'self:/cdn-cgi/challenge-platform/h/g/orchestrate/jsch/v1');
-  assert.equal(v.source.includes('SECRET'), false);
-  assert.equal(v.source.includes('frag'), false);
+  assert.deepEqual(semExtensao, { directive: 'connect-src', category: 'self', source: 'self' });
 });
 
 test('addCspEvent: cap de cardinalidade — fontes a mais caem em ~other', () => {
