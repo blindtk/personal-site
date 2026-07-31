@@ -20,12 +20,12 @@ real data for the dashboards it feeds. 233 tests, nine CI workflows, four ADRs,
 for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
-> 🇵🇹 **Nota em português:** este README está em inglês porque a maioria de
-> quem o lê profissionalmente (recrutadores, engenheiros) não lê português — o
-> site em si é bilingue por construção, PT em `/` e EN em `/en/`, e todo o
-> conteúdo editorial (`content/`) existe nos dois idiomas. Ver
-> [`CLAUDE.md`](CLAUDE.md) para as convenções do projeto (em português, como o
-> resto de `docs/`).
+> **Note:** this README is in English because most people who read it
+> professionally (recruiters, engineers) don't read Portuguese — the site
+> itself is bilingual by construction, PT at `/` and EN at `/en/`, and all
+> editorial content (`content/`) exists in both languages. See
+> [`CLAUDE.md`](CLAUDE.md) for the project's conventions (written in
+> Portuguese, like the rest of `docs/`).
 
 ## What this is
 

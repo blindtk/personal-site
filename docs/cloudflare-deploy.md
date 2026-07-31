@@ -233,13 +233,16 @@ qualquer forma.
 
 ## 6. Repositório GitHub
 
-Fica **privado** durante todo este processo — a Cloudflare Pages/Workers
+Ficou **privado** durante o desenvolvimento — a Cloudflare Pages/Workers
 Builds funcionam com repo privado (a GitHub App tem acesso concedido
 explicitamente, "Only select repositories"; ao contrário do GitHub Pages,
-não exige repo público). Tornar o repo público é uma decisão à parte, sem
-prazo ligado ao lançamento do site — checklist antes de o fazer (scan de
-segredos ao histórico completo, permissões de Actions para PRs de forks,
-branch protection, secret scanning) fica para quando for decidido.
+não exige repo público). **Atualização: o repositório já é público** (ver
+`docs/archive/auditoria-repo-publico-2026-07-31.md`). Checklist que devia
+ter sido confirmada antes disso — scan de segredos ao histórico completo,
+permissões de Actions para PRs de forks, branch protection, secret
+scanning — **não foi reverificada por este agente** (fora do alcance de
+uma sessão sem acesso às definições do repositório no GitHub); vale a pena
+confirmar manualmente que ficou feita.
 
 ## 7. Checklist do que falta / decisões pendentes
 
@@ -269,4 +272,5 @@ branch protection, secret scanning) fica para quando for decidido.
   em `static/src/config.ts` e `docs/dns-tls.md` (2026-07-30). Nota: o
   endereço antigo continua no histórico do git; a mitigação real é o alias
   ser rotável.
-- [ ] Repo público — checklist na secção 6, sem prazo definido.
+- [x] Repo público — já aconteceu; checklist de pré-requisitos da secção 6
+  não reverificada nesta sessão, confirmar manualmente.
