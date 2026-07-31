@@ -1,0 +1,54 @@
+# OpenSSF Scorecard: mede postura de supply-chain (pins por SHA, permissions
+# mínimas, branch protection, workflows perigosos como pull_request_target,
+# …) — não encontra bugs de código, mede práticas. Aqui é sobretudo trabalho
+# já feito à mão (ver security.yml, zizmor); o valor do Scorecard é impedir
+# regressão e publicar um badge verificável, não descobrir algo novo.
+#
+# Resultado em Security → Code scanning (SARIF) e no dashboard público
+# securityscorecards.dev (publish_results). Ambos só possíveis com o
+# repositório público — ver docs/security-review-2026-07-29.md §4
+# "OpenSSF Scorecard".
+name: Scorecard
+
+on:
+  schedule:
+    # Sábado de madrugada — fora da janela de PRs da semana, sem colidir
+    # com Headers (17 6 diário), Invariants (43 7 diário), Supply chain
+    # (0 6 * * 1) ou CodeQL (30 5 * * 1).
+    - cron: '30 5 * * 6'
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      # obrigatório para assinar e publicar os resultados (Sigstore) no
+      # dashboard público do OpenSSF.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Correr análise Scorecard
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+
+      - name: Guardar SARIF como artefacto
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 5
+
+      - name: Publicar em Security → Code scanning
+        uses: github/codeql-action/upload-sarif@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
+        with:
+          sarif_file: results.sarif
