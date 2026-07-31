@@ -31,7 +31,15 @@ processo em [`.github/SECURITY.md`](.github/SECURITY.md).
    warnings novos antes de abrires o PR.
 4. Se mexeste em `dynamic/worker/` ou nas ferramentas de `/ferramentas/`,
    corre também `node --test` e valida a lógica com vetores conhecidos.
-5. Abre o Pull Request — o template (`.github/pull_request_template.md`)
+5. Se mexeste em `dynamic/worker/src/lib/csp-report.js` ou `sanitize.js`,
+   corre também os harnesses de fuzzing localmente (`.clusterfuzzlite/fuzz/`)
+   por alguns segundos, para confirmar que continuam a compilar e a correr
+   sem crashar:
+   ```bash
+   npx --yes -p @jazzer.js/core jazzer .clusterfuzzlite/fuzz/csp_report_fuzz.js --sync -- -max_total_time=5
+   npx --yes -p @jazzer.js/core jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=5
+   ```
+6. Abre o Pull Request — o modelo (`.github/pull_request_template.md`)
    guia o que incluir. A CI (build, testes, análise estática) corre
    automaticamente; tem de passar antes de qualquer merge.
 
