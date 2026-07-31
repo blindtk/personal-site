@@ -1,6 +1,6 @@
 {
-  "$comment": "Headers de segurança que a produção TEM de servir — a fonte de verdade do workflow Headers (.github/workflows/headers.yml). Cada entrada lista substrings obrigatórias (case-insensitive) no valor do header. REVERTIDO de propósito para SET-ME (2026-07-29): a Cloudflare Access ainda está ativa a bloquear pedidos não autenticados ao site (docs/cloudflare-deploy.md, secção 3) — apontar para produção agora fazia o cron diário falhar sempre (a resposta é da página de login da Access, não do site), mascarando qualquer regressão real de headers com ruído da Access. Preenche 'url' com o domínio quando a Access for desligada/ajustada no lançamento (Fase 3, docs/cloudflare-deploy.md secção 7), OU mais cedo se configurares um Cloudflare Access Service Token para o CI (ver nota nesse doc).",
-  "url": "SET-ME: https://danielmala.co/",
+  "$comment": "Headers de segurança que a produção TEM de servir — a fonte de verdade do workflow Headers (.github/workflows/headers.yml). Cada entrada lista substrings obrigatórias (case-insensitive) no valor do header. `url` apontado para produção (2026-07-31): a Cloudflare Access, que bloqueava pedidos não autenticados e mascarava o resultado real do cron diário com a página de login da Access, foi desligada/ajustada (confirmado pelo dono do repo — ver docs/cloudflare-deploy.md secção 3 e 7).",
+  "url": "https://danielmala.co/",
   "headers": {
     "content-security-policy": ["default-src 'self'", "script-src", "object-src 'none'", "frame-src 'none'", "worker-src 'none'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'", "require-trusted-types-for 'script'"],
     "strict-transport-security": ["max-age=63072000", "includeSubDomains"],

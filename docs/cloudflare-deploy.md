@@ -49,8 +49,15 @@ application** (secção 3), não com WAF.
 
 ## 3. Cloudflare Access — lockdown durante o desenvolvimento
 
-Enquanto o site não está pronto para lançamento público, fica atrás de
-login por email (One-Time PIN) via Cloudflare Access — cobre `*.pages.dev`
+> **Atualização (2026-07-31, confirmado pelo dono do repo):** a Access
+> deixou de bloquear `danielmala.co`/`www.danielmala.co` — a política WAF
+> geo (secção 5) é agora a proteção real para a produção, tal como previsto
+> abaixo. Não confirmado se `*.pages.dev` continua atrás de Access (o
+> desenho original cobria os dois ao mesmo tempo); o resto desta secção
+> descreve o lockdown tal como foi configurado durante o desenvolvimento.
+
+Enquanto o site não estava pronto para lançamento público, ficava atrás de
+login por email (One-Time PIN) via Cloudflare Access — cobria `*.pages.dev`
 **e** `danielmala.co`/`www.danielmala.co` ao mesmo tempo, ao contrário do
 WAF de zona.
 
@@ -235,8 +242,13 @@ branch protection, secret scanning) fica para quando for decidido.
 
 ## 7. Checklist do que falta / decisões pendentes
 
-- [ ] Lançamento (Fase 3): desligar/ajustar a Access + confirmar que as
-  regras WAF (secção 5) fazem mesmo o trabalho sozinhas.
+- [x] **Lançamento (Fase 3), parte 1 (2026-07-31, confirmado pelo dono do
+  repo):** a Access deixou de bloquear `danielmala.co`/`www.danielmala.co`.
+  **Ainda em aberto:** confirmar que as regras WAF (secção 5) fazem mesmo o
+  trabalho sozinhas sem a Access por trás, e migrar a regra 2 ("CI headers
+  check") do match por User-Agent público para o header assinado
+  `X-Ci-Waf-Token` — já implementado do lado do CI, falta só a regra no
+  dashboard (ver nota 2026-07-30 na secção 5).
 - [x] **Confirmado (2026-07-29, decisão do dono do repo):** as regras
   "Previews sociais" e "O dono sempre" do desenho original **não** foram
   criadas, **por escolha, não por esquecimento**. Os bots de preview social
@@ -246,19 +258,12 @@ branch protection, secret scanning) fica para quando for decidido.
   redundante. Quanto ao dono: aceite que viajar para fora de PT o sujeita
   à regra 5 (Block) como qualquer visitante — só PT passa (com Managed
   Challenge), decisão mantida de propósito.
-- [ ] `.github/expected-headers.json` → `url` **voltou** a `SET-ME`
-  (2026-07-29): tinha sido apontado para `https://danielmala.co/` numa
-  revisão de segurança, mas a Access (secção 3) continua ativa — o cron
-  diário do `Headers` passaria a falhar sempre por causa da página de login
-  da Access, não de uma regressão real de headers, mascarando o sinal que
-  interessa. Duas formas de ativar antes do lançamento, se quiseres o
-  cron a verificar já: (a) criar um **Access Service Token** (Zero Trust →
-  Access → Service Auth) e adicionar `CF-Access-Client-Id`/
-  `CF-Access-Client-Secret` como secrets do GitHub + headers no
-  `check-headers.mjs`; (b) esperar pela Fase 3 (Access desligada) e só
-  então apontar o `url`. **Decidido (2026-07-30, preparação do repo para
-  público):** via (b) — mantém-se `SET-ME` até a Access ser desligada na
-  Fase 3.
+- [x] `.github/expected-headers.json` → `url` esteve `SET-ME` enquanto a
+  Access (secção 3) bloqueava produção — o cron diário do `Headers` teria
+  falhado sempre por causa da página de login da Access, não de uma
+  regressão real de headers. **Resolvido (2026-07-31):** via a opção (b) já
+  prevista aqui — a Access foi desligada/ajustada na Fase 3, `url` aponta
+  agora para `https://danielmala.co/`.
 - [ ] CAA, HSTS preload, DNSSEC — checklist em `docs/dns-tls.md`, por
   executar/confirmar.
 - [x] Alias de email (`me@danielmala.co`) em vez do Hotmail pessoal — feito

@@ -7,6 +7,14 @@
 > ou reescrito. Toda a afirmação abaixo é ancorada em `caminho:linha` ou num
 > comando reprodutível.
 
+> **Atualização (2026-07-31, mesmo dia).** O dono do repo confirmou que a
+> Cloudflare Access deixou de bloquear `danielmala.co`/`www.danielmala.co` —
+> resposta à pergunta 1 no fim deste relatório. Isso resolveu o achado #1 do
+> resumo executivo e, por decisão já pré-acordada em `dynamic/PLAN.md`,
+> obrigou a reverter também o achado #3 (`DEBUG_EXPOSE_SELF_PATH`). Ambos
+> foram executados nesta mesma ronda (ver marcas `[RESOLVIDO]` abaixo); os
+> restantes achados continuam por decidir.
+
 ## Nota meta, antes de tudo
 
 Este não é o primeiro ciclo desta tarefa. `docs/prompt-repo-publico.md` é,
@@ -31,32 +39,38 @@ Por ordem de impacto (impacto = o que um leitor cético, a fazer exatamente o
 que o próprio README convida — "não acredites, verifica" — encontra em 5
 minutos):
 
-1. **A verificação diária de cabeçalhos de produção está desligada por
-   placeholder, e o comentário que o diz admite que o site pode ainda estar
-   atrás de Cloudflare Access.** `.github/expected-headers.json` tem
-   `"url": "SET-ME: https://danielmala.co/"` com um `$comment` que diz, em
-   claro: *"a Cloudflare Access ainda está ativa a bloquear pedidos não
-   autenticados ao site (...) apontar para produção agora fazia o cron
-   diário falhar sempre"*. Isto contradiz a moldura pública inteira do site
-   ("ao vivo, verificável, sem login") **se ainda for verdade hoje**. É a
-   única pergunta desta auditoria cuja resposta pode mudar tudo o resto — só
-   o dono sabe se o Access já foi desligado.
-2. **Uma técnica de bypass de WAF ainda ativa está documentada em claro num
-   ficheiro público.** `docs/cloudflare-deploy.md:150-172` explica que a
-   regra 2 do WAF ainda faz *match* por uma substring de User-Agent pública
-   (não migrada para o header assinado `X-Ci-Waf-Token`, já implementado do
-   lado do CI) — e diz que isto já foi identificado como "achado de uma
-   sessão de validação de lançamento" em 2026-07-30, sem correção aplicada
-   desde então. Ao contrário dos paths-isco do honeypot (transparência
-   deliberada, sem custo — scanners não leem o repo), isto dá a qualquer
-   leitor humano a receita exata para saltar a política geográfica.
-3. **Uma flag de debug que expõe pathnames de violações CSP continua ligada,
-   com o risco aceite a assentar numa premissa que a própria tarefa desta
-   auditoria já invalidou.** `dynamic/worker/src/lib/csp-report.js:132`:
-   `DEBUG_EXPOSE_SELF_PATH = true`. O `dynamic/PLAN.md:25-30` e os dois
-   relatórios de 2026-07-30 aceitam este risco com base em "produção continua
-   atrás de Cloudflare Access". Se o repo já é público *e* o site já serve
-   tráfego real (as duas premissas desta tarefa), essa base já não vale.
+1. **[RESOLVIDO 2026-07-31]** A verificação diária de cabeçalhos de produção
+   estava desligada por placeholder, e o comentário admitia que o site
+   podia ainda estar atrás de Cloudflare Access — `.github/
+   expected-headers.json` tinha `"url": "SET-ME: https://danielmala.co/"`.
+   **O dono confirmou que a Access já não bloqueia `danielmala.co`/
+   `www.danielmala.co`**; `url` foi atualizado para `https://danielmala.co/`
+   e o `$comment` já não reproduz a premissa desatualizada.
+2. **[EM ABERTO — requer ação no dashboard Cloudflare, fora do alcance deste
+   agente]** Uma técnica de bypass de WAF ainda ativa está documentada em
+   claro num ficheiro público. `docs/cloudflare-deploy.md:150-172` explica
+   que a regra 2 do WAF ainda faz *match* por uma substring de User-Agent
+   pública (não migrada para o header assinado `X-Ci-Waf-Token`, já
+   implementado do lado do CI) — e diz que isto já foi identificado como
+   "achado de uma sessão de validação de lançamento" em 2026-07-30, sem
+   correção aplicada desde então. Ao contrário dos paths-isco do honeypot
+   (transparência deliberada, sem custo — scanners não leem o repo), isto dá
+   a qualquer leitor humano a receita exata para saltar a política
+   geográfica. A migração da regra em si só pode ser feita pelo dono no
+   dashboard da Cloudflare.
+3. **[RESOLVIDO 2026-07-31]** Uma flag de debug que expunha pathnames de
+   violações CSP continuava ligada, com o risco aceite a assentar numa
+   premissa que a própria tarefa desta auditoria invalidou.
+   `dynamic/worker/src/lib/csp-report.js:132` tinha
+   `DEBUG_EXPOSE_SELF_PATH = true`; o `dynamic/PLAN.md:25-30` e os dois
+   relatórios de 2026-07-30 aceitavam este risco com base em "produção
+   continua atrás de Cloudflare Access". Como essa base deixou de valer,
+   revertida para `false` (o próprio `dynamic/PLAN.md` já previa reverter
+   primeiro neste cenário, antes de a causa das violações self/self estar
+   confirmada) — 2 assertions em `dynamic/worker/test/logic.test.mjs`
+   atualizadas e um terceiro teste (só testava o comportamento de debug)
+   removido; total de testes do Worker passa de 119 para 118, e o total do
+   repo de 191 para 190 (README atualizado).
 4. **A build de produção não é limpa — viola o próprio critério do
    `CLAUDE.md`.** `content/blog/` não existe fisicamente, mas
    `getCollection('blog', ...)` é chamado em `BaseLayout.astro:29` (todas as
@@ -189,8 +203,9 @@ no sentido de "está factualmente errado" — os erros concretos que existiam
 - `.gitleaksignore` lista como falso-positivo aceite um mapa de AAGUIDs
   públicos do FIDO Alliance em `static/src/scripts/passkeys.js` — não são
   segredos, confirmado.
-- `dynamic/worker/src/lib/csp-report.js:132` — `DEBUG_EXPOSE_SELF_PATH =
-  true`, ainda ligado (achado #3 do resumo executivo).
+- `dynamic/worker/src/lib/csp-report.js:132` — `DEBUG_EXPOSE_SELF_PATH`,
+  **[RESOLVIDO 2026-07-31]** revertido para `false` (achado #3 do resumo
+  executivo).
 - Nenhum ficheiro de código, script ou entrada `content/*.json` órfão —
   todos os 12 scripts em `static/src/scripts/` e os 7 JSON de `content/` têm
   importador confirmado. **Lacuna de teste** (não órfão, mas contradiz a
@@ -202,19 +217,24 @@ no sentido de "está factualmente errado" — os erros concretos que existiam
 
 ## Plano de execução — PRs pequenos e independentes, por prioridade
 
-1. **PR — corrigir o cron de verificação de headers (bloqueador, pendente de
-   resposta do dono)**. Toca em: config (`.github/expected-headers.json`).
-   Só depois de confirmar se a Cloudflare Access ainda bloqueia produção.
-   Reconfirmar: `headers.yml` corre manualmente contra a URL real.
-2. **PR — migrar a regra WAF de CI para o header assinado**. Toca em:
-   infraestrutura (fora do repo, no dashboard Cloudflare) + atualizar
-   `docs/cloudflare-deploy.md` para remover a nota "falta migrar". Não há
-   `npm run build`/`node --test` a correr aqui (é config de zona), mas
-   reconfirmar com `check-headers.mjs`/`check-invariants.mjs` a passar com
-   o header novo.
-3. **PR — decidir e resolver `DEBUG_EXPOSE_SELF_PATH`**. Toca em: código
-   (`dynamic/worker/src/lib/csp-report.js`) + `dynamic/PLAN.md`. Reconfirmar:
-   `cd dynamic/worker && node --test`.
+1. **[FEITO 2026-07-31]** ~~PR — corrigir o cron de verificação de
+   headers~~ — `url` em `.github/expected-headers.json` atualizado para
+   `https://danielmala.co/` depois de o dono confirmar que a Access já não
+   bloqueia produção; `$comment` atualizado. `docs/cloudflare-deploy.md`
+   (secções 3 e 7) e `dynamic/PLAN.md` também atualizados para refletir o
+   estado atual.
+2. **PR — migrar a regra WAF de CI para o header assinado (ainda em
+   aberto — requer dashboard Cloudflare, fora do alcance deste agente)**.
+   Toca em: infraestrutura (fora do repo) + atualizar
+   `docs/cloudflare-deploy.md` para remover a nota "falta migrar" depois de
+   feito. Reconfirmar com `check-headers.mjs`/`check-invariants.mjs` a
+   passar com o header novo.
+3. **[FEITO 2026-07-31]** ~~PR — decidir e resolver
+   `DEBUG_EXPOSE_SELF_PATH`~~ — revertido para `false` em
+   `dynamic/worker/src/lib/csp-report.js`, decisão registada em
+   `dynamic/PLAN.md`, testes atualizados em
+   `dynamic/worker/test/logic.test.mjs` (118 testes, era 119).
+   `cd dynamic/worker && node --test` confirmado: 118 pass, 0 fail.
 4. **PR — build limpo (coleção `blog`)**. Toca em: código
    (`BaseLayout.astro`/`HomePage.astro`/`content.config.ts` — decisão de
    implementação entre criar `content/blog/` vazio com `.gitkeep`, tornar a
@@ -248,14 +268,17 @@ no sentido de "está factualmente errado" — os erros concretos que existiam
 
 ## Perguntas cuja resposta muda o plano
 
-1. **A Cloudflare Access ainda bloqueia produção, ou já foi desligada/
-   ajustada desde 2026-07-29?** Determina se o achado #1 é um bloqueador de
-   lançamento ativo ou um comentário desatualizado a limpar.
+1. ~~A Cloudflare Access ainda bloqueia produção?~~ **Respondido
+   2026-07-31: não, já foi desligada/ajustada.** Executado (ver item 1 do
+   plano).
 2. **A migração da regra WAF (User-Agent → `X-Ci-Waf-Token`) já foi feita no
-   dashboard desde 30/07?** Se não, é a coisa mais urgente a fechar.
-3. **`DEBUG_EXPOSE_SELF_PATH` — o diagnóstico das violações `self/self`
-   já concluiu?** Se o site já serve tráfego público real, a base do risco
-   aceite (Access a proteger tudo) já não vale.
+   dashboard?** Continua sem resposta — é agora a coisa mais urgente a
+   fechar, e só o dono a pode fazer (dashboard Cloudflare).
+3. ~~`DEBUG_EXPOSE_SELF_PATH` — o diagnóstico já concluiu?~~ **Sem resposta
+   sobre o diagnóstico em si, mas irrelevante agora**: a premissa do risco
+   aceite (Access a proteger tudo) mudou, por isso revertido primeiro, como
+   já estava decidido em `dynamic/PLAN.md`. Se as violações self/self
+   reaparecerem, reabrir o diagnóstico à luz do novo estado.
 4. **`arquitetura-editorial-este-site.md` (separar Perímetro em 3 páginas) —
    foi aceite e está para implementar, ou abandonada?** Determina
    `docs/proposals/` (viva) vs `docs/archive/` (morta).

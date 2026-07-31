@@ -37,6 +37,16 @@
   Access — se essa premissa mudar antes da causa ser confirmada, reverter
   primeiro.
 
+  **2026-07-31 — revertido.** O dono do repo confirmou que a Cloudflare
+  Access deixou de bloquear `danielmala.co`/`www.danielmala.co` — a premissa
+  do risco aceite mudou antes de a causa das violações self/self ser
+  confirmada, por isso reverteu-se primeiro, como já estava decidido acima:
+  `DEBUG_EXPOSE_SELF_PATH = false` e os testes dependentes do path
+  atualizados em `dynamic/worker/test/logic.test.mjs`. O diagnóstico da
+  causa das violações self/self em si continua por concluir — se
+  reaparecerem, reabrir com a flag e reavaliar o risco à luz de produção já
+  não estar atrás de Access.
+
 - **2026-07-29 — Workflow `invariants.yml`: fecha o loop deteção → alerta**
   (discutido com o dono do repo depois da revisão de segurança do mesmo
   dia): os dashboards do honeypot/threat-intel/CT/CF-stats são só **pull**
