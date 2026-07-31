@@ -3,7 +3,7 @@
 # Recommended": por omissão é verbosa e comenta em decisões de estilo já
 # tomadas ("Needs a .coderabbit.yaml to be tolerable") — este ficheiro é
 # essa calibração.
-# Schema: https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
 
 language: "en-US"
 
