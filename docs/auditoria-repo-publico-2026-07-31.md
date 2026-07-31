@@ -46,18 +46,15 @@ minutos):
    **O dono confirmou que a Access já não bloqueia `danielmala.co`/
    `www.danielmala.co`**; `url` foi atualizado para `https://danielmala.co/`
    e o `$comment` já não reproduz a premissa desatualizada.
-2. **[EM ABERTO — requer ação no dashboard Cloudflare, fora do alcance deste
-   agente]** Uma técnica de bypass de WAF ainda ativa está documentada em
-   claro num ficheiro público. `docs/cloudflare-deploy.md:150-172` explica
-   que a regra 2 do WAF ainda faz *match* por uma substring de User-Agent
-   pública (não migrada para o header assinado `X-Ci-Waf-Token`, já
-   implementado do lado do CI) — e diz que isto já foi identificado como
-   "achado de uma sessão de validação de lançamento" em 2026-07-30, sem
-   correção aplicada desde então. Ao contrário dos paths-isco do honeypot
-   (transparência deliberada, sem custo — scanners não leem o repo), isto dá
-   a qualquer leitor humano a receita exata para saltar a política
-   geográfica. A migração da regra em si só pode ser feita pelo dono no
-   dashboard da Cloudflare.
+2. **[RESOLVIDO 2026-07-31, confirmado pelo dono do repo]** Uma técnica de
+   bypass de WAF ainda ativa estava documentada em claro num ficheiro
+   público. `docs/cloudflare-deploy.md:150-172` explicava que a regra 2 do
+   WAF fazia *match* por uma substring de User-Agent pública (não migrada
+   para o header assinado `X-Ci-Waf-Token`, já implementado do lado do CI)
+   — identificado como "achado de uma sessão de validação de lançamento" em
+   2026-07-30. **A regra no dashboard já foi migrada** para verificar
+   `X-Ci-Waf-Token` em vez do User-Agent; a documentação foi atualizada para
+   refletir isso.
 3. **[RESOLVIDO 2026-07-31]** Uma flag de debug que expunha pathnames de
    violações CSP continuava ligada, com o risco aceite a assentar numa
    premissa que a própria tarefa desta auditoria invalidou.
@@ -186,8 +183,9 @@ no sentido de "está factualmente errado" — os erros concretos que existiam
   namespace KV e o `CF_ZONE_TAG`/`CF_ACCOUNT_ID` reais (identificadores, não
   segredos — corretamente tratados como tal pelo próprio autor em comentário).
 - `docs/cloudflare-deploy.md:144-172` documenta a ordem exata das 5 regras
-  WAF de produção, incluindo a técnica de bypass ainda ativa (achado #2 do
-  resumo executivo) e a política geográfica exata (só PT passa).
+  WAF de produção e a política geográfica exata (só PT passa) — transparência
+  deliberada, sem custo. A técnica de bypass que aqui vivia (achado #2,
+  **resolvido**) já não está ativa.
 - `static/public/ferramentas/exif-demo.jpg` tem EXIF real com GPS (câmara
   FUJIFILM X-T5, coordenadas de zona turística fora de Portugal) — usado
   deliberadamente como demo da ferramenta EXIF
@@ -223,12 +221,10 @@ no sentido de "está factualmente errado" — os erros concretos que existiam
    bloqueia produção; `$comment` atualizado. `docs/cloudflare-deploy.md`
    (secções 3 e 7) e `dynamic/PLAN.md` também atualizados para refletir o
    estado atual.
-2. **PR — migrar a regra WAF de CI para o header assinado (ainda em
-   aberto — requer dashboard Cloudflare, fora do alcance deste agente)**.
-   Toca em: infraestrutura (fora do repo) + atualizar
-   `docs/cloudflare-deploy.md` para remover a nota "falta migrar" depois de
-   feito. Reconfirmar com `check-headers.mjs`/`check-invariants.mjs` a
-   passar com o header novo.
+2. **[FEITO 2026-07-31, confirmado pelo dono do repo]** ~~PR — migrar a
+   regra WAF de CI para o header assinado~~ — já migrada no dashboard;
+   `docs/cloudflare-deploy.md` §5/§7 atualizado para remover a nota "falta
+   migrar".
 3. **[FEITO 2026-07-31]** ~~PR — decidir e resolver
    `DEBUG_EXPOSE_SELF_PATH`~~ — revertido para `false` em
    `dynamic/worker/src/lib/csp-report.js`, decisão registada em
@@ -271,9 +267,10 @@ no sentido de "está factualmente errado" — os erros concretos que existiam
 1. ~~A Cloudflare Access ainda bloqueia produção?~~ **Respondido
    2026-07-31: não, já foi desligada/ajustada.** Executado (ver item 1 do
    plano).
-2. **A migração da regra WAF (User-Agent → `X-Ci-Waf-Token`) já foi feita no
-   dashboard?** Continua sem resposta — é agora a coisa mais urgente a
-   fechar, e só o dono a pode fazer (dashboard Cloudflare).
+2. ~~A migração da regra WAF (User-Agent → `X-Ci-Waf-Token`) já foi feita no
+   dashboard?~~ **Respondido 2026-07-31: sim, já migrada.** Documentação
+   atualizada. (`*.pages.dev` confirmado que continua atrás de Access, por
+   desenho — sem ação necessária.)
 3. ~~`DEBUG_EXPOSE_SELF_PATH` — o diagnóstico já concluiu?~~ **Sem resposta
    sobre o diagnóstico em si, mas irrelevante agora**: a premissa do risco
    aceite (Access a proteger tudo) mudou, por isso revertido primeiro, como

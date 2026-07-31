@@ -52,9 +52,10 @@ application** (secção 3), não com WAF.
 > **Atualização (2026-07-31, confirmado pelo dono do repo):** a Access
 > deixou de bloquear `danielmala.co`/`www.danielmala.co` — a política WAF
 > geo (secção 5) é agora a proteção real para a produção, tal como previsto
-> abaixo. Não confirmado se `*.pages.dev` continua atrás de Access (o
-> desenho original cobria os dois ao mesmo tempo); o resto desta secção
-> descreve o lockdown tal como foi configurado durante o desenvolvimento.
+> abaixo. **`*.pages.dev` continua atrás de Access** (confirmado) — só a
+> aplicação/destination da produção foi ajustada; o resto desta secção
+> descreve o lockdown tal como foi configurado durante o desenvolvimento e
+> continua a aplicar-se às previews.
 
 Enquanto o site não estava pronto para lançamento público, ficava atrás de
 login por email (One-Time PIN) via Cloudflare Access — cobria `*.pages.dev`
@@ -154,7 +155,7 @@ vem antes da política de país, e cada regra que atua **para a evolução**):
 | # | Regra | Condição (resumo) | Ação |
 |---|---|---|---|
 | 1 | Bots verificados | `cf.client.bot` (bots verificados pela Cloudflare) | Skip |
-| 2 | CI headers check | User-Agent contém `headers-check` (**a migrar** para `X-Ci-Waf-Token` — ver nota 2026-07-30 abaixo) | Skip |
+| 2 | CI headers check | `http.request.headers["x-ci-waf-token"][0] eq "<valor do secret CI_WAF_TOKEN>"` (migrado 2026-07-31 — ver nota abaixo) | Skip |
 | 3 | Honeypot Paths | Path é `/.env`, `/.git/config`, `/wp-login.php`, `/admin` ou começa por `/phpmyadmin` | **Managed Challenge**, pára a avaliação |
 | 4 | Allowed Countries - Site | fora dos paths acima **e** país é PT | **Managed Challenge**, pára a avaliação |
 | 5 | Blocked Countries - Site | fora dos paths acima **e** país não é PT | **Block**, pára a avaliação |
@@ -166,15 +167,15 @@ Porquê cada regra:
   4/5) depois do lançamento e passam a reportar produção partida por causa
   do próprio WAF, não de uma regressão real.
   > **Nota (2026-07-30):** o match original ("User-Agent contém
-  > `headers-check`") é uma string pública, documentada neste próprio
+  > `headers-check`") era uma string pública, documentada neste próprio
   > ficheiro — qualquer pedido de fora do mundo podia copiá-la e saltar a
-  > política de país (achado de uma sessão de validação de lançamento). Os
-  > scripts (`check-headers.mjs`, `check-invariants.mjs`) e os workflows já
-  > enviam um segredo `CI_WAF_TOKEN` (GitHub Actions secret) no header
-  > `X-Ci-Waf-Token` quando configurado. **Falta migrar esta regra no
-  > dashboard** para `http.request.headers["x-ci-waf-token"][0] eq
-  > "<mesmo valor do secret>"` — depois disso, o match por User-Agent pode
-  > sair da condição por completo. Rotação: mudar o valor no GitHub Actions
+  > política de país (achado de uma sessão de validação de lançamento).
+  > **Resolvido (2026-07-31, confirmado pelo dono do repo):** a regra no
+  > dashboard já faz match pelo header assinado `X-Ci-Waf-Token`
+  > (`http.request.headers["x-ci-waf-token"][0] eq "<valor do secret>"`),
+  > não pelo User-Agent — os scripts (`check-headers.mjs`,
+  > `check-invariants.mjs`) já enviavam o segredo `CI_WAF_TOKEN` (GitHub
+  > Actions secret) neste header. Rotação: mudar o valor no GitHub Actions
   > (Settings → Secrets → Actions → `CI_WAF_TOKEN`) e na regra WAF ao mesmo
   > tempo, mesma disciplina do `RATE_SALT`/`CF_API_TOKEN`.
 - **3**: os cinco paths-isco do honeypot (`dynamic/worker/`, `DECOYS` em
@@ -242,13 +243,11 @@ branch protection, secret scanning) fica para quando for decidido.
 
 ## 7. Checklist do que falta / decisões pendentes
 
-- [x] **Lançamento (Fase 3), parte 1 (2026-07-31, confirmado pelo dono do
-  repo):** a Access deixou de bloquear `danielmala.co`/`www.danielmala.co`.
-  **Ainda em aberto:** confirmar que as regras WAF (secção 5) fazem mesmo o
-  trabalho sozinhas sem a Access por trás, e migrar a regra 2 ("CI headers
-  check") do match por User-Agent público para o header assinado
-  `X-Ci-Waf-Token` — já implementado do lado do CI, falta só a regra no
-  dashboard (ver nota 2026-07-30 na secção 5).
+- [x] **Lançamento (Fase 3) (2026-07-31, confirmado pelo dono do repo):** a
+  Access deixou de bloquear `danielmala.co`/`www.danielmala.co`; a regra 2
+  do WAF ("CI headers check") já faz match pelo header assinado
+  `X-Ci-Waf-Token` em vez do User-Agent público (secção 5). `*.pages.dev`
+  continua atrás de Access, por desenho.
 - [x] **Confirmado (2026-07-29, decisão do dono do repo):** as regras
   "Previews sociais" e "O dono sempre" do desenho original **não** foram
   criadas, **por escolha, não por esquecimento**. Os bots de preview social
