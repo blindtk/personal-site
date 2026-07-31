@@ -67,18 +67,16 @@ abaixo). Quando estiver:
 > garantido). Se o homelab/`lab.` ou outro subdomínio alguma vez servir HTTP
 > puro, parte. Só submeter quando a família de subdomínios estiver decidida.
 
-## 4. Extra barato (recomendado)
+## 4. DNSSEC
 
-- **DNSSEC**: um clique na Cloudflare (**DNS → Settings → Enable DNSSEC**) +
-  registo DS no registrar (automático se o registrar for a própria
-  Cloudflare). Protege a resolução do domínio contra spoofing.
+- **Ativo.** Protege a resolução do domínio contra spoofing (**DNS →
+  Settings → DNSSEC** na Cloudflare, `DS` registado no registrar).
 
-> **Confirmado ativo (2026-07-30, validação de lançamento):** `DNSKEY`
-> devolvido por dois resolvedores validadores independentes (Cloudflare
-> `1.1.1.1` e Google `8.8.8.8`, ambos com `AD: true`), com o `DS`
-> correspondente já registado na zona pai `.co`. DNSSEC está a validar
-> corretamente — este item já não é uma pendência, ao contrário do que a
-> secção acima sugere.
+> **Confirmado (2026-07-30, validação de lançamento):** `DNSKEY` devolvido
+> por dois resolvedores validadores independentes (Cloudflare `1.1.1.1` e
+> Google `8.8.8.8`, ambos com `AD: true`), com o `DS` correspondente já
+> registado na zona pai `.co`. Verificar: `dig @1.1.1.1 danielmala.co
+> DNSKEY +dnssec` (e o mesmo contra `@8.8.8.8`) devem incluir a flag `ad`.
 
 ## Relação com o resto do repo
 
