@@ -36,11 +36,14 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: |
-            static/package-lock.json
-            dynamic/worker/package-lock.json
-
+          # package-manager-cache: false, explícito — zizmor apanhou
+          # (cache-poisoning, severidade alta) que o setup-node cacheia por
+          # omissão (mesmo sem `cache: 'npm'`), e uma cache envenenada é
+          # vetor de execução de código num workflow que publica
+          # artefactos assinados a partir de uma tag. Este workflow corre
+          # raramente (só em tag/manual); a velocidade não compensa o risco.
+          package-manager-cache: false
+      #
       # --ignore-scripts: mesma proteção do ci.yml (nenhuma dependência corre
       # postinstall arbitrário).
       - name: Build static/
