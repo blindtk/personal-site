@@ -84,7 +84,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Instalar Semgrep
-        run: pipx install semgrep==1.171.0
+        run: pipx install semgrep==1.172.0
       - name: SAST
         # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07,
         # ver docs/security-review-2026-07-29.md). O volume real medido contra
