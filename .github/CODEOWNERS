@@ -1,0 +1,5 @@
+# Sem isto, a regra "Require review from Code Owners" do ruleset de `main`
+# não tem ninguém para resolver como dono — bloqueia todos os PRs
+# indefinidamente (`Cannot update this protected ref.`), incluindo os do
+# próprio Renovate. Um só dono para o repo inteiro.
+* @blindtk
