@@ -40,6 +40,12 @@ jobs:
         uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: javascript
+          # Jazzer.js corre em cima do V8/Node, não código nativo — não há
+          # instrumentação ASan possível. Sem isto, o build_fuzzers assume o
+          # sanitizer por omissão (address) e falha logo no compile:
+          # "JavaScript projects cannot be fuzzed with sanitizers." (visto na
+          # 1.ª execução em produção, run #1 de 2026-08-01).
+          sanitizer: none
 
       - name: Correr fuzzers
         id: run
