@@ -3,7 +3,9 @@
 # Atualizar o campo Expires antes de expirar (rever ~anualmente).
 
 Contact: https://danielmala.co/contactos/
+Contact: https://danielmala.co/en/contact/
 Expires: 2027-07-17T00:00:00.000Z
 Preferred-Languages: pt, en
 Canonical: https://danielmala.co/.well-known/security.txt
 Policy: https://danielmala.co/seguranca/
+Policy: https://danielmala.co/en/security/

@@ -3,7 +3,6 @@
   "items": [
     { "name": "FCSS in Cloud Security", "full": "Fortinet Certified Solution Specialist Cloud Security", "issuer": "Fortinet", "group": "track", "expires": "2026-09-29", "url": "https://www.credly.com/badges/f38c5c9e-fd53-4868-a908-eab10b12c7b4" },
     { "name": "FCP Secure Networking", "full": "Fortinet Certified Professional Secure Networking", "issuer": "Fortinet", "group": "track", "expires": "2026-09-08", "url": "https://www.credly.com/badges/a3b85495-17fa-4238-bfb3-f0d7a6820d12" },
-    { "name": "FCP Security Operations", "full": "Fortinet Certified Professional Security Operations", "issuer": "Fortinet", "group": "track", "expires": "2025-09-08", "url": "https://www.credly.com/badges/9864cc71-2862-4158-887d-6f5189ad8b22" },
     { "name": "NSE 7 — Cloud Security", "full": "Fortinet NSE 7 Certified in Cloud Security", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29", "url": "https://www.credly.com/badges/1481a54b-d723-4282-80b0-24328d1e7e77" },
     { "name": "NSE 6 — Secure Networking", "full": "Fortinet NSE 6 Certified in Secure Networking", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-08", "url": "https://www.credly.com/badges/9aa2fba2-0c49-4644-a37e-19e0ed129866" },
     { "name": "NSE 4 — FortiOS", "full": "Fortinet NSE 4 Certified in FortiOS", "issuer": "Fortinet", "group": "nse", "expires": "2026-09-29", "url": "https://www.credly.com/badges/33660b5d-fb63-477d-8fd8-b6f1e246fcd7" },

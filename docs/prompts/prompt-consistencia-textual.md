@@ -29,9 +29,12 @@ Copia o bloco abaixo como pedido a um agente.
 >   `layers`). É aqui que vive a maior parte do texto "de página".
 > - `static/src/config.ts` — dados pessoais (nome, handle, cargo, email,
 >   domínio, redes, disponibilidade). **Fonte única** destes valores.
-> - `static/src/components/pages/*.astro` — as componentes de página. Não
->   deviam ter strings hardcoded (as regras do projeto proíbem-no); sinaliza
->   qualquer texto visível que esteja aqui em vez de em `ui.ts`.
+> - `static/src/components/pages/*.astro` **e** `static/src/components/tools/*.astro`
+>   (+ `.js`/`.ts` associados) — as componentes de página e das ferramentas de
+>   `/ferramentas/`. Não deviam ter strings hardcoded (as regras do projeto
+>   proíbem-no); sinaliza qualquer texto visível que esteja aqui em vez de em
+>   `ui.ts`. Nas de `tools/`, a lógica em si deve limitar-se a ligar ao DOM —
+>   um achado de string hardcoded não é licença para mexer nessa lógica.
 > - `static/src/i18n/routes.ts` — pares de rotas PT/EN, para confirmar que as
 >   ligações cruzadas apontam para páginas que existem.
 >

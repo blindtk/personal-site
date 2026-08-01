@@ -9,7 +9,7 @@ const s = t(lang).tools.passkeys;
 // Domínio para o render no build (o cliente re-interpola com location.hostname,
 // que em produção coincide com este). fake = subdomínio-isco de demonstração.
 const host = new URL(SITE_URL).hostname;
-const fake = `${host}.login-seguro.xyz`;
+const fake = `${host}.${s.decoySuffix}`;
 const cleanupText = s.cleanup.replace('{rp}', host);
 const whyParts = s.whyText.split('{fake}');
 
@@ -67,7 +67,7 @@ const jsStrings = { ...s, host, fake };
   const root = document.getElementById('pk-lab')!;
   const S = JSON.parse(root.dataset.strings!);
   const rpId = location.hostname;
-  const fakeRpId = `${location.hostname}.login-seguro.xyz`;
+  const fakeRpId = `${location.hostname}.${S.decoySuffix}`;
 
   const $ = (id: string) => document.getElementById(id)!;
   const createBtn = $('pk-create') as HTMLButtonElement;
@@ -156,7 +156,7 @@ const jsStrings = { ...s, host, fake };
       const cred = (await navigator.credentials.create({
         publicKey: {
           challenge: rand(32),
-          rp: { id: rpId, name: 'Passkey Lab (demo)' },
+          rp: { id: rpId, name: S.rpName },
           user: { id: rand(16), name: 'demo@lab', displayName: 'Demo' },
           pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
           authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },

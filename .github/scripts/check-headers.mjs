@@ -64,6 +64,36 @@ async function fetchSameOrigin(url, opts, maxRedirects = 5) {
   return fetch(current, { ...opts, redirect: 'manual' });
 }
 
+// Neutraliza newlines/ANSI/control chars antes de imprimir dados vindos da
+// resposta HTTP (título, headers): sem isto, um valor forjado podia injetar
+// uma nova linha começada por `::` e o runner interpretava-a como comando de
+// workflow (::set-output::, ::add-mask::, …) em vez de texto de log.
+function sanitizeForLog(value, maxLen = 200) {
+  const str = String(value ?? 'null').slice(0, maxLen);
+  // eslint-disable-next-line no-control-regex -- remoção intencional de control chars/ANSI
+  return str.replace(/[\x00-\x1f\x7f]/g, '?').replace(/::/g, ': :');
+}
+
+// Só os primeiros bytes bastam para extrair <title> — res.text() carregava a
+// resposta inteira para memória, e o alvo (produção, atrás de WAF/Access) é
+// controlado por terceiros na prática de uma página de bloqueio: um corpo
+// deliberadamente enorme atrasava o job ou esgotava memória do runner.
+async function readBodyPrefix(res, maxBytes = 4096) {
+  const reader = res.body?.getReader();
+  if (!reader) return '';
+  const chunks = [];
+  let received = 0;
+  while (received < maxBytes) {
+    // eslint-disable-next-line no-await-in-loop -- leitura sequencial do mesmo stream
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+  }
+  await reader.cancel().catch(() => {});
+  return Buffer.concat(chunks.map((c) => Buffer.from(c)), received).subarray(0, maxBytes).toString('utf8');
+}
+
 if (!target || target.startsWith('SET-ME')) {
   // ::warning:: (não ::notice::) de propósito — achado da revisão de
   // segurança 2026-07 (ronda 4, N3): este caminho corria em produção há 13
@@ -94,6 +124,14 @@ const res = await fetchSameOrigin(target, {
 console.log(`HTTP ${res.status}`);
 if (!res.ok) {
   console.error(`::error::check-headers: resposta ${res.status} de ${target}`);
+  console.error(
+    `cf-ray: ${sanitizeForLog(res.headers.get('cf-ray'))}, ` +
+      `cf-mitigated: ${sanitizeForLog(res.headers.get('cf-mitigated'))}, ` +
+      `server: ${sanitizeForLog(res.headers.get('server'))}`,
+  );
+  const bodyPrefix = await readBodyPrefix(res);
+  const title = /<title>([^<]*)<\/title>/i.exec(bodyPrefix)?.[1];
+  if (title) console.error(`título da resposta: ${sanitizeForLog(title)}`);
   process.exit(1);
 }
 

@@ -217,7 +217,9 @@ export const ui = {
         { name: 'X-Content-Type-Options: nosniff', why: 'Impede o browser de adivinhar o tipo de um ficheiro e executá-lo como algo que não é.' },
         { name: 'Referrer-Policy', why: 'Não vaza o caminho completo desta página para sites externos ao seguir uma ligação.' },
         { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
-        { name: 'COOP / COEP / CORP', why: 'O trio cross-origin completo: isola o contexto de navegação e os recursos de outras origens — os mesmos três exigidos no contrato de cabeçalhos das Provas.' },
+        { name: 'Cross-Origin-Opener-Policy', why: 'Isola o contexto de navegação (window/tab) de outras origens — impede que uma janela de outro site controle esta.' },
+        { name: 'Cross-Origin-Embedder-Policy', why: 'Só carrega recursos de outras origens que autorizem explicitamente (CORP/CORS) — parte do isolamento cross-origin, a par de COOP.' },
+        { name: 'Cross-Origin-Resource-Policy', why: 'Impede que outros sites carreguem os recursos deste directamente — completa o trio cross-origin, os mesmos nove cabeçalhos exigidos no contrato das Provas.' },
       ],
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
@@ -236,7 +238,7 @@ export const ui = {
       // ----- Provas -----
       evidenceTitle: 'Transparência verificável',
       evidenceBody:
-        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o scan aos cabeçalhos ao vivo (CSP incluída) e os workflows que correm a cada push.',
+        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o scan aos cabeçalhos ao vivo (CSP incluída) e os workflows de CI, por push, cron ou tag.',
       evidenceCta: 'Ver a página Provas →',
       // ----- Projeto (narrativa) -----
       projectBody:
@@ -268,16 +270,22 @@ export const ui = {
       contractRequires: 'exige',
       workflowsTitle: 'Workflows',
       workflowsIntro:
-        'A cada push para main, estes workflows correm no GitHub Actions. Verdes = build limpo, sem vulnerabilidades conhecidas, e segredos + SAST a passar.',
+        'Estes workflows correm no GitHub Actions — a maioria a cada push para main, alguns em cron (diário/semanal) ou só numa tag de release. Verdes = build limpo, sem vulnerabilidades conhecidas, e segredos + SAST a passar.',
       pipelineIntro: 'As camadas que correm — cada uma falha o CI se encontrar algo:',
       pipelineToolCol: 'ferramenta',
       pipelineCatchesCol: 'o que apanha',
       pipeline: [
         { tool: 'Renovate', catches: 'Mantém as dependências atualizadas e pina as GitHub Actions por digest SHA (proteção contra tags movidas). Corre numa janela semanal.' },
+        { tool: 'Dependency Review', catches: 'Bloqueia PRs que introduzem uma dependência nova com vulnerabilidade conhecida, no diff do próprio PR — o gate rápido, complementar ao OSV-Scanner abaixo.' },
         { tool: 'OSV-Scanner', catches: 'Dependências com vulnerabilidades conhecidas ou marcadas como maliciosas (base OSV.dev + advisories do GitHub), lidas do lockfile.' },
         { tool: 'Gitleaks', catches: 'Segredos committados — tokens, chaves privadas — sobre a história completa do PR. Também como hook local antes de cada commit.' },
+        { tool: 'CodeQL', catches: 'Análise semântica de segurança (SAST) do JavaScript/TypeScript — complementar ao Semgrep, outra classe de padrões.' },
         { tool: 'Semgrep', catches: 'SAST: sinks de DOM XSS (innerHTML, document.write) nos scripts do lado do cliente e no terminal do Lab.' },
         { tool: 'zizmor', catches: 'Auditoria dos próprios workflows: pins em falta, permissões excessivas, injeção de template em run:.' },
+        { tool: 'Cadeia de fornecimento', catches: 'Verifica as assinaturas do registo npm e gera um SBOM (CycloneDX) dos dois lockfiles, como artefacto — semanal.' },
+        { tool: 'Invariantes', catches: 'Verifica /api/health e as rotas de leitura do Worker em produção; abre uma Issue automática se algo partir — diário.' },
+        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Dois harnesses cobrem três funções do Worker que processam bytes não confiáveis — parseReports() (relatórios CSP) e sanitizeText()/escapeHtml() (sanitizadores de output) — semanal.' },
+        { tool: 'Releases assinadas', catches: 'Assina a proveniência (Sigstore) dos artefactos de build e gera SBOM, numa GitHub Release — só ao criar uma tag v*.' },
       ],
       pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
       verifyTitle: 'Verifica tu mesmo',
@@ -670,6 +678,8 @@ export const ui = {
       passkeys: {
         name: 'Laboratório de passkeys',
         desc: 'Cria uma passkey de demonstração real (WebAuthn) e vê, byte a byte, o que o autenticador devolve — e porque é que nada disto funcionaria num domínio-isco.',
+        rpName: 'Laboratório de Passkeys (demo)',
+        decoySuffix: 'login-seguro.xyz',
         step1Title: 'criar a passkey',
         step1Exp: 'O browser pede ao teu autenticador (Face ID, impressão digital, chave física) uma credencial para esta origem. A chave privada nunca sai do dispositivo.',
         step1Btn: 'criar passkey de demonstração',
@@ -765,6 +775,7 @@ export const ui = {
         desc: 'Base64, URL e hexadecimal — nos dois sentidos, com suporte UTF-8.',
         mode: 'Formato',
         inputLabel: 'Entrada',
+        inputPlaceholder: 'olá, mundo',
         outputLabel: 'Saída',
         encode: 'Codificar →',
         decode: '← Descodificar',
@@ -881,6 +892,7 @@ export const ui = {
           rotate90ccw: 'Rodada 90° (anti-horário)',
         },
         cleanBtn: '🧹 limpar metadados e descarregar',
+        downloadFilename: 'sem-metadados.jpg',
         invalidFile: 'Não encontrei metadados EXIF neste ficheiro — só JPEG com Exif é suportado.',
         privacyNote: 'tudo corre no browser — sem fetch, sem upload, sem cópia guardada.',
         warning: 'evita carregar fotos com pessoas ou moradas reais só para testar — usa a imagem de demonstração.',
@@ -1185,7 +1197,9 @@ export const ui = {
         { name: 'X-Content-Type-Options: nosniff', why: 'Stops the browser guessing a file’s type and running it as something it is not.' },
         { name: 'Referrer-Policy', why: 'Does not leak this page’s full path to external sites when following a link.' },
         { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
-        { name: 'COOP / COEP / CORP', why: 'The full cross-origin trio: isolates the browsing context and resources from other origins — the same three required by the header contract on Evidence.' },
+        { name: 'Cross-Origin-Opener-Policy', why: 'Isolates the browsing context (window/tab) from other origins — stops a window on another site from controlling this one.' },
+        { name: 'Cross-Origin-Embedder-Policy', why: 'Only loads cross-origin resources that explicitly opt in (CORP/CORS) — part of the cross-origin isolation, alongside COOP.' },
+        { name: 'Cross-Origin-Resource-Policy', why: 'Stops other sites loading this site’s resources directly — completes the cross-origin trio, the same nine headers required by the contract on Evidence.' },
       ],
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
@@ -1204,7 +1218,7 @@ export const ui = {
       // ----- Evidence -----
       evidenceTitle: 'Verifiable transparency',
       evidenceBody:
-        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the live header scan (CSP included), and the workflows that run on every push.",
+        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the live header scan (CSP included), and the CI workflows, on push, cron, or tag.",
       evidenceCta: 'See the Evidence page →',
       // ----- Project (narrative) -----
       projectBody:
@@ -1236,16 +1250,22 @@ export const ui = {
       contractRequires: 'requires',
       workflowsTitle: 'Workflows',
       workflowsIntro:
-        'On every push to main, these workflows run on GitHub Actions. Green = clean build, no known vulnerabilities, and secrets + SAST passing.',
+        'These workflows run on GitHub Actions — most on every push to main, some on a cron (daily/weekly), some only on a release tag. Green = clean build, no known vulnerabilities, and secrets + SAST passing.',
       pipelineIntro: 'The layers that run — each one fails CI if it finds something:',
       pipelineToolCol: 'tool',
       pipelineCatchesCol: 'what it catches',
       pipeline: [
         { tool: 'Renovate', catches: 'Keeps dependencies up to date and pins the GitHub Actions by SHA digest (protection against moved tags). Runs on a weekly window.' },
+        { tool: 'Dependency Review', catches: "Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's own diff — the fast gate, complementary to the OSV-Scanner sweep below." },
         { tool: 'OSV-Scanner', catches: 'Dependencies with known vulnerabilities or flagged as malicious (OSV.dev database + GitHub advisories), read from the lockfile.' },
         { tool: 'Gitleaks', catches: 'Committed secrets — tokens, private keys — across the full PR history. Also as a local hook before every commit.' },
+        { tool: 'CodeQL', catches: 'Semantic security analysis (SAST) of the JavaScript/TypeScript — complementary to Semgrep, a different class of patterns.' },
         { tool: 'Semgrep', catches: 'SAST: DOM XSS sinks (innerHTML, document.write) in the client-side scripts and the Lab terminal.' },
         { tool: 'zizmor', catches: 'Audit of the workflows themselves: missing pins, excessive permissions, template injection in run:.' },
+        { tool: 'Supply chain', catches: 'Verifies npm registry signatures and generates a CycloneDX SBOM for both lockfiles, as an artifact — weekly.' },
+        { tool: 'Invariants', catches: "Checks /api/health and the Worker's read routes in production; opens an automatic Issue if something breaks — daily." },
+        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Two harnesses cover three Worker functions that parse untrusted network input — parseReports() (CSP-report parsing) and sanitizeText()/escapeHtml() (output sanitizers) — weekly.' },
+        { tool: 'Signed releases', catches: 'Signs the provenance (Sigstore) of build artefacts and generates an SBOM, on a GitHub Release — only when a v* tag is created.' },
       ],
       pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
       verifyTitle: 'Check for yourself',
@@ -1639,6 +1659,8 @@ export const ui = {
       passkeys: {
         name: 'Passkey lab',
         desc: 'Create a real demo passkey (WebAuthn) and see, byte by byte, what the authenticator returns — and why none of it would work on a lookalike domain.',
+        rpName: 'Passkey Lab (demo)',
+        decoySuffix: 'secure-login.xyz',
         step1Title: 'create the passkey',
         step1Exp: 'The browser asks your authenticator (Face ID, fingerprint, security key) for a credential bound to this origin. The private key never leaves the device.',
         step1Btn: 'create demo passkey',
@@ -1734,6 +1756,7 @@ export const ui = {
         desc: 'Base64, URL, and hex — both directions, UTF-8 aware.',
         mode: 'Format',
         inputLabel: 'Input',
+        inputPlaceholder: 'hello, world',
         outputLabel: 'Output',
         encode: 'Encode →',
         decode: '← Decode',
@@ -1850,6 +1873,7 @@ export const ui = {
           rotate90ccw: 'Rotated 90° (counter-clockwise)',
         },
         cleanBtn: '🧹 strip metadata and download',
+        downloadFilename: 'no-metadata.jpg',
         invalidFile: 'No EXIF metadata found in this file — only JPEG with Exif is supported.',
         privacyNote: 'it all runs in the browser — no upload, no fetch, no copy kept.',
         warning: "avoid uploading photos with real people or addresses just to test — use the demo image.",

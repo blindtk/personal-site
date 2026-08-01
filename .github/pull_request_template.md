@@ -1,20 +1,22 @@
 <!--
-Template de PR deste repo. Preenche as secções que se aplicam e apaga as que
-não fazem sentido para esta alteração. Contexto do projeto em CLAUDE.md.
+PR template for this repo. Fill in the sections that apply and delete the
+ones that don't make sense for this change. Project context in CLAUDE.md.
 -->
 
-## Contexto
-<!-- O que motivou a alteração e o problema que resolve. -->
+## Context
+<!-- What motivated the change and the problem it solves. -->
 
-## Alterações
-<!-- Em pontos. Refere a área tocada: content/, static/ ou dynamic/. -->
+## Changes
+<!-- Bullet points. Note the area touched: content/, static/, or dynamic/. -->
 -
 
-## Validação
-<!-- Marca só o que se aplica a esta alteração. -->
-- [ ] `cd static && npm run build` passa sem erros nem warnings novos
-- [ ] Se mexi em ferramentas, testei a lógica com vetores conhecidos (`node --test`)
-- [ ] Se adicionei página nova, criei as **duas** versões (PT + EN) e o par em `routes.ts`
+## Validation
+<!-- Check only what applies to this change. -->
+- [ ] `cd static && npm run build` passes with no errors or new warnings
+- [ ] If tools were touched, logic was tested with known vectors (`node --test`)
+- [ ] If a new page was added, created **both** versions (PT + EN) and the pair in `routes.ts`
+- [ ] If `dynamic/worker/` was touched, ran `npm test` and `npx wrangler deploy --dry-run` (see `dynamic/PLAN.md`)
+- [ ] If `csp-report.js` or `sanitize.js` was touched, ran the local fuzz harnesses (see `CONTRIBUTING.md`)
 
-## Notas
-<!-- Decisões, trade-offs, o que ficou de fora, follow-ups. Apaga se não aplicar. -->
+## Notes
+<!-- Decisions, trade-offs, what was left out, follow-ups. Delete if not applicable. -->

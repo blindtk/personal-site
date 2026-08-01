@@ -6,21 +6,28 @@
 [![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
 [![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
 [![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
+[![Fuzzing](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml)
+[![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
+
+Two of the eleven workflows in [`.github/workflows/`](.github/workflows/) have
+no badge above: `dependency-review.yml` (PR-scoped, listed in the build
+pipeline table below) and `labeler.yml` (applies area labels to PRs — repo
+hygiene, not a security check).
 
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 191 tests, six CI workflows, four ADRs,
-for a personal site. That is deliberate, not accidental — see
+real data for the dashboards it feeds. 233 tests, eleven CI workflows, four
+ADRs, for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
-> 🇵🇹 **Nota em português:** este README está em inglês porque a maioria de
-> quem o lê profissionalmente (recrutadores, engenheiros) não lê português — o
-> site em si é bilingue por construção, PT em `/` e EN em `/en/`, e todo o
-> conteúdo editorial (`content/`) existe nos dois idiomas. Ver
-> [`CLAUDE.md`](CLAUDE.md) para as convenções do projeto (em português, como o
-> resto de `docs/`).
+> **Note:** this README is in English because most people who read it
+> professionally (recruiters, engineers) don't read Portuguese — the site
+> itself is bilingual by construction, PT at `/` and EN at `/en/`, and all
+> editorial content (`content/`) exists in both languages. See
+> [`CLAUDE.md`](CLAUDE.md) for the project's conventions (written in
+> Portuguese, like the rest of `docs/`).
 
 ## What this is
 
@@ -61,7 +68,7 @@ code, not asserted from memory.
 
 ## Why so much for a personal site?
 
-A personal site with a threat model, four ADRs, six CI workflows, and 191
+A personal site with a threat model, four ADRs, eleven CI workflows, and 233
 tests is disproportionate for what it does — unless the disproportion *is* the
 point. It is: this repository exists to demonstrate security-engineering
 practice at a scale where the controls become meaningful, not to serve a blog
@@ -109,46 +116,15 @@ npm run preview    # serve dist/ locally
   the Links page).
 - **Name/handle, email, socials, domain:** all in `static/src/config.ts`.
 
-## Deploy — Cloudflare Pages
+## Deploy
 
-Exact steps for a first-time deploy:
-
-1. **Create a free Cloudflare account:** <https://dash.cloudflare.com/sign-up>.
-2. In the dashboard: **Workers & Pages → Create → Pages → Connect to Git**.
-3. Authorize Cloudflare against your GitHub and pick the `personal-site` repo.
-4. In the build configuration screen, set **exactly**:
-   - **Production branch:** `main`
-   - **Framework preset:** `Astro`
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-   - **Root directory (advanced):** `static` ← important! The Astro project
-     lives in the `static/` subfolder, not the repo root.
-5. Click **Save and Deploy**. Cloudflare installs dependencies, builds, and
-   publishes — about 2 minutes to a `https://personal-site-abc.pages.dev` URL.
-6. From then on, **every push to `main` deploys automatically**. Pushes to
-   other branches get their own preview URL (handy for reviewing PRs).
-
-### Custom domain
-
-The live site runs on `danielmala.co` (registered at Namecheap, DNS on
-Cloudflare — nameservers switched at the registrar). `SITE_URL` in
-`static/src/config.ts` already points there. For the full process (nameserver
-switch, wiring the Worker, Access during development, WAF rules), see
+The static site runs on Cloudflare Pages and deploys automatically from
+Git — every push to `main` publishes it. The backend runs on a Cloudflare
+Worker (`dynamic/worker/`); its production deploy stays manual (`npx
+wrangler deploy`, see `dynamic/PLAN.md`). `SITE_URL` in
+`static/src/config.ts` points at the production domain. The deploy process
+this repo actually follows is documented in
 [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
-
-### Alternative: serve from your own VPS (Cloudflare as proxy)
-
-1. `npm run build` and copy `static/dist/` to the VPS, e.g.
-   `rsync -avz --delete static/dist/ user@vps:/var/www/site/`.
-2. Serve the folder with nginx/Caddy — it's a 100% static site, any file
-   server works.
-3. On Cloudflare: **DNS → Add record** → type `A`, name `@`, the VPS IP, with
-   the **orange cloud** (proxied) for CDN + TLS + IP masking.
-
-Pages is simpler (zero maintenance) and is what's actually in production —
-the `dynamic/` backend already runs on its own Worker, separate from wherever
-the static site is served, so the VPS route stays a real alternative, not a
-requirement.
 
 ## Build pipeline security
 
@@ -158,13 +134,17 @@ goes through:
 | Check | Where | What it guarantees |
 | --- | --- | --- |
 | **Build + `npm audit`** | `ci.yml` | The site builds clean, no high/critical advisories in dependencies. |
+| **Dependency Review** | `dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (the GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
 | **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
 | **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
+| **CodeQL** | `codeql.yml` | Semantic SAST for the JavaScript/TypeScript — a different analysis class from Semgrep's pattern-matching, run separately. |
 | **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
 | **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
 | **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
 | **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
+| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (weekly + manual) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
+| **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
 
 Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
 keeps the digests current and batches updates into a weekly PR),
@@ -248,10 +228,18 @@ Development conventions: see [CLAUDE.md](CLAUDE.md).
 Built with heavy use of Claude Code — the branch names in the merge commits
 already say so, on every PR. Architecture, threat model, security decisions,
 and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
-trade-offs and the alternatives rejected. Every security-relevant change is
-covered by tests (`npm test`, 191 across the Worker and the site) and by the
-scanners in [`.github/workflows/`](.github/workflows/). I can walk through any
-decision in this repository.
+trade-offs and the alternatives rejected. Security-relevant changes are
+checked by tests (`npm test`, 233 across the Worker and the site) and by the
+scanners in [`.github/workflows/`](.github/workflows/) — not a measured
+coverage guarantee, but the gate every PR has to clear. I can walk through
+any decision in this repository.
+
+## Contributing
+
+Single-maintainer project, but the repo is public and contributions are
+welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process — bug
+reports, PR conventions, and where the project's own conventions live
+(`CLAUDE.md`, in Portuguese, like the rest of `docs/`).
 
 ## Security
 

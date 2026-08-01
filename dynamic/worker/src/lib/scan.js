@@ -17,6 +17,7 @@ export const SECURITY_HEADERS = [
   { name: 'permissions-policy', weight: 1 },
   { name: 'cross-origin-opener-policy', weight: 1 },
   { name: 'cross-origin-resource-policy', weight: 1 },
+  { name: 'cross-origin-embedder-policy', weight: 1 },
 ];
 
 function letter(ratio) {

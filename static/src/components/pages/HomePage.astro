@@ -52,7 +52,8 @@ const verifiedBadges = certItems.filter((item) => item.verified !== false).lengt
 // competência pessoal (isso ficou para o bloco de identidade). Ferramentas
 // e paths-isco/regras vêm de content/ e de lib/tools para nunca divergir das
 // páginas Ferramentas e Perímetro. Páginas e cabeçalhos verificados são
-// manuais — ver docs/home-revisao-editorial.md §7 para o porquê.
+// manuais — não há como derivá-los de content/ sem duplicar routes.ts e
+// scan.js aqui; rever os dois lados juntos se mudarem.
 const toolsClientCount = TOOLS.filter((tool) => tool.kind === 'client').length;
 const decoyCount = Object.keys(honeypotAttack.paths).length;
 const sigmaRuleCount = detections.rules.length;
@@ -61,8 +62,10 @@ const sigmaRuleCount = detections.rules.length;
 const pageCount = 29;
 // Manual: lista de cabeçalhos pontuados em dynamic/worker/src/lib/scan.js
 // (fora do build estático — static/ não importa dynamic/). Rever os dois
-// lados juntos se a lista de scan.js mudar.
-const headerCount = 8;
+// lados juntos se a lista de scan.js mudar. Tem de bater certo com
+// .github/expected-headers.json (contrato da página Provas) e com a lista
+// em ui.ts (Segurança) — mesma fonte de verdade nas 3 páginas.
+const headerCount = 9;
 const statValues: Record<string, string> = {
   pages: String(pageCount),
   tools: String(TOOLS.length),
@@ -81,7 +84,7 @@ const fill = (text: string) => text.replace(/\{(\w+)\}/g, (_, key: string) => st
 const stats = dict.home.statsStatic.map((stat) => ({ ...stat, n: fill(stat.n), d: fill(stat.d) }));
 const credentialsText = fill(dict.home.credentials);
 
-// Cada tile liga à página que prova o número (ver docs/home-revisao-editorial.md §4).
+// Cada tile liga à página que prova o número — "não acredites, verifica".
 const statLinks: Record<string, string> = {
   pages: routes.siteOverview[lang],
   tools: routes.tools[lang],

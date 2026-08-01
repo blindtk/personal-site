@@ -1,48 +1,48 @@
-# Política de segurança
+# Security policy
 
-Obrigado por ajudares a manter este projeto seguro. Este repositório contém
-o site pessoal de Daniel Malaco (Astro estático em `static/`) e o
-Cloudflare Worker das features de segurança (`dynamic/worker/`).
+Thanks for helping keep this project secure. This repository contains
+Daniel Malaco's personal site (static Astro in `static/`) and the
+Cloudflare Worker behind its security features (`dynamic/worker/`).
 
-## O que está coberto
+## What's covered
 
-- O site em produção (o *deploy* mais recente do `main`).
-- O Worker em `dynamic/worker/` e os seus endpoints (`/api/*`).
-- A própria cadeia de build (workflows em `.github/workflows/`).
+- The site in production (the latest deploy from `main`).
+- The Worker in `dynamic/worker/` and its endpoints (`/api/*`).
+- The build chain itself (workflows in `.github/workflows/`).
 
-Como é um site que se atualiza continuamente, **a única versão suportada é a
-que está em produção** — não há *releases* antigos a manter.
+Since this is a continuously-deployed site, **the only supported version is
+what's currently in production** — there are no older releases to maintain.
 
-## Como reportar uma vulnerabilidade
+## Reporting a vulnerability
 
-Reporta em **privado**, nunca numa Issue pública (uma Issue expõe a falha a
-toda a gente antes de estar corrigida):
+Report it **privately**, never in a public Issue (an Issue exposes the flaw
+to everyone before it's fixed):
 
-- Através da página de contactos: <https://danielmala.co/contactos/>
+- Via the contact page: <https://danielmala.co/en/contact/>
 
-Ver também o `security.txt` do site
+See also the site's `security.txt`
 ([`/.well-known/security.txt`](https://danielmala.co/.well-known/security.txt)),
-no formato [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116).
+in [RFC 9116](https://www.rfc-editor.org/rfc/rfc9116) format.
 
-Inclui, se possível: o que encontraste, os passos para reproduzir, e o
-impacto que lhe atribuis. Uma prova de conceito mínima ajuda muito.
+Include, if possible: what you found, steps to reproduce, and the impact
+you'd assign it. A minimal proof of concept helps a lot.
 
-## O que esperar
+## What to expect
 
-- Resposta normalmente em **24–48 h, em dias úteis**.
-- Manténs-te ao corrente da correção e do *timing* de divulgação.
-- Pedimos divulgação coordenada: dá tempo para corrigir antes de tornar
-  público. Investigação de boa-fé é bem-vinda e nunca será penalizada.
+- A response typically within **24–48h on business days**.
+- You'll be kept in the loop on the fix and disclosure timing.
+- Coordinated disclosure is requested: give time to fix before going
+  public. Good-faith research is welcome and will never be penalised.
 
-## Fora de âmbito
+## Out of scope
 
-Relatórios automáticos de *scanners* sem impacto demonstrável (ex.: ausência
-de um header em endpoints que não servem conteúdo sensível, versões de
-bibliotecas sem exploração prática) têm prioridade baixa.
+Automated scanner reports with no demonstrable impact (e.g. a missing
+header on endpoints that serve no sensitive content, library versions with
+no practical exploit) are low priority.
 
-## A postura de segurança deste repositório
+## This repository's security posture
 
-O próprio *pipeline* é tratado como superfície de ataque: OSV-Scanner,
-gitleaks, Semgrep e zizmor correm em cada PR, e as GitHub Actions estão
-pinadas por *commit* SHA (mantidas pelo Renovate). Detalhes na secção
-**"Segurança do pipeline"** do [README](../README.md).
+The build pipeline itself is treated as attack surface: OSV-Scanner,
+gitleaks, Semgrep, and zizmor run on every PR, and GitHub Actions are
+pinned to commit SHA (kept current by Renovate). Details in the
+**"Build pipeline security"** section of the [README](../README.md).
