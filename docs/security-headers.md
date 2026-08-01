@@ -118,10 +118,10 @@ Homepage (`/` e `/en/`), cabeçalho `Link` (RFC 8288) — mesmas relações já 
 `<head>` (`rel="canonical"`/`rel="alternate" hreflang`, `BaseLayout.astro`),
 para agentes que não chegam a fazer parsing de HTML:
 
-```
+```http
 Link: <https://danielmala.co/>; rel="canonical", <https://danielmala.co/en/>; rel="alternate"; hreflang="en"
 ```
-```
+```http
 Link: <https://danielmala.co/en/>; rel="canonical", <https://danielmala.co/>; rel="alternate"; hreflang="pt"
 ```
 
