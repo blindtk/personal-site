@@ -94,6 +94,10 @@ const res = await fetchSameOrigin(target, {
 console.log(`HTTP ${res.status}`);
 if (!res.ok) {
   console.error(`::error::check-headers: resposta ${res.status} de ${target}`);
+  console.error(`cf-ray: ${res.headers.get('cf-ray')}, cf-mitigated: ${res.headers.get('cf-mitigated')}, server: ${res.headers.get('server')}`);
+  const bodyText = await res.text();
+  const title = /<title>([^<]*)<\/title>/i.exec(bodyText)?.[1];
+  if (title) console.error(`título da resposta: ${title}`);
   process.exit(1);
 }
 
