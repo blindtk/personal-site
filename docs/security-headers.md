@@ -114,6 +114,17 @@ Cache-Control: public, max-age=31536000, immutable
 > (No nginx o problema é o inverso — ver o cuidado abaixo; no Caddy o override
 > por matcher já substitui corretamente.)
 
+Homepage (`/` e `/en/`), cabeçalho `Link` (RFC 8288) — mesmas relações já no
+`<head>` (`rel="canonical"`/`rel="alternate" hreflang`, `BaseLayout.astro`),
+para agentes que não chegam a fazer parsing de HTML:
+
+```
+Link: <https://danielmala.co/>; rel="canonical", <https://danielmala.co/en/>; rel="alternate"; hreflang="en"
+```
+```
+Link: <https://danielmala.co/en/>; rel="canonical", <https://danielmala.co/>; rel="alternate"; hreflang="pt"
+```
+
 ---
 
 ## nginx
