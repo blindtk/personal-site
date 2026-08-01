@@ -8,19 +8,31 @@
 # fronteira de confiança real), estas duas funções são a fronteira de
 # confiança do Worker — daí serem o alvo, não as outras.
 #
-# Só cron semanal (não em cada PR, mesmo espírito do scorecard.yml/
-# codeql.yml — ver o comentário em supply-chain.yml sobre a quota de
-# minutos do plano Free do GitHub Actions) e curto (60-120s por harness): o
-# objetivo é o Scorecard reconhecer a integração de fuzzing, não substituir
-# os testes com vetores conhecidos já existentes (node --test).
+# Curto (60-120s por harness): o objetivo é o Scorecard reconhecer a
+# integração de fuzzing, não substituir os testes com vetores conhecidos já
+# existentes (node --test).
+#
+# SEM CRON, só workflow_dispatch — de propósito, não é o plano original.
+# language: javascript + sanitizer: coverage (a única combinação de
+# SANITIZER aceite tanto pelo script de compile do OSS-Fuzz como pelo
+# validador da própria action — ver comentário no passo "Build fuzzers")
+# acaba por compilar também binários de honggfuzz/AFL (infra genérica de
+# C/C++ que a imagem base ainda arrasta, mesmo só sendo libFuzzer suportado
+# para JS) e o run_fuzzers tenta correr esses binários como se fossem
+# alvos do projeto — falham sempre a arrancar (execCC(): execvp('clang'):
+# No such file or directory) e o job falha com "bugs" que não são dos
+# nossos harnesses. Confirmado que não depende do commit da action pinada:
+# tanto este pin como o HEAD atual de google/clusterfuzzlite apontam para a
+# mesma imagem Docker flutuante (gcr.io/oss-fuzz-base/clusterfuzzlite-
+# build-fuzzers:v1) — o bug vive dentro dela, não em nada deste repo.
+# Tentado sem sucesso: sanitizer: none (rejeitado pela própria action),
+# fuzzing_engines: [libfuzzer] em .clusterfuzzlite/project.yaml (ignorado
+# por esta action — mesmo resultado com ou sem). Cron desligado até a
+# Google corrigir a imagem publicada; corre manualmente (workflow_dispatch)
+# de vez em quando para verificar se já passou a funcionar.
 name: Fuzzing
 
 on:
-  schedule:
-    # Sábado às 7h — entre o Headers (17 6 diário) e o Invariants (43 7
-    # diário), sem colidir com o Scorecard (30 5 * * 6) nem o CodeQL/Supply
-    # chain (segunda de madrugada).
-    - cron: '0 7 * * 6'
   workflow_dispatch: {}
 
 permissions: {}
