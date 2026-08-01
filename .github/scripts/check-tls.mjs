@@ -25,8 +25,22 @@ try {
   process.exit(1);
 }
 
-const HARD = new Set(['CRITICAL', 'HIGH']);
+// FATAL é o severity que o testssl.sh usa no id "scanProblem" quando o scan
+// em si não conseguiu correr (ex.: falha repetida de ligação) — sem isto no
+// HARD, um scan que nunca chegou a testar nada caía no ramo "severidade
+// desconhecida" (só ::warning::) e o job passava como se tivesse verificado
+// produção (achado do CodeRabbit no PR #155, confirmado).
+const HARD = new Set(['CRITICAL', 'HIGH', 'FATAL']);
 const SOFT = new Set(['MEDIUM', 'LOW', 'WARN']);
+
+if (findings.length === 0) {
+  // Um relatório vazio não é "tudo OK" — é o scan a não ter corrido (ou o
+  // volume montado no docker run vazio). Sem isto, um testssl.sh que falhou
+  // silenciosamente antes de escrever achados passava como verificação
+  // limpa (achado do CodeRabbit no PR #155, confirmado).
+  console.error('::error::check-tls: relatório sem qualquer achado — o scan provavelmente não correu.');
+  process.exit(1);
+}
 
 let hardFailures = 0;
 let softFailures = 0;

@@ -109,14 +109,31 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
   } else {
     const records = out.split('\n').map((l) => l.trim()).filter(Boolean);
     if (records.length === 0) {
-      // Lacuna já documentada em docs/dns-tls.md (2026-07-29) — não é uma
-      // regressão nova, por isso aviso e não erro. Ver $comment do CAA em
-      // expected-dns.json.
-      console.log('::warning::CAA: nenhum registo CAA em produção — lacuna já documentada em docs/dns-tls.md §1 (por criar), não uma regressão nova.');
-      softFailures += 1;
+      // `dig +short` fica em silêncio tanto para NODATA (sem CAA — a lacuna
+      // já documentada) como para SERVFAIL/timeout (a consulta em si
+      // falhou) — sem distinguir os dois, uma falha de resolução real
+      // passava disfarçada de "lacuna conhecida" (achado do CodeRabbit no
+      // PR #155, confirmado). Repete sem +short só para ler o `status:`.
+      const full = dig(['CAA', domain]);
+      const status = /;; ->>HEADER<<-.*status:\s*(\w+)/.exec(full)?.[1];
+      if (status !== 'NOERROR') {
+        console.error(`::error::CAA: consulta a ${domain} devolveu status ${status ?? 'desconhecido'} (não NOERROR) — falha de resolução, não a lacuna documentada.`);
+        hardFailures += 1;
+      } else {
+        // Lacuna já documentada em docs/dns-tls.md (2026-07-29) — não é uma
+        // regressão nova, por isso aviso e não erro. Ver $comment do CAA em
+        // expected-dns.json.
+        console.log('::warning::CAA: nenhum registo CAA em produção — lacuna já documentada em docs/dns-tls.md §1 (por criar), não uma regressão nova.');
+        softFailures += 1;
+      }
     } else {
-      const expected = [...cfg.caa.expected].sort();
-      const actual = [...records].sort();
+      // Normaliza espaços e a caixa da tag antes de comparar — resolvedores
+      // diferentes podem formatar o mesmo registo com espaçamento distinto
+      // (achado do CodeRabbit no PR #155: uma diferença cosmética não devia
+      // fazer o job falhar).
+      const normalize = (r) => r.replace(/\s+/g, ' ').trim().replace(/^(\d+)\s+(\S+)/, (_, flag, tag) => `${flag} ${tag.toLowerCase()}`);
+      const expected = cfg.caa.expected.map(normalize).sort();
+      const actual = records.map(normalize).sort();
       const matches = expected.length === actual.length && expected.every((v, i) => v === actual[i]);
       if (matches) {
         console.log(`ok  CAA: ${records.length} registo(s), batem certo com docs/dns-tls.md`);
@@ -138,7 +155,15 @@ for (const resolver of cfg.dnssec.resolvers) {
   }
   const flagsLine = /;; flags:([^;]*);/.exec(out)?.[1] ?? '';
   const hasAd = flagsLine.split(/\s+/).includes('ad');
-  const hasDnskey = /;; ANSWER:\s*[1-9]/.test(out) || /\sDNSKEY\s/.test(out);
+  // `;; ANSWER:` nunca aparece literalmente — a contagem vem na própria
+  // linha de flags (`...; QUERY: 1, ANSWER: 2, ...`); e procurar "DNSKEY"
+  // solto no output apanhava a QUESTION SECTION (sempre presente, mesmo com
+  // zero respostas), o que fazia uma resposta autenticada NODATA passar como
+  // "DNSKEY validado" (achado do CodeRabbit no PR #155, confirmado — testado
+  // com um vetor NODATA real). Conta a partir do header e só aceita DNSKEY
+  // fora de linhas de comentário/pergunta (que começam por `;`).
+  const answerCount = Number(/,\s*ANSWER:\s*(\d+)/.exec(out)?.[1] ?? 0);
+  const hasDnskey = answerCount > 0 && out.split('\n').some((l) => !l.startsWith(';') && /\bIN\s+DNSKEY\b/.test(l));
   if (!hasAd || !hasDnskey) {
     console.error(`::error::DNSSEC (@${resolver}): resposta sem a flag "ad" e/ou sem DNSKEY — cadeia de confiança não validada (docs/dns-tls.md §4 confirma "ad" nos dois resolvedores; isto é uma regressão).`);
     hardFailures += 1;

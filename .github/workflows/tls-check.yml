@@ -70,14 +70,22 @@ jobs:
         run: |
           set -e
           mkdir -p tls-report
+          # Array em vez de expansão inline: o CodeRabbit assinalou a linha
+          # anterior (${CI_WAF_TOKEN:+--reqheader "..."} sem aspas) como
+          # word-splitting quebrado — verificado que, em bash, as aspas
+          # literais dentro do :+ já são respeitadas na análise sintática
+          # (não reproduz o bug descrito), mas o array evita depender dessa
+          # subtileza e é mais fácil de auditar.
+          args=(--quiet --jsonfile /data/testssl.json)
+          if [ -n "$CI_WAF_TOKEN" ]; then
+            args+=(--reqheader "x-ci-waf-token: ${CI_WAF_TOKEN}")
+          fi
           # Imagem: drwetter/testssl.sh:3.2, pinada por digest (não há tag
           # nem SHA de commit aqui — testssl.sh não é uma GitHub Action).
           docker run --rm \
             -v "$PWD/tls-report:/data" \
             drwetter/testssl.sh@sha256:c1a54a31bb596e09f79f91823468512e9c0794eb522340ff228875971514695c \
-            --quiet \
-            --jsonfile /data/testssl.json \
-            ${CI_WAF_TOKEN:+--reqheader "x-ci-waf-token: ${CI_WAF_TOKEN}"} \
+            "${args[@]}" \
             "$HOST"
 
       - name: Avaliar achados
