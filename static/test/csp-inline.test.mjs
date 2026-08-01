@@ -61,13 +61,14 @@ function inlineScripts(html) {
     anterior = semComentarios;
     semComentarios = semComentarios.replace(/<!--[\s\S]*?-->/g, '');
   } while (semComentarios !== anterior);
-  // `i` no fecho: sem isto, <SCRIPT> em maiúsculas não batia certo. `\s*`
-  // antes do `>` de fecho: `</script >` (com espaço) também é uma tag de
-  // fecho válida para os browsers, e a regex sem isto não a apanhava
-  // (achados do CodeQL, js/bad-tag-filter, em duas rondas) — dist/ nunca
-  // teria nenhum dos dois casos, mas o teste deve ser correto
+  // `i` no fecho: sem isto, <SCRIPT> em maiúsculas não batia certo. O fecho
+  // usa o mesmo `[^>]*` da abertura em vez de `>` literal: para os
+  // browsers, `</script qualquer-coisa>` continua a ser tag de fecho (só
+  // importa chegar a um `>`) — a regex tinha de aceitar o mesmo span
+  // (achados do CodeQL, js/bad-tag-filter, três rondas) — dist/ nunca
+  // teria nenhum destes casos, mas o teste deve ser correto
   // independentemente da fonte.
-  return [...semComentarios.matchAll(/<script([^>]*)>([\s\S]*?)<\/script\s*>/gi)]
+  return [...semComentarios.matchAll(/<script([^>]*)>([\s\S]*?)<\/script[^>]*>/gi)]
     .filter((m) => !/\ssrc=/i.test(m[1]))
     .map((m) => ({ attrs: m[1].trim(), body: m[2] }));
 }
