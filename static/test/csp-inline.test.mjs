@@ -50,8 +50,25 @@ function htmlFiles(dir) {
  * `<script src=…>` de exemplo, e sem isto ele seria lido como bloco inline.
  */
 function inlineScripts(html) {
-  const semComentarios = html.replace(/<!--[\s\S]*?-->/g, '');
-  return [...semComentarios.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)]
+  // Repete a remoção até estabilizar (não numa só passagem): comentários
+  // aninhados/sobrepostos podiam deixar um "<!--" residual que uma única
+  // passagem não apanha (achado do CodeQL, js/incomplete-multi-character-
+  // sanitization). Sem impacto prático aqui — o HTML vem de dist/, não de
+  // input externo — mas corrige-se na mesma, é grátis.
+  let semComentarios = html;
+  let anterior;
+  do {
+    anterior = semComentarios;
+    semComentarios = semComentarios.replace(/<!--[\s\S]*?-->/g, '');
+  } while (semComentarios !== anterior);
+  // `i` no fecho: sem isto, <SCRIPT> em maiúsculas não batia certo. O fecho
+  // usa o mesmo `[^>]*` da abertura em vez de `>` literal: para os
+  // browsers, `</script qualquer-coisa>` continua a ser tag de fecho (só
+  // importa chegar a um `>`) — a regex tinha de aceitar o mesmo span
+  // (achados do CodeQL, js/bad-tag-filter, três rondas) — dist/ nunca
+  // teria nenhum destes casos, mas o teste deve ser correto
+  // independentemente da fonte.
+  return [...semComentarios.matchAll(/<script([^>]*)>([\s\S]*?)<\/script[^>]*>/gi)]
     .filter((m) => !/\ssrc=/i.test(m[1]))
     .map((m) => ({ attrs: m[1].trim(), body: m[2] }));
 }
