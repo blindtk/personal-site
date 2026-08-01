@@ -143,7 +143,7 @@ goes through:
 | **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
 | **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
-| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (weekly + manual) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
+| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (manual only — see note below) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
 | **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
 
 Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
@@ -165,6 +165,17 @@ Actions minutes, but the weekly cadence stays — SBOM drift and signature
 checks don't need per-PR granularity, and there was no reason to change a
 schedule that was working. Full context in
 [docs/security-review-2026-07-29.md](docs/security-review-2026-07-29.md) §0.
+
+**On the Fuzzing schedule:** `fuzzing.yml` has no cron for now — `language:
+javascript` + `sanitizer: coverage` (the only `SANITIZER` value accepted by
+both the OSS-Fuzz compile script and the ClusterFuzzLite action's own
+validator for JS) makes `google/clusterfuzzlite/actions/build_fuzzers`
+compile unrelated honggfuzz/AFL compiler-wrapper binaries alongside the real
+JS targets, and `run_fuzzers` treats them as fuzz targets, failing instantly.
+Confirmed independent of the pinned commit — it and the action's current
+`main` both resolve to the same floating `gcr.io/oss-fuzz-base/clusterfuzzlite-
+build-fuzzers:v1` Docker image, so the bug lives there, not in this repo. The
+workflow stays `workflow_dispatch`-only until upstream fixes it.
 
 ## Security features (the site's actual subject matter)
 
