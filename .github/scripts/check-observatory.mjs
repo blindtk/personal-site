@@ -47,7 +47,10 @@ async function requestScan(attempt = 1) {
     console.error(`::error::check-observatory: pedido à API falhou — ${err?.message ?? err}`);
     process.exit(1);
   }
-  if (!res.ok && attempt < 2) {
+  // Só repete em 5xx — um 4xx (ex.: host inválido) é definitivo, o pedido
+  // volta a falhar sempre da mesma forma, e repetir só atrasava o job sem
+  // hipótese real de sucesso (achado do CodeRabbit no PR #155, confirmado).
+  if (!res.ok && res.status >= 500 && attempt < 2) {
     console.log(`::warning::check-observatory: API respondeu HTTP ${res.status} na tentativa ${attempt} — a repetir…`);
     return requestScan(attempt + 1);
   }
