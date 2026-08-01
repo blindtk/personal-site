@@ -27,8 +27,35 @@ if (!target || target.startsWith('SET-ME')) {
 const host = new URL(target).host;
 const API_URL = `https://observatory-api.mdn.mozilla.net/api/v2/scan?host=${encodeURIComponent(host)}`;
 
+// Timeout evita bloquear o job durante horas se a API ficar pendurada — sem
+// isto, um hang ficava só limitado pelo timeout por omissão do GitHub
+// Actions (360 min), não por nada que este script controle. Uma repetição
+// cobre o 500 transitório já documentado do Observatory no primeiro scan de
+// um host novo (achado do CodeRabbit no PR #155, confirmado) — como o alvo
+// é sempre o mesmo host, isto só costuma importar na primeiríssima execução.
+const REQUEST_TIMEOUT_MS = 30_000;
+
+async function requestScan(attempt = 1) {
+  let res;
+  try {
+    res = await fetch(API_URL, { method: 'POST', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+  } catch (err) {
+    if (attempt < 2) {
+      console.log(`::warning::check-observatory: pedido falhou na tentativa ${attempt} (${err?.message ?? err}) — a repetir…`);
+      return requestScan(attempt + 1);
+    }
+    console.error(`::error::check-observatory: pedido à API falhou — ${err?.message ?? err}`);
+    process.exit(1);
+  }
+  if (!res.ok && attempt < 2) {
+    console.log(`::warning::check-observatory: API respondeu HTTP ${res.status} na tentativa ${attempt} — a repetir…`);
+    return requestScan(attempt + 1);
+  }
+  return res;
+}
+
 console.log(`A pedir scan do Mozilla HTTP Observatory para ${host}…`);
-const res = await fetch(API_URL, { method: 'POST' });
+const res = await requestScan();
 if (!res.ok) {
   console.error(`::error::check-observatory: API respondeu HTTP ${res.status} (${host})`);
   process.exit(1);
