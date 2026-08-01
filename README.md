@@ -183,6 +183,25 @@ Confirmed independent of the pinned commit — it and the action's current
 build-fuzzers:v1` Docker image, so the bug lives there, not in this repo. The
 workflow stays `workflow_dispatch`-only until upstream fixes it.
 
+## External security scans (manual)
+
+Beyond the automated checks above, these third-party scanners are run
+manually against production, not wired into CI — either because they have no
+API, the API is redundant with a check this repo already runs, or the free
+tier doesn't fit a recurring cron (tool-by-tool reasoning in [PR #155](https://github.com/blindtk/personal-site/pull/155)).
+Each link below is a live report for `danielmala.co`, not a static snapshot:
+
+| Scanner | What it checks | Report |
+| --- | --- | --- |
+| Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
+| Security Headers | HTTP security headers | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
+| Mozilla HTTP Observatory | headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half of this one | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
+| Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
+| DNSViz | independent DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
+| ImmuniWeb | web/SSL security score | [immuniweb.com](https://www.immuniweb.com/cyberscore/danielmala.co/) |
+| Cloudflare Agent Readiness | AI-agent discoverability/legibility — see the `Link` header work in [PR #154](https://github.com/blindtk/personal-site/pull/154) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
+| MXToolbox | ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |
+
 ## Security features (the site's actual subject matter)
 
 Beyond the client-side tools, the site has several live cybersecurity showcases:
