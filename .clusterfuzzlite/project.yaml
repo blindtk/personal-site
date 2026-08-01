@@ -1,1 +1,10 @@
 language: javascript
+# Sem isto, o build com sanitizer: coverage (fuzzing.yml) compila também
+# variantes de honggfuzz/AFL — infra genérica de C/C++ que o base-builder-
+# javascript ainda arrasta para $OUT mesmo não fazendo sentido para JS (o
+# único engine suportado é libFuzzer). Essas variantes "crashavam" sempre
+# ao arrancar (execCC(): execvp('clang'): No such file or directory, no
+# runtime de run_fuzzers) e o job falhava com "bugs" que não eram dos
+# nossos harnesses — visto nas 2.ª/3.ª execuções em 2026-08-01.
+fuzzing_engines:
+  - libfuzzer
