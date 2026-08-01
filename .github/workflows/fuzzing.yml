@@ -41,11 +41,16 @@ jobs:
         with:
           language: javascript
           # Jazzer.js corre em cima do V8/Node, não código nativo — não há
-          # instrumentação ASan possível. Sem isto, o build_fuzzers assume o
-          # sanitizer por omissão (address) e falha logo no compile:
-          # "JavaScript projects cannot be fuzzed with sanitizers." (visto na
-          # 1.ª execução em produção, run #1 de 2026-08-01).
-          sanitizer: none
+          # instrumentação ASan possível. O script de compile do OSS-Fuzz só
+          # aceita 'coverage' ou 'none' para language: javascript (falha com
+          # "cannot be fuzzed with sanitizers" para qualquer outro valor —
+          # visto na 1.ª execução em produção, run #1 de 2026-08-01), mas o
+          # próprio wrapper desta action só reconhece
+          # address/memory/undefined/coverage como SANITIZER válido (rejeita
+          # 'none' com "Invalid Configuration" — visto na 2.ª execução,
+          # workflow_dispatch manual). 'coverage' é o único valor aceite por
+          # ambas as camadas.
+          sanitizer: coverage
 
       - name: Correr fuzzers
         id: run
