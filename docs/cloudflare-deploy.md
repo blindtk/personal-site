@@ -142,12 +142,10 @@ contorno temporário — deixou de ser necessário depois do fix.
 
 ## 5. WAF — regras da zona `danielmala.co`
 
-`Security → WAF → Custom rules` (zona, não o Worker/Pages).
-
-> **Atualizado 2026-07-29** com as regras confirmadas em produção — divergem
-> do desenho original abaixo descrito (catch-all geo com lista de 27 países da
-> UE, sem regra dedicada aos paths-isco). O que mudou e porquê está na nota no
-> fim desta secção.
+`Security → WAF → Custom rules` (zona, não o Worker/Pages). Estas regras
+divergem do desenho original preparado antes do lançamento — ver
+["Histórico: desenho original vs. produção"](#histórico-desenho-original-vs-produção)
+no fim desta secção para o que mudou e porquê.
 
 Ordem exata das regras em produção (as `Skip` vêm antes; a regra do honeypot
 vem antes da política de país, e cada regra que atua **para a evolução**):
@@ -200,28 +198,17 @@ Porquê cada regra:
 - A ação **Log** (para observar sem afetar tráfego) continua **indisponível
   no Free** para Custom Rules — só `Managed Challenge`/`Block`/etc.
 
-**Nota (2026-07-29) — divergência entre o plano original e a produção.** O
-desenho abaixo (bots + previews sociais + CI + IP do dono a *Skip*, catch-all
-de 27 países UE a `Managed Challenge`) foi o que ficou preparado com
-antecedência, com a Access (secção 3) como proteção real enquanto isso — a
-ideia registada era que a regra final ficaria já na ação definitiva sem
-risco, porque ninguém de fora conseguia lá chegar de qualquer forma. As
-regras hoje em produção são mais restritivas nalguns pontos (país único em
-vez de 27, `Block` em vez de `Managed Challenge` para o resto do mundo) e têm
-uma peça nova e deliberada (regra 3, dedicada ao honeypot) que o plano
-original não previa. Não ficou registado neste documento se as regras
-"Previews sociais" (bots do LinkedIn/Twitter/Facebook) e "O dono sempre" (skip
-por IP) do plano original chegaram a ser criadas e foram depois removidas, ou
-se nunca chegaram a sair do plano — confirmar antes do checklist da secção 7,
-para não assumir uma proteção (o IP do dono sempre passar) que pode não
-existir.
+### Histórico: desenho original vs. produção
 
-### Desenho original (histórico, substituído pela tabela acima)
+> Esta subsecção é registo histórico — não descreve o estado atual (a tabela
+> acima é a fonte de verdade). Preservada porque explica *porquê* a produção
+> diverge do que foi planeado.
 
-Preparado com antecedência, com a Access (secção 3) como proteção real
-enquanto isso — por isso a regra final ficou já na ação definitiva (`Managed
-Challenge`), sem risco, já que ninguém de fora conseguia lá chegar de
-qualquer forma.
+O desenho abaixo (bots + previews sociais + CI + IP do dono a *Skip*,
+catch-all de 27 países UE a `Managed Challenge`) foi o que ficou preparado
+com antecedência, com a Access (secção 3) como proteção real enquanto isso —
+a ideia registada era que a regra final ficaria já na ação definitiva sem
+risco, porque ninguém de fora conseguia lá chegar de qualquer forma.
 
 | # | Regra | Expressão | Ação |
 |---|---|---|---|
@@ -230,6 +217,17 @@ qualquer forma.
 | 3 | CI do GitHub Actions | `(http.user_agent contains "headers-check")` | Skip |
 | 4 | O dono sempre | `(ip.src eq <IP>)` | Skip |
 | 5 | Catch-all geo | `not (ip.geoip.country in {"PT" "AT" "BE" "BG" "HR" "CY" "CZ" "DK" "EE" "FI" "FR" "DE" "GR" "HU" "IE" "IT" "LV" "LT" "LU" "MT" "NL" "PL" "RO" "SK" "SI" "ES" "SE"})` | Managed Challenge |
+
+**O que mudou, e porquê (2026-07-29):** as regras hoje em produção são mais
+restritivas nalguns pontos (país único em vez de 27, `Block` em vez de
+`Managed Challenge` para o resto do mundo) e têm uma peça nova e deliberada
+(regra 3, dedicada ao honeypot) que o plano original não previa. As regras
+"Previews sociais" e "O dono sempre" do desenho original **não foram
+criadas, por escolha, não por esquecimento** — confirmado 2026-07-29 (ver
+secção 7): os bots de preview social já são apanhados pela regra 1 (`cf.client.bot`
+inclui os crawlers de preview conhecidos), e quanto ao dono, viajar para
+fora de PT sujeita-o à regra 5 (Block) como qualquer visitante — decisão
+mantida de propósito.
 
 ## 6. Repositório GitHub
 
@@ -244,33 +242,19 @@ scanning — **não foi reverificada por este agente** (fora do alcance de
 uma sessão sem acesso às definições do repositório no GitHub); vale a pena
 confirmar manualmente que ficou feita.
 
-## 7. Checklist do que falta / decisões pendentes
+## 7. Estado atual e o que falta
 
-- [x] **Lançamento (Fase 3) (2026-07-31, confirmado pelo dono do repo):** a
-  Access deixou de bloquear `danielmala.co`/`www.danielmala.co`; a regra 2
-  do WAF ("CI headers check") já faz match pelo header assinado
-  `X-Ci-Waf-Token` em vez do User-Agent público (secção 5). `*.pages.dev`
-  continua atrás de Access, por desenho.
-- [x] **Confirmado (2026-07-29, decisão do dono do repo):** as regras
-  "Previews sociais" e "O dono sempre" do desenho original **não** foram
-  criadas, **por escolha, não por esquecimento**. Os bots de preview social
-  (LinkedIn/Twitter/Facebook) já são apanhados pela regra 1 ("Bots
-  verificados", `cf.client.bot`) — a lista de bots verificados da Cloudflare
-  inclui os crawlers de preview conhecidos, tornando uma regra dedicada
-  redundante. Quanto ao dono: aceite que viajar para fora de PT o sujeita
-  à regra 5 (Block) como qualquer visitante — só PT passa (com Managed
-  Challenge), decisão mantida de propósito.
-- [x] `.github/expected-headers.json` → `url` esteve `SET-ME` enquanto a
-  Access (secção 3) bloqueava produção — o cron diário do `Headers` teria
-  falhado sempre por causa da página de login da Access, não de uma
-  regressão real de headers. **Resolvido (2026-07-31):** via a opção (b) já
-  prevista aqui — a Access foi desligada/ajustada na Fase 3, `url` aponta
-  agora para `https://danielmala.co/`.
-- [ ] CAA, HSTS preload, DNSSEC — checklist em `docs/dns-tls.md`, por
-  executar/confirmar.
-- [x] Alias de email (`me@danielmala.co`) em vez do Hotmail pessoal — feito
-  em `static/src/config.ts` e `docs/dns-tls.md` (2026-07-30). Nota: o
-  endereço antigo continua no histórico do git; a mitigação real é o alias
-  ser rotável.
-- [x] Repo público — já aconteceu; checklist de pré-requisitos da secção 6
-  não reverificada nesta sessão, confirmar manualmente.
+**Feito:** lançamento em produção (Fase 3, 2026-07-31 — Access desligada de
+`danielmala.co`/`www.danielmala.co`, regra WAF 2 já autenticada por header
+assinado em vez de User-Agent público, secção 5); decisões de desenho do WAF
+confirmadas como deliberadas, não esquecidas (secção 5); `.github/expected-headers.json`
+já aponta para produção real em vez de `SET-ME`; alias de email
+(`me@danielmala.co`) em `static/src/config.ts` e `docs/dns-tls.md`
+(2026-07-30); repositório público (secção 6) — checklist de pré-requisitos
+da secção 6 não foi reverificada por este agente, vale a pena confirmar
+manualmente.
+
+**Por fazer:**
+
+- [ ] CAA, HSTS preload, DNSSEC — checklist em [`docs/dns-tls.md`](dns-tls.md),
+  por executar/confirmar.
