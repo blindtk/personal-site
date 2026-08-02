@@ -1,260 +1,268 @@
 # personal-site-worker
 
-Backend das features de segurança do site (Bloco 3): honeypot, mapa de
-tráfego hostil, self-scan de cabeçalhos, ticker SOC e recetor de violações
-CSP. Um só Cloudflare Worker + um namespace KV.
+Backend for the site's security features (Block 3): honeypot, hostile
+traffic map, header self-scan, SOC ticker, and CSP violation receiver. A
+single Cloudflare Worker + one KV namespace.
 
-> **Porque vive aqui e não em `static/`:** a regra do monorepo é que o
-> `static/` é 100% cliente, sem backend. Tudo o que precisa de servidor
-> pertence ao `dynamic/` — isto é o primeiro código real dessa área.
+> **Why it lives here and not in `static/`:** the monorepo rule is that
+> `static/` is 100% client, no backend. Anything that needs a server
+> belongs in `dynamic/` — this is that area's first real code.
 
 ## Endpoints
 
-| Rota | O que faz | Cache | Rate limit |
+| Route | What it does | Cache | Rate limit |
 | --- | --- | --- | --- |
-| *(iscos)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Regista só metadados (país, ASN, path, timestamp) e devolve 404 | — | — |
-| `GET /api/honeypot` | Stats agregadas + últimas 30 tentativas | 60 s | — |
-| `GET /api/map` | Origens por país (24 h / 7 d) | 60 s | — |
-| `GET /api/scan` | Nota + checklist dos cabeçalhos do próprio site | 6 h | `?refresh=1`: 3/10 min |
-| `GET /api/pwned-range` | Proxy k-anonimato para a Have I Been Pwned range API (ferramenta `pwned`) — só o prefixo de 5 carateres do hash sai do browser | — | — |
-| `GET /api/ticker` | CISA KEV + NVD críticos, sanitizados | 1 h | — |
-| `POST /api/csp-report` | Recetor de violações CSP — envio **manual** (botão na página Provas), não `report-uri`/`report-to` automático (removidos da CSP em 2026-07, ver `docs/security-headers.md`) | — | 10/min por cliente + cap global 300/h |
-| `GET /api/csp-violations` | Agregados 7d das violações (painel Segurança) | 60 s | — |
-| `GET /api/threat-intel` | Heatmap, hora-do-dia, tops (país/ASN/técnica) e eventos recentes (painel Perímetro) | 6 h | — |
-| `POST /api/vitals` | Recetor de Web Vitals (LCP/CLS/etc.) — beacon first-party não-autenticado | — | mesmo padrão do `/api/csp-report` |
-| `GET /api/vitals` | Agregados de Web Vitals (p75 + classificação, por histograma) | 120 s | — |
-| `GET /api/ct` | Vigia CT: certificados emitidos p/ o domínio (logs de Certificate Transparency, 90 d) | 6 h | — |
-| `GET /api/cf-stats` | Estado da zona Cloudflare: pedidos/cache/ameaças da zona (+ top países por ameaças) + invocações/erros deste Worker (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
-| `GET /api/mirror` | Espelho: a "vista do servidor" deste pedido (TLS/ASN/país/UA, **nunca o IP**) | — (per-request, `no-store`) | 30/min por cliente |
+| *(decoys)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Records only metadata (country, ASN, path, timestamp) and returns 404 | — | — |
+| `GET /api/honeypot` | Aggregated stats + last 30 attempts | 60 s | — |
+| `GET /api/map` | Origins by country (24 h / 7 d) | 60 s | — |
+| `GET /api/scan` | Note + checklist of the site's own headers | 6 h | `?refresh=1`: 3/10 min |
+| `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | — | — |
+| `GET /api/ticker` | CISA KEV + critical NVD entries, sanitized | 1 h | — |
+| `POST /api/csp-report` | CSP violation receiver — **manual** send (button on the Evidence page), not automatic `report-uri`/`report-to` (removed from the CSP in 2026-07, see `docs/security-headers.md`) | — | 10/min per client + 300/h global cap |
+| `GET /api/csp-violations` | 7-day violation aggregates (Security page panel) | 60 s | — |
+| `GET /api/threat-intel` | Heatmap, time-of-day, tops (country/ASN/technique), and recent events (Perimeter panel) | 6 h | — |
+| `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon | — | same pattern as `/api/csp-report` |
+| `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s | — |
+| `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
+| `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
+| `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, **never the IP**) | — (per-request, `no-store`) | 30/min per client |
 | `GET /api/health` | Liveness | — | — |
 
-## Privacidade (honeypot)
+## Privacy (honeypot)
 
-**Nenhum IP é armazenado.** Os eventos guardam apenas país (`cf-ipcountry`,
-validado a 2 letras — resto vira `XX`), ASN (`request.cf.asn`, validado no
-espaço 32-bit), path (só os iscos conhecidos) e um **timestamp arredondado
-a 5 min**. O arredondamento é anonimização: sem o instante preciso não dá
-para correlacionar ASN+path+timestamp com logs de terceiros. A única coisa
-derivada do IP é a chave de rate limit: um hash SHA-256 truncado com salt
-que roda ao dia (`RATE_SALT` + data UTC), guardado só durante a janela do
-limite e nunca associado aos eventos. `recordHoneypot` nem sequer lê o IP.
-Coberto por teste (`test/logic.test.mjs`): o IP nunca aparece em nenhum
-valor do KV nem em nenhuma linha de log do Worker.
+**No IP is ever stored.** Events only save country (`cf-ipcountry`,
+validated to 2 letters — anything else becomes `XX`), ASN
+(`request.cf.asn`, validated within the 32-bit space), path (only known
+decoys), and a **timestamp rounded to 5 minutes**. The rounding is
+anonymization: without the precise instant, ASN+path+timestamp can't be
+correlated with third-party logs. The only thing derived from the IP is
+the rate-limit key: a truncated SHA-256 hash with a salt that rotates
+daily (`RATE_SALT` + UTC date), kept only during the limit's window and
+never associated with the events. `recordHoneypot` doesn't even read the
+IP. Covered by a test (`test/logic.test.mjs`): the IP never appears in
+any KV value nor in any Worker log line.
 
-## Privacidade (violações CSP)
+## Privacy (CSP violations)
 
-Desde 2026-07 o envio é **manual** (botão na página Provas, ver
-`static/public/js/csp-report.js` e `CspViolations.astro`) — a CSP deixou de
-ter `report-uri`/`report-to`, por isso o browser já não manda nada sozinho;
-poupa escritas no KV num plano Free com teto diário apertado. O wire format
-e o recetor não mudaram: o corpo que chega a `POST /api/csp-report` pode
-trazer URLs completos (com paths e query strings, onde vivem tokens). O
-Worker **nunca persiste o URL**: do `blocked-uri` guarda-se só a **origem**
-(scheme + host), e extensões de browser bucketizam por scheme
-(`chrome-extension://`), nunca pelo ID da extensão — que identificaria o
-utilizador pelo que tem instalado. Sem IP, sem User-Agent, e ao contrário
-do honeypot nem sequer há lista de eventos recentes: só contadores diários
-por diretiva/categoria/origem (`src/lib/csp-report.js`, coberto por teste —
-path e query nunca aparecem em nenhum valor do KV).
+Since 2026-07, sending is **manual** (a button on the Evidence page, see
+`static/public/js/csp-report.js` and `CspViolations.astro`) — the CSP no
+longer has `report-uri`/`report-to`, so the browser no longer sends
+anything on its own. The wire format and the receiver didn't change: the
+body arriving at `POST /api/csp-report` can carry full URLs (with paths
+and query strings, where tokens live). The Worker **never persists the
+URL**: from `blocked-uri` it only saves the **origin** (scheme + host),
+and browser extensions get bucketed by scheme (`chrome-extension://`),
+never by extension ID — which would identify the user by what they have
+installed. No IP, no User-Agent, and unlike the honeypot there isn't even
+a recent-events list: only daily counters by directive/category/origin
+(`src/lib/csp-report.js`, covered by a test — path and query never appear
+in any KV value).
 
-Defesas do endpoint (é o único POST do Worker, público por natureza):
-`Content-Type` estrito, corpo ≤ 16 KB, rate limit por cliente, validação de
-que o `document-uri` é do próprio site (relatórios forjados "de outros
-sites" descartam-se com o mesmo 204 — indistinguível), cap de cardinalidade
-das chaves de agregação (`~other` a partir de 40 fontes distintas/bucket) e
-cap global de escritas por janela (`CSP_WRITE_CAP`).
+Endpoint defenses (it's the Worker's only POST, public by nature): strict
+`Content-Type`, body ≤ 16 KB, per-client rate limit, validation that
+`document-uri` belongs to the site itself (forged reports "from other
+sites" are dropped with the same 204 — indistinguishable), a cardinality
+cap on aggregation keys (`~other` past 40 distinct sources/bucket), and a
+global write cap per window (`CSP_WRITE_CAP`).
 
-## Vigia CT (`/api/ct`)
+## CT watcher (`/api/ct`)
 
-Qualquer certificado TLS emitido para o domínio fica registado em logs
-públicos de Certificate Transparency — incluindo um que um atacante
-conseguisse emitir após um takeover de DNS/registrar. O Worker consulta o
-crt.sh (duas queries: apex e `%.domínio`, porque um certificado emitido só
-para um subdomínio nunca apareceria na query do apex), deduplica
-pré-certificado/folha pelo serial, e compara cada emissão com a allowlist
-`CT_EXPECTED_ISSUERS` — o que não bater aparece como **inesperado** no
-painel da página Segurança.
+Any TLS certificate issued for the domain gets recorded in public
+Certificate Transparency logs — including one an attacker managed to
+issue after a DNS/registrar takeover. The Worker queries crt.sh (two
+queries: apex and `%.domain`, because a certificate issued only for a
+subdomain would never show up in the apex query), deduplicates
+precert/leaf by serial, and compares every issuance against the
+`CT_EXPECTED_ISSUERS` allowlist — anything that doesn't match shows up as
+**unexpected** on the Security page panel.
 
-Sem input de visitantes (a query é fixa, derivada de `SCAN_TARGET`) — não
-é reutilizável como proxy nem precisa de rate limit próprio. O crt.sh é
-instável por natureza: a cache de 6 h com stale-while-revalidate serve o
-último snapshot bom enquanto o refresh corre em background, o cron aquece a
-cache, e se uma das duas queries falhar usa-se o resultado parcial da
-outra (as duas falharem ⇒ 502 e o painel mostra o fallback). Os dados são
-100 % públicos (estão nos logs CT); ainda assim tudo o que segue para o
-cliente passa por `sanitizeText`, e só nomes pertencentes ao domínio são
-persistidos (`src/lib/ct.js`, coberto por teste).
+No visitor input (the query is fixed, derived from `SCAN_TARGET`) — not
+reusable as a proxy and doesn't need its own rate limit. crt.sh is
+unstable by nature: the 6h cache with stale-while-revalidate serves the
+last good snapshot while the refresh runs in the background, the cron
+warms the cache, and if one of the two queries fails, the other's
+partial result is used (both failing ⇒ 502 and the panel shows the
+fallback). The data is 100% public (it's in the CT logs); everything that
+still reaches the client goes through `sanitizeText`, and only names
+belonging to the domain are persisted (`src/lib/ct.js`, covered by a
+test).
 
-## Estado da Cloudflare (`/api/cf-stats`)
+## Cloudflare Status (`/api/cf-stats`)
 
-Painel da página Provas com métricas reais desta zona/Worker — pedidos,
-taxa de cache, ameaças bloqueadas pelo edge da Cloudflare (com uma tabela
-dos países de origem com mais ameaças bloqueadas nos últimos 7 dias),
-invocações e erros do próprio Worker — via **GraphQL Analytics API**
-(`api.cloudflare.com/client/v4/graphql`).
+Panel on the Evidence page with real metrics for this zone/Worker —
+requests, cache rate, threats blocked by Cloudflare's edge (with a table
+of the origin countries with the most blocked threats over the last 7
+days), and this Worker's own invocations and errors — via the
+**GraphQL Analytics API** (`api.cloudflare.com/client/v4/graphql`).
 
-A tabela de países soma o campo `countryMap` de cada dia da janela (é por
-dia, não por período — a agregação é feita aqui, em `topCountriesByThreats`
-em `src/lib/cf-analytics.js`), filtra países sem nenhuma ameaça e códigos
-inválidos, e mostra os 10 com mais ameaças bloqueadas. É um sinal mais
-largo do que o "mapa de tráfego hostil" do Honeypot (`/api/map`): esse só
-regista quem bateu nos paths-isco; isto cobre o que o WAF/edge da
-Cloudflare bloqueou na zona **inteira**.
+The country table sums the `countryMap` field from each day in the
+window (it's per day, not per period — the aggregation happens here, in
+`topCountriesByThreats` in `src/lib/cf-analytics.js`), filters out
+countries with zero threats and invalid codes, and shows the top 10 by
+blocked threats. It's a broader signal than the Honeypot's "hostile
+traffic map" (`/api/map`): that one only records who hit the decoy paths;
+this one covers what the Cloudflare WAF/edge blocked across the
+**entire** zone.
 
-**Isto não é o Cloudflare Radar.** O Radar é agregado global e anónimo de
-todos os clientes Cloudflare — não sabe nada sobre este domínio em
-particular, só serve de contexto emprestado ("como está a internet lá
-fora"). A GraphQL Analytics API, pelo contrário, só devolve dados **desta**
-zona/conta, autenticados com `CF_API_TOKEN` — é a mesma fonte que alimenta
-o dashboard da Cloudflare quando lá entras. Só agregados diários; nunca IPs
-nem dados de visitantes individuais.
+**This is not Cloudflare Radar.** Radar is a global, anonymous aggregate
+across all Cloudflare customers — it knows nothing about this specific
+domain, it only serves as borrowed context ("how the internet out there
+is doing"). The GraphQL Analytics API, by contrast, only returns data for
+**this** zone/account, authenticated with `CF_API_TOKEN` — it's the same
+source that feeds the Cloudflare dashboard when you log in. Daily
+aggregates only; never IPs or individual visitor data.
 
-Precisa de três vars (`CF_ZONE_TAG`, `CF_ACCOUNT_ID`, `CF_WORKER_SCRIPT`,
-ver `wrangler.toml`) e do secret `CF_API_TOKEN`, criado em
-dash.cloudflare.com → Meu perfil → Tokens de API, com os scopes:
+Needs three vars (`CF_ZONE_TAG`, `CF_ACCOUNT_ID`, `CF_WORKER_SCRIPT`, see
+`wrangler.toml`) and the `CF_API_TOKEN` secret, created at
+dash.cloudflare.com → My Profile → API Tokens, with the scopes:
 
-- `Zone Analytics:Read` + `Account Analytics:Read` — pedidos/cache/ameaças
-  da zona e invocações do Worker (`CF_STATS_QUERY`).
+- `Zone Analytics:Read` + `Account Analytics:Read` — zone requests/cache/
+  threats and Worker invocations (`CF_STATS_QUERY`).
 - `Zone Firewall Services:Read` + `Zone WAF:Read` +
-  `Account Firewall Access Rules:Read` — para o pedido separado e
-  best-effort que lê o dataset cru `firewallEventsAdaptive` (24h, único
-  acessível no plano Free) e agrega por ação/origem/país
-  (`CF_FIREWALL_QUERY`/`firewallBreakdown` em `src/lib/cf-analytics.js`). Um
-  cron diário (`scheduled()` em `src/index.js`) fotografa esse resultado
-  para o KV e funde 7 dias (`snapshotFirewall`/`readFirewall7d`) — é o que
-  alimenta o painel "Firewall por ação/origem/país (7d)" na tab Threat
-  Intel do Analytics e o card "Managed challenges" no Overview. Sem estes
-  três scopes, o pedido falha em silêncio (é *best-effort*, nunca derruba o
-  núcleo) e esses painéis ficam presos a zero — sem erro visível, porque é
-  exatamente esse o comportamento pretendido de degradação graciosa. Os
-  mesmos três scopes alimentam também um **segundo pedido separado**
-  (`CF_FIREWALL_DETAIL_QUERY`/`firewallDetailBreakdown`, mesmo dataset cru,
-  campos `clientRequestPath`/`userAgent`/`clientAsn`) que dá as tabelas
-  "URLs mais visadas", "User-agents mais vistos" e "Redes mais vistas" na
-  tab Tráfego — sem acumulação a 7 dias (fica a 24h). Pedido à parte de
-  propósito: uma deriva de schema aqui nunca deve apagar as tabelas de
-  ação/origem/país que já funcionam. `clientIP` está disponível neste mesmo
-  dataset mas nunca é pedido nem processado — zero-PII por escolha do site.
+  `Account Firewall Access Rules:Read` — for the separate, best-effort
+  request that reads the raw `firewallEventsAdaptive` dataset (24h, the
+  only one accessible on the Free plan) and aggregates by
+  action/origin/country (`CF_FIREWALL_QUERY`/`firewallBreakdown` in
+  `src/lib/cf-analytics.js`). A daily cron (`scheduled()` in
+  `src/index.js`) snapshots that result into KV and merges 7 days
+  (`snapshotFirewall`/`readFirewall7d`) — that's what feeds the
+  "Firewall by action/origin/country (7d)" panel on the Analytics'
+  Threat Intel tab and the "Managed challenges" card on the Overview.
+  Without these three scopes, the request fails silently (it's
+  *best-effort*, never takes down the core) and those panels stay stuck
+  at zero — with no visible error, because that's exactly the intended
+  graceful-degradation behavior. The same three scopes also feed a
+  **second, separate request**
+  (`CF_FIREWALL_DETAIL_QUERY`/`firewallDetailBreakdown`, same raw
+  dataset, `clientRequestPath`/`userAgent`/`clientAsn` fields) that
+  powers the "Most targeted URLs", "Most seen user-agents", and "Most
+  seen networks" tables on the Traffic tab — no 7-day accumulation
+  (stays at 24h). A separate request on purpose: a schema drift here
+  should never wipe out the action/origin/country tables that already
+  work. `clientIP` is available in this same dataset but is never
+  requested or processed — zero-PII by the site's own choice.
 
-Sem as vars/secret do primeiro grupo, a rota devolve 502 e o painel
-mostra o fallback — mesmo padrão do vigia CT sem `SCAN_TARGET`.
+Without the first group's vars/secret, the route returns 502 and the
+panel shows the fallback — the same pattern as the CT watcher without
+`SCAN_TARGET`.
 
-A cache de 6h já limita a frequência com que se bate na API da Cloudflare
-no caminho normal. `?refresh=1` força um pedido novo antes disso — útil
-para não esperar 6h depois de mudar o shape dos dados (ex.: ao adicionar o
-`topCountries`, entradas antigas na KV ficam sem esse campo até expirarem
-ou até um refresh manual as substituir) — e, por aceitar input (o próprio
-parâmetro), leva o mesmo rate limit apertado do `/api/scan` (3/10 min).
+The 6h cache already limits how often the Cloudflare API gets hit on the
+normal path. `?refresh=1` forces a fresh request ahead of that — useful
+so you don't have to wait 6h after changing the data's shape (e.g. when
+`topCountries` was added, old KV entries lacked that field until they
+expired or a manual refresh replaced them) — and, since it accepts input
+(the parameter itself), it carries the same tight rate limit as
+`/api/scan` (3/10 min).
 
-Lógica pura em `src/lib/cf-analytics.js` (parse da resposta GraphQL, testado
-com vetores conhecidos — qualquer campo em falta ou schema que mude do lado
-da Cloudflare degrada para 0, nunca rebenta o painel).
+Pure logic in `src/lib/cf-analytics.js` (parses the GraphQL response,
+tested with known vectors — any missing field or schema change on
+Cloudflare's side degrades to 0, never breaks the panel).
 
-### Erros e logs
+### Errors and logs
 
-As respostas de erro ao cliente são sempre genéricas (`upstream_error`,
-`rate_limited`, …) — nunca stack traces, paths internos ou detalhes do KV.
-O detalhe (stack) fica só nos logs do Worker (server-side) via
-`console.error`, e esses logs nunca incluem o IP.
+Client-facing error responses are always generic (`upstream_error`,
+`rate_limited`, …) — never stack traces, internal paths, or KV detail.
+The detail (the stack) stays only in the Worker's logs (server-side) via
+`console.error`, and those logs never include the IP.
 
-### Cap de escritas ao KV
+### KV write cap
 
-Cada tentativa nos iscos faz várias escritas. Para limitar custo/abuso se
-alguém martelar os paths-isco, há um **cap global de escritas por DIA**
-(`HONEYPOT_WRITE_CAP` em `src/index.js`, por omissão 60 eventos/dia):
-passado o teto, os eventos extra são descartados e o pedido devolve na
-mesma o 404 indistinguível. Ver `src/lib/kvcap.js` (best-effort — o KV é
-eventualmente consistente, o objetivo é limitar a ordem de grandeza).
-`CSP_WRITE_CAP` (50/dia) e `VITALS_WRITE_CAP` (150/dia) seguem o mesmo
-padrão. Os três são caps **diários** (não por hora) de propósito: o plano
-Free do Workers KV tem um teto de ~1.000 escritas/dia para a conta
-**inteira**, partilhado entre honeypot/CSP/vitals/rate-limit/cron — um cap
-por hora generoso deixava um único burst de scanners ou tráfego orgânico
-consumir sozinho vários dias de quota. Ver `dynamic/PLAN.md` para a decisão
-e as contas.
+Every attempt against the decoys triggers several writes. To limit
+cost/abuse if someone hammers the decoy paths, there's a **global write
+cap per DAY** (`HONEYPOT_WRITE_CAP` in `src/index.js`, defaulting to 60
+events/day): past the ceiling, extra events are dropped and the request
+still returns the same indistinguishable 404. See `src/lib/kvcap.js`
+(best-effort — KV is eventually consistent, the goal is bounding the
+order of magnitude). `CSP_WRITE_CAP` (50/day) and `VITALS_WRITE_CAP`
+(150/day) follow the same pattern. All three are **daily** caps (not
+hourly) on purpose: the Workers KV Free plan has a ceiling of ~1,000
+writes/day for the **whole** account, shared between
+honeypot/CSP/vitals/rate-limit/cron — a generous hourly cap let a single
+burst of scanners or organic traffic consume several days of quota by
+itself. See `dynamic/PLAN.md` for the decision and the numbers.
 
-## Desenvolvimento
+## Development
 
 ```bash
 cd dynamic/worker
 npm install
-npm test          # lógica pura (node --test) — sem rede nem Cloudflare
-npx wrangler dev  # Worker local com KV em memória
+npm test          # pure logic (node --test) — no network, no Cloudflare
+npx wrangler dev  # local Worker with in-memory KV
 ```
 
-Os módulos em `src/lib/` são puros e cobertos por `test/logic.test.mjs`
-(agregação, sanitização, rate limit, parse dos feeds, nota de cabeçalhos)
-com vetores conhecidos.
+The modules in `src/lib/` are pure and covered by `test/logic.test.mjs`
+(aggregation, sanitization, rate limiting, feed parsing, header note)
+with known vectors.
 
 ## Deploy
 
-> Esta secção descreve o fluxo manual via `wrangler` CLI. Em produção o
-> deploy corre automaticamente via **Workers Builds** (Git integration da
-> Cloudflare) a cada push para `main` — mesma ideia, comandos por trás são os
-> mesmos (`wrangler deploy`), mas configurado no dashboard em vez de correr à
-> mão. Ver [`docs/cloudflare-deploy.md`](../../docs/cloudflare-deploy.md)
-> para esse processo e os problemas reais resolvidos (rotas não colavam por
-> `routes` estar mal posicionado no `wrangler.toml`, `workers.dev` público
-> por omissão, etc.) — vale a pena ler antes de mexer neste ficheiro outra
-> vez.
+> This section describes the manual flow via the `wrangler` CLI. In
+> production, deploy runs automatically via **Workers Builds**
+> (Cloudflare's Git integration) on every push to `main` — same idea, the
+> commands underneath are the same (`wrangler deploy`), but configured in
+> the dashboard instead of run by hand. See
+> [`docs/cloudflare-deploy.md`](../../docs/cloudflare-deploy.md) for that
+> process and the real problems solved (routes not taking effect because
+> `routes` was misplaced in `wrangler.toml`, `workers.dev` public by
+> default, etc.) — worth reading before touching this file again.
 
-### 1. Namespace KV + secrets
+### 1. KV namespace + secrets
 
 ```bash
 npx wrangler kv namespace create HONEYPOT
 npx wrangler kv namespace create HONEYPOT --preview
-# cola os ids em wrangler.toml (id / preview_id)
+# paste the ids into wrangler.toml (id / preview_id)
 
-npx wrangler secret put RATE_SALT     # qualquer string longa aleatória
-npx wrangler secret put NVD_API_KEY   # opcional (sobe o rate limit do NVD)
+npx wrangler secret put RATE_SALT     # any long random string
+npx wrangler secret put NVD_API_KEY   # optional (raises the NVD rate limit)
 
-# Só necessários se a Cloudflare Access estiver ativa à frente de
-# SCAN_TARGET (ver docs/cloudflare-deploy.md) — sem eles o self-scan recebe
-# a página de login da Access em vez do site. Criar o Access Service Token
-# em dash.cloudflare.com → Zero Trust → Access → Service Auth.
+# Only needed if Cloudflare Access is active in front of SCAN_TARGET
+# (see docs/cloudflare-deploy.md) — without them, self-scan receives the
+# Access login page instead of the site. Create the Access Service Token
+# at dash.cloudflare.com → Zero Trust → Access → Service Auth.
 npx wrangler secret put ACCESS_CLIENT_ID
 npx wrangler secret put ACCESS_CLIENT_SECRET
 ```
 
-### 2a. Deploy no domínio próprio (o que está em produção)
+### 2a. Deploy on the real domain (what's in production)
 
-O bloco `routes` em `wrangler.toml` (paths-isco + `/api/*` no
-`danielmala.co`) já está ativo — `npx wrangler deploy` (ou o push para
-`main`, via Workers Builds) intercepta esses paths; o resto do site
-continua servido pelo Cloudflare Pages. Como a API fica **same-origin**, o
-frontend chama `/api/...` e a CSP `connect-src 'self'` basta — nada a
-mudar.
+The `routes` block in `wrangler.toml` (decoy paths + `/api/*` on
+`danielmala.co`) is already active — `npx wrangler deploy` (or a push to
+`main`, via Workers Builds) intercepts those paths; the rest of the site
+stays served by Cloudflare Pages. Since the API ends up **same-origin**,
+the frontend calls `/api/...` and the CSP's `connect-src 'self'` is
+enough — nothing to change.
 
-### 2b. Deploy em `*.workers.dev` (para testar já, sem domínio)
+### 2b. Deploy on `*.workers.dev` (to test right away, without a domain)
 
-`npx wrangler deploy` sem rotas publica em
-`personal-site-worker.<conta>.workers.dev`. Nesse caso:
+`npx wrangler deploy` with no routes publishes to
+`personal-site-worker.<account>.workers.dev`. In that case:
 
-1. Define no build do site `PUBLIC_API_BASE` para esse URL (ver
+1. Set `PUBLIC_API_BASE` in the site's build to that URL (see
    `static/src/config.ts`).
-2. Autoriza a origem do site no Worker: `ALLOWED_ORIGINS` (var) com o URL
-   `*.pages.dev`.
-3. Acrescenta essa origem ao `connect-src` da CSP em
-   `static/public/_headers` — é a **única** exceção à CSP `'self'`, e só
-   é precisa neste modo de teste. No modo 2a não é necessária.
+2. Authorize the site's origin on the Worker: `ALLOWED_ORIGINS` (var)
+   with the `*.pages.dev` URL.
+3. Add that origin to the CSP's `connect-src` in
+   `static/public/_headers` — the **only** exception to the `'self'`
+   CSP, and only needed in this test mode. Not needed in mode 2a.
 
-> Nota: os paths-isco só apanham scanners reais quando o Worker está nas
-> rotas do domínio (2a). Em `*.workers.dev` (2b) o honeypot funciona para
-> testes, mas o tráfego hostil real bate no Pages, não no Worker.
+> Note: the decoy paths only catch real scanners when the Worker is on
+> the domain's routes (2a). On `*.workers.dev` (2b), the honeypot works
+> for testing, but real hostile traffic hits Pages, not the Worker.
 
-## Variáveis e secrets — resumo
+## Variables and secrets — summary
 
-| Nome | Tipo | Onde | Para quê |
+| Name | Type | Where | For |
 | --- | --- | --- | --- |
-| `KV` | binding | wrangler.toml | namespace único (eventos, buckets, caches, rate limit) |
-| `RATE_SALT` | secret | `wrangler secret put` | hash de rate limit; rodar SEMANALMENTE (invalida limites acumulados de propósito) |
-| `NVD_API_KEY` | secret | `wrangler secret put` | opcional, rate limit do NVD |
-| `CF_API_TOKEN` | secret | `wrangler secret put` | token Analytics:Read (zona + conta) + Firewall/WAF:Read (zona + conta), p/ `/api/cf-stats` — ver secção "Estado da Cloudflare" acima |
-| `ACCESS_CLIENT_ID` | secret | `wrangler secret put` | opcional — Access Service Token, só se a Access estiver ativa à frente de `SCAN_TARGET` |
-| `ACCESS_CLIENT_SECRET` | secret | `wrangler secret put` | idem, par do `ACCESS_CLIENT_ID` |
-| `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (só no modo 2b) |
-| `SCAN_TARGET` | var | wrangler.toml | URL que o self-scan inspeciona |
-| `DEPLOY_TS` | var | `--var` no deploy | "tempo até 1.º scan" (opcional) |
-| `CF_ZONE_TAG` | var | wrangler.toml | ID da zona, p/ `/api/cf-stats` |
-| `CF_ACCOUNT_ID` | var | wrangler.toml | ID da conta, p/ `/api/cf-stats` |
-| `CF_WORKER_SCRIPT` | var | wrangler.toml | nome deste Worker na conta, p/ `/api/cf-stats` |
+| `KV` | binding | wrangler.toml | single namespace (events, buckets, caches, rate limit) |
+| `RATE_SALT` | secret | `wrangler secret put` | rate-limit hash; rotate WEEKLY (invalidates accumulated limits on purpose) |
+| `NVD_API_KEY` | secret | `wrangler secret put` | optional, NVD rate limit |
+| `CF_API_TOKEN` | secret | `wrangler secret put` | Analytics:Read (zone + account) + Firewall/WAF:Read (zone + account) token, for `/api/cf-stats` — see the "Cloudflare Status" section above |
+| `ACCESS_CLIENT_ID` | secret | `wrangler secret put` | optional — Access Service Token, only if Access is active in front of `SCAN_TARGET` |
+| `ACCESS_CLIENT_SECRET` | secret | `wrangler secret put` | same, paired with `ACCESS_CLIENT_ID` |
+| `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (mode 2b only) |
+| `SCAN_TARGET` | var | wrangler.toml | URL that self-scan inspects |
+| `DEPLOY_TS` | var | `--var` on deploy | "time to first scan" (optional) |
+| `CF_ZONE_TAG` | var | wrangler.toml | zone ID, for `/api/cf-stats` |
+| `CF_ACCOUNT_ID` | var | wrangler.toml | account ID, for `/api/cf-stats` |
+| `CF_WORKER_SCRIPT` | var | wrangler.toml | this Worker's name on the account, for `/api/cf-stats` |
