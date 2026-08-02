@@ -144,7 +144,7 @@ scanner reports for `danielmala.co` — Qualys SSL Labs, Security Headers,
 Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 [`docs/ci-cd.md`](docs/ci-cd.md).
 
-## Security features (the site's actual subject matter)
+## Security features
 
 `/ferramentas/` (`/en/tools/`) has **11 tools**: 8 run entirely client-side
 (subnet calculator, hash functions, encoder/decoder, password strength,
