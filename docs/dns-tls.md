@@ -39,6 +39,20 @@ danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 > DMARC/SPF já confirmados corretos na mesma verificação (`p=reject` estrito,
 > `-all`) — só falta mesmo o CAA desta lista.
 
+> **Atualizado (2026-08-02):** os 7 registos foram criados no dashboard e
+> `dig CAA danielmala.co +short` confirma-os todos presentes. Mas a resposta
+> autoritativa devolve **11** registos, não 7 — a Cloudflare acrescenta
+> `comodoca.com` e `digicert.com` (issue + issuewild) por baixo, sem
+> aparecerem na lista editável do dashboard: exatamente a diversificação de
+> CA do Universal SSL já prevista na nota acima, agora confirmada ao vivo.
+> Não é motivo para remover os 7 registos explícitos — continuam a ser a
+> única declaração de intenção do dono do domínio (e o único sítio de onde
+> vem o `iodef`); sem eles, a política de CAA fica inteiramente dependente
+> do que a Cloudflare decidir usar internamente, incluindo se um dia o
+> domínio sair da Cloudflare. O workflow `dns-check.yml` trata isto como
+> subconjunto — falha só se faltar algum dos 7, avisa (não falha) se
+> aparecerem CAs extra.
+
 ## 2. Redirect HTTP → HTTPS
 
 - Cloudflare Pages já força HTTPS no `*.pages.dev` e nos custom domains.
