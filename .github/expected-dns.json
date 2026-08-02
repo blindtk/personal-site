@@ -14,7 +14,7 @@
     "allowedPolicies": ["reject", "quarantine"]
   },
   "caa": {
-    "$comment": "docs/dns-tls.md §1: lista de CAs autorizadas a emitir para o domínio (Universal SSL da Cloudflare) + o iodef de notificação. AO CONTRÁRIO do SPF/DMARC/DNSSEC acima, docs/dns-tls.md confirma que estes registos AINDA NÃO EXISTEM em produção (2026-07-29) — era uma lacuna já conhecida e documentada, não uma regressão. Por isso o script trata 'nenhum CAA' como aviso (o TODO já registado), mas 'falta algum destes 7 registos' como erro (isso já seria uma regressão de algo que passou a estar correto). A comparação é por SUBCONJUNTO, não igualdade exata: confirmado em produção (2026-08-02) que a Cloudflare injeta CAs próprias (comodoca.com, digicert.com) na resposta autoritativa por baixo desta lista, como diversificação do Universal SSL — não estão na lista de registos editável no dashboard, ninguém os adicionou, e não são uma regressão; aparecem como aviso (registo 'extra'), nunca como erro.",
+    "$comment": "docs/dns-tls.md §1: lista de CAs autorizadas a emitir para o domínio (Universal SSL da Cloudflare) + o iodef de notificação. Confirmados a existir em produção (2026-08-02) — 'nenhum registo CAA' já não é o TODO antigo, é uma regressão total, tal como 'falta algum destes 7'. A comparação a 'expected' é por SUBCONJUNTO: a Cloudflare injeta CAs próprias (comodoca.com, digicert.com) na resposta autoritativa por baixo desta lista, como diversificação do Universal SSL — não estão na lista de registos editável no dashboard, ninguém os adicionou. Só os extras listados em 'allowedExtra' (os 4 confirmados) ficam como aviso; qualquer outro extra é uma CA não reconhecida (fora do dashboard E fora desta allowlist) e falha o job — o CAA existe para restringir quem pode emitir, um extra não verificado não pode passar em silêncio.",
     "expected": [
       "0 issue \"letsencrypt.org\"",
       "0 issue \"pki.goog; cansignhttpexchanges=yes\"",
@@ -23,6 +23,12 @@
       "0 issuewild \"pki.goog; cansignhttpexchanges=yes\"",
       "0 issuewild \"ssl.com\"",
       "0 iodef \"mailto:me@danielmala.co\""
+    ],
+    "allowedExtra": [
+      "0 issue \"comodoca.com\"",
+      "0 issue \"digicert.com; cansignhttpexchanges=yes\"",
+      "0 issuewild \"comodoca.com\"",
+      "0 issuewild \"digicert.com; cansignhttpexchanges=yes\""
     ]
   }
 }

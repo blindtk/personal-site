@@ -108,49 +108,62 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
     hardFailures += 1;
   } else {
     const records = out.split('\n').map((l) => l.trim()).filter(Boolean);
+    // Normaliza espaços e a caixa da tag antes de comparar — resolvedores
+    // diferentes podem formatar o mesmo registo com espaçamento distinto
+    // (achado do CodeRabbit no PR #155: uma diferença cosmética não devia
+    // fazer o job falhar).
+    const normalize = (r) => r.replace(/\s+/g, ' ').trim().replace(/^(\d+)\s+(\S+)/, (_, flag, tag) => `${flag} ${tag.toLowerCase()}`);
+    const expected = cfg.caa.expected.map(normalize);
+    const actual = records.map(normalize);
+    const actualSet = new Set(actual);
+    const missing = expected.filter((v) => !actualSet.has(v));
+
     if (records.length === 0) {
-      // `dig +short` fica em silêncio tanto para NODATA (sem CAA — a lacuna
-      // já documentada) como para SERVFAIL/timeout (a consulta em si
-      // falhou) — sem distinguir os dois, uma falha de resolução real
-      // passava disfarçada de "lacuna conhecida" (achado do CodeRabbit no
-      // PR #155, confirmado). Repete sem +short só para ler o `status:`.
+      // `dig +short` fica em silêncio tanto para NODATA como para
+      // SERVFAIL/timeout — sem distinguir os dois, uma falha de resolução
+      // real passava disfarçada de "lacuna conhecida" (achado do CodeRabbit
+      // no PR #155). Repete sem +short só para ler o `status:`.
       const full = dig(['CAA', domain]);
       const status = /;; ->>HEADER<<-.*status:\s*(\w+)/.exec(full)?.[1];
       if (status !== 'NOERROR') {
-        console.error(`::error::CAA: consulta a ${domain} devolveu status ${status ?? 'desconhecido'} (não NOERROR) — falha de resolução, não a lacuna documentada.`);
-        hardFailures += 1;
+        console.error(`::error::CAA: consulta a ${domain} devolveu status ${status ?? 'desconhecido'} (não NOERROR) — falha de resolução.`);
       } else {
-        // Lacuna já documentada em docs/dns-tls.md (2026-07-29) — não é uma
-        // regressão nova, por isso aviso e não erro. Ver $comment do CAA em
-        // expected-dns.json.
-        console.log('::warning::CAA: nenhum registo CAA em produção — lacuna já documentada em docs/dns-tls.md §1 (por criar), não uma regressão nova.');
-        softFailures += 1;
+        // Já NÃO é a lacuna conhecida (achado do CodeRabbit no PR #156,
+        // confirmado): docs/dns-tls.md regista os 7 registos como criados e
+        // confirmados em produção a 2026-08-02 — "sem CAA nenhum" hoje é uma
+        // regressão total (alguém apagou tudo), não o TODO antigo.
+        console.error('::error::CAA: nenhum registo CAA em produção — os 7 documentados em docs/dns-tls.md §1 foram confirmados a existir (2026-08-02); isto é uma regressão, não a lacuna antiga.');
       }
+      hardFailures += 1;
+    } else if (missing.length > 0) {
+      console.error(`::error::CAA: falta(m) ${missing.length} registo(s) da lista documentada em docs/dns-tls.md §1 — ${JSON.stringify(missing)}`);
+      hardFailures += 1;
     } else {
-      // Normaliza espaços e a caixa da tag antes de comparar — resolvedores
-      // diferentes podem formatar o mesmo registo com espaçamento distinto
-      // (achado do CodeRabbit no PR #155: uma diferença cosmética não devia
-      // fazer o job falhar).
-      const normalize = (r) => r.replace(/\s+/g, ' ').trim().replace(/^(\d+)\s+(\S+)/, (_, flag, tag) => `${flag} ${tag.toLowerCase()}`);
-      const expected = cfg.caa.expected.map(normalize);
-      const actual = records.map(normalize);
-      const actualSet = new Set(actual);
-      const expectedSet = new Set(expected);
-      const missing = expected.filter((v) => !actualSet.has(v));
+      console.log(`ok  CAA: os ${expected.length} registo(s) documentados estão presentes`);
+    }
+
+    if (records.length > 0) {
       // Subconjunto, não igualdade exata: a Cloudflare injeta CAs próprias
       // (diversificação do Universal SSL) na resposta autoritativa, fora da
       // lista editável no dashboard — confirmado em produção (2026-08-02,
       // comodoca.com/digicert.com apareceram sem ninguém os ter adicionado
-      // manualmente). Ver $comment do CAA em expected-dns.json.
+      // manualmente). Mas só os extras JÁ CONHECIDOS (allowedExtra em
+      // expected-dns.json) ficam como aviso — qualquer outro extra é uma CA
+      // não autorizada a emitir para o domínio, o que o CAA existe
+      // precisamente para impedir (achado do CodeRabbit no PR #156,
+      // confirmado: um "extra" sem allowlist deixava passar qualquer CA nova
+      // sem falhar o job).
+      const expectedSet = new Set(expected);
+      const allowedExtraSet = new Set((cfg.caa.allowedExtra ?? []).map(normalize));
       const extra = actual.filter((v) => !expectedSet.has(v));
-      if (missing.length > 0) {
-        console.error(`::error::CAA: falta(m) ${missing.length} registo(s) da lista documentada em docs/dns-tls.md §1 — ${JSON.stringify(missing)}`);
+      const knownExtra = extra.filter((v) => allowedExtraSet.has(v));
+      const unexpectedExtra = extra.filter((v) => !allowedExtraSet.has(v));
+      if (unexpectedExtra.length > 0) {
+        console.error(`::error::CAA: ${unexpectedExtra.length} registo(s) extra NÃO reconhecido(s) — fora da lista documentada e fora da diversificação conhecida da Cloudflare — ${JSON.stringify(unexpectedExtra)}`);
         hardFailures += 1;
-      } else {
-        console.log(`ok  CAA: os ${expected.length} registo(s) documentados estão presentes`);
       }
-      if (extra.length > 0) {
-        console.log(`::warning::CAA: ${extra.length} registo(s) extra além do documentado (provável diversificação de CA da própria Cloudflare, não uma regressão) — ${JSON.stringify(extra)}`);
+      if (knownExtra.length > 0) {
+        console.log(`::warning::CAA: ${knownExtra.length} registo(s) extra conhecido(s) da Cloudflare (Universal SSL) — ${JSON.stringify(knownExtra)}`);
         softFailures += 1;
       }
     }
