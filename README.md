@@ -23,7 +23,7 @@ result rather than the workflow's run status).
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 233 tests, fourteen CI workflows, four
+real data for the dashboards it feeds. 233 tests, fourteen CI workflows, ten
 ADRs, for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
@@ -39,7 +39,7 @@ ADRs, for a personal site. That is deliberate, not accidental — see
 
 Start with [`docs/architecture.md`](docs/architecture.md) — a diagram of how
 the site, the Worker, KV, and external APIs connect, and where the trust
-boundaries sit. Then, of the four ADRs in [`docs/adr/`](docs/adr/), these three
+boundaries sit. Then, of the ten ADRs in [`docs/adr/`](docs/adr/), these three
 say the most about how this repository actually thinks:
 
 1. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
@@ -66,7 +66,7 @@ code, not asserted from memory.
 
 ## Why so much for a personal site?
 
-A personal site with a threat model, four ADRs, fourteen CI workflows, and 233
+A personal site with a threat model, ten ADRs, fourteen CI workflows, and 233
 tests is disproportionate for what it does — unless the disproportion *is* the
 point. It is: this repository exists to demonstrate security-engineering
 practice at a scale where the controls become meaningful, not to serve a blog
