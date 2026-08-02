@@ -29,10 +29,16 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
 3. Run `cd static && npm run build` — it has to pass with no errors or
    new warnings before you open the PR.
 4. If you touched `dynamic/worker/` or the tools in `/ferramentas/`, also
-   run `node --test` and validate the logic with known vectors. If the
-   change was specifically in `dynamic/worker/`, also confirm it still
-   packages with `cd dynamic/worker && npx wrangler deploy --dry-run` (see
-   [`dynamic/PLAN.md`](dynamic/PLAN.md) — the real deploy stays manual).
+   run `node --test` and validate the logic with known vectors. This works
+   without a browser or the Cloudflare runtime because the rule is: DOM/network
+   glue stays in `.astro` components and `src/index.js`, while anything with
+   real logic (parsing, sanitizing, aggregating, rate-limit math) lives in a
+   pure function in `src/scripts/` or `src/lib/` — testable in plain Node,
+   with known vectors (RFC test vectors, real `/24`/`/31` networks, etc.) as
+   the standard of proof. If the change was specifically in `dynamic/worker/`,
+   also confirm it still packages with `cd dynamic/worker && npx wrangler
+   deploy --dry-run` (see [`dynamic/PLAN.md`](dynamic/PLAN.md) — the real
+   deploy stays manual).
 5. If you touched `dynamic/worker/src/lib/csp-report.js` or
    `sanitize.js`, also run the fuzzing harnesses locally
    (`.clusterfuzzlite/fuzz/`) for a few seconds, to confirm they still
