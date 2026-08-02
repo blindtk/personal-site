@@ -143,7 +143,17 @@ Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 
 ## Security features (the site's actual subject matter)
 
-Beyond the client-side tools, the site has several live cybersecurity showcases:
+`/ferramentas/` (`/en/tools/`) has **11 tools**: 8 run entirely client-side
+(subnet calculator, hash functions, encoder/decoder, password strength,
+email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
+no network calls, no backend dependency), and 3 talk to the Worker because the
+check genuinely can't run in a browser (`pwned` — k-anonymity breach check,
+`self-scan` — header analysis of an arbitrary target, `mirror` — what the
+server sees about you). The three server-backed ones are marked with a
+"requires server" badge on the tools index; they are never hidden as if they
+were client-side.
+
+Beyond the tools, the site has several live cybersecurity showcases:
 
 | Feature | Where | Needs the Worker? |
 | --- | --- | --- |
@@ -161,42 +171,6 @@ always works, since it's fully static.
 **Note on the honeypot's decoys being public:** see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) above —
 this is a deliberate stance, not an oversight.
-
-## Security tools
-
-`/ferramentas/` (`/en/tools/`) has **11 tools**: 8 run entirely client-side
-(subnet calculator, hash functions, encoder/decoder, password strength,
-email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
-no network calls, no backend dependency), and 3 talk to the Worker because the
-check genuinely can't run in a browser (`pwned` — k-anonymity breach check,
-`self-scan` — header analysis of an arbitrary target, `mirror` — what the
-server sees about you). The three server-backed ones are marked with a
-"requires server" badge on the tools index; they are never hidden as if they
-were client-side.
-
-## Code structure
-
-```
-content/               ← markdown/JSON: blog/, pages/, projects/, links.json, attack.json, …
-static/
-  src/
-    config.ts          ← name, handle, email, socials, SITE_URL
-    content.config.ts  ← collection schemas (reads from ../content)
-    i18n/               ← UI strings (ui.ts) and route map (routes.ts)
-    layouts/            ← BaseLayout (nav, footer, <head>)
-    components/
-      pages/            ← one component per page, shared by PT/EN
-      tools/            ← the 11 security tools
-    scripts/            ← pure tool logic (testable in Node)
-    pages/              ← thin routes: / (PT) and /en/ (EN)
-  public/               ← favicon and static files served as-is
-dynamic/
-  worker/               ← Cloudflare Worker in production — honeypot, traffic
-                          map, self-scan, SOC ticker, CSP-violation pipeline
-  PLAN.md               ← decisions log and what's still planned (DNS/whois tools)
-```
-
-Development conventions: see [CLAUDE.md](CLAUDE.md).
 
 ## AI-assisted development
 
