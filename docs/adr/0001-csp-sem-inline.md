@@ -1,54 +1,54 @@
-# ADR 0001 — CSP sem `unsafe-inline`, sem hashes: eliminar o inline em vez de o catalogar
+# ADR 0001 — CSP without `unsafe-inline`, without hashes: eliminate inline instead of cataloguing it
 
-**Estado:** aceite e em produção (`static/public/_headers`).
+**Status:** accepted and in production (`static/public/_headers`).
 
-## Contexto
+## Context
 
-Uma CSP estrita (`default-src 'self'`, sem `unsafe-inline`) precisa de alguma
-forma de autorizar os `<script>`/`<style>` que o próprio site produz. O Astro,
-por omissão, inlina CSS pequeno e scripts *hoisted* pequenos diretamente no
-HTML de cada página.
+A strict CSP (`default-src 'self'`, no `unsafe-inline`) needs some way to
+authorize whatever `<script>`/`<style>` the site itself produces. By
+default, Astro inlines small CSS and small *hoisted* scripts directly into
+each page's HTML.
 
-A primeira abordagem foi o mecanismo nativo do Astro
-(`security.csp` / hashes SHA-256 por bloco inline): calcular um hash por
-`<script>`/`<style>` inline no build e uni-los num único header. Funcionou até
-ao site crescer: cada página combina o script/estilo partilhado com o
-específico dela num só bloco inline — o número de hashes cresce com o número
-de **combinações** página × script, não com o número de scripts reais. Ao fim
-de ~50 páginas, a linha do header ultrapassava os 2000 caracteres máximos por
-header do Cloudflare Pages, e o Pages **descartava o header CSP inteiro em
-produção** — sem aviso, sem erro de build, só ausência silenciosa do header
-mais importante do site.
+The first approach was Astro's native mechanism (`security.csp` / SHA-256
+hashes per inline block): compute a hash for each inline
+`<script>`/`<style>` at build time and union them into a single header. It
+worked until the site grew: each page combines its shared script/style
+with its page-specific one into a single inline block — the number of
+hashes grows with the number of page × script **combinations**, not with
+the number of real scripts. After ~50 pages, the header line exceeded
+Cloudflare Pages' 2000-character-per-header maximum, and Pages
+**silently dropped the entire CSP header in production** — no warning, no
+build error, just the site's most important header quietly missing.
 
-## Decisão
+## Decision
 
-Eliminar o inline em vez de o catalogar. Dois levers no `astro.config.mjs`:
+Eliminate inline instead of cataloguing it. Two levers in `astro.config.mjs`:
 
-- `build.inlineStylesheets: 'never'` — todo o CSS vira `<link>` externo.
-- `vite.build.assetsInlineLimit: 0` — todo o `<script>` *hoisted* vira
-  `<script src="/_astro/…">` externo.
+- `build.inlineStylesheets: 'never'` — all CSS becomes an external `<link>`.
+- `vite.build.assetsInlineLimit: 0` — every hoisted `<script>` becomes an
+  external `<script src="/_astro/…">`.
 
-Com zero `<script>`/`<style>` inline no site inteiro, `'self'` já é tão
-restrito quanto uma lista de hashes — mas com um header de tamanho fixo
-(~395 caracteres) que não volta a crescer com mais páginas ou ferramentas.
+With zero inline `<script>`/`<style>` across the whole site, `'self'` is
+already as strict as a hash list — but with a fixed-size header
+(~395 characters) that never grows again as pages or tools are added.
 
-**Exceção única:** o `<script type="application/ld+json">` (schema.org
-Person) em `BaseLayout.astro`. JSON-LD não tem equivalente fiável a `<link>`
-externo em crawlers, e o parser HTML aplica `script-src`/`script-src-elem` a
-qualquer `<script>` independentemente do `type` — por isso este bloco tem um
-único hash SHA-256 do seu conteúdo exato, em vez de reabrir
-`unsafe-inline`. Cresce por *variante de conteúdo* (se PT e EN alguma vez
-divergirem), não por página.
+**Single exception:** the `<script type="application/ld+json">` (schema.org
+Person structured data) in `BaseLayout.astro`. JSON-LD has no reliable
+equivalent to an external `<link>` for crawlers, and the HTML parser
+applies `script-src`/`script-src-elem` to any `<script>` regardless of
+`type` — so this block gets a single SHA-256 hash of its exact content,
+instead of reopening `unsafe-inline`. It grows by *content variant* (if PT
+and EN ever diverge), not by page.
 
-## Consequências
+## Consequences
 
-- CSP inclui `require-trusted-types-for 'script'` + `trusted-types 'none'`:
-  só é honesto porque todo o DOM é construído via `createElement`/
-  `textContent`, nunca `innerHTML`/`eval` — o zero-inline e o Trusted Types
-  reforçam-se mutuamente.
-- A CSP passou a viver inteiramente em `static/public/_headers` (linha
-  estática, não gerada no build) — fonte de verdade única, sem passo de build
-  a manter sincronizado.
-- Custo: qualquer novo `<script>`/`<style>` inline introduzido por engano
-  parte a página em vez de silenciosamente abrir a política (falha alto,
-  não baixo — comportamento desejado).
+- The CSP includes `require-trusted-types-for 'script'` + `trusted-types
+  'none'`: only honest because the whole DOM is built via
+  `createElement`/`textContent`, never `innerHTML`/`eval` — zero-inline
+  and Trusted Types reinforce each other.
+- The CSP now lives entirely in `static/public/_headers` (a static line,
+  not build-generated) — a single source of truth, with no build step to
+  keep in sync.
+- Cost: any new inline `<script>`/`<style>` introduced by mistake breaks
+  the page instead of silently opening up the policy (fails loud, not
+  quiet — the desired behavior).

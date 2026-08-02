@@ -1,44 +1,45 @@
-# ADR 0005 — Relato de violações CSP: manual em vez de automático
+# ADR 0005 — CSP violation reporting: manual instead of automatic
 
-**Estado:** aceite e em produção.
+**Status:** accepted and in production.
 
-## Contexto
+## Context
 
-A CSP tinha `report-uri /api/csp-report` + `report-to csp-endpoint`
-(cabeçalho `Reporting-Endpoints`): o browser mandava um POST a
-`/api/csp-report` a cada violação de **qualquer** visitante, sem exceção —
-o desenho standard para deteção automática de regressões.
+The CSP had `report-uri /api/csp-report` + `report-to csp-endpoint`
+(`Reporting-Endpoints` header): the browser sent a POST to
+`/api/csp-report` on every violation from **any** visitor, no exceptions —
+the standard design for automatic regression detection.
 
-Na prática, sem inline nenhum no site (ver [ADR 0001](0001-csp-sem-inline.md)),
-uma violação de `script-src`/`style-src` só podia significar uma de duas
-coisas: regressão da build ou injeção real. Mas a esmagadora maioria dos
-relatórios era ruído de extensões de browser (ad-blockers, gestores de
-password) a injetar conteúdo nas páginas de visitantes — e cada POST aceite
-custa escritas no KV do Worker (rate-limit + bucket + cap, ~3 writes/POST),
-partilhadas com honeypot/vitals/cron no mesmo teto diário apertado do plano
-Free (~1.000 escritas/dia para a conta inteira). O volume de ruído
-automático empurrou a conta para perto desse teto — motivado por um alerta
-real da Cloudflare, "50% of your daily Workers KV operation limit reached".
+In practice, with zero inline content on the site (see
+[ADR 0001](0001-csp-sem-inline.md)), a `script-src`/`style-src` violation
+could only mean one of two things: a build regression or a real injection.
+But the overwhelming majority of reports were noise from browser
+extensions (ad-blockers, password managers) injecting content into
+visitors' pages — and every accepted POST costs KV writes on the Worker
+(rate-limit + bucket + cap, ~3 writes/POST), shared with
+honeypot/vitals/cron under the same tight Free-plan daily ceiling (~1,000
+writes/day for the whole account). The volume of automatic noise pushed
+the account close to that ceiling — prompted by a real Cloudflare alert,
+"50% of your daily Workers KV operation limit reached".
 
-## Decisão
+## Decision
 
-Remover `report-uri`, `report-to` e o cabeçalho `Reporting-Endpoints`.
-Substituir por captura 100% local: `static/public/js/csp-report.js` — o
-primeiro recurso de `<head>`, sem `defer` de propósito, para ligar o
-listener `securitypolicyviolation` antes de qualquer script/link que pudesse
-violar a CSP e não perder o sinal de regressão da própria build — guarda em
-`sessionStorage` (dedup por diretiva+origem, teto de 20). Nada sai daí sem
-um clique: `CspViolations.astro` (página Provas) lê a fila e manda um botão
-"Reportar" que envia tudo num único POST no formato batch
-`application/reports+json`, já suportado por `parseReports()` — zero
-mudança no recetor do Worker além dos comentários.
+Remove `report-uri`, `report-to`, and the `Reporting-Endpoints` header.
+Replace with 100% local capture: `static/public/js/csp-report.js` — the
+first resource in `<head>`, deliberately without `defer`, to attach the
+`securitypolicyviolation` listener before any script/link that could
+violate the CSP, so the build's own regression signal isn't lost — stores
+in `sessionStorage` (deduped by directive+origin, capped at 20). Nothing
+leaves without a click: `CspViolations.astro` (the Evidence page) reads
+the queue and offers a "Report" button that sends everything in a single
+POST in the batch format `application/reports+json`, already supported by
+`parseReports()` — zero change to the Worker's receiver beyond comments.
 
-## Consequências
+## Consequences
 
-- Zero escritas no KV até alguém decidir mesmo reportar, em vez de uma
-  escrita por violação de qualquer visitante.
-- **Trade-off aceite conscientemente:** perde-se a deteção automática de
-  regressões reais em produção — só se sabe se alguém (tipicamente o
-  próprio dono, a testar após um deploy) visitar a página Provas e clicar.
-- Revisitar se o teto do KV deixar de ser problema (upgrade de plano, ou
-  amostragem em vez de corte total) — ver `dynamic/PLAN.md`.
+- Zero KV writes until someone actually decides to report, instead of one
+  write per violation from any visitor.
+- **Consciously accepted trade-off:** loses automatic detection of real
+  production regressions — you only find out if someone (typically the
+  owner, testing after a deploy) visits the Evidence page and clicks.
+- Revisit if the KV ceiling stops being a problem (plan upgrade, or
+  sampling instead of a total cutoff) — see `dynamic/PLAN.md`.

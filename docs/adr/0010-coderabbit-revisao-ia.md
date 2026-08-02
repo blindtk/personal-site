@@ -1,51 +1,50 @@
-# ADR 0010 — CodeRabbit para revisão de PR por IA, não Copilot Code Review nem Strix em CI
+# ADR 0010 — CodeRabbit for AI PR review, not Copilot Code Review or Strix in CI
 
-**Estado:** aceite e em produção (`.coderabbit.yaml`).
+**Status:** accepted and in production (`.coderabbit.yaml`).
 
-## Contexto
+## Context
 
-Com o repositório público e a um ritmo de PRs elevado, uma revisão de PR
-assistida por IA tem retorno real — mas há três opções com perfis muito
-diferentes:
+With the repository public and a high PR rate, AI-assisted PR review has
+real payoff — but there are three options with very different profiles:
 
-- **GitHub Copilot Code Review** — zero setup, nativo do GitHub, mas
-  claramente mais superficial: bom em estilo e bugs óbvios, fraco em
-  raciocínio cross-file e lógica específica de segurança.
-- **Strix** (agente autónomo de pentest) — a opção mais interessante em
-  abstrato, mas o valor de um agente autónomo escala com a complexidade da
-  superfície de ataque, e a deste site é deliberadamente mínima (sem auth,
-  sem base de dados, sem sessões). A classe de bug mais interessante do
-  sistema (esgotamento de orçamento de escrita do KV) exige ler o código-
-  fonte e raciocinar sobre quotas do plano Free — precisamente o tipo de
-  falha de lógica de negócio que um prober autónomo não encontra a sondar.
-  Custo por corrida ($2–10, não determinístico) e risco de alucinação
-  altos para o valor esperado.
-- **CodeRabbit** — lê o diff **e** o contexto do repositório; a
-  característica que define este código é que a intenção vive nos
-  comentários (porque `routes` tem de vir antes de `[vars]` no TOML, porque
-  o cap é diário e não por hora), e uma IA que lê esse contexto consegue
-  assinalar quando uma mudança contradiz um invariante já declarado — algo
-  que nem um prober black-box nem um revisor de diff superficial conseguem.
+- **GitHub Copilot Code Review** — zero setup, native to GitHub, but
+  noticeably shallower: good at style and obvious bugs, weak at
+  cross-file reasoning and security-specific logic.
+- **Strix** (autonomous pentest agent) — the most interesting option in
+  the abstract, but an autonomous agent's value scales with the
+  complexity of the attack surface, and this site's is deliberately
+  minimal (no auth, no database, no sessions). The system's most
+  interesting bug class (KV write-budget exhaustion) requires reading the
+  source and reasoning about Free-plan quotas — exactly the kind of
+  business-logic flaw an autonomous prober won't find by probing. Cost
+  per run ($2–10, non-deterministic) and hallucination risk are high for
+  the expected value.
+- **CodeRabbit** — reads the diff **and** the repository's context; the
+  defining trait of this codebase is that intent lives in the comments
+  (why `routes` has to come before `[vars]` in TOML, why the cap is daily
+  and not hourly), and an AI that reads that context can flag when a
+  change contradicts an already-stated invariant — something neither a
+  black-box prober nor a shallow diff reviewer can do.
 
-## Decisão
+## Decision
 
-Ativar CodeRabbit em todos os PRs (grátis em repo público), com
-`.coderabbit.yaml` calibrado por pasta em vez de genérico —
-`path_instructions` que lembram o orçamento de escrita do KV em
-`dynamic/worker/`, a paridade de chaves PT/EN em `i18n/`, a proibição de
-sinks de DOM XSS em `static/src/scripts/`, e a regra de rotas finas em
-`static/src/pages/`. **Não** ativar Copilot Code Review a par (duplicar
-comentário de IA só treina a ignorar ambos) nem correr Strix em CI —
-reservado para uma corrida manual, única, pós-lançamento, documentada como
-experiência e não como controlo recorrente.
+Enable CodeRabbit on every PR (free on a public repo), with
+`.coderabbit.yaml` calibrated per folder instead of generic —
+`path_instructions` that remind it of the KV write budget in
+`dynamic/worker/`, PT/EN key parity in `i18n/`, the ban on DOM XSS sinks
+in `static/src/scripts/`, and the thin-routes rule in
+`static/src/pages/`. **Not** enabling Copilot Code Review alongside it
+(duplicate AI commentary just trains you to ignore both) nor running
+Strix in CI — reserved for a single manual run, post-launch, documented as
+an experiment rather than a recurring control.
 
-## Consequências
+## Consequences
 
-- Um segundo revisor automatizado, gratuito, calibrado ao vocabulário e às
-  invariantes reais deste repositório — não um linter genérico.
-- Perfil de "profile: chill" e `poem: false` para reduzir verbosidade por
-  omissão (sem isso, CodeRabbit comenta em decisões de estilo já tomadas).
-- `content/**` excluído da revisão (`path_filters`) — é conteúdo editorial,
-  não código, regra do CLAUDE.md.
-- Raciocínio completo da comparação entre as três opções em
+- A second automated reviewer, free, calibrated to this repository's
+  actual vocabulary and invariants — not a generic linter.
+- `profile: chill` and `poem: false` to cut default verbosity (without
+  that, CodeRabbit comments on style decisions already made).
+- `content/**` excluded from review (`path_filters`) — it's editorial
+  content, not code, per the CLAUDE.md rule.
+- Full reasoning behind the three-way comparison in
   [`docs/security-review-2026-07-29.md`](../security-review-2026-07-29.md) §5.

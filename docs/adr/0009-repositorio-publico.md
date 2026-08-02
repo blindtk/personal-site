@@ -1,49 +1,49 @@
-# ADR 0009 — Repositório público, não privado
+# ADR 0009 — Public repository, not private
 
-**Estado:** aceite e executado (2026-07-31).
+**Status:** accepted and executed (2026-07-31).
 
-## Contexto
+## Context
 
-O repositório ficou privado durante o desenvolvimento. Mas o propósito
-declarado deste projeto é ser lido por estranhos a decidir se contratam o
-autor — um portefólio privado é uma contradição em termos. Concretamente:
-o site em produção linka de volta para o repositório (`SITE.repo` em
-`config.ts`, página Provas); enquanto privado, esses links devolviam 404 a
-qualquer visitante, quebrando o próprio mecanismo de credibilidade do site.
+The repository was private during development. But the project's stated
+purpose is to be read by strangers deciding whether to hire its author —
+a private portfolio is a contradiction in terms. Concretely: the site in
+production links back to the repository (`SITE.repo` in `config.ts`, the
+Evidence page); while private, those links returned a 404 to every
+visitor, breaking the site's own credibility mechanism.
 
-Manter privado tinha vantagens reais: zero risco de disclosure, sem ruído
-de Issues externas, controlo total. Mas também um custo concreto no GitHub
-Free: Actions minutes limitados (2.000/mês, e o repo já estava acima
-dessa quota), CodeQL, secret scanning + push protection, Dependency Review,
-artifact attestations e OpenSSF Scorecard — todos exigem GHAS (pago) em
-repo privado, e são grátis em repo público.
+Staying private had real advantages: zero disclosure risk, no external
+Issue noise, total control. But also a concrete cost on GitHub Free:
+limited Actions minutes (2,000/month, and the repo was already over that
+quota), CodeQL, secret scanning + push protection, Dependency Review,
+artifact attestations, and OpenSSF Scorecard — all require GHAS (paid) on
+a private repo, and are free on a public one.
 
-## Decisão
+## Decision
 
-Tornar o repositório público (2026-07-31), depois de uma checklist de
-pré-publicação: substituir o email pessoal exposto em `config.ts` por um
-alias no domínio, rodar `RATE_SALT` e `CF_API_TOKEN`, e confirmar (via
-`gitleaks detect` sobre o histórico completo) que nenhum segredo real
-alguma vez entrou em git. **Histórico preservado por inteiro** — sem
-squash, sem reescrita, sem reiniciar noutro repositório: os 132 PRs
-mostram o próprio processo de encontrar e corrigir erros (ex.: o fail-open
-→ fail-closed do rate limit, [ADR 0003](0003-rate-limit-kv-vs-nativo.md)),
-que é mais persuasivo do que qualquer código limpo de origem única.
+Make the repository public (2026-07-31), after a pre-publication
+checklist: replace the personal email exposed in `config.ts` with a
+domain alias, rotate `RATE_SALT` and `CF_API_TOKEN`, and confirm (via
+`gitleaks detect` over the full history) that no real secret ever entered
+git. **History preserved in full** — no squash, no rewrite, no restarting
+in another repository: the 132 PRs show the actual process of finding and
+fixing mistakes (e.g. the rate limit's fail-open → fail-closed fix,
+[ADR 0003](0003-rate-limit-kv-vs-nativo.md)), which is more persuasive
+than any single-origin clean code.
 
-## Consequências
+## Consequences
 
-- Seis capacidades passam de pagas para grátis (CodeQL, secret scanning,
-  Dependency Review, attestations, Scorecard, CodeRabbit) — ativadas nos
-  dias seguintes (`96ecfd8`, `641bf07`).
-- Impacto de segurança avaliado como **líquido positivo, não negativo**: a
-  superfície de ataque real (conta Cloudflare, endpoints do Worker) já
-  estava exposta à internet independentemente da visibilidade do
-  repositório; tornar o código legível não a alarga.
-- **Trade-off aceite:** os cinco paths-isco do honeypot (`DECOYS` em
-  `src/index.js`) ficam publicamente documentados — mas são os paths
-  standard que qualquer scanner de commodity já sonda às cegas, então
-  explicá-los não custa nada e demonstra a técnica em vez de a esconder
-  (ver "Why so much for a personal site?" no README).
-- Raciocínio completo, checklist e análise de risco em
-  [`docs/public-repo-decision.md`](../public-repo-decision.md) (registo
-  histórico da decisão, não documento vivo).
+- Six capabilities go from paid to free (CodeQL, secret scanning,
+  Dependency Review, attestations, Scorecard, CodeRabbit) — enabled in
+  the following days (`96ecfd8`, `641bf07`).
+- Security impact assessed as **net positive, not negative**: the real
+  attack surface (Cloudflare account, Worker endpoints) was already
+  exposed to the internet regardless of repository visibility; making the
+  code readable doesn't widen it.
+- **Accepted trade-off:** the honeypot's five decoy paths (`DECOYS` in
+  `src/index.js`) become publicly documented — but they're the standard
+  paths any commodity scanner already probes blindly, so explaining them
+  costs nothing and demonstrates the technique instead of hiding it (see
+  "Why so much for a personal site?" in the README).
+- Full reasoning, checklist, and risk analysis in
+  [`docs/public-repo-decision.md`](../public-repo-decision.md) (a
+  historical record of the decision, not a living document).

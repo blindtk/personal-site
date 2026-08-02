@@ -1,48 +1,48 @@
-# ADR 0006 — Caps de escrita do Worker: por dia e dimensionados ao orçamento, não à resistência a abuso
+# ADR 0006 — Worker write caps: daily, sized to the budget, not to abuse resistance
 
-**Estado:** aceite e em produção.
+**Status:** accepted and in production.
 
-## Contexto
+## Context
 
-`HONEYPOT_WRITE_CAP`, `CSP_WRITE_CAP` e `VITALS_WRITE_CAP` existiam desde o
-início como travão anti-abuso — por hora, com valores "generosos para
-tráfego legítimo de scanners" (500/h, 300/h, 5000/h respetivamente) — mas
-desenhados sem qualquer relação com o teto real do plano Free: ~1.000
-escritas/dia para a **conta inteira**, partilhado entre honeypot, CSP,
-vitals, rate-limit e cron.
+`HONEYPOT_WRITE_CAP`, `CSP_WRITE_CAP`, and `VITALS_WRITE_CAP` existed from
+the start as an anti-abuse brake — per hour, with values "generous for
+legitimate scanner traffic" (500/h, 300/h, 5000/h respectively) — but
+designed with no relationship to the Free plan's real ceiling: ~1,000
+writes/day for the **whole account**, shared between honeypot, CSP,
+vitals, rate-limit, and cron.
 
-Ao ser questionado diretamente ("no futuro, quando ficar público, as APIs
-estão bem protegidas? o honeypot não vai consumir tudo?"), a resposta
-honesta era **não**: nos piores casos, honeypot 500×5=2.500 escritas numa
-única hora (2,5× o orçamento diário inteiro); vitals 5.000×2=10.000/hora
-(10×). Ou seja, mesmo sem qualquer ataque, tráfego orgânico normal do dia
-de lançamento (RUM a disparar em cada page-load real) já podia esgotar a
-quota do dia sozinho.
+Asked directly ("once this is public, are the APIs actually protected?
+won't the honeypot eat the whole budget?"), the honest answer before the
+fix was **no**: in the worst cases, honeypot 500×5=2,500 writes in a
+single hour (2.5× the entire daily budget); vitals 5,000×2=10,000/hour
+(10×). In other words, even with no attack at all, normal organic traffic
+on launch day (RUM firing on every real page load) could exhaust the
+day's quota by itself.
 
-## Decisão
+## Decision
 
-1. Os três caps passam de janela por **hora** para janela por **dia**
-   (`windowMs: DAY_MS`), com as `capKey` recalculadas por dia (`wcap:d:…`,
+1. All three caps move from an **hourly** window to a **daily** one
+   (`windowMs: DAY_MS`), with `capKey` recalculated per day (`wcap:d:…`,
    `cspcap:d:…`, `vitcap:d:…`).
-2. Valores muito mais baixos, dimensionados ao orçamento da conta e não ao
-   "quanto um scanner pode gerar": honeypot 60/dia, CSP 50/dia, vitals
-   150/dia — juntos ~640/dia (contando múltiplas escritas por evento),
-   deixando folga para o cron (~45/dia) e o rate-limit.
-3. `recordHoneypot` deixa de reescrever a chave `meta` em todos os eventos —
-   `deployTs`/`firstScanTs`, uma vez definidos, nunca voltam a mudar, por
-   isso a escrita só acontece na primeira vez.
+2. Much lower values, sized to the account's budget rather than to "how
+   much a scanner can generate": honeypot 60/day, CSP 50/day, vitals
+   150/day — ~640/day combined (counting multiple writes per event),
+   leaving headroom for cron (~45/day) and rate-limiting.
+3. `recordHoneypot` stops rewriting the `meta` key on every event —
+   `deployTs`/`firstScanTs`, once set, never change again, so the write
+   only happens the first time.
 
-## Consequências
+## Consequences
 
-- **Trade-off consciente:** sob scanning pesado sustentado ou tráfego real
-  elevado, eventos a mais no mesmo dia são descartados silenciosamente (o
-  404/204 continua a sair, indistinguível) — perde-se granularidade no
-  Threat Intel/RUM, nunca o core do site.
-- Não resolve tudo: continua a não haver um orçamento partilhado entre as
-  três chaves — é teoricamente possível esgotar o dia com
-  honeypot+CSP+vitals em simultâneo, cada um dentro do seu próprio cap. Um
-  "disjuntor" diário único e partilhado entre todas as escritas do Worker
-  fica registado como ideia para depois, não implementado por falta de
-  urgência comprovada — ver `dynamic/PLAN.md`.
-- Teste de regressão em `dynamic/worker/test/logic.test.mjs` fixa a janela
-  e as chaves por dia.
+- **Conscious trade-off:** under sustained heavy scanning or elevated real
+  traffic, extra events on the same day are dropped silently (the
+  404/204 still goes out, indistinguishable) — loses granularity in
+  Threat Intel/RUM, never the site's core.
+- Doesn't solve everything: there's still no shared budget across the
+  three keys — it's theoretically possible to exhaust the day with
+  honeypot+CSP+vitals simultaneously, each within its own cap. A single,
+  shared daily "circuit breaker" across all Worker writes is recorded as
+  a future idea, not implemented for lack of proven urgency — see
+  `dynamic/PLAN.md`.
+- A regression test in `dynamic/worker/test/logic.test.mjs` pins the
+  window and the per-day keys.
