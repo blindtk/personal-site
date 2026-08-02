@@ -100,19 +100,13 @@ npm run preview    # serve dist/ locally
 
 ## Edit content (no code required)
 
-- **New post:** create `content/blog/pt/my-post.md` (and optionally its
-  English twin in `content/blog/en/` with the same filename). Use
-  `draft: true` in the frontmatter until it's ready to publish.
-- **About page:** `content/pages/sobre.md` (PT) and `content/pages/about.md` (EN).
-- **Projects:** one file per project in `content/projects/pt/` + `en/`.
-- **Links:** `content/links.json`.
-- **Structured data that feeds real pages:** `content/attack.json` (ATT&CK
-  heatmap, `/attack`), `content/certs.json` (Certifications page),
-  `content/awards.json` (CTF/awards list on About and Home), `content/detections.json`
-  (Sigma-style rules shown on the Perimeter page), `content/honeypot-attack.json`
-  (decoy-path → technique mapping), `content/catalog.json` (curated list on
-  the Links page).
-- **Name/handle, email, socials, domain:** all in `static/src/config.ts`.
+All editorial content is markdown/JSON under `content/` — no code, ever
+(`static/` reads it via loaders). Each collection is paired PT
+(`content/<collection>/pt/`) + EN (`content/<collection>/en/`) with the
+**same filename** on both sides; a new blog post is just a new file
+(`draft: true` until it's ready). Personal data (name, handle, email,
+socials, domain) lives only in `static/src/config.ts`. Full collection list
+and schemas: `static/src/content.config.ts`.
 
 ## Deploy
 
@@ -131,8 +125,10 @@ way — is documented in
 
 The repository treats its own build chain as attack surface. Every push/PR
 goes through build + tests + `npm audit`, Dependency Review, OSV-Scanner,
-gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), and zizmor
-auditing the workflows themselves. Production gets its own scheduled checks:
+gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), zizmor
+auditing the workflows themselves, and CodeRabbit for AI-assisted review
+(calibrated per-folder, not generic — `.coderabbit.yaml`). Production gets
+its own scheduled checks:
 security headers against a versioned allowlist, a TLS/cipher scan, DNS
 hygiene, a Mozilla Observatory grade, and fuzzing of the two real trust
 boundaries (CSP-report parsing, output sanitizers). Every action is pinned to

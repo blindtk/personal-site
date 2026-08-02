@@ -9,6 +9,7 @@ produção. O `README.md` mantém só um resumo com link para aqui — esta tabe
 | Verificação | Onde | O que garante |
 | --- | --- | --- |
 | **Build + `npm audit`** | `ci.yml` | O site builda sem erros, sem advisories high/critical nas dependências. |
+| **CodeRabbit** | GitHub App (`.coderabbit.yaml`), não um workflow | Revisão de PR por IA, grátis em repo público. Não é gate bloqueante — comentário, não pass/fail. Calibrado com `path_instructions` por pasta (ex.: lembra o orçamento de escrita KV em `dynamic/worker/`, a paridade PT/EN em `i18n/`, as rotas finas em `pages/`) em vez de genérico. |
 | **Dependency Review** | `dependency-review.yml` | Bloqueia PRs que introduzam uma dependência nova com vulnerabilidade conhecida, restrito ao diff do PR (GitHub Dependency Graph) — o gate rápido, complementar à sweep completa do OSV-Scanner sobre o lockfile inteiro, abaixo. |
 | **OSV-Scanner** | `security.yml` | `package-lock.json` sem vulnerabilidades conhecidas ([OSV.dev](https://osv.dev), inclui GHSA); falha a CI em qualquer advisory conhecida. |
 | **gitleaks** | `security.yml` + hook local | Nenhum segredo (tokens Cloudflare, chaves) entra no histórico do git. Localmente: `pipx install pre-commit && pre-commit install`. |
