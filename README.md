@@ -181,7 +181,9 @@ the review that's mine. I can walk through any decision in this repository.
 Single-maintainer project, but the repo is public and contributions are
 welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process — bug
 reports, PR conventions, and where the project's own conventions live
-(`CLAUDE.md`, in Portuguese, like the rest of `docs/`).
+(`CLAUDE.md`). `docs/` and `CLAUDE.md` are in English; `content/` (blog
+posts, page copy) is bilingual PT/EN by construction — see CLAUDE.md's
+architecture rules.
 
 ## Security
 

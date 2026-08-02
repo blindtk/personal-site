@@ -1,9 +1,5 @@
 # Going public: decision record and readiness checklist
 
-> **Language note.** English, for the same reason as
-> [`security-review-2026-07-29.md`](security-review-2026-07-29.md): this is a
-> reviewer-facing artefact. The rest of `docs/` is Portuguese.
-
 **Date:** 2026-07-29 · **Status:** Executed 2026-07-31 — kept as a historical
 decision record (see `docs/cloudflare-deploy.md` §6). The analysis and
 checklist below reflect the state of the repository on the day the
