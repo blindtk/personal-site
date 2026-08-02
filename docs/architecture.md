@@ -59,16 +59,14 @@ flowchart TB
    dispara o build/deploy do Pages (integração Git nativa da Cloudflare) e,
    em paralelo, o deploy do Worker via **Workers Builds** (a mesma
    integração Git, configurada no dashboard da Cloudflare — ver
-   `docs/cloudflare-deploy.md` §4). Não há passo manual no caminho normal.
-   Falta, ainda assim, o que o achado H3 de
-   `docs/security-review-2026-07-29.md` pede: proveniência verificável entre
-   commit e artefacto deployado (`attest-build-provenance`) e um gate de
-   revisor num GitHub Environment — o Workers Builds automatiza o deploy,
-   mas não dá nenhuma das duas coisas, porque corre inteiramente do lado da
-   Cloudflare, fora do GitHub Actions. Existe também um caminho manual
-   secundário (`npx wrangler deploy` a partir do laptop do developer),
-   documentado em `CLAUDE.md` como forma de testar uma branch antes do
-   merge — aponta para o mesmo Worker de produção se corrido sem cuidado.
+   `docs/cloudflare-deploy.md` §4). Não há passo manual no caminho normal;
+   existe um caminho manual secundário (`npx wrangler deploy` a partir do
+   laptop do developer, documentado em `CLAUDE.md` como forma de testar
+   uma branch antes do merge) que aponta para o mesmo Worker de produção.
+   O risco associado a esta fronteira (ausência de proveniência verificável
+   e de gate de revisor entre commit e deploy) está registado e mantido
+   atualizado só em [`docs/threat-model.md`](threat-model.md) (achado H3,
+   B2/B3) — não repetido aqui.
 3. **Worker → APIs externas.** Todas as chamadas são unidirecionais
    (o Worker só lê), com timeout (`AbortSignal.timeout`), e o self-scan usa
    `fetchSameOrigin` para nunca deixar as credenciais da Access seguirem um
@@ -81,9 +79,6 @@ flowchart TB
 | `static/` (Pages) | push a `main` | Sim — integração Git nativa da Cloudflare |
 | `dynamic/worker/` | push a `main` (Workers Builds) | Sim — mesma integração Git, configurada à parte no dashboard (ver `docs/cloudflare-deploy.md` §4) |
 
-Os dois caminhos são automáticos, mas nenhum passa pelo GitHub Actions — a
-lacuna real (achado H3) não é "deploy manual", é **ausência de proveniência
-verificável e de um gate de revisor** entre o commit em `main` e o que fica a
-correr na Cloudflare. Um `npx wrangler deploy` manual a partir do laptop
-continua possível como via secundária (testar uma branch antes do merge,
-`CLAUDE.md`) e aponta para o mesmo Worker de produção.
+Os dois caminhos são automáticos, mas nenhum passa pelo GitHub Actions —
+ver [`docs/threat-model.md`](threat-model.md) (achado H3) para o que essa
+lacuna implica e o estado atual.
