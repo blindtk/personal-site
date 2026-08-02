@@ -24,11 +24,13 @@ threat model didn't account for.
 
 ## Decision
 
-Remove `cloudflare-bindings` from `.mcp.json`. Keep the remaining six, all
+Remove `cloudflare-bindings` from `.mcp.json`. Keep the remaining five, all
 read-only and covering the same kind of data already accessible manually
 in the Cloudflare dashboard: `cloudflare-audit-logs`,
 `cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
-`cloudflare-observability`, `cloudflare-builds`, `cloudflare-docs`.
+`cloudflare-observability`, `cloudflare-docs`. (`cloudflare-builds` was
+in this set too until the 2026-08-02 correction below — it wasn't
+actually read-only.)
 
 ## Consequences
 

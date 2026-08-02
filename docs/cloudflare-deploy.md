@@ -118,11 +118,14 @@ Even with the above, every PR generated two extra URLs
 (`<hash>-personal-site-worker.<account>.workers.dev` and
 `<branch>-personal-site-worker.<account>.workers.dev`), published with no
 protection in a comment from the `cloudflare-workers-and-pages` bot on the
-PR — visible to anyone with repo access (at the time, only the owner; the
-repository was still private and went public later, on 2026-07-31, so
-this exposure would have extended to everyone had it not been fixed
-first). Fixed by turning off **"Builds for non-production branches"** in
-the Worker's Settings — stops generating previews on every PR.
+PR — the URLs themselves had no protection at all, reachable by anyone
+who obtained one regardless of repository access. Separately, *finding
+out* a URL existed was gated by repo access (only the owner, at the
+time; the repository was still private and went public later, on
+2026-07-31, so that discovery path would have extended to everyone had
+this not been fixed first). Fixed by turning off **"Builds for
+non-production branches"** in the Worker's Settings — stops generating
+previews on every PR.
 
 ### Problem 3: `routes` read as an environment variable
 

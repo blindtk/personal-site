@@ -257,7 +257,7 @@ enough — nothing to change.
 | Name | Type | Where | For |
 | --- | --- | --- | --- |
 | `KV` | binding | wrangler.toml | single namespace (events, buckets, caches, rate limit) |
-| `RATE_SALT` | secret | `wrangler secret put` | rate-limit hash; the secret itself is rotated manually WEEKLY (invalidates accumulated limits on purpose) — the *effective* rate-limit key derived from it already changes daily (see Privacy section above) |
+| `RATE_SALT` | secret, **mandatory** | `wrangler secret put` | rate-limit hash; the secret itself is rotated manually WEEKLY (invalidates accumulated limits on purpose) — the *effective* rate-limit key derived from it already changes daily (see Privacy section above). **Unresolved risk:** if unset, the Worker logs `rate_salt_missing` but doesn't fail closed — it falls back to the public, hardcoded `'rotate-me'` string (`dailySalt` in `src/lib/ratelimit.js`), so rate-limiting continues to "work" with a predictable salt instead of stopping. Fixing this (reject requests when the secret is absent) is tracked as a separate Worker change, not a docs fix. |
 | `NVD_API_KEY` | secret | `wrangler secret put` | optional, NVD rate limit |
 | `CF_API_TOKEN` | secret | `wrangler secret put` | Analytics:Read (zone + account) + Firewall/WAF:Read (zone + account) token, for `/api/cf-stats` — see the "Cloudflare Status" section above |
 | `ACCESS_CLIENT_ID` | secret | `wrangler secret put` | optional — Access Service Token, only if Access is active in front of `SCAN_TARGET` |
