@@ -11,44 +11,24 @@ Todos os cabeçalhos de segurança, incluindo a CSP, vivem numa única linha
 estática em `static/public/_headers` (lido nativamente pelo Cloudflare
 Pages) — sem geração no build, sem `<meta>` por página.
 
-> **Nota de design (e porque não há duas camadas):** até 2026-07 a CSP tinha
-> hashes SHA-256 por `<script>`/`<style>` inline (feature `security.csp` do
-> Astro), com uma `<meta>` estrita por página e um header derivado dela no
-> build (união dos hashes de todas as páginas). Abandonado: o Astro combina
-> o script/estilo partilhado de cada página com o específico dela num único
-> bloco inline por página — o nº de hashes cresce com o nº de *combinações*
-> página×script, não com o nº de scripts reais. Ao fim de ~50 páginas a linha
-> ultrapassava os **2000 caracteres máximos por header do Cloudflare Pages**,
-> e o Pages descartava o header CSP inteiro em produção, sem aviso — CSP
-> ausente, só detetado pelo self-scan.
+> **Porque não há duas camadas (hashes + header):** ver
+> [ADR 0001](adr/0001-csp-sem-inline.md) — a decisão de eliminar todo o
+> `<script>`/`<style>` inline em vez de catalogar hashes por bloco, e a
+> única exceção (o JSON-LD de `BaseLayout.astro`, com um hash SHA-256
+> fixo). Este documento mantém só os *valores* atuais do header e como
+> mantê-los, replicáveis em qualquer servidor; a história e o raciocínio da
+> decisão vivem só na ADR.
 >
-> A correção foi eliminar o inline em vez de o catalogar: zero
-> `<script>`/`<style>` inline no site inteiro (`build.inlineStylesheets:
-> 'never'` em `astro.config.mjs`; o único script partilhado por todas as
-> páginas vive em `static/public/js/nav.js`, servido tal-e-qual, fora do
-> bundler). Com isso, `script-src 'self'` e `style-src 'self'` já são tão
-> restritos quanto uma lista de hashes — nenhum script/estilo fora do próprio
-> domínio executa — mas com uma linha de tamanho fixo, que não volta a
-> crescer com mais páginas ou ferramentas.
->
-> Exceção única: o `<script type="application/ld+json">` (dados estruturados
-> schema.org Person, `BaseLayout.astro`) continua inline em todas as páginas
-> — JSON-LD não tem forma fiável de ir para ficheiro externo (crawlers não
-> seguem `src` de forma consistente). A hipótese inicial era que, por não ser
-> executado como JS, `script-src` não o restringia — **errado**: o browser
-> aplica `script-src`/`script-src-elem` a qualquer `<script>` sem `src`,
-> independentemente do `type`, e isso gerou violações reais em produção
-> (apanhadas pelo self-scan). A correção foi um único hash SHA-256 do
-> conteúdo exato do bloco em `script-src` — não reabre `'unsafe-inline'` e,
-> como o conteúdo só depende de `SITE.name`/`role`/`url`/redes em
-> `config.ts` (iguais em PT e EN hoje), um hash cobre as duas páginas. Se
-> `role[pt]` e `role[en]` alguma vez divergirem, recalcula com:
+> **Recalcular o hash do JSON-LD**, se `role[pt]`/`role[en]` ou outro campo
+> de `config.ts` usado no bloco alguma vez divergir entre PT e EN (hoje um
+> único hash cobre as duas páginas):
 > ```
 > node -e "console.log('sha256-' + require('crypto').createHash('sha256').update(CONTEUDO_EXATO_DO_SCRIPT,'utf8').digest('base64'))"
 > ```
 > (usa o texto exato entre `<script type="application/ld+json">` e
 > `</script>` do HTML gerado, ex.: `dist/index.html`) e acrescenta o segundo
-> hash a par do primeiro — cresce por *variante de conteúdo*, não por página.
+> hash a par do primeiro em `script-src` — cresce por *variante de conteúdo*,
+> não por página.
 >
 > **Reporting de violações — automático até 2026-07, agora manual.** A CSP
 > teve `report-uri /api/csp-report` + `report-to csp-endpoint` (cabeçalho
