@@ -13,10 +13,12 @@
 [![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Two of the fourteen workflows in [`.github/workflows/`](.github/workflows/) have
-no badge above: `dependency-review.yml` (PR-scoped, listed in the build
-pipeline table below) and `labeler.yml` (applies area labels to PRs — repo
-hygiene, not a security check).
+Three of the fourteen workflows in [`.github/workflows/`](.github/workflows/)
+have no GitHub Actions run-badge above: `dependency-review.yml` (PR-scoped,
+listed in the build pipeline table below), `labeler.yml` (applies area labels
+to PRs — repo hygiene, not a security check), and `scorecard.yml` (represented
+instead by the OpenSSF Scorecard badge above, which reflects the scorecard
+result rather than the workflow's run status).
 
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
