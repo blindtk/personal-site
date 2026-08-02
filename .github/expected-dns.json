@@ -1,0 +1,28 @@
+{
+  "$comment": "Fonte de verdade da higiene DNS do domínio — o que o workflow DNS (.github/workflows/dns-check.yml, .github/scripts/check-dns.mjs) verifica contra produção. Espelha o que já está documentado (e, no caso do CAA, ainda por fazer) em docs/dns-tls.md — este ficheiro não inventa política nova, só a torna verificável por máquina.",
+  "domain": "danielmala.co",
+  "dnssec": {
+    "$comment": "docs/dns-tls.md §4: DNSKEY tem de vir com a flag `ad` (Authenticated Data) de dois resolvedores validadores independentes — confirma a cadeia de confiança até à zona pai `.co`, não só que existem registos DNSKEY.",
+    "resolvers": ["1.1.1.1", "8.8.8.8"]
+  },
+  "spf": {
+    "$comment": "docs/dns-tls.md nota de 2026-07-29: SPF já confirmado com `-all` (falha estrita — nenhum servidor além dos listados pode enviar como este domínio). `+all`/`~all`/`?all` ou ausência de SPF são regressões de um estado já correto, não uma lacuna conhecida.",
+    "requireHardFail": true
+  },
+  "dmarc": {
+    "$comment": "Mesma nota: DMARC já confirmado com `p=reject`. `p=quarantine` mantém-se aceite (ainda protege, é o passo anterior a `reject` em qualquer rollout); `p=none` ou ausência são regressão.",
+    "allowedPolicies": ["reject", "quarantine"]
+  },
+  "caa": {
+    "$comment": "docs/dns-tls.md §1: lista de CAs autorizadas a emitir para o domínio (Universal SSL da Cloudflare) + o iodef de notificação. AO CONTRÁRIO do SPF/DMARC/DNSSEC acima, docs/dns-tls.md confirma que estes registos AINDA NÃO EXISTEM em produção (2026-07-29) — é uma lacuna já conhecida e documentada, não uma regressão. Por isso o script trata 'nenhum CAA' como aviso (o TODO já registado), mas 'existe CAA e não bate certo com esta lista' como erro (isso já seria uma regressão de algo que passou a estar correto).",
+    "expected": [
+      "0 issue \"letsencrypt.org\"",
+      "0 issue \"pki.goog; cansignhttpexchanges=yes\"",
+      "0 issue \"ssl.com\"",
+      "0 issuewild \"letsencrypt.org\"",
+      "0 issuewild \"pki.goog; cansignhttpexchanges=yes\"",
+      "0 issuewild \"ssl.com\"",
+      "0 iodef \"mailto:me@danielmala.co\""
+    ]
+  }
+}

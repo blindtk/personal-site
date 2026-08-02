@@ -1,0 +1,38 @@
+# Automatiza o Mozilla HTTP Observatory contra produção — decisão tomada em
+# conjunto com o dono do repo (2026-08-01), depois de confirmar que, ao
+# contrário do Qualys SSL Labs (redundante com tls-check.yml) e do
+# Security Headers (API descontinuada em abril de 2026), o Observatory tem
+# API grátis, sem chave, feita de propósito para CI/CD. Semanal: mais
+# barato que o TLS check (uma chamada HTTP, sem Docker) mas não precisa da
+# cadência diária do Headers — o Observatory testa uma rubrica própria
+# (cookies, redirects, isolamento cross-origin), que não muda com a
+# frequência de um deploy individual.
+name: Observatory check
+
+on:
+  schedule:
+    - cron: '50 6 * * 5'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL a verificar (por omissão: a do expected-headers.json)'
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verificar grade do Mozilla Observatory
+        env:
+          # valor externo entra por env e nunca interpolado no run: — evita
+          # injeção de template (auditado pelo zizmor)
+          TARGET_URL: ${{ inputs.url }}
+        run: node .github/scripts/check-observatory.mjs

@@ -1,0 +1,100 @@
+# Confirma de fora, uma vez por mês, o que o Qualys SSL Labs já reporta
+# (protocolos, cifras, certificado, vulnerabilidades conhecidas) — sem
+# depender de um serviço terceiro individual estar no ar nem esperar pelo
+# cache dele. Mensal, não semanal: a superfície TLS (cifras, protocolo,
+# certificado) muda raramente — mais cadência não detetava nada mais cedo,
+# só gastava minutos do plano Free do GitHub Actions (o repo já anda perto
+# da quota, ver supply-chain.yml). O scan corre via a imagem Docker oficial
+# do testssl.sh, pinada por digest — a mesma disciplina de pin exato do
+# resto do repo (actions por SHA), aplicada aqui a uma imagem em vez de uma
+# action, porque testssl.sh não é distribuído como GitHub Action nem como
+# pacote apt.
+name: TLS check
+
+on:
+  schedule:
+    - cron: '11 8 3 * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL a verificar (por omissão: a do expected-headers.json)'
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  testssl:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Determinar alvo
+        id: target
+        env:
+          # valor externo entra por env e nunca interpolado no run: — evita
+          # injeção de template (auditado pelo zizmor)
+          TARGET_URL: ${{ inputs.url }}
+        run: |
+          set -e
+          url="${TARGET_URL:-$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('.github/expected-headers.json','utf8')).url)")}"
+          if [[ "$url" == SET-ME* ]]; then
+            echo "::warning::tls-check: URL de produção por definir em .github/expected-headers.json — verificação IGNORADA (nada foi verificado nesta execução)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          host="$(node -e "console.log(new URL(process.argv[1]).host)" "$url")"
+          echo "host=$host" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Correr testssl.sh
+        if: steps.target.outputs.skip == 'false'
+        env:
+          # Segredo do bypass da regra WAF "CI headers check" (docs/
+          # cloudflare-deploy.md §5, regra 2) — as checagens de
+          # protocolo/cifra/vulnerabilidades do testssl.sh correm ao nível
+          # TLS, ANTES de qualquer regra WAF (a Cloudflare completa o
+          # handshake para qualquer cliente, incluindo os que a política de
+          # país bloqueia, para poder avaliar o pedido HTTP a seguir) — só
+          # os testes que fazem pedidos HTTP reais (--headers, HSTS) passam
+          # pelo WAF. --reqheader replica nesses pedidos o mesmo header
+          # x-ci-waf-token já usado por check-headers.mjs/
+          # check-invariants.mjs, para não caírem na política de país
+          # vindos de um runner do GitHub (normalmente fora de PT).
+          CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
+          HOST: ${{ steps.target.outputs.host }}
+        run: |
+          set -e
+          mkdir -p tls-report
+          # Array em vez de expansão inline: o CodeRabbit assinalou a linha
+          # anterior (${CI_WAF_TOKEN:+--reqheader "..."} sem aspas) como
+          # word-splitting quebrado — verificado que, em bash, as aspas
+          # literais dentro do :+ já são respeitadas na análise sintática
+          # (não reproduz o bug descrito), mas o array evita depender dessa
+          # subtileza e é mais fácil de auditar.
+          args=(--quiet --jsonfile /data/testssl.json)
+          if [ -n "$CI_WAF_TOKEN" ]; then
+            args+=(--reqheader "x-ci-waf-token: ${CI_WAF_TOKEN}")
+          fi
+          # Imagem: drwetter/testssl.sh:3.2, pinada por digest (não há tag
+          # nem SHA de commit aqui — testssl.sh não é uma GitHub Action).
+          docker run --rm \
+            -v "$PWD/tls-report:/data" \
+            drwetter/testssl.sh@sha256:c1a54a31bb596e09f79f91823468512e9c0794eb522340ff228875971514695c \
+            "${args[@]}" \
+            "$HOST"
+
+      - name: Avaliar achados
+        if: steps.target.outputs.skip == 'false'
+        run: node .github/scripts/check-tls.mjs tls-report/testssl.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always() && steps.target.outputs.skip == 'false'
+        with:
+          name: testssl-report
+          path: tls-report/testssl.json
+          retention-days: 90

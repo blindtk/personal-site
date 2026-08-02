@@ -6,11 +6,14 @@
 [![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
 [![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
 [![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
+[![TLS check](https://github.com/blindtk/personal-site/actions/workflows/tls-check.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/tls-check.yml)
+[![DNS check](https://github.com/blindtk/personal-site/actions/workflows/dns-check.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/dns-check.yml)
+[![Observatory check](https://github.com/blindtk/personal-site/actions/workflows/observatory-check.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/observatory-check.yml)
 [![Fuzzing](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml)
 [![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Two of the eleven workflows in [`.github/workflows/`](.github/workflows/) have
+Two of the fourteen workflows in [`.github/workflows/`](.github/workflows/) have
 no badge above: `dependency-review.yml` (PR-scoped, listed in the build
 pipeline table below) and `labeler.yml` (applies area labels to PRs — repo
 hygiene, not a security check).
@@ -18,16 +21,9 @@ hygiene, not a security check).
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 233 tests, eleven CI workflows, four
+real data for the dashboards it feeds. 233 tests, fourteen CI workflows, four
 ADRs, for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
-
-> **Note:** this README is in English because most people who read it
-> professionally (recruiters, engineers) don't read Portuguese — the site
-> itself is bilingual by construction, PT at `/` and EN at `/en/`, and all
-> editorial content (`content/`) exists in both languages. See
-> [`CLAUDE.md`](CLAUDE.md) for the project's conventions (written in
-> Portuguese, like the rest of `docs/`).
 
 ## What this is
 
@@ -68,7 +64,7 @@ code, not asserted from memory.
 
 ## Why so much for a personal site?
 
-A personal site with a threat model, four ADRs, eleven CI workflows, and 233
+A personal site with a threat model, four ADRs, fourteen CI workflows, and 233
 tests is disproportionate for what it does — unless the disproportion *is* the
 point. It is: this repository exists to demonstrate security-engineering
 practice at a scale where the controls become meaningful, not to serve a blog
@@ -143,6 +139,9 @@ goes through:
 | **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
 | **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
+| **TLS/cipher/vuln scan in production** | `tls-check.yml` (monthly + manual) | Runs [testssl.sh](https://testssl.sh) against production; findings are classified by testssl.sh's own severity — CRITICAL/HIGH (weak protocols, known vulnerabilities like Heartbleed/POODLE, an invalid/expired cert) fail the workflow, MEDIUM/LOW only warn. |
+| **DNS hygiene in production** | `dns-check.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against what [`docs/dns-tls.md`](docs/dns-tls.md) documents as already correct — a regression fails the workflow; a still-missing CAA record (a known, documented gap) only warns. |
+| **Mozilla Observatory grade in production** | `observatory-check.yml` (weekly + manual) | Calls the free [Mozilla HTTP Observatory](https://github.com/mdn/mdn-http-observatory) API — a second, independent grading rubric (cookies, redirect chain, cross-origin isolation) on top of the exact-header checks in `headers.yml`. Grade D/F fails the workflow, B/C only warns. |
 | **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (manual only — see note below) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
 | **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
 
@@ -176,6 +175,25 @@ Confirmed independent of the pinned commit — it and the action's current
 `main` both resolve to the same floating `gcr.io/oss-fuzz-base/clusterfuzzlite-
 build-fuzzers:v1` Docker image, so the bug lives there, not in this repo. The
 workflow stays `workflow_dispatch`-only until upstream fixes it.
+
+## External security scans (manual)
+
+Beyond the automated checks above, these third-party scanners are run
+manually against production, not wired into CI — either because they have no
+API, the API is redundant with a check this repo already runs, or the free
+tier doesn't fit a recurring cron (tool-by-tool reasoning in [PR #155](https://github.com/blindtk/personal-site/pull/155)).
+Each link below is a live report for `danielmala.co`, not a static snapshot:
+
+| Scanner | What it checks | Report |
+| --- | --- | --- |
+| Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
+| Security Headers | HTTP security headers | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
+| Mozilla HTTP Observatory | headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half of this one | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
+| Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
+| DNSViz | independent DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
+| ImmuniWeb | web/SSL security score | [immuniweb.com](https://www.immuniweb.com/cyberscore/danielmala.co/) |
+| Cloudflare Agent Readiness | AI-agent discoverability/legibility — see the `Link` header work in [PR #154](https://github.com/blindtk/personal-site/pull/154) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
+| MXToolbox | ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |
 
 ## Security features (the site's actual subject matter)
 

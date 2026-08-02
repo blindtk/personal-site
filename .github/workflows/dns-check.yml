@@ -1,0 +1,35 @@
+# Higiene DNS do domínio de produção como garantia testada, não como nota
+# em docs/dns-tls.md que ninguém volta a reler: verifica SPF, DMARC, CAA e a
+# cadeia de confiança DNSSEC (.github/scripts/check-dns.mjs, fonte de
+# verdade em .github/expected-dns.json). Workflow separado do TLS check
+# (tls-check.yml), mesmo padrão de headers.yml vs invariants.yml — concerns
+# diferentes (DNS não depende de certificado/cifras, e vice-versa), cada um
+# com o seu histórico de execuções. Semanal (mais frequente que o TLS
+# mensal): um `dig` é uma consulta UDP, segundos de runner — ao contrário do
+# scan completo do testssl.sh, não há razão de custo para espaçar mais.
+name: DNS check
+
+on:
+  schedule:
+    - cron: '35 6 * * 3'
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # dig não vem garantido nas imagens ubuntu-latest (ao contrário do
+      # Docker, usado no tls-check.yml) — instalar em vez de assumir.
+      - name: Instalar dnsutils
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dnsutils
+
+      - name: Verificar higiene DNS de produção
+        run: node .github/scripts/check-dns.mjs
