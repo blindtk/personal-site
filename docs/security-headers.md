@@ -1,63 +1,64 @@
-# Cabeçalhos de segurança — configuração portável
+# Security headers — portable configuration
 
-Este site serve os mesmos cabeçalhos de segurança em **Cloudflare Pages** e numa
-**VPS** (nginx ou Caddy). Este documento é a fonte única para replicar essa
-configuração em qualquer servidor, para que migrar de Pages para VPS seja
-*copiar config*, não reconstruí-la.
+This site serves the same security headers on **Cloudflare Pages** and on
+a **VPS** (nginx or Caddy). This document is the single source for
+replicating that configuration on any server, so that migrating from
+Pages to a VPS is *copying config*, not rebuilding it.
 
-## Como a segurança está dividida
+## How security is split
 
-Todos os cabeçalhos de segurança, incluindo a CSP, vivem numa única linha
-estática em `static/public/_headers` (lido nativamente pelo Cloudflare
-Pages) — sem geração no build, sem `<meta>` por página.
+All security headers, including the CSP, live in a single static line in
+`static/public/_headers` (read natively by Cloudflare Pages) — no
+build-time generation, no per-page `<meta>`.
 
-> **Porque não há duas camadas (hashes + header):** ver
-> [ADR 0001](adr/0001-csp-sem-inline.md) — a decisão de eliminar todo o
-> `<script>`/`<style>` inline em vez de catalogar hashes por bloco, e a
-> única exceção (o JSON-LD de `BaseLayout.astro`, com um hash SHA-256
-> fixo). Este documento mantém só os *valores* atuais do header e como
-> mantê-los, replicáveis em qualquer servidor; a história e o raciocínio da
-> decisão vivem só na ADR.
+> **Why there's no two-layer approach (hashes + header):** see
+> [ADR 0001](adr/0001-csp-sem-inline.md) — the decision to eliminate all
+> inline `<script>`/`<style>` instead of cataloguing hashes per block, and
+> the single exception (the JSON-LD in `BaseLayout.astro`, with a fixed
+> SHA-256 hash). This document only keeps the header's current *values*
+> and how to maintain them, replicable on any server; the decision's
+> history and reasoning live only in the ADR.
 >
-> **Recalcular o hash do JSON-LD**, se `role[pt]`/`role[en]` ou outro campo
-> de `config.ts` usado no bloco alguma vez divergir entre PT e EN (hoje um
-> único hash cobre as duas páginas):
+> **Recomputing the JSON-LD hash**, if `role[pt]`/`role[en]` or another
+> `config.ts` field used in the block ever diverges between PT and EN
+> (today a single hash covers both pages):
 > ```
-> node -e "console.log('sha256-' + require('crypto').createHash('sha256').update(CONTEUDO_EXATO_DO_SCRIPT,'utf8').digest('base64'))"
+> node -e "console.log('sha256-' + require('crypto').createHash('sha256').update(EXACT_SCRIPT_CONTENT,'utf8').digest('base64'))"
 > ```
-> (usa o texto exato entre `<script type="application/ld+json">` e
-> `</script>` do HTML gerado, ex.: `dist/index.html`) e acrescenta o segundo
-> hash a par do primeiro em `script-src` — cresce por *variante de conteúdo*,
-> não por página.
+> (use the exact text between `<script type="application/ld+json">` and
+> `</script>` in the generated HTML, e.g. `dist/index.html`) and append
+> the second hash alongside the first in `script-src` — it grows by
+> *content variant*, not by page.
 >
-> **Reporting de violações — automático até 2026-07, agora manual.** A CSP
-> teve `report-uri /api/csp-report` + `report-to csp-endpoint` (cabeçalho
-> `Reporting-Endpoints`): o browser mandava um POST a cada violação de
-> QUALQUER visitante, sem exceção. Sem inline nenhum, uma violação de
-> `script-src`/`style-src` só pode significar uma coisa (regressão da build
-> ou injeção real) — mas, na prática, a esmagadora maioria dos relatórios era
-> ruído de extensões de browser (ad-blockers, gestores de password) a injetar
-> conteúdo nas páginas de visitantes. Cada POST aceite custa escritas no KV
-> do Worker (`dynamic/worker/`), e o plano Free da Cloudflare tem um teto
-> diário apertado, partilhado com honeypot/vitals/cron — o volume de ruído
-> automático empurrou a conta para perto do teto. Removidos os três
-> cabeçalhos; substituídos por captura 100% local
-> (`static/public/js/csp-report.js`, ouve `securitypolicyviolation` e guarda
-> em `sessionStorage`) + envio manual num botão na página Provas
-> (`CspViolations.astro`) — zero escritas até alguém decidir mesmo reportar.
-> O recetor continua a ser o mesmo Worker (`POST /api/csp-report`), que
-> agrega de forma anónima; só a forma como o pedido chega lá mudou. Ver
+> **Violation reporting — automatic until 2026-07, manual now.** The CSP
+> used to have `report-uri /api/csp-report` + `report-to csp-endpoint`
+> (`Reporting-Endpoints` header): the browser sent a POST on every
+> violation from ANY visitor, no exceptions. With zero inline content, a
+> `script-src`/`style-src` violation could only mean one thing (a build
+> regression or a real injection) — but in practice, the overwhelming
+> majority of reports were noise from browser extensions (ad-blockers,
+> password managers) injecting content into visitors' pages. Every
+> accepted POST costs KV writes on the Worker (`dynamic/worker/`), and
+> Cloudflare's Free plan has a tight daily ceiling, shared with
+> honeypot/vitals/cron — the volume of automatic noise pushed the account
+> close to that ceiling. Removed all three headers; replaced with 100%
+> local capture (`static/public/js/csp-report.js`, listens for
+> `securitypolicyviolation` and stores in `sessionStorage`) + manual
+> sending via a button on the Evidence page (`CspViolations.astro`) —
+> zero writes until someone actually decides to report. The receiver is
+> still the same Worker (`POST /api/csp-report`), which aggregates
+> anonymously; only how the request gets there changed. See
 > `dynamic/PLAN.md`.
 >
-> A presença destes cabeçalhos em produção é verificada automaticamente pelo
-> workflow `Headers` (`.github/workflows/headers.yml`) contra a lista
-> versionada em `.github/expected-headers.json` — após cada deploy e num cron
-> diário.
+> The presence of these headers in production is checked automatically by
+> the `Headers` workflow (`.github/workflows/headers.yml`) against the
+> versioned list in `.github/expected-headers.json` — after every deploy
+> and on a daily cron.
 
-A fonte de verdade dos valores é sempre `static/public/_headers`. Se o alterares,
-atualiza os blocos abaixo em espelho.
+The source of truth for the values is always `static/public/_headers`. If
+you change it, update the mirrored blocks below.
 
-## Valores atuais (espelho de `_headers`)
+## Current values (mirror of `_headers`)
 
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-/RztAGp2rIIt3aqLYwLYPT9MWtDrHCcQxZQBSY9sugY='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'
@@ -71,14 +72,14 @@ Cross-Origin-Resource-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
-> **COEP `require-corp`:** todo o site é same-origin (CSS/JS/fontes/imagens),
-> por isso não quebra nada; a par do COOP ativa *cross-origin isolation*. As
-> imagens OG são cross-origin mas só as buscam **outros** sites (previews),
-> nunca as nossas páginas — daí o `CORP: cross-origin` específico delas.
+> **COEP `require-corp`:** the whole site is same-origin (CSS/JS/fonts/
+> images), so nothing breaks; together with COOP it enables
+> *cross-origin isolation*. The OG images are cross-origin, but only
+> **other** sites fetch them (previews), never our own pages — hence the
+> `CORP: cross-origin` specific to them.
 
-Exceção das imagens Open Graph (`/og-image.png`, `/og-image-en.png`), que
-precisam de ser carregáveis por outras origens (pré-visualizações de
-LinkedIn/Slack/etc.):
+Exception for the Open Graph images (`/og-image.png`, `/og-image-en.png`),
+which need to be loadable from other origins (LinkedIn/Slack/etc. previews):
 
 ```
 ! Cross-Origin-Resource-Policy
@@ -86,17 +87,18 @@ Cross-Origin-Resource-Policy: cross-origin
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-> **Cuidado (Cloudflare Pages):** quando várias regras do `_headers` coincidem
-> com o mesmo path, o Pages **não substitui** um header repetido — **concatena**
-> os valores com vírgula (`same-origin, cross-origin`), que é inválido e faz o
-> browser ignorar o header por inteiro. A linha `! Cross-Origin-Resource-Policy`
-> remove primeiro o valor herdado do bloco `/*`; só depois se define o novo.
-> (No nginx o problema é o inverso — ver o cuidado abaixo; no Caddy o override
-> por matcher já substitui corretamente.)
+> **Watch out (Cloudflare Pages):** when several `_headers` rules match
+> the same path, Pages does **not** override a repeated header — it
+> **concatenates** the values with a comma (`same-origin, cross-origin`),
+> which is invalid and makes the browser ignore the header entirely. The
+> `! Cross-Origin-Resource-Policy` line first removes the value inherited
+> from the `/*` block; only then is the new one set. (On nginx the problem
+> is the reverse — see the warning below; on Caddy, matcher-based
+> overrides already substitute correctly.)
 
-Homepage (`/` e `/en/`), cabeçalho `Link` (RFC 8288) — mesmas relações já no
-`<head>` (`rel="canonical"`/`rel="alternate" hreflang`, `BaseLayout.astro`),
-para agentes que não chegam a fazer parsing de HTML:
+Homepage (`/` and `/en/`), `Link` header (RFC 8288) — same relations
+already in `<head>` (`rel="canonical"`/`rel="alternate" hreflang`,
+`BaseLayout.astro`), for agents that never get around to parsing HTML:
 
 ```http
 Link: <https://danielmala.co/>; rel="canonical", <https://danielmala.co/en/>; rel="alternate"; hreflang="en"
@@ -109,18 +111,18 @@ Link: <https://danielmala.co/en/>; rel="canonical", <https://danielmala.co/>; re
 
 ## nginx
 
-Dentro do `server { … }` do site (assume TLS já terminado no nginx ou na
-Cloudflare à frente). `always` garante que os cabeçalhos saem também em respostas
-de erro (404, etc.).
+Inside the site's `server { … }` (assumes TLS already terminated at nginx
+or at Cloudflare in front). `always` guarantees the headers also go out
+on error responses (404, etc.).
 
 ```nginx
 server {
     listen 443 ssl http2;
     server_name danielmala.co;
-    root /var/www/site;          # destino do rsync do static/dist/
+    root /var/www/site;          # rsync target for static/dist/
     index index.html;
 
-    # --- Cabeçalhos de segurança (espelho de static/public/_headers) ---
+    # --- Security headers (mirror of static/public/_headers) ---
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-/RztAGp2rIIt3aqLYwLYPT9MWtDrHCcQxZQBSY9sugY='; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types 'none'" always;
     add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;
@@ -131,37 +133,39 @@ server {
     add_header Cross-Origin-Resource-Policy "same-origin" always;
     add_header Cross-Origin-Embedder-Policy "require-corp" always;
 
-    # security.txt e restante conteúdo estático servem-se tal-e-qual.
+    # security.txt and the rest of the static content are served as-is.
     location / {
         try_files $uri $uri/ =404;
     }
 
-    # Imagens Open Graph: CORP relaxado + cache longa.
+    # Open Graph images: relaxed CORP + long cache.
     location ~ ^/og-image(-en)?\.png$ {
         add_header Cross-Origin-Resource-Policy "cross-origin" always;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
-        # Reafirmar os restantes: um bloco add_header no location substitui
-        # os herdados do server, por isso repetem-se os essenciais.
+        # Reassert the rest: an add_header block inside a location
+        # overrides those inherited from server, so the essentials are
+        # repeated here.
         add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
         add_header X-Content-Type-Options "nosniff" always;
     }
 }
 ```
 
-> **Cuidado (nginx):** `add_header` **não** é aditivo — declarar qualquer
-> `add_header` dentro de um `location` faz esse bloco *ignorar* todos os
-> `add_header` herdados do `server`. Por isso o `location` das imagens OG repete
-> os cabeçalhos que ainda quer manter. Se preferires evitar a repetição, usa o
-> módulo `headers-more` (`more_set_headers`), que é aditivo.
+> **Watch out (nginx):** `add_header` is **not** additive — declaring any
+> `add_header` inside a `location` makes that block *ignore* all
+> `add_header`s inherited from `server`. That's why the OG images'
+> `location` repeats the headers it still wants to keep. If you'd rather
+> avoid the repetition, use the `headers-more` module
+> (`more_set_headers`), which is additive.
 
 ## Caddy
 
-O Caddy termina TLS automaticamente (Let's Encrypt) e o HSTS não é obrigatório
-declarar — mas mantém-se explícito para paridade com o `_headers`.
+Caddy terminates TLS automatically (Let's Encrypt) and HSTS isn't
+mandatory to declare — but it's kept explicit for parity with `_headers`.
 
 ```caddy
 danielmala.co {
-    root * /var/www/site        # destino do rsync do static/dist/
+    root * /var/www/site        # rsync target for static/dist/
     encode gzip zstd
     file_server
 
@@ -175,10 +179,10 @@ danielmala.co {
         Cross-Origin-Opener-Policy "same-origin"
         Cross-Origin-Resource-Policy "same-origin"
         Cross-Origin-Embedder-Policy "require-corp"
-        -Server                 # remove o cabeçalho Server (menos fingerprinting)
+        -Server                 # remove the Server header (less fingerprinting)
     }
 
-    # Imagens Open Graph: CORP relaxado + cache longa (sobrepõe o CORP acima).
+    # Open Graph images: relaxed CORP + long cache (overrides the CORP above).
     @og path /og-image.png /og-image-en.png
     header @og {
         Cross-Origin-Resource-Policy "cross-origin"
@@ -187,33 +191,33 @@ danielmala.co {
 }
 ```
 
-Ao contrário do nginx, o bloco `header @og` do Caddy é aditivo/sobreponível: só
-altera os cabeçalhos que nomeia, mantendo os restantes do bloco global.
+Unlike nginx, Caddy's `header @og` block is additive/overridable: it only
+changes the headers it names, keeping the rest from the global block.
 
 ---
 
-## HSTS preload (decisão futura, deliberadamente adiada)
+## HSTS preload (future decision, deliberately deferred)
 
-O `max-age` é de 2 anos com `includeSubDomains`, mas **sem** a diretiva
-`preload` — de propósito, para manter a configuração reversível até a família
-de subdomínios estar decidida (ver `docs/dns-tls.md`). Submeter a `preload`
-grava o domínio (e subdomínios) na lista *hard-coded* dos browsers e é
-difícil de reverter.
+`max-age` is 2 years with `includeSubDomains`, but **without** the
+`preload` directive — on purpose, to keep the configuration reversible
+until the subdomain family is decided (see `docs/dns-tls.md`). Submitting
+`preload` bakes the domain (and subdomains) into browsers' *hard-coded*
+list and is hard to reverse.
 
-Quando a família de subdomínios estiver fechada e quiseres o preload:
+Once the subdomain family is settled and you want preload:
 
-1. Acrescenta `; preload` ao valor (`max-age=63072000; includeSubDomains; preload`)
-   em `static/public/_headers` **e** nos blocos nginx/Caddy acima.
-2. Submete o domínio em <https://hstspreload.org>.
+1. Add `; preload` to the value (`max-age=63072000; includeSubDomains; preload`)
+   in `static/public/_headers` **and** in the nginx/Caddy blocks above.
+2. Submit the domain at <https://hstspreload.org>.
 
-## Verificar depois do deploy
+## Verify after deploy
 
 ```bash
 curl -sI https://danielmala.co | grep -iE 'content-security-policy|strict-transport|content-type-options|frame-options|referrer|permissions|cross-origin'
 curl -s  https://danielmala.co/.well-known/security.txt
 ```
 
-Scanners públicos (correr após o site estar publicado):
+Public scanners (run once the site is published):
 
 - <https://securityheaders.com/?q=danielmala.co&followRedirects=on>
 - <https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co>

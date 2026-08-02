@@ -1,17 +1,17 @@
-# DNS & TLS — checklist de reforço do domínio
+# DNS & TLS — domain hardening checklist
 
-> **Estado:** o domínio (`danielmala.co`, em `static/src/config.ts`) já está
-> ativo na Cloudflare (nameservers trocados no Namecheap — ver
-> `docs/cloudflare-deploy.md`). Os itens abaixo são endurecimentos
-> adicionais, por executar/confirmar no dashboard — nenhum é automático só
-> por a zona existir.
+> **Status:** the domain (`danielmala.co`, in `static/src/config.ts`) is
+> already active on Cloudflare (nameservers swapped at Namecheap — see
+> `docs/cloudflare-deploy.md`). The items below are additional
+> hardening steps, to execute/confirm in the dashboard — none of them are
+> automatic just because the zone exists.
 
-## 1. CAA — restringir quem pode emitir certificados
+## 1. CAA — restrict who can issue certificates
 
-Registos CAA limitam as CAs autorizadas a emitir para o domínio. Sem CAA,
-qualquer CA pública pode emitir. Com a zona na Cloudflare e **Universal SSL**
-ativo, a Cloudflare emite através destas CAs — todas têm de estar autorizadas,
-senão a emissão/renovação falha:
+CAA records limit which CAs are authorized to issue for the domain.
+Without CAA, any public CA can issue. With the zone on Cloudflare and
+**Universal SSL** active, Cloudflare issues through these CAs — all of
+them need to be authorized, or issuance/renewal fails:
 
 ```
 danielmala.co.  IN  CAA  0 issue "letsencrypt.org"
@@ -23,79 +23,80 @@ danielmala.co.  IN  CAA  0 issuewild "ssl.com"
 danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 ```
 
-- Criar no dashboard: **DNS → Records → Add record → CAA** (um por linha).
-- O `iodef` recebe notificações de pedidos de emissão que violem a política.
-- Nota: com Universal SSL, a própria Cloudflare acrescenta/gere registos CAA
-  dinamicamente quando necessário; manter os registos explícitos acima
-  documenta a intenção e cobre o caso de saíres da Cloudflare. Confirma a
-  lista de CAs em uso na doc oficial antes de aplicar (pode mudar):
+- Create in the dashboard: **DNS → Records → Add record → CAA** (one per line).
+- The `iodef` receives notifications for issuance requests that violate the policy.
+- Note: with Universal SSL, Cloudflare itself adds/manages CAA records
+  dynamically when needed; keeping the explicit records above documents
+  intent and covers the case of leaving Cloudflare. Confirm the list of
+  CAs in use in the official docs before applying (it can change):
   <https://developers.cloudflare.com/ssl/reference/certificate-authorities/>
-- Verificar depois: `dig CAA danielmala.co +short`
+- Verify afterward: `dig CAA danielmala.co +short`
 
-> **Confirmado em produção (2026-07-29, revisão de segurança):** a consulta
-> `dig CAA danielmala.co` devolve **sem resposta** — os registos acima ainda
-> não foram criados. Enquanto isto ficar por fazer, qualquer CA publicamente
-> confiada pode emitir um certificado para o domínio, sem restrição.
-> DMARC/SPF já confirmados corretos na mesma verificação (`p=reject` estrito,
-> `-all`) — só falta mesmo o CAA desta lista.
+> **Confirmed in production (2026-07-29, security review):** the query
+> `dig CAA danielmala.co` returns **no answer** — the records above
+> haven't been created yet. While this stays undone, any publicly trusted
+> CA can issue a certificate for the domain, unrestricted. DMARC/SPF
+> already confirmed correct in the same check (strict `p=reject`,
+> `-all`) — only the CAA records from this list are missing.
 
-> **Atualizado (2026-08-02):** os 7 registos foram criados no dashboard e
-> `dig CAA danielmala.co +short` confirma-os todos presentes. Mas a resposta
-> autoritativa devolve **11** registos, não 7 — a Cloudflare acrescenta
-> `comodoca.com` e `digicert.com` (issue + issuewild) por baixo, sem
-> aparecerem na lista editável do dashboard: exatamente a diversificação de
-> CA do Universal SSL já prevista na nota acima, agora confirmada ao vivo.
-> Não é motivo para remover os 7 registos explícitos — continuam a ser a
-> única declaração de intenção do dono do domínio (e o único sítio de onde
-> vem o `iodef`); sem eles, a política de CAA fica inteiramente dependente
-> do que a Cloudflare decidir usar internamente, incluindo se um dia o
-> domínio sair da Cloudflare. O workflow `dns-check.yml` trata isto como
-> subconjunto — falha só se faltar algum dos 7, avisa (não falha) se
-> aparecerem CAs extra.
+> **Updated (2026-08-02):** the 7 records were created in the dashboard
+> and `dig CAA danielmala.co +short` confirms all of them present. But the
+> authoritative response returns **11** records, not 7 — Cloudflare adds
+> `comodoca.com` and `digicert.com` (issue + issuewild) underneath, without
+> appearing in the dashboard's editable list: exactly the Universal SSL CA
+> diversification already anticipated in the note above, now confirmed
+> live. This isn't a reason to remove the 7 explicit records — they remain
+> the only declaration of the domain owner's intent (and the only place
+> the `iodef` comes from); without them, CAA policy is entirely dependent
+> on whatever Cloudflare decides to use internally, including if the
+> domain ever leaves Cloudflare. The `dns-check.yml` workflow treats this
+> as a subset check — it only fails if one of the 7 is missing, and warns
+> (doesn't fail) if extra CAs show up.
 
-## 2. Redirect HTTP → HTTPS
+## 2. HTTP → HTTPS redirect
 
-- Cloudflare Pages já força HTTPS no `*.pages.dev` e nos custom domains.
-- Na zona: **SSL/TLS → Edge Certificates → Always Use HTTPS: ON**.
-- Se um dia servires da VPS: **SSL/TLS → Overview → Full (strict)** (nunca
-  "Flexible"), com certificado válido na origem.
-- Verificar: `curl -sI http://danielmala.co/ | grep -i location` → deve
-  responder `301` para `https://…`.
+- Cloudflare Pages already forces HTTPS on `*.pages.dev` and on custom domains.
+- On the zone: **SSL/TLS → Edge Certificates → Always Use HTTPS: ON**.
+- If ever serving from a VPS: **SSL/TLS → Overview → Full (strict)**
+  (never "Flexible"), with a valid certificate at the origin.
+- Verify: `curl -sI http://danielmala.co/ | grep -i location` → should
+  respond `301` to `https://…`.
 
-## 3. HSTS com preload
+## 3. HSTS with preload
 
-O `_headers` já envia `max-age=63072000; includeSubDomains` (2 anos), **sem**
-`preload` — deliberado até a família de subdomínios estar decidida (ver aviso
-abaixo). Quando estiver:
+`_headers` already sends `max-age=63072000; includeSubDomains` (2 years),
+**without** `preload` — deliberate until the subdomain family is decided
+(see warning below). When it is:
 
-1. Confirmar os pré-requisitos da preload list:
-   - redirect HTTP→HTTPS no próprio domínio (passo 2);
-   - certificado válido; `max-age` ≥ 31536000 (temos 2× isso);
-   - `includeSubDomains` + `preload` no header.
-2. Acrescentar `; preload` ao `Strict-Transport-Security` em
-   `static/public/_headers` (e no espelho em `docs/security-headers.md`).
-3. Submeter em <https://hstspreload.org> e acompanhar o estado.
+1. Confirm the preload list prerequisites:
+   - HTTP→HTTPS redirect on the domain itself (step 2);
+   - a valid certificate; `max-age` ≥ 31536000 (we have 2× that);
+   - `includeSubDomains` + `preload` in the header.
+2. Add `; preload` to `Strict-Transport-Security` in
+   `static/public/_headers` (and the mirror in `docs/security-headers.md`).
+3. Submit at <https://hstspreload.org> and track the status.
 
-> ⚠️ **Antes de submeter:** `includeSubDomains` + preload obriga **todos** os
-> subdomínios a HTTPS válido, para sempre (sair da lista demora meses e não é
-> garantido). Se o homelab/`lab.` ou outro subdomínio alguma vez servir HTTP
-> puro, parte. Só submeter quando a família de subdomínios estiver decidida.
+> ⚠️ **Before submitting:** `includeSubDomains` + preload forces **every**
+> subdomain to valid HTTPS, forever (getting off the list takes months and
+> isn't guaranteed). If the homelab/`lab.` or another subdomain ever serves
+> plain HTTP, it breaks. Only submit once the subdomain family is decided.
 
 ## 4. DNSSEC
 
-- **Ativo.** Protege a resolução do domínio contra spoofing (**DNS →
-  Settings → DNSSEC** na Cloudflare, `DS` registado no registrar).
+- **Active.** Protects domain resolution against spoofing (**DNS →
+  Settings → DNSSEC** on Cloudflare, `DS` registered at the registrar).
 
-> **Confirmado (2026-07-30, validação de lançamento):** `DNSKEY` devolvido
-> por dois resolvedores validadores independentes (Cloudflare `1.1.1.1` e
-> Google `8.8.8.8`, ambos com `AD: true`), com o `DS` correspondente já
-> registado na zona pai `.co`. Verificar: `dig @1.1.1.1 danielmala.co
-> DNSKEY +dnssec` (e o mesmo contra `@8.8.8.8`) devem incluir a flag `ad`.
+> **Confirmed (2026-07-30, launch validation):** `DNSKEY` returned by two
+> independent validating resolvers (Cloudflare `1.1.1.1` and Google
+> `8.8.8.8`, both with `AD: true`), with the matching `DS` already
+> registered in the `.co` parent zone. Verify: `dig @1.1.1.1 danielmala.co
+> DNSKEY +dnssec` (and the same against `@8.8.8.8`) should include the
+> `ad` flag.
 
-## Relação com o resto do repo
+## Relationship to the rest of the repo
 
-- Os headers servidos (incluindo HSTS) são verificados em produção pelo
-  workflow `Headers` (`.github/workflows/headers.yml`) contra
-  `.github/expected-headers.json`. Quando ativares o `preload`, acrescenta
-  `"preload"` à entrada `strict-transport-security` desse ficheiro para o
-  check passar a exigi-lo.
+- The headers served (including HSTS) are checked in production by the
+  `Headers` workflow (`.github/workflows/headers.yml`) against
+  `.github/expected-headers.json`. When you enable `preload`, add
+  `"preload"` to that file's `strict-transport-security` entry so the
+  check starts requiring it.
