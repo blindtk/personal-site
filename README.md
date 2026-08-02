@@ -13,13 +13,6 @@
 [![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Three of the fourteen workflows in [`.github/workflows/`](.github/workflows/)
-have no GitHub Actions run-badge above: `dependency-review.yml` (PR-scoped,
-listed in the build pipeline table below), `labeler.yml` (applies area labels
-to PRs — repo hygiene, not a security check), and `scorecard.yml` (represented
-instead by the OpenSSF Scorecard badge above, which reflects the scorecard
-result rather than the workflow's run status).
-
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
@@ -39,7 +32,7 @@ ADRs, for a personal site. That is deliberate, not accidental — see
 
 Start with [`docs/architecture.md`](docs/architecture.md) — a diagram of how
 the site, the Worker, KV, and external APIs connect, and where the trust
-boundaries sit. Then, of the ten ADRs in [`docs/adr/`](docs/adr/), these three
+boundaries sit. Then, of the ADRs in [`docs/adr/`](docs/adr/), these three
 say the most about how this repository actually thinks:
 
 1. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
@@ -66,11 +59,10 @@ code, not asserted from memory.
 
 ## Why so much for a personal site?
 
-A personal site with a threat model, ten ADRs, fourteen CI workflows, and 233
-tests is disproportionate for what it does — unless the disproportion *is* the
-point. It is: this repository exists to demonstrate security-engineering
-practice at a scale where the controls become meaningful, not to serve a blog
-efficiently. The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
+The numbers above are disproportionate for what a personal site does —
+unless the disproportion *is* the point. It is: this repository exists to
+demonstrate security-engineering practice at a scale where the controls
+become meaningful, not to serve a blog efficiently. The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
 `/phpmyadmin/`, `/.git/config`) are published on purpose, not despite being a
 honeypot — they're the standard paths every commodity scanner already probes
 blindly, so explaining them costs nothing and demonstrates the technique
@@ -98,7 +90,7 @@ npm run build      # → static/dist/
 npm run preview    # serve dist/ locally
 ```
 
-## Edit content (no code required)
+## Edit content
 
 All editorial content is markdown/JSON under `content/` — no code, ever
 (`static/` reads it via loaders). Each collection is paired PT
@@ -177,10 +169,12 @@ Built with heavy use of Claude Code — the branch names in the merge commits
 already say so, on every PR. Architecture, threat model, security decisions,
 and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
 trade-offs and the alternatives rejected. Security-relevant changes are
-checked by tests (`npm test`, 233 across the Worker and the site) and by the
-scanners in [`.github/workflows/`](.github/workflows/) — not a measured
-coverage guarantee, but the gate every PR has to clear. I can walk through
-any decision in this repository.
+checked by tests (`npm test`) and by the scanners in
+[`.github/workflows/`](.github/workflows/) — not a measured coverage
+guarantee, but the gate every PR has to clear. CodeRabbit reviews every PR
+too, calibrated to this repo's own invariants rather than generic
+(`.coderabbit.yaml`) — AI reviewing AI-assisted code, not a substitute for
+the review that's mine. I can walk through any decision in this repository.
 
 ## Contributing
 
