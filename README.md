@@ -13,18 +13,20 @@
 [![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Daniel Malaco's personal site — and, more to the point, a working
-demonstration of security engineering practice at a scale most personal
-sites don't bother with. That scale is deliberate, not accidental — see
+Daniel Malaco's personal site: technical writing, interactive security
+tools, and production-backed demonstrations of defensive engineering — and,
+more to the point, a working demonstration of security engineering practice
+at a scale most personal sites don't bother with. That scale is deliberate,
+not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
-**Highlights:** living threat model · ADR-documented decisions · CI/CD
-pipeline that treats its own build chain as attack surface · production
-Cloudflare Worker (honeypot, hostile-traffic map, SOC ticker) · interactive
-security tools · continuous validation of the live site (TLS, DNS, headers,
-Observatory)
+**Highlights**
+- Living threat model and documented architecture decisions (ADRs)
+- Production Cloudflare Worker powering live security demonstrations
+- Interactive security tools (client-side and Worker-backed)
+- CI/CD pipeline designed as part of the security model
 
-## What this is
+## Repository layout
 
 | Folder | What it is | Status |
 | --- | --- | --- |
@@ -73,10 +75,11 @@ these four say the most about how this repository actually thinks:
 
 ## Why so much for a personal site?
 
-233 tests, fourteen CI workflows, and eighteen ADRs are disproportionate for
-what a personal site does — unless the disproportion *is* the point. It is:
-this repository exists to demonstrate security-engineering practice at a
-scale where the controls become meaningful, not to serve a blog efficiently.
+Hundreds of automated tests, more than a dozen CI workflows, and a growing
+set of ADRs are disproportionate for what a personal site does — unless the
+disproportion *is* the point. It is: this repository exists to demonstrate
+security-engineering practice at a scale where the controls become
+meaningful, not to serve a blog efficiently.
 The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
 `/phpmyadmin/`, `/.git/config`) are published on purpose, not despite being a
 honeypot — they're the standard paths every commodity scanner already probes
@@ -192,8 +195,8 @@ own invariants rather than generic (`.coderabbit.yaml`).
 mine — the ADRs in [`docs/adr/`](docs/adr/) record what was rejected and why.
 
 **Review:** every PR is gated by tests (`npm test`) and the scanners in
-[`.github/workflows/`](.github/workflows/), then by CodeRabbit, then by
-me — AI reviewing AI-assisted code is not a substitute for that last step.
+[`.github/workflows/`](.github/workflows/), then reviewed by CodeRabbit,
+then approved manually before merge.
 
 **Guardrails:** the repo's own conventions live in
 [`CLAUDE.md`](CLAUDE.md); a change that doesn't follow them isn't merged
@@ -203,20 +206,20 @@ as-is, even if the logic is correct.
 
 - [`docs/architecture.md`](docs/architecture.md) — system diagram, trust boundaries
 - [`docs/threat-model.md`](docs/threat-model.md) — assets, attack surfaces, residual risk
-- [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
+- [`dynamic/worker/README.md`](dynamic/worker/README.md) — backend endpoints and privacy stance
 - [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
 - [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
-- [`dynamic/worker/README.md`](dynamic/worker/README.md) — backend endpoints and privacy stance
+- [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
 - [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) — the review that seeded the threat model
 
 ## Contributing
 
 Single-maintainer project, but the repo is public and contributions are
-welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process — bug
-reports, PR conventions, and where the project's own conventions live
-(`CLAUDE.md`). `docs/` and `CLAUDE.md` are in English; `content/` (blog
-posts, page copy) is bilingual PT/EN by construction — see CLAUDE.md's
-architecture rules.
+welcome. Contributors are expected to run the relevant local checks before
+opening a PR — see [CONTRIBUTING.md](CONTRIBUTING.md) for the exact
+workflow and repository conventions (`CLAUDE.md`). `docs/` and `CLAUDE.md`
+are in English; `content/` (blog posts, page copy) is bilingual PT/EN by
+construction — see CLAUDE.md's architecture rules.
 
 ## Security
 
