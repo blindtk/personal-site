@@ -13,12 +13,16 @@
 [![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Daniel Malaco's personal site — and, more to the point, a working demonstration
-of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
-treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 233 tests, fourteen CI workflows,
-eighteen ADRs, for a personal site. That is deliberate, not accidental — see
+Daniel Malaco's personal site — and, more to the point, a working
+demonstration of security engineering practice at a scale most personal
+sites don't bother with. That scale is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
+
+**Highlights:** living threat model · ADR-documented decisions · CI/CD
+pipeline that treats its own build chain as attack surface · production
+Cloudflare Worker (honeypot, hostile-traffic map, SOC ticker) · interactive
+security tools · continuous validation of the live site (TLS, DNS, headers,
+Observatory)
 
 ## What this is
 
@@ -69,10 +73,11 @@ these four say the most about how this repository actually thinks:
 
 ## Why so much for a personal site?
 
-The numbers above are disproportionate for what a personal site does —
-unless the disproportion *is* the point. It is: this repository exists to
-demonstrate security-engineering practice at a scale where the controls
-become meaningful, not to serve a blog efficiently. The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
+233 tests, fourteen CI workflows, and eighteen ADRs are disproportionate for
+what a personal site does — unless the disproportion *is* the point. It is:
+this repository exists to demonstrate security-engineering practice at a
+scale where the controls become meaningful, not to serve a blog efficiently.
+The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
 `/phpmyadmin/`, `/.git/config`) are published on purpose, not despite being a
 honeypot — they're the standard paths every commodity scanner already probes
 blindly, so explaining them costs nothing and demonstrates the technique
@@ -144,6 +149,8 @@ Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 
 ## Security features
 
+### Interactive tools
+
 `/ferramentas/` (`/en/tools/`) has **11 tools**. 8 run entirely client-side —
 subnet calculator, hash functions, encoder/decoder, password strength,
 email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
@@ -154,7 +161,9 @@ breach check), `self-scan` (header analysis of an arbitrary target), and
 marked with a "requires server" badge on the tools index; they are never
 hidden as if they were client-side.
 
-Beyond the tools, the site has several live cybersecurity showcases:
+### Live demonstrations
+
+The site also runs several live cybersecurity showcases:
 
 | Feature | Where | Needs the Worker? |
 | --- | --- | --- |
@@ -175,16 +184,30 @@ this is a deliberate stance, not an oversight.
 
 ## AI-assisted development
 
-Built with heavy use of Claude Code — the branch names in the merge commits
-already say so, on every PR. Architecture, threat model, security decisions,
-and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
-trade-offs and the alternatives rejected. Security-relevant changes are
-checked by tests (`npm test`) and by the scanners in
-[`.github/workflows/`](.github/workflows/) — not a measured coverage
-guarantee, but the gate every PR has to clear. CodeRabbit reviews every PR
-too, calibrated to this repo's own invariants rather than generic
-(`.coderabbit.yaml`) — AI reviewing AI-assisted code, not a substitute for
-the review that's mine.
+**Tools:** Claude Code for implementation (branch names in the merge commits
+record it, on every PR); CodeRabbit for review, calibrated to this repo's
+own invariants rather than generic (`.coderabbit.yaml`).
+
+**Decisions:** architecture, threat model, and security trade-offs are
+mine — the ADRs in [`docs/adr/`](docs/adr/) record what was rejected and why.
+
+**Review:** every PR is gated by tests (`npm test`) and the scanners in
+[`.github/workflows/`](.github/workflows/), then by CodeRabbit, then by
+me — AI reviewing AI-assisted code is not a substitute for that last step.
+
+**Guardrails:** the repo's own conventions live in
+[`CLAUDE.md`](CLAUDE.md); a change that doesn't follow them isn't merged
+as-is, even if the logic is correct.
+
+## Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) — system diagram, trust boundaries
+- [`docs/threat-model.md`](docs/threat-model.md) — assets, attack surfaces, residual risk
+- [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
+- [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
+- [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
+- [`dynamic/worker/README.md`](dynamic/worker/README.md) — backend endpoints and privacy stance
+- [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) — the review that seeded the threat model
 
 ## Contributing
 
