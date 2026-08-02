@@ -82,7 +82,14 @@ jobs:
           fi
           # Imagem: drwetter/testssl.sh:3.2, pinada por digest (não há tag
           # nem SHA de commit aqui — testssl.sh não é uma GitHub Action).
+          # -u "$(id -u):$(id -g)": a imagem corre como um utilizador
+          # próprio, diferente do dono (runner) do diretório montado — sem
+          # isto, o scan corria (viu-se a nota A+ no log) mas a escrita de
+          # /data/testssl.json falhava com "Permission denied", silenciosa
+          # até o check-tls.mjs a seguir rebentar com ENOENT (achado numa
+          # primeira execução real contra produção, 2026-08-02).
           docker run --rm \
+            -u "$(id -u):$(id -g)" \
             -v "$PWD/tls-report:/data" \
             drwetter/testssl.sh@sha256:c1a54a31bb596e09f79f91823468512e9c0794eb522340ff228875971514695c \
             "${args[@]}" \

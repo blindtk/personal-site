@@ -132,14 +132,26 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
       // (achado do CodeRabbit no PR #155: uma diferença cosmética não devia
       // fazer o job falhar).
       const normalize = (r) => r.replace(/\s+/g, ' ').trim().replace(/^(\d+)\s+(\S+)/, (_, flag, tag) => `${flag} ${tag.toLowerCase()}`);
-      const expected = cfg.caa.expected.map(normalize).sort();
-      const actual = records.map(normalize).sort();
-      const matches = expected.length === actual.length && expected.every((v, i) => v === actual[i]);
-      if (matches) {
-        console.log(`ok  CAA: ${records.length} registo(s), batem certo com docs/dns-tls.md`);
-      } else {
-        console.error(`::error::CAA: registos existem mas divergem da lista documentada em docs/dns-tls.md §1.\n  esperado: ${JSON.stringify(expected)}\n  atual:    ${JSON.stringify(actual)}`);
+      const expected = cfg.caa.expected.map(normalize);
+      const actual = records.map(normalize);
+      const actualSet = new Set(actual);
+      const expectedSet = new Set(expected);
+      const missing = expected.filter((v) => !actualSet.has(v));
+      // Subconjunto, não igualdade exata: a Cloudflare injeta CAs próprias
+      // (diversificação do Universal SSL) na resposta autoritativa, fora da
+      // lista editável no dashboard — confirmado em produção (2026-08-02,
+      // comodoca.com/digicert.com apareceram sem ninguém os ter adicionado
+      // manualmente). Ver $comment do CAA em expected-dns.json.
+      const extra = actual.filter((v) => !expectedSet.has(v));
+      if (missing.length > 0) {
+        console.error(`::error::CAA: falta(m) ${missing.length} registo(s) da lista documentada em docs/dns-tls.md §1 — ${JSON.stringify(missing)}`);
         hardFailures += 1;
+      } else {
+        console.log(`ok  CAA: os ${expected.length} registo(s) documentados estão presentes`);
+      }
+      if (extra.length > 0) {
+        console.log(`::warning::CAA: ${extra.length} registo(s) extra além do documentado (provável diversificação de CA da própria Cloudflare, não uma regressão) — ${JSON.stringify(extra)}`);
+        softFailures += 1;
       }
     }
   }

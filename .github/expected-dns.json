@@ -14,7 +14,7 @@
     "allowedPolicies": ["reject", "quarantine"]
   },
   "caa": {
-    "$comment": "docs/dns-tls.md §1: lista de CAs autorizadas a emitir para o domínio (Universal SSL da Cloudflare) + o iodef de notificação. AO CONTRÁRIO do SPF/DMARC/DNSSEC acima, docs/dns-tls.md confirma que estes registos AINDA NÃO EXISTEM em produção (2026-07-29) — é uma lacuna já conhecida e documentada, não uma regressão. Por isso o script trata 'nenhum CAA' como aviso (o TODO já registado), mas 'existe CAA e não bate certo com esta lista' como erro (isso já seria uma regressão de algo que passou a estar correto).",
+    "$comment": "docs/dns-tls.md §1: lista de CAs autorizadas a emitir para o domínio (Universal SSL da Cloudflare) + o iodef de notificação. AO CONTRÁRIO do SPF/DMARC/DNSSEC acima, docs/dns-tls.md confirma que estes registos AINDA NÃO EXISTEM em produção (2026-07-29) — era uma lacuna já conhecida e documentada, não uma regressão. Por isso o script trata 'nenhum CAA' como aviso (o TODO já registado), mas 'falta algum destes 7 registos' como erro (isso já seria uma regressão de algo que passou a estar correto). A comparação é por SUBCONJUNTO, não igualdade exata: confirmado em produção (2026-08-02) que a Cloudflare injeta CAs próprias (comodoca.com, digicert.com) na resposta autoritativa por baixo desta lista, como diversificação do Universal SSL — não estão na lista de registos editável no dashboard, ninguém os adicionou, e não são uma regressão; aparecem como aviso (registo 'extra'), nunca como erro.",
     "expected": [
       "0 issue \"letsencrypt.org\"",
       "0 issue \"pki.goog; cansignhttpexchanges=yes\"",
