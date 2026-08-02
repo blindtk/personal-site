@@ -16,8 +16,8 @@
 Daniel Malaco's personal site — and, more to the point, a working demonstration
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 233 tests, fourteen CI workflows, ten
-ADRs, for a personal site. That is deliberate, not accidental — see
+real data for the dashboards it feeds. 233 tests, fourteen CI workflows,
+fourteen ADRs, for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
 ## What this is
@@ -28,23 +28,31 @@ ADRs, for a personal site. That is deliberate, not accidental — see
 | `static/` | The static site (Astro): blog, 11 security tools, all pages | ✅ active |
 | `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, self-scan, SOC ticker, CSP-violation pipeline | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
-## Architecture and the three decisions worth reading
+## Architecture and the four decisions worth reading
 
 Start with [`docs/architecture.md`](docs/architecture.md) — a diagram of how
 the site, the Worker, KV, and external APIs connect, and where the trust
-boundaries sit. Then, of the ADRs in [`docs/adr/`](docs/adr/), these three
+boundaries sit. Then, of the ADRs in [`docs/adr/`](docs/adr/), these four
 say the most about how this repository actually thinks:
 
-1. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
+1. **[ADR 0011 — no Cloudflare deploy credential in GitHub Actions](docs/adr/0011-sem-token-cloudflare-no-github-actions.md).**
+   Every `wrangler deploy` in CI runs `--dry-run`; real deploy happens through
+   Cloudflare Workers Builds, entirely outside GitHub Actions, so there is no
+   high-value credential anywhere a compromised workflow or a malicious fork
+   PR could reach. The honest trade-off that comes with it — no cryptographic
+   provenance between the commit CI tested and what's actually running — is
+   tracked as an open item in [`docs/threat-model.md`](docs/threat-model.md),
+   not hidden.
+2. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
    The honeypot and analytics never store the visitor's IP — not because the
    plan doesn't allow it, but because the data wasn't needed for the
    aggregates the dashboards show. A privacy decision made against the
    author's own convenience, on a project with no external pressure to make it.
-2. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
+3. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
    Rather than hash every inline `<script>`/`<style>` Astro emits, the site
    eliminates inline output entirely, so the CSP is one static line with no
    `unsafe-inline` and no hash list to keep in sync as pages change.
-3. **[ADR 0003 — rate limiting in KV, with fail-closed, as a deliberate stopgap](docs/adr/0003-rate-limit-kv-vs-nativo.md).**
+4. **[ADR 0003 — rate limiting in KV, with fail-closed, as a deliberate stopgap](docs/adr/0003-rate-limit-kv-vs-nativo.md).**
    A hand-rolled rate limiter with a documented migration path to a native
    Cloudflare rule, plus the incident that shaped it: the honeypot came close
    to the Workers KV free-tier daily write ceiling before launch, diagnosed

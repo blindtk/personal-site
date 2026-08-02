@@ -22,3 +22,7 @@ existed.
 | [0008](0008-mcp-cloudflare-so-leitura.md) | Cloudflare MCP servers in `.mcp.json`: read-only, no `cloudflare-bindings` |
 | [0009](0009-repositorio-publico.md) | Public repository, not private |
 | [0010](0010-coderabbit-revisao-ia.md) | CodeRabbit for AI PR review, not Copilot Code Review or Strix in CI |
+| [0011](0011-sem-token-cloudflare-no-github-actions.md) | No Cloudflare deploy credential in GitHub Actions: Workers Builds over a CI-driven deploy |
+| [0012](0012-baseline-de-hardening-github-actions.md) | GitHub Actions hardening baseline: SHA-pinned actions, `permissions: {}`, no `persist-credentials` |
+| [0013](0013-osv-scanner-action-direta.md) | OSV-Scanner called directly, not via the official reusable workflow |
+| [0014](0014-astro-check-node-test-obrigatorios-ci.md) | `astro check` and `node --test` as required CI gates, not a human-confirmed checklist item |
