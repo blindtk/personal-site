@@ -187,16 +187,18 @@ this is a deliberate stance, not an oversight.
 
 ## AI-assisted development
 
-**Tools:** Claude Code for implementation (branch names in the merge commits
-record it, on every PR); CodeRabbit for review, calibrated to this repo's
+**Tools:** Claude Code for implementation — the branch name on every merge
+commit records this; CodeRabbit for review, calibrated to this repo's
 own invariants rather than generic (`.coderabbit.yaml`).
 
 **Decisions:** architecture, threat model, and security trade-offs are
 mine — the ADRs in [`docs/adr/`](docs/adr/) record what was rejected and why.
 
-**Review:** every PR is gated by tests (`npm test`) and the scanners in
-[`.github/workflows/`](.github/workflows/), then reviewed by CodeRabbit,
-then approved manually before merge.
+**Review:** every PR is gated by the production build, type checking, and
+tests in both `static/` and `dynamic/worker/`, plus the security scanners
+in [`.github/workflows/`](.github/workflows/) (full detail in
+[`docs/ci-cd.md`](docs/ci-cd.md)), then reviewed by CodeRabbit, then
+approved manually before merge.
 
 **Guardrails:** the repo's own conventions live in
 [`CLAUDE.md`](CLAUDE.md); a change that doesn't follow them isn't merged
