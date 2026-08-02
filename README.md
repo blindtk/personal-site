@@ -116,12 +116,15 @@ npm run preview    # serve dist/ locally
 
 ## Deploy
 
-The static site runs on Cloudflare Pages and deploys automatically from
-Git — every push to `main` publishes it. The backend runs on a Cloudflare
-Worker (`dynamic/worker/`); its production deploy stays manual (`npx
-wrangler deploy`, see `dynamic/PLAN.md`). `SITE_URL` in
+Both halves deploy automatically from Git on every push to `main`: the
+static site via Cloudflare Pages, and the backend Worker
+(`dynamic/worker/`) via Cloudflare Workers Builds — the same Git
+integration, configured separately in the Cloudflare dashboard. `npx
+wrangler deploy` from a laptop is a secondary path, used to test a branch
+before merge, not the production path. `SITE_URL` in
 `static/src/config.ts` points at the production domain. The deploy process
-this repo actually follows is documented in
+this repo actually follows — including the real incidents hit along the
+way — is documented in
 [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
 ## Build pipeline security

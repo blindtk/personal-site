@@ -37,8 +37,9 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
    with known vectors (RFC test vectors, real `/24`/`/31` networks, etc.) as
    the standard of proof. If the change was specifically in `dynamic/worker/`,
    also confirm it still packages with `cd dynamic/worker && npx wrangler
-   deploy --dry-run` (see [`dynamic/PLAN.md`](dynamic/PLAN.md) — the real
-   deploy stays manual).
+   deploy --dry-run` — production deploy itself is automatic (Cloudflare
+   Workers Builds, on push to `main`), not something a PR triggers; see
+   [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) §4.
 5. If you touched `dynamic/worker/src/lib/csp-report.js` or
    `sanitize.js`, also run the fuzzing harnesses locally
    (`.clusterfuzzlite/fuzz/`) for a few seconds, to confirm they still
