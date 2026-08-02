@@ -17,7 +17,7 @@ Daniel Malaco's personal site — and, more to the point, a working demonstratio
 of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
 treats its own build chain as attack surface, and a live honeypot generating
 real data for the dashboards it feeds. 233 tests, fourteen CI workflows,
-fourteen ADRs, for a personal site. That is deliberate, not accidental — see
+eighteen ADRs, for a personal site. That is deliberate, not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
 ## What this is
