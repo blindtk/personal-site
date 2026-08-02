@@ -12,7 +12,7 @@ this table is the full version.
 | **CodeRabbit** | GitHub App (`.coderabbit.yaml`), not a workflow | AI-assisted PR review, free on a public repo. Not a blocking gate — a comment, not pass/fail. Calibrated with per-folder `path_instructions` (e.g. reminds it of the KV write budget in `dynamic/worker/`, PT/EN parity in `i18n/`, thin routes in `pages/`) instead of generic. |
 | **Dependency Review** | `dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
 | **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
-| **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
+| **gitleaks** | `security.yml` + local hook | Scans for secrets (Cloudflare tokens, keys) matching its configured rules — detection, not a guarantee against every possible secret. Locally: `pipx install pre-commit && pre-commit install`. |
 | **CodeQL** | `codeql.yml` | Semantic SAST for JavaScript/TypeScript — a different analysis class from Semgrep's pattern-matching, run separately. |
 | **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
 | **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
@@ -62,7 +62,12 @@ instantly. Confirmed independent of the pinned commit — it and the
 action's current `main` both resolve to the same floating
 `gcr.io/oss-fuzz-base/clusterfuzzlite-build-fuzzers:v1` Docker image, so
 the bug lives there, not in this repo. The workflow stays
-`workflow_dispatch`-only until upstream fixes it.
+`workflow_dispatch`-only until upstream fixes it. That floating tag is an
+accepted residual risk, not an oversight: it's resolved entirely inside
+Google's own action (this repo has no way to pin it to a digest without
+forking the action), the workflow only runs on manual dispatch (never
+automatically on untrusted input), and it's revisited whenever upstream
+changes the tag's behavior enough to unblock the JS sanitizer bug above.
 
 ## External scans (manual)
 

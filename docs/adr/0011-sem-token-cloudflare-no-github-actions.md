@@ -22,10 +22,11 @@ entirely outside GitHub Actions.
 
 Never put a Cloudflare API token with deploy permissions into GitHub
 Actions secrets. Let Cloudflare's own Git integration (Workers Builds)
-own the deploy step. The only Cloudflare credential that does live in
-GitHub Actions secrets is `CF_API_TOKEN` used by `/api/cf-stats`
-(`Analytics:Read` + `Firewall/WAF:Read` scope only — read, not deploy),
-and it never reaches a workflow, only the Worker's own runtime secrets.
+own the deploy step. The one Cloudflare credential this repository does
+use, `CF_API_TOKEN` (`Analytics:Read` + `Firewall/WAF:Read` scope only —
+read, not deploy) for `/api/cf-stats`, never reaches GitHub Actions at
+all — it lives only in the Worker's own runtime secrets (`wrangler secret
+put`, see `dynamic/worker/README.md`).
 
 ## Consequences
 

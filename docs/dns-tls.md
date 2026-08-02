@@ -38,7 +38,7 @@ danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 > CA can issue a certificate for the domain, unrestricted. DMARC/SPF
 > already confirmed correct in the same check (strict `p=reject`,
 > `-all`) — only the CAA records from this list are missing.
-
+>
 > **Updated (2026-08-02):** the 7 records were created in the dashboard
 > and `dig CAA danielmala.co +short` confirms all of them present. But the
 > authoritative response returns **11** records, not 7 — Cloudflare adds
@@ -77,8 +77,9 @@ danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 3. Submit at <https://hstspreload.org> and track the status.
 
 > ⚠️ **Before submitting:** `includeSubDomains` + preload forces **every**
-> subdomain to valid HTTPS, forever (getting off the list takes months and
-> isn't guaranteed). If the homelab/`lab.` or another subdomain ever serves
+> subdomain to valid HTTPS for as long as the domain stays on the list
+> (removal is slow and not guaranteed — it can take months and depends on
+> browser rollout). If the homelab/`lab.` or another subdomain ever serves
 > plain HTTP, it breaks. Only submit once the subdomain family is decided.
 
 ## 4. DNSSEC

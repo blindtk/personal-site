@@ -22,9 +22,10 @@ a private repo, and are free on a public one.
 
 Make the repository public (2026-07-31), after a pre-publication
 checklist: replace the personal email exposed in `config.ts` with a
-domain alias, rotate `RATE_SALT` and `CF_API_TOKEN`, and confirm (via
-`gitleaks detect` over the full history) that no real secret ever entered
-git. **History preserved in full** — no squash, no rewrite, no restarting
+domain alias, rotate `RATE_SALT` and `CF_API_TOKEN`, and run `gitleaks
+git` over the full history to check for secrets matching its configured
+rules — detection, not a guarantee that no secret was ever committed.
+**History preserved in full** — no squash, no rewrite, no restarting
 in another repository: the 132 PRs show the actual process of finding and
 fixing mistakes (e.g. the rate limit's fail-open → fail-closed fix,
 [ADR 0003](0003-rate-limit-kv-vs-nativo.md)), which is more persuasive

@@ -130,8 +130,8 @@ auditing the workflows themselves, and CodeRabbit for AI-assisted review
 (calibrated per-folder, not generic — `.coderabbit.yaml`). Production gets
 its own scheduled checks:
 security headers against a versioned allowlist, a TLS/cipher scan, DNS
-hygiene, a Mozilla Observatory grade, and fuzzing of the two real trust
-boundaries (CSP-report parsing, output sanitizers). Every action is pinned to
+hygiene, and a Mozilla Observatory grade. Fuzzing of the two real trust
+boundaries (CSP-report parsing, output sanitizers) is manual-only. Every action is pinned to
 a commit SHA (Renovate keeps digests current), `permissions: {}` by default,
 `persist-credentials: false` everywhere, and `npm ci --ignore-scripts` in CI.
 

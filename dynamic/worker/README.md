@@ -18,7 +18,7 @@ single Cloudflare Worker + one KV namespace.
 | `GET /api/scan` | Note + checklist of the site's own headers | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | — | — |
 | `GET /api/ticker` | CISA KEV + critical NVD entries, sanitized | 1 h | — |
-| `POST /api/csp-report` | CSP violation receiver — **manual** send (button on the Evidence page), not automatic `report-uri`/`report-to` (removed from the CSP in 2026-07, see `docs/security-headers.md`) | — | 10/min per client + 300/h global cap |
+| `POST /api/csp-report` | CSP violation receiver — **manual** send (button on the Evidence page), not automatic `report-uri`/`report-to` (removed from the CSP in 2026-07, see `docs/security-headers.md`) | — | 10/min per client (fails closed with 429 past this limit) + 50/day global write cap (silently dropped past the cap, still 204) |
 | `GET /api/csp-violations` | 7-day violation aggregates (Security page panel) | 60 s | — |
 | `GET /api/threat-intel` | Heatmap, time-of-day, tops (country/ASN/technique), and recent events (Perimeter panel) | 6 h | — |
 | `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon | — | same pattern as `/api/csp-report` |
@@ -34,11 +34,13 @@ single Cloudflare Worker + one KV namespace.
 validated to 2 letters — anything else becomes `XX`), ASN
 (`request.cf.asn`, validated within the 32-bit space), path (only known
 decoys), and a **timestamp rounded to 5 minutes**. The rounding is
-anonymization: without the precise instant, ASN+path+timestamp can't be
-correlated with third-party logs. The only thing derived from the IP is
-the rate-limit key: a truncated SHA-256 hash with a salt that rotates
-daily (`RATE_SALT` + UTC date), kept only during the limit's window and
-never associated with the events. `recordHoneypot` doesn't even read the
+anonymization: it removes the precise instant, reducing (not eliminating)
+the risk of correlating ASN+path+timestamp with third-party logs. The
+only thing derived from the IP is the rate-limit key: a truncated
+SHA-256 hash combining `RATE_SALT` with the UTC date — this derived key
+changes daily even though the underlying `RATE_SALT` secret itself is
+rotated manually on a weekly cadence (see the secrets table below) — kept
+only during the limit's window and never associated with the events. `recordHoneypot` doesn't even read the
 IP. Covered by a test (`test/logic.test.mjs`): the IP never appears in
 any KV value nor in any Worker log line.
 
@@ -58,7 +60,7 @@ a recent-events list: only daily counters by directive/category/origin
 (`src/lib/csp-report.js`, covered by a test — path and query never appear
 in any KV value).
 
-Endpoint defenses (it's the Worker's only POST, public by nature): strict
+Endpoint defenses (these are the Worker's only public POST endpoints, by nature): strict
 `Content-Type`, body ≤ 16 KB, per-client rate limit, validation that
 `document-uri` belongs to the site itself (forged reports "from other
 sites" are dropped with the same 204 — indistinguishable), a cardinality
@@ -255,7 +257,7 @@ enough — nothing to change.
 | Name | Type | Where | For |
 | --- | --- | --- | --- |
 | `KV` | binding | wrangler.toml | single namespace (events, buckets, caches, rate limit) |
-| `RATE_SALT` | secret | `wrangler secret put` | rate-limit hash; rotate WEEKLY (invalidates accumulated limits on purpose) |
+| `RATE_SALT` | secret | `wrangler secret put` | rate-limit hash; the secret itself is rotated manually WEEKLY (invalidates accumulated limits on purpose) — the *effective* rate-limit key derived from it already changes daily (see Privacy section above) |
 | `NVD_API_KEY` | secret | `wrangler secret put` | optional, NVD rate limit |
 | `CF_API_TOKEN` | secret | `wrangler secret put` | Analytics:Read (zone + account) + Firewall/WAF:Read (zone + account) token, for `/api/cf-stats` — see the "Cloudflare Status" section above |
 | `ACCESS_CLIENT_ID` | secret | `wrangler secret put` | optional — Access Service Token, only if Access is active in front of `SCAN_TARGET` |

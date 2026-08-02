@@ -84,9 +84,13 @@ assumption.
 
 ### B2 — GitHub account/Actions compromise
 Well mitigated for the *pipeline* (SHA pins, `permissions: {}`,
-`persist-credentials: false`, zizmor). Residual risk: account-level MFA;
-once finding H3 (deploy via CI) is closed, the deploy token becomes a new
-high-value secret that has to live in a protected Environment.
+`persist-credentials: false`, zizmor). Residual risk: account-level MFA.
+Production deploy runs through Workers Builds, entirely outside GitHub
+Actions (see B3, [ADR 0011](adr/0011-sem-token-cloudflare-no-github-actions.md))
+— finding H3 is the missing provenance and reviewer gate on that path,
+not a deploy token, since no deploy credential lives on the GitHub side
+at all. A deploy token would only become relevant if H3's remediation
+moved production deployment into GitHub Actions instead.
 
 ### B3 — Developer laptop compromise
 The normal path to Worker production is automatic (Workers Builds, on

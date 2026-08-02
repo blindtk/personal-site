@@ -14,7 +14,7 @@ existed.
 
 | ADR | Decision |
 | --- | --- |
-| [0001](0001-csp-sem-inline.md) | CSP without `unsafe-inline`, without hashes: eliminate inline instead of cataloguing it |
+| [0001](0001-csp-sem-inline.md) | CSP without `unsafe-inline`, without per-block hashes: eliminate inline instead of cataloguing it |
 | [0003](0003-rate-limit-kv-vs-nativo.md) | Rate limiting in KV (fail-closed) as a transition to a native Cloudflare rule |
 | [0004](0004-zero-pii-honeypot.md) | Honeypot and analytics zero-PII by choice, not plan limitation |
 | [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget |

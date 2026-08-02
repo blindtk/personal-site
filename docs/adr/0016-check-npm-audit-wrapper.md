@@ -30,8 +30,8 @@ re-review instead of a permanent silent exception.
 - A known-bad advisory can be excepted with a paper trail (who, why,
   until when) instead of either blocking every PR or disabling the
   check.
-- moderate/low-severity advisories with no available fix don't block CI
-  — only high/critical do.
+- moderate/low-severity advisories never block CI, regardless of whether
+  a fix is available — only high/critical do.
 - Two independent dependency scanners (OSV-Scanner, `npm audit` via this
   wrapper) now share the same exception discipline: declarative,
   justified, and time-boxed, never a silent ignore.

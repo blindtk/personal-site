@@ -1,4 +1,4 @@
-# ADR 0001 — CSP without `unsafe-inline`, without hashes: eliminate inline instead of cataloguing it
+# ADR 0001 — CSP without `unsafe-inline`, without per-block hashes: eliminate inline instead of cataloguing it
 
 **Status:** accepted and in production (`static/public/_headers`).
 

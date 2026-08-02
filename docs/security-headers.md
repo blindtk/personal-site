@@ -22,7 +22,7 @@ build-time generation, no per-page `<meta>`.
 > **Recomputing the JSON-LD hash**, if `role[pt]`/`role[en]` or another
 > `config.ts` field used in the block ever diverges between PT and EN
 > (today a single hash covers both pages):
-> ```
+> ```bash
 > node -e "console.log('sha256-' + require('crypto').createHash('sha256').update(EXACT_SCRIPT_CONTENT,'utf8').digest('base64'))"
 > ```
 > (use the exact text between `<script type="application/ld+json">` and
@@ -81,7 +81,7 @@ Cross-Origin-Embedder-Policy: require-corp
 Exception for the Open Graph images (`/og-image.png`, `/og-image-en.png`),
 which need to be loadable from other origins (LinkedIn/Slack/etc. previews):
 
-```
+```text
 ! Cross-Origin-Resource-Policy
 Cross-Origin-Resource-Policy: cross-origin
 Cache-Control: public, max-age=31536000, immutable
