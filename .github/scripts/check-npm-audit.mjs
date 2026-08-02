@@ -24,6 +24,24 @@ const allowlistPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'npm-a
 const { ignored } = JSON.parse(readFileSync(allowlistPath, 'utf8'));
 const today = new Date().toISOString().slice(0, 10);
 
+// Cada entrada tem de ter ghsaId, reason não-vazio e ignoreUntil num formato
+// de data válido — sem isto, uma entrada mal-formada podia suprimir um
+// advisory high/critical sem a justificação que este ficheiro existe para
+// impor.
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const invalid = ignored.filter((entry) => {
+  if (typeof entry.ghsaId !== 'string' || !entry.ghsaId) return true;
+  if (typeof entry.reason !== 'string' || !entry.reason.trim()) return true;
+  if (typeof entry.ignoreUntil !== 'string' || !ISO_DATE.test(entry.ignoreUntil)) return true;
+  return Number.isNaN(new Date(entry.ignoreUntil).getTime());
+});
+if (invalid.length > 0) {
+  for (const entry of invalid) {
+    console.error(`::error::npm-audit-allowlist.json: entrada inválida (ghsaId, reason e ignoreUntil (AAAA-MM-DD) são obrigatórios) — ${JSON.stringify(entry)}`);
+  }
+  process.exit(1);
+}
+
 let report;
 try {
   const out = execFileSync('npm', ['audit', '--json'], { cwd: pkgDir, encoding: 'utf8' });

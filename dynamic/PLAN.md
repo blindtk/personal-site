@@ -541,7 +541,15 @@
   `.mcp.json`; the remaining six (`cloudflare-audit-logs`,
   `cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
   `cloudflare-observability`, `cloudflare-builds`, `cloudflare-docs`)
-  stay, confirmed as read-only by the analysis above.
+  stayed, believed read-only by the analysis above.
+
+  **Corrected (2026-08-02, CodeRabbit review of PR #157):** the "all
+  six are read-only" premise was wrong for `cloudflare-builds` — the
+  Cloudflare Workers Builds MCP exposes build-management operations
+  (e.g. `workers_builds_cancel_build`), not just reads. Removed from
+  `.mcp.json`; the remaining five (`cloudflare-audit-logs`,
+  `cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
+  `cloudflare-observability`, `cloudflare-docs`) are the read-only set.
 
 ## Shelved ideas (presented, **not approved** for implementation)
 

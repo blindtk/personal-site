@@ -41,3 +41,11 @@ in the Cloudflare dashboard: `cloudflare-audit-logs`,
 - `cloudflare-audit-logs` still exposes sensitive information about the
   account itself (administrative action history) — not destructive, but
   worth keeping in mind when authorizing OAuth in a session.
+
+**Correction (2026-08-02):** `cloudflare-builds` wasn't actually
+read-only — the Cloudflare Workers Builds MCP exposes build-management
+operations (e.g. `workers_builds_cancel_build`), not just reads. Removed
+from `.mcp.json`; the remaining five (`cloudflare-audit-logs`,
+`cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
+`cloudflare-observability`, `cloudflare-docs`) are the read-only set.
+See `dynamic/PLAN.md` for the full record.
