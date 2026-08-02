@@ -28,12 +28,20 @@ eighteen ADRs, for a personal site. That is deliberate, not accidental — see
 | `static/` | The static site (Astro): blog, 11 security tools, all pages | ✅ active |
 | `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, self-scan, SOC ticker, CSP-violation pipeline | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
-## Architecture and the four decisions worth reading
+## Architecture, threat model, and the four decisions worth reading
 
 Start with [`docs/architecture.md`](docs/architecture.md) — a diagram of how
 the site, the Worker, KV, and external APIs connect, and where the trust
-boundaries sit. Then, of the ADRs in [`docs/adr/`](docs/adr/), these four
-say the most about how this repository actually thinks:
+boundaries sit.
+
+[`docs/threat-model.md`](docs/threat-model.md) is the living threat model
+that architecture answers to: assets, attack surfaces, most-likely/highest-
+impact attacks, accepted residual risk — including "the site's own security
+claims" as a breakable asset, which is the reason every verifiable claim in
+this README is checked against the code, not asserted from memory.
+
+Of the ADRs in [`docs/adr/`](docs/adr/) that respond to that threat model,
+these four say the most about how this repository actually thinks:
 
 1. **[ADR 0011 — no Cloudflare deploy credential in GitHub Actions](docs/adr/0011-sem-token-cloudflare-no-github-actions.md).**
    Every `wrangler deploy` in CI runs `--dry-run`; real deploy happens through
@@ -58,12 +66,6 @@ say the most about how this repository actually thinks:
    to the Workers KV free-tier daily write ceiling before launch, diagnosed
    and fixed by aligning cache TTLs to the cron interval rather than by
    reaching for a bigger plan.
-
-[`docs/threat-model.md`](docs/threat-model.md) is the living threat model:
-assets, attack surfaces, most-likely/highest-impact attacks, accepted residual
-risk — including "the site's own security claims" as a breakable asset, which
-is the reason every verifiable claim in this README is checked against the
-code, not asserted from memory.
 
 ## Why so much for a personal site?
 
@@ -142,15 +144,15 @@ Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 
 ## Security features
 
-`/ferramentas/` (`/en/tools/`) has **11 tools**: 8 run entirely client-side
-(subnet calculator, hash functions, encoder/decoder, password strength,
+`/ferramentas/` (`/en/tools/`) has **11 tools**. 8 run entirely client-side —
+subnet calculator, hash functions, encoder/decoder, password strength,
 email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
-no network calls, no backend dependency), and 3 talk to the Worker because the
-check genuinely can't run in a browser (`pwned` — k-anonymity breach check,
-`self-scan` — header analysis of an arbitrary target, `mirror` — what the
-server sees about you). The three server-backed ones are marked with a
-"requires server" badge on the tools index; they are never hidden as if they
-were client-side.
+no network calls, no backend dependency. The other 3 talk to the Worker
+because the check genuinely can't run in a browser: `pwned` (k-anonymity
+breach check), `self-scan` (header analysis of an arbitrary target), and
+`mirror` (what the server sees about you). The three server-backed ones are
+marked with a "requires server" badge on the tools index; they are never
+hidden as if they were client-side.
 
 Beyond the tools, the site has several live cybersecurity showcases:
 
@@ -182,7 +184,7 @@ checked by tests (`npm test`) and by the scanners in
 guarantee, but the gate every PR has to clear. CodeRabbit reviews every PR
 too, calibrated to this repo's own invariants rather than generic
 (`.coderabbit.yaml`) — AI reviewing AI-assisted code, not a substitute for
-the review that's mine. I can walk through any decision in this repository.
+the review that's mine.
 
 ## Contributing
 
