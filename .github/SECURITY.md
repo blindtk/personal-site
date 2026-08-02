@@ -44,5 +44,5 @@ no practical exploit) are low priority.
 
 The build pipeline itself is treated as attack surface: OSV-Scanner,
 gitleaks, Semgrep, and zizmor run on every PR, and GitHub Actions are
-pinned to commit SHA (kept current by Renovate). Details in the
-**"Build pipeline security"** section of the [README](../README.md).
+pinned to commit SHA (kept current by Renovate). Full stage-by-stage
+detail in [`docs/ci-cd.md`](../docs/ci-cd.md).

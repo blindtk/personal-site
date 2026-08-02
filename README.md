@@ -127,75 +127,19 @@ this repo actually follows is documented in
 ## Build pipeline security
 
 The repository treats its own build chain as attack surface. Every push/PR
-goes through:
+goes through build + tests + `npm audit`, Dependency Review, OSV-Scanner,
+gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), and zizmor
+auditing the workflows themselves. Production gets its own scheduled checks:
+security headers against a versioned allowlist, a TLS/cipher scan, DNS
+hygiene, a Mozilla Observatory grade, and fuzzing of the two real trust
+boundaries (CSP-report parsing, output sanitizers). Every action is pinned to
+a commit SHA (Renovate keeps digests current), `permissions: {}` by default,
+`persist-credentials: false` everywhere, and `npm ci --ignore-scripts` in CI.
 
-| Check | Where | What it guarantees |
-| --- | --- | --- |
-| **Build + `npm audit`** | `ci.yml` | The site builds clean, no high/critical advisories in dependencies. |
-| **Dependency Review** | `dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (the GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
-| **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
-| **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
-| **CodeQL** | `codeql.yml` | Semantic SAST for the JavaScript/TypeScript — a different analysis class from Semgrep's pattern-matching, run separately. |
-| **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
-| **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
-| **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
-| **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
-| **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
-| **TLS/cipher/vuln scan in production** | `tls-check.yml` (monthly + manual) | Runs [testssl.sh](https://testssl.sh) against production; findings are classified by testssl.sh's own severity — CRITICAL/HIGH (weak protocols, known vulnerabilities like Heartbleed/POODLE, an invalid/expired cert) fail the workflow, MEDIUM/LOW only warn. |
-| **DNS hygiene in production** | `dns-check.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against what [`docs/dns-tls.md`](docs/dns-tls.md) documents as already correct — a regression fails the workflow; a still-missing CAA record (a known, documented gap) only warns. |
-| **Mozilla Observatory grade in production** | `observatory-check.yml` (weekly + manual) | Calls the free [Mozilla HTTP Observatory](https://github.com/mdn/mdn-http-observatory) API — a second, independent grading rubric (cookies, redirect chain, cross-origin isolation) on top of the exact-header checks in `headers.yml`. Grade D/F fails the workflow, B/C only warns. |
-| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (manual only — see note below) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
-| **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
-
-Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
-keeps the digests current and batches updates into a weekly PR),
-`permissions: {}` by default with least-privilege per job, `persist-credentials: false`
-on every checkout, and `npm ci --ignore-scripts` in `ci.yml` (no dependency
-runs an arbitrary postinstall in CI). The CSP is one static line in
-`static/public/_headers` — no hashes, because there is zero inline
-`<script>`/`<style>` on the site (see [docs/security-headers.md](docs/security-headers.md)
-and [ADR 0001](docs/adr/0001-csp-sem-inline.md)). The DNS/TLS plan (CAA, HSTS
-preload, DNSSEC) lives in [docs/dns-tls.md](docs/dns-tls.md). The Cloudflare
-deploy process (domain, Pages, Worker, Access, WAF) and the real incidents hit
-along the way are in [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
-
-**On cadence:** the weekly-not-per-PR schedule for SBOM/signature verification
-predates this repo going public, when Actions minutes were metered against
-the private-repo free tier (2,000 min/month). Public repos get unlimited
-Actions minutes, but the weekly cadence stays — SBOM drift and signature
-checks don't need per-PR granularity, and there was no reason to change a
-schedule that was working. Full context in
-[docs/security-review-2026-07-29.md](docs/security-review-2026-07-29.md) §0.
-
-**On the Fuzzing schedule:** `fuzzing.yml` has no cron for now — `language:
-javascript` + `sanitizer: coverage` (the only `SANITIZER` value accepted by
-both the OSS-Fuzz compile script and the ClusterFuzzLite action's own
-validator for JS) makes `google/clusterfuzzlite/actions/build_fuzzers`
-compile unrelated honggfuzz/AFL compiler-wrapper binaries alongside the real
-JS targets, and `run_fuzzers` treats them as fuzz targets, failing instantly.
-Confirmed independent of the pinned commit — it and the action's current
-`main` both resolve to the same floating `gcr.io/oss-fuzz-base/clusterfuzzlite-
-build-fuzzers:v1` Docker image, so the bug lives there, not in this repo. The
-workflow stays `workflow_dispatch`-only until upstream fixes it.
-
-## External security scans (manual)
-
-Beyond the automated checks above, these third-party scanners are run
-manually against production, not wired into CI — either because they have no
-API, the API is redundant with a check this repo already runs, or the free
-tier doesn't fit a recurring cron (tool-by-tool reasoning in [PR #155](https://github.com/blindtk/personal-site/pull/155)).
-Each link below is a live report for `danielmala.co`, not a static snapshot:
-
-| Scanner | What it checks | Report |
-| --- | --- | --- |
-| Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
-| Security Headers | HTTP security headers | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
-| Mozilla HTTP Observatory | headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half of this one | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
-| Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
-| DNSViz | independent DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
-| ImmuniWeb | web/SSL security score | [immuniweb.com](https://www.immuniweb.com/cyberscore/danielmala.co/) |
-| Cloudflare Agent Readiness | AI-agent discoverability/legibility — see the `Link` header work in [PR #154](https://github.com/blindtk/personal-site/pull/154) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
-| MXToolbox | ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |
+Full stage-by-stage table, cadence rationale, and the external (manual)
+scanner reports for `danielmala.co` — Qualys SSL Labs, Security Headers,
+Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
+[`docs/ci-cd.md`](docs/ci-cd.md).
 
 ## Security features (the site's actual subject matter)
 
