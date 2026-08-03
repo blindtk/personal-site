@@ -13,19 +13,20 @@
 [![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
-Two of the fourteen workflows in [`.github/workflows/`](.github/workflows/) have
-no badge above: `dependency-review.yml` (PR-scoped, listed in the build
-pipeline table below) and `labeler.yml` (applies area labels to PRs — repo
-hygiene, not a security check).
-
-Daniel Malaco's personal site — and, more to the point, a working demonstration
-of security engineering practice: a threat model, ADRs, a CI/CD pipeline that
-treats its own build chain as attack surface, and a live honeypot generating
-real data for the dashboards it feeds. 233 tests, fourteen CI workflows, four
-ADRs, for a personal site. That is deliberate, not accidental — see
+Daniel Malaco's personal site: technical writing, interactive security
+tools, and production-backed demonstrations of defensive engineering — and,
+more to the point, a working demonstration of security engineering practice
+at a scale most personal sites don't bother with. That scale is deliberate,
+not accidental — see
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) below.
 
-## What this is
+**Highlights**
+- Living threat model and documented architecture decisions (ADRs)
+- Production Cloudflare Worker powering live security demonstrations
+- Interactive security tools (client-side and Worker-backed)
+- CI/CD pipeline designed as part of the security model
+
+## Repository layout
 
 | Folder | What it is | Status |
 | --- | --- | --- |
@@ -33,42 +34,53 @@ ADRs, for a personal site. That is deliberate, not accidental — see
 | `static/` | The static site (Astro): blog, 11 security tools, all pages | ✅ active |
 | `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, self-scan, SOC ticker, CSP-violation pipeline | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
-## Architecture and the three decisions worth reading
+## Architecture, threat model, and the four decisions worth reading
 
 Start with [`docs/architecture.md`](docs/architecture.md) — a diagram of how
 the site, the Worker, KV, and external APIs connect, and where the trust
-boundaries sit. Then, of the four ADRs in [`docs/adr/`](docs/adr/), these three
-say the most about how this repository actually thinks:
+boundaries sit.
 
-1. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
+[`docs/threat-model.md`](docs/threat-model.md) is the living threat model
+that architecture answers to: assets, attack surfaces, most-likely/highest-
+impact attacks, accepted residual risk — including "the site's own security
+claims" as a breakable asset, which is the reason every verifiable claim in
+this README is checked against the code, not asserted from memory.
+
+Of the ADRs in [`docs/adr/`](docs/adr/) that respond to that threat model,
+these four say the most about how this repository actually thinks:
+
+1. **[ADR 0011 — no Cloudflare deploy credential in GitHub Actions](docs/adr/0011-sem-token-cloudflare-no-github-actions.md).**
+   Every `wrangler deploy` in CI runs `--dry-run`; real deploy happens through
+   Cloudflare Workers Builds, entirely outside GitHub Actions, so there is no
+   high-value credential anywhere a compromised workflow or a malicious fork
+   PR could reach. The honest trade-off that comes with it — no cryptographic
+   provenance between the commit CI tested and what's actually running — is
+   tracked as an open item in [`docs/threat-model.md`](docs/threat-model.md),
+   not hidden.
+2. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
    The honeypot and analytics never store the visitor's IP — not because the
    plan doesn't allow it, but because the data wasn't needed for the
    aggregates the dashboards show. A privacy decision made against the
    author's own convenience, on a project with no external pressure to make it.
-2. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
+3. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
    Rather than hash every inline `<script>`/`<style>` Astro emits, the site
    eliminates inline output entirely, so the CSP is one static line with no
    `unsafe-inline` and no hash list to keep in sync as pages change.
-3. **[ADR 0003 — rate limiting in KV, with fail-closed, as a deliberate stopgap](docs/adr/0003-rate-limit-kv-vs-nativo.md).**
+4. **[ADR 0003 — rate limiting in KV, with fail-closed, as a deliberate stopgap](docs/adr/0003-rate-limit-kv-vs-nativo.md).**
    A hand-rolled rate limiter with a documented migration path to a native
    Cloudflare rule, plus the incident that shaped it: the honeypot came close
    to the Workers KV free-tier daily write ceiling before launch, diagnosed
    and fixed by aligning cache TTLs to the cron interval rather than by
    reaching for a bigger plan.
 
-[`docs/threat-model.md`](docs/threat-model.md) is the living threat model:
-assets, attack surfaces, most-likely/highest-impact attacks, accepted residual
-risk — including "the site's own security claims" as a breakable asset, which
-is the reason every verifiable claim in this README is checked against the
-code, not asserted from memory.
-
 ## Why so much for a personal site?
 
-A personal site with a threat model, four ADRs, fourteen CI workflows, and 233
-tests is disproportionate for what it does — unless the disproportion *is* the
-point. It is: this repository exists to demonstrate security-engineering
-practice at a scale where the controls become meaningful, not to serve a blog
-efficiently. The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
+Hundreds of automated tests, more than a dozen CI workflows, and a growing
+set of ADRs are disproportionate for what a personal site does — unless the
+disproportion *is* the point. It is: this repository exists to demonstrate
+security-engineering practice at a scale where the controls become
+meaningful, not to serve a blog efficiently.
+The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
 `/phpmyadmin/`, `/.git/config`) are published on purpose, not despite being a
 honeypot — they're the standard paths every commodity scanner already probes
 blindly, so explaining them costs nothing and demonstrates the technique
@@ -96,108 +108,65 @@ npm run build      # → static/dist/
 npm run preview    # serve dist/ locally
 ```
 
-## Edit content (no code required)
+## Edit content
 
-- **New post:** create `content/blog/pt/my-post.md` (and optionally its
-  English twin in `content/blog/en/` with the same filename). Use
-  `draft: true` in the frontmatter until it's ready to publish.
-- **About page:** `content/pages/sobre.md` (PT) and `content/pages/about.md` (EN).
-- **Projects:** one file per project in `content/projects/pt/` + `en/`.
-- **Links:** `content/links.json`.
-- **Structured data that feeds real pages:** `content/attack.json` (ATT&CK
-  heatmap, `/attack`), `content/certs.json` (Certifications page),
-  `content/awards.json` (CTF/awards list on About and Home), `content/detections.json`
-  (Sigma-style rules shown on the Perimeter page), `content/honeypot-attack.json`
-  (decoy-path → technique mapping), `content/catalog.json` (curated list on
-  the Links page).
-- **Name/handle, email, socials, domain:** all in `static/src/config.ts`.
+All editorial content is markdown/JSON under `content/` — no code, ever
+(`static/` reads it via loaders). Each collection is paired PT
+(`content/<collection>/pt/`) + EN (`content/<collection>/en/`) with the
+**same filename** on both sides; a new blog post is just a new file
+(`draft: true` until it's ready). Personal data (name, handle, email,
+socials, domain) lives only in `static/src/config.ts`. Full collection list
+and schemas: `static/src/content.config.ts`.
 
 ## Deploy
 
-The static site runs on Cloudflare Pages and deploys automatically from
-Git — every push to `main` publishes it. The backend runs on a Cloudflare
-Worker (`dynamic/worker/`); its production deploy stays manual (`npx
-wrangler deploy`, see `dynamic/PLAN.md`). `SITE_URL` in
+Both halves deploy automatically from Git on every push to `main`: the
+static site via Cloudflare Pages, and the backend Worker
+(`dynamic/worker/`) via Cloudflare Workers Builds — the same Git
+integration, configured separately in the Cloudflare dashboard. `npx
+wrangler deploy` from a laptop is a secondary path, used to test a branch
+before merge, not the production path. `SITE_URL` in
 `static/src/config.ts` points at the production domain. The deploy process
-this repo actually follows is documented in
+this repo actually follows — including the real incidents hit along the
+way — is documented in
 [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md).
 
 ## Build pipeline security
 
 The repository treats its own build chain as attack surface. Every push/PR
-goes through:
+goes through build + tests + `npm audit`, Dependency Review, OSV-Scanner,
+gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), zizmor
+auditing the workflows themselves, and CodeRabbit for AI-assisted review
+(calibrated per-folder, not generic — `.coderabbit.yaml`). Production gets
+its own scheduled checks:
+security headers against a versioned allowlist, a TLS/cipher scan, DNS
+hygiene, and a Mozilla Observatory grade. Fuzzing of the two real trust
+boundaries (CSP-report parsing, output sanitizers) is manual-only. Every action is pinned to
+a commit SHA (Renovate keeps digests current), `permissions: {}` by default,
+`persist-credentials: false` everywhere, and `npm ci --ignore-scripts` in CI.
 
-| Check | Where | What it guarantees |
-| --- | --- | --- |
-| **Build + `npm audit`** | `ci.yml` | The site builds clean, no high/critical advisories in dependencies. |
-| **Dependency Review** | `dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (the GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
-| **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
-| **gitleaks** | `security.yml` + local hook | No secret (Cloudflare tokens, keys) ever enters git history. Locally: `pipx install pre-commit && pre-commit install`. |
-| **CodeQL** | `codeql.yml` | Semantic SAST for the JavaScript/TypeScript — a different analysis class from Semgrep's pattern-matching, run separately. |
-| **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
-| **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
-| **Headers in production** | `headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
-| **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
-| **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
-| **TLS/cipher/vuln scan in production** | `tls-check.yml` (monthly + manual) | Runs [testssl.sh](https://testssl.sh) against production; findings are classified by testssl.sh's own severity — CRITICAL/HIGH (weak protocols, known vulnerabilities like Heartbleed/POODLE, an invalid/expired cert) fail the workflow, MEDIUM/LOW only warn. |
-| **DNS hygiene in production** | `dns-check.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against what [`docs/dns-tls.md`](docs/dns-tls.md) documents as already correct — a regression fails the workflow; a still-missing CAA record (a known, documented gap) only warns. |
-| **Mozilla Observatory grade in production** | `observatory-check.yml` (weekly + manual) | Calls the free [Mozilla HTTP Observatory](https://github.com/mdn/mdn-http-observatory) API — a second, independent grading rubric (cookies, redirect chain, cross-origin isolation) on top of the exact-header checks in `headers.yml`. Grade D/F fails the workflow, B/C only warns. |
-| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (manual only — see note below) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
-| **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy, which stays manual (`dynamic/PLAN.md`). |
+Full stage-by-stage table, cadence rationale, and the external (manual)
+scanner reports for `danielmala.co` — Qualys SSL Labs, Security Headers,
+Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
+[`docs/ci-cd.md`](docs/ci-cd.md).
 
-Cross-cutting practices: every action **pinned to a commit SHA** ([Renovate](renovate.json5)
-keeps the digests current and batches updates into a weekly PR),
-`permissions: {}` by default with least-privilege per job, `persist-credentials: false`
-on every checkout, and `npm ci --ignore-scripts` in `ci.yml` (no dependency
-runs an arbitrary postinstall in CI). The CSP is one static line in
-`static/public/_headers` — no hashes, because there is zero inline
-`<script>`/`<style>` on the site (see [docs/security-headers.md](docs/security-headers.md)
-and [ADR 0001](docs/adr/0001-csp-sem-inline.md)). The DNS/TLS plan (CAA, HSTS
-preload, DNSSEC) lives in [docs/dns-tls.md](docs/dns-tls.md). The Cloudflare
-deploy process (domain, Pages, Worker, Access, WAF) and the real incidents hit
-along the way are in [docs/cloudflare-deploy.md](docs/cloudflare-deploy.md).
+## Security features
 
-**On cadence:** the weekly-not-per-PR schedule for SBOM/signature verification
-predates this repo going public, when Actions minutes were metered against
-the private-repo free tier (2,000 min/month). Public repos get unlimited
-Actions minutes, but the weekly cadence stays — SBOM drift and signature
-checks don't need per-PR granularity, and there was no reason to change a
-schedule that was working. Full context in
-[docs/security-review-2026-07-29.md](docs/security-review-2026-07-29.md) §0.
+### Interactive tools
 
-**On the Fuzzing schedule:** `fuzzing.yml` has no cron for now — `language:
-javascript` + `sanitizer: coverage` (the only `SANITIZER` value accepted by
-both the OSS-Fuzz compile script and the ClusterFuzzLite action's own
-validator for JS) makes `google/clusterfuzzlite/actions/build_fuzzers`
-compile unrelated honggfuzz/AFL compiler-wrapper binaries alongside the real
-JS targets, and `run_fuzzers` treats them as fuzz targets, failing instantly.
-Confirmed independent of the pinned commit — it and the action's current
-`main` both resolve to the same floating `gcr.io/oss-fuzz-base/clusterfuzzlite-
-build-fuzzers:v1` Docker image, so the bug lives there, not in this repo. The
-workflow stays `workflow_dispatch`-only until upstream fixes it.
+`/ferramentas/` (`/en/tools/`) has **11 tools**. 8 run entirely client-side —
+subnet calculator, hash functions, encoder/decoder, password strength,
+email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
+no network calls, no backend dependency. The other 3 talk to the Worker
+because the check genuinely can't run in a browser: `pwned` (k-anonymity
+breach check), `self-scan` (header analysis of an arbitrary target), and
+`mirror` (what the server sees about you). The three server-backed ones are
+marked with a "requires server" badge on the tools index; they are never
+hidden as if they were client-side.
 
-## External security scans (manual)
+### Live demonstrations
 
-Beyond the automated checks above, these third-party scanners are run
-manually against production, not wired into CI — either because they have no
-API, the API is redundant with a check this repo already runs, or the free
-tier doesn't fit a recurring cron (tool-by-tool reasoning in [PR #155](https://github.com/blindtk/personal-site/pull/155)).
-Each link below is a live report for `danielmala.co`, not a static snapshot:
-
-| Scanner | What it checks | Report |
-| --- | --- | --- |
-| Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
-| Security Headers | HTTP security headers | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
-| Mozilla HTTP Observatory | headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half of this one | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
-| Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
-| DNSViz | independent DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
-| ImmuniWeb | web/SSL security score | [immuniweb.com](https://www.immuniweb.com/cyberscore/danielmala.co/) |
-| Cloudflare Agent Readiness | AI-agent discoverability/legibility — see the `Link` header work in [PR #154](https://github.com/blindtk/personal-site/pull/154) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
-| MXToolbox | ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |
-
-## Security features (the site's actual subject matter)
-
-Beyond the client-side tools, the site has several live cybersecurity showcases:
+The site also runs several live cybersecurity showcases:
 
 | Feature | Where | Needs the Worker? |
 | --- | --- | --- |
@@ -216,59 +185,43 @@ always works, since it's fully static.
 ["Why so much for a personal site?"](#why-so-much-for-a-personal-site) above —
 this is a deliberate stance, not an oversight.
 
-## Security tools
-
-`/ferramentas/` (`/en/tools/`) has **11 tools**: 8 run entirely client-side
-(subnet calculator, hash functions, encoder/decoder, password strength,
-email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
-no network calls, no backend dependency), and 3 talk to the Worker because the
-check genuinely can't run in a browser (`pwned` — k-anonymity breach check,
-`self-scan` — header analysis of an arbitrary target, `mirror` — what the
-server sees about you). The three server-backed ones are marked with a
-"requires server" badge on the tools index; they are never hidden as if they
-were client-side.
-
-## Code structure
-
-```
-content/               ← markdown/JSON: blog/, pages/, projects/, links.json, attack.json, …
-static/
-  src/
-    config.ts          ← name, handle, email, socials, SITE_URL
-    content.config.ts  ← collection schemas (reads from ../content)
-    i18n/               ← UI strings (ui.ts) and route map (routes.ts)
-    layouts/            ← BaseLayout (nav, footer, <head>)
-    components/
-      pages/            ← one component per page, shared by PT/EN
-      tools/            ← the 11 security tools
-    scripts/            ← pure tool logic (testable in Node)
-    pages/              ← thin routes: / (PT) and /en/ (EN)
-  public/               ← favicon and static files served as-is
-dynamic/
-  worker/               ← Cloudflare Worker in production — honeypot, traffic
-                          map, self-scan, SOC ticker, CSP-violation pipeline
-  PLAN.md               ← decisions log and what's still planned (DNS/whois tools)
-```
-
-Development conventions: see [CLAUDE.md](CLAUDE.md).
-
 ## AI-assisted development
 
-Built with heavy use of Claude Code — the branch names in the merge commits
-already say so, on every PR. Architecture, threat model, security decisions,
-and review are mine; the ADRs in [`docs/adr/`](docs/adr/) record the
-trade-offs and the alternatives rejected. Security-relevant changes are
-checked by tests (`npm test`, 233 across the Worker and the site) and by the
-scanners in [`.github/workflows/`](.github/workflows/) — not a measured
-coverage guarantee, but the gate every PR has to clear. I can walk through
-any decision in this repository.
+**Tools:** Claude Code for implementation — the branch name on every merge
+commit records this; CodeRabbit for review, calibrated to this repo's
+own invariants rather than generic (`.coderabbit.yaml`).
+
+**Decisions:** architecture, threat model, and security trade-offs are
+mine — the ADRs in [`docs/adr/`](docs/adr/) record what was rejected and why.
+
+**Review:** every PR is gated by the production build, type checking, and
+tests in both `static/` and `dynamic/worker/`, plus the security scanners
+in [`.github/workflows/`](.github/workflows/) (full detail in
+[`docs/ci-cd.md`](docs/ci-cd.md)), then reviewed by CodeRabbit, then
+approved manually before merge.
+
+**Guardrails:** the repo's own conventions live in
+[`CLAUDE.md`](CLAUDE.md); a change that doesn't follow them isn't merged
+as-is, even if the logic is correct.
+
+## Documentation
+
+- [`docs/architecture.md`](docs/architecture.md) — system diagram, trust boundaries
+- [`docs/threat-model.md`](docs/threat-model.md) — assets, attack surfaces, residual risk
+- [`dynamic/worker/README.md`](dynamic/worker/README.md) — backend endpoints and privacy stance
+- [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
+- [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
+- [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
+- [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) — the review that seeded the threat model
 
 ## Contributing
 
 Single-maintainer project, but the repo is public and contributions are
-welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process — bug
-reports, PR conventions, and where the project's own conventions live
-(`CLAUDE.md`, in Portuguese, like the rest of `docs/`).
+welcome. Contributors are expected to run the relevant local checks before
+opening a PR — see [CONTRIBUTING.md](CONTRIBUTING.md) for the exact
+workflow and repository conventions (`CLAUDE.md`). `docs/` and `CLAUDE.md`
+are in English; `content/` (blog posts, page copy) is bilingual PT/EN by
+construction — see CLAUDE.md's architecture rules.
 
 ## Security
 

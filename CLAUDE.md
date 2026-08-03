@@ -1,77 +1,80 @@
-# CLAUDE.md — convenções do projeto
+# CLAUDE.md — project conventions
 
-Monorepo do site pessoal. Três áreas com papéis rígidos:
+Personal site monorepo. Three areas with rigid responsibilities:
 
-- `content/` — markdown/JSON de conteúdo. **Nunca** pôr código aqui.
-- `static/` — site estático Astro. Lê `content/` via loaders (`glob`, import JSON).
-- `dynamic/` — backend (Cloudflare Worker em `dynamic/worker/`: honeypot,
-  mapa de tráfego, self-scan, ticker). Lógica pura em `src/lib/*` testada com
-  `node --test` (correr antes de qualquer PR que toque aqui). Ferramentas
-  novas só com decisão explícita do dono do repo (ver `dynamic/PLAN.md`).
+- `content/` — markdown/JSON content. **Never** put code here.
+- `static/` — Astro static site. Reads `content/` via loaders (`glob`, JSON import).
+- `dynamic/` — backend (Cloudflare Worker in `dynamic/worker/`: honeypot,
+  traffic map, self-scan, ticker). Pure logic in `src/lib/*` tested with
+  `node --test` (run before any PR that touches this). New tools only with
+  an explicit decision from the repo owner (see `dynamic/PLAN.md`).
 
-## Comandos
+## Commands
 
 ```bash
 cd static
-npm run dev       # desenvolvimento
-npm run build     # build de produção (tem de passar sem erros antes de qualquer PR)
-npm run preview   # servir o build localmente
+npm run dev       # development
+npm run build     # production build (must pass with no errors before any PR)
+npm run preview   # serve the build locally
 ```
 
-## Regras de arquitetura
+## Architecture rules
 
-1. **Bilingue por construção.** Cada página existe em PT (`/`) e EN (`/en/`).
-   As rotas em `static/src/pages/` são *finas* (3 linhas): importam uma
-   componente de `src/components/pages/` e passam `lang`. Toda a lógica vive
-   na componente partilhada — nunca duplicar lógica entre PT e EN.
-2. **Strings de UI** vão todas para `static/src/i18n/ui.ts` (PT e EN juntos,
-   mesma estrutura). Zero strings hardcoded em componentes.
-3. **Rotas novas** registam-se em `static/src/i18n/routes.ts` (par PT/EN) —
-   é isto que alimenta a nav e o seletor de idioma.
-4. **Conteúdo por idioma** segue o padrão `content/<coleção>/pt/…` +
-   `content/<coleção>/en/…` com o **mesmo nome de ficheiro** nos dois lados
-   (é assim que o seletor PT/EN liga as versões).
-5. **Dados pessoais/configuráveis** (nome, handle, email, domínio, redes)
-   só em `static/src/config.ts`.
+1. **Bilingual by construction.** Every page exists in PT (`/`) and EN (`/en/`).
+   Routes in `static/src/pages/` are *thin* (3 lines): they import a
+   component from `src/components/pages/` and pass `lang`. All logic lives
+   in the shared component — never duplicate logic between PT and EN.
+2. **UI strings** all go in `static/src/i18n/ui.ts` (PT and EN together,
+   same structure). Zero hardcoded strings in components.
+3. **New routes** register in `static/src/i18n/routes.ts` (PT/EN pair) —
+   this is what feeds the nav and the language selector.
+4. **Content per language** follows the pattern `content/<collection>/pt/…` +
+   `content/<collection>/en/…` with the **same filename** on both sides
+   (this is how the PT/EN selector links the versions).
+5. **Personal/configurable data** (name, handle, email, domain, socials)
+   only in `static/src/config.ts`.
 
-## Ferramentas em `/ferramentas/`
+## Tools in `/ferramentas/`
 
-- A lógica pura (sem DOM) vive em `static/src/scripts/*.js` para poder ser
-  testada em Node; as componentes em `src/components/tools/*.astro` só fazem
-  a ligação ao DOM.
-- A maioria é **100% client-side**: sem chamadas de rede, sem depender de
-  backend. As três exceções (`pwned` — password comprometida por k-anonimato;
-  `self-scan` de cabeçalhos; `mirror` — o que o servidor vê de ti) falam com o
-  Worker em `dynamic/worker/` — vivem no mesmo
-  índice, mas com o badge "requer servidor" (`ToolsIndexPage.astro`/
-  `ToolPage.astro`, chave `kind` por ferramenta), nunca escondidas como se
-  fossem client-side. Novas ferramentas que precisem de servidor seguem o
-  mesmo padrão — decisão registada em `dynamic/PLAN.md`.
-- Ao alterar lógica, validar com vetores conhecidos (ex.: MD5 de RFC 1321,
-  redes /24 e /31) — correr com
-  `node --input-type=module -e "import(...)"` ou similar.
+- Pure logic (no DOM) lives in `static/src/scripts/*.js` so it can be
+  tested in Node; components in `src/components/tools/*.astro` only do the
+  DOM wiring.
+- Most are **100% client-side**: no network calls, no backend dependency.
+  The three exceptions (`pwned` — password breach check via k-anonymity;
+  `self-scan` of headers; `mirror` — what the server sees about you) talk
+  to the Worker in `dynamic/worker/` — they live in the same index, but
+  with a "requires server" badge (`ToolsIndexPage.astro`/`ToolPage.astro`,
+  a `kind` key per tool), never hidden as if they were client-side. New
+  tools that need a server follow the same pattern — decision recorded in
+  `dynamic/PLAN.md`.
+- When changing logic, validate with known vectors (e.g. RFC 1321 MD5,
+  `/24` and `/31` networks) — run with
+  `node --input-type=module -e "import(...)"` or similar.
 
-## Estilo
+## Style
 
-- CSS global único em `static/src/styles/global.css` com custom properties
-  (`--bg`, `--accent`, …). Usar as variáveis, não cores literais.
-- Estética: escuro, técnico, sóbrio, acento verde-terminal (`--accent`) e
-  âmbar (`--accent-2`) para o Lab/avisos. Mobile-first.
-- Português europeu (não brasileiro) em todo o conteúdo PT.
+- Single global CSS in `static/src/styles/global.css` with custom properties
+  (`--bg`, `--accent`, …). Use the variables, not literal colors.
+- Aesthetic: dark, technical, sober, terminal-green accent (`--accent`) and
+  amber (`--accent-2`) for the Lab/warnings. Mobile-first.
+- European Portuguese (not Brazilian) in all `content/` editorial copy —
+  the site's PT pages, blog posts, and page copy. Documentation in `docs/`,
+  `dynamic/PLAN.md`, and this file are in English; see the note in
+  `README.md`'s Contributing section for the reasoning.
 
-## Antes de terminar qualquer alteração
+## Before finishing any change
 
-1. `cd static && npm run build` — tem de completar sem erros nem warnings novos.
-2. Se mexeste nas ferramentas, testa a lógica com vetores conhecidos.
-3. Se adicionaste página nova, cria as **duas** versões (PT + EN) e o par em
+1. `cd static && npm run build` — must complete with no errors or new warnings.
+2. If you touched the tools, test the logic with known vectors.
+3. If you added a new page, create **both** versions (PT + EN) and the pair in
    `routes.ts`.
 
-## Fluxo de PRs
+## PR flow
 
-- **Um PR merged está fechado: nunca se lhe juntam commits novos.** Trabalho
-  novo é **sempre um PR novo** — reiniciar a branch a partir do `main`
-  (`git checkout -B <branch> origin/main`) e abrir novo PR. Nunca empilhar por
-  cima de história já merged.
-- Idealmente, **manter um PR aberto** até a feature estar confirmada (dá para
-  testar da branch sem merge: `git checkout <branch> && cd dynamic/worker &&
-  npx wrangler deploy`), para não andar a abrir vários PRs seguidos.
+- **A merged PR is closed: never add new commits to it.** New work is
+  **always a new PR** — restart the branch from `main`
+  (`git checkout -B <branch> origin/main`) and open a new PR. Never stack on
+  top of already-merged history.
+- Ideally, **keep one PR open** until the feature is confirmed (you can test
+  from the branch without merging: `git checkout <branch> && cd dynamic/worker &&
+  npx wrangler deploy`), instead of opening several PRs in a row.

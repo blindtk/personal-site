@@ -1,62 +1,65 @@
-# ADR 0003 — Rate limiting em KV (com falha fechada) como transição para uma regra nativa da Cloudflare
+# ADR 0003 — Rate limiting in KV (fail-closed) as a transition to a native Cloudflare rule
 
-**Estado:** aceite, com uma migração pendente registada como manual.
+**Status:** accepted, with a pending migration recorded as manual.
 
-## Contexto
+## Context
 
-O Worker implementa rate limiting por-cliente em `dynamic/worker/src/lib/ratelimit.js`:
-hash salteado e diário do IP → chave KV `rl:<rota>:<hash>` → janela fixa
-(contagem + início de janela). Existe também um **cap global** de escritas do
-próprio rate limiter (`RATE_LIMIT_WRITE_CAP`, 300/dia) para não deixar um
-único cliente dentro do limite por rota esgotar sozinho o teto de ~1.000
-escritas/dia da conta inteira no plano Free.
+The Worker implements per-client rate limiting in
+`dynamic/worker/src/lib/ratelimit.js`: a salted, daily-rotating hash of the
+IP → KV key `rl:<route>:<hash>` → fixed window (count + window start).
+There's also a **global write cap** for the rate limiter itself
+(`RATE_LIMIT_WRITE_CAP`, 300/day) so a single client staying within its
+per-route limit can't alone exhaust the ~1,000 writes/day ceiling for the
+entire account on the Free plan.
 
-KV é eventualmente consistente (~60s de propagação global). Isto é aceitável
-para os contadores agregados do honeypot/CSP/vitals (não precisam de exatidão
-ao pedido), mas é uma base estruturalmente errada para um rate limiter: pedidos
-concorrentes em colos diferentes podem ler contagens desatualizadas.
+KV is eventually consistent (~60s of global propagation). That's
+acceptable for the honeypot/CSP/vitals aggregated counters (they don't
+need per-request accuracy), but it's a structurally wrong foundation for a
+rate limiter: concurrent requests across different colos can read stale
+counts.
 
-**Achado de uma revisão de segurança (2026-07-29,
+**Finding from a security review (2026-07-29,
 [docs/security-review-2026-07-29.md](../security-review-2026-07-29.md),
-achado A1):** quando o cap global de escritas (300/dia) se esgotava,
-`rateLimit()` continuava a devolver `allowed: true` — só deixava de persistir
-o estado por-cliente. Isso congelava a janela desse cliente indefinidamente:
-~300 pedidos triviais (10 minutos de tráfego num único IP em `/api/mirror` ou
-`/api/vitals`, sem precisar de distribuir por origens) desligavam o rate
-limit da rota inteira até à meia-noite UTC.
+finding A1):** when the global write cap (300/day) was exhausted,
+`rateLimit()` kept returning `allowed: true` — it just stopped persisting
+per-client state. That froze that client's window indefinitely: ~300
+trivial requests (10 minutes of traffic from a single IP against
+`/api/mirror` or `/api/vitals`, no need to distribute across origins)
+would disable the entire route's rate limit until midnight UTC.
 
-## Decisão
+## Decision
 
-**Curto prazo (feito, 2026-07-29):** `rateLimit()` passa a falhar **fechado**
-quando o cap global se esgota — a rota devolve 429 a todos os clientes até o
-orçamento reabrir, sem gastar nenhuma escrita extra (o 429 continua "grátis",
-como já acontecia para o rate limit por-cliente). Troca-se "toda a gente passa"
-por "toda a gente espera", que é o lado seguro deste trade-off.
+**Short term (done, 2026-07-29):** `rateLimit()` now fails **closed** when
+the global cap is exhausted — the route returns 429 to all clients until
+the budget reopens, without spending any extra write (the 429 stays
+"free", as it already did for per-client rate limiting). "Everyone gets
+through" is traded for "everyone waits", which is the safe side of this
+trade-off.
 
-**Médio prazo (pendente, decisão manual do dono do repo):** substituir o rate
-limiting por uma [regra nativa de Rate Limiting da
-Cloudflare](https://developers.cloudflare.com/waf/rate-limiting-rules/) (WAF,
-disponível no plano Free). Vantagens sobre a implementação atual:
+**Medium term (pending, manual decision by the repo owner):** replace the
+rate limiting with a [native Cloudflare Rate Limiting
+rule](https://developers.cloudflare.com/waf/rate-limiting-rules/) (WAF,
+available on the Free plan). Advantages over the current implementation:
 
-- Aplica-se **antes** do Worker correr — zero CPU, zero escritas KV.
-- Não depende de consistência eventual — o WAF impõe o limite corretamente.
-- Elimina `ratelimit.js`, o espaço de chaves `rl:`/`rlcap:` e ~300
-  escritas/dia do orçamento do KV, que passam a estar disponíveis para
+- Applies **before** the Worker runs — zero CPU, zero KV writes.
+- Doesn't depend on eventual consistency — the WAF enforces the limit correctly.
+- Eliminates `ratelimit.js`, the `rl:`/`rlcap:` key space, and ~300
+  writes/day from the KV budget, freeing them up for
   honeypot/CSP/vitals/firewall.
 
-Não foi feito nesta ronda porque é uma alteração de configuração na dashboard
-da Cloudflare (fora do que um PR de código consegue expressar) — ver
-`docs/security-review-2026-07-29.md` §9 para o desenho da regra.
+Not done in this round because it's a configuration change in the
+Cloudflare dashboard (outside what a code PR can express) — see
+`docs/security-review-2026-07-29.md` §9 for the rule design.
 
-## Consequências
+## Consequences
 
-- Enquanto a migração para a regra nativa não acontece, a falha fechada é a
-  rede de segurança: mesmo sob abuso deliberado do cap global, o pior cenário
-  passa a ser "as rotas com input de visitante ficam indisponíveis até à meia-
-  noite UTC", nunca "o rate limit desliga-se silenciosamente".
-- As leituras públicas sem rate limit (`/api/honeypot`, `/api/map`,
-  `/api/ticker`, `/api/ct`, `/api/cf-stats` sem `?refresh=1`) não são afetadas
-  — continuam servidas da cache independentemente do estado deste cap.
-- Teste de regressão em `dynamic/worker/test/logic.test.mjs` (`rate limit: cap
-  global diário no teto falha fechado…`) fixa este comportamento; qualquer
-  alteração futura que o reverta falha os testes.
+- Until the migration to the native rule happens, failing closed is the
+  safety net: even under deliberate abuse of the global cap, the worst
+  case becomes "routes with visitor input are unavailable until midnight
+  UTC", never "rate limiting silently turns off".
+- Public reads with no rate limit (`/api/honeypot`, `/api/map`,
+  `/api/ticker`, `/api/ct`, `/api/cf-stats` without `?refresh=1`) are
+  unaffected — still served from cache regardless of this cap's state.
+- A regression test in `dynamic/worker/test/logic.test.mjs` ("rate limit:
+  daily global cap at ceiling fails closed…") pins this behavior; any
+  future change that reverts it fails the tests.

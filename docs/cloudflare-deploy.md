@@ -1,276 +1,270 @@
-# Deploy na Cloudflare — domínio, Pages, Worker, Access e WAF
+# Cloudflare deploy — domain, Pages, Worker, Access, and WAF
 
-Registo do processo real de pôr `danielmala.co` em produção: o domínio foi
-comprado no Namecheap, o DNS passou a ser gerido pela Cloudflare, e o site
-(Pages) + backend (Worker) foram ligados às rotas desse domínio. Este
-documento existe para não perder o que só ficou registado em conversa —
-inclui os problemas reais que apareceram e como foram corrigidos.
+Record of the real process of putting `danielmala.co` into production: the
+domain was bought on Namecheap, DNS moved to being managed by Cloudflare,
+and the site (Pages) + backend (Worker) were wired to that domain's
+routes. This document exists so what only ever lived in conversation
+isn't lost — it includes the real problems that came up and how they were
+fixed.
 
-## 1. Domínio: Namecheap → Cloudflare
+## 1. Domain: Namecheap → Cloudflare
 
-O domínio continua **registado no Namecheap** — só o DNS passou a ser
-gerido pela Cloudflare (troca de nameservers, não transferência).
+The domain is still **registered at Namecheap** — only DNS moved to being
+managed by Cloudflare (a nameserver swap, not a transfer).
 
-1. Namecheap: desligar parking/redirect do domínio e desativar PremiumDNS
-   (incompatível com nameservers de terceiros).
-2. Cloudflare: `Add a site` → `danielmala.co` → plano Free. Como era domínio
-   novo, não havia registos DNS para importar.
-3. Cloudflare dá 2 nameservers → colar no Namecheap em
+1. Namecheap: turn off domain parking/redirect and disable PremiumDNS
+   (incompatible with third-party nameservers).
+2. Cloudflare: `Add a site` → `danielmala.co` → Free plan. Since it was a
+   new domain, there were no DNS records to import.
+3. Cloudflare gives you 2 nameservers → paste them into Namecheap at
    `Domain List → Manage → Nameservers → Custom DNS`.
-4. Esperar o email "Active" da Cloudflare (minutos a poucas horas).
+4. Wait for Cloudflare's "Active" email (minutes to a few hours).
 
-No ecrã de onboarding da Cloudflare também apareceu o **AI Crawl Control**
-("Configure AI training & search policies"): `Search` e `Agent` ficaram em
-Allow (para SEO e para assistentes de IA conseguirem responder sobre o
-site), `Training` foi mudado para **Block** (o default "block on pages with
-ads" não fazia sentido — o site não tem anúncios, por isso o default
-equivalia a permitir tudo).
+Cloudflare's onboarding screen also surfaced **AI Crawl Control**
+("Configure AI training & search policies"): `Search` and `Agent` were
+left on Allow (for SEO, and so AI assistants can answer questions about
+the site), `Training` was changed to **Block** (the default "block on
+pages with ads" didn't apply — the site has no ads, so the default
+amounted to allowing everything).
 
-## 2. Cloudflare Pages (site estático)
+## 2. Cloudflare Pages (static site)
 
-`Workers & Pages → Create application → Pages → Connect to Git`, com a
-GitHub App da Cloudflare instalada em modo **"Only select repositories"**
-(só este repo — funciona com repo privado, não exige repo público).
+`Workers & Pages → Create application → Pages → Connect to Git`, with
+Cloudflare's GitHub App installed in **"Only select repositories"** mode
+(just this repo — works with a private repo, doesn't require a public one).
 
-Configuração do projeto:
+Project configuration:
 - Root directory (advanced): `static`
 - Build command: `npm run build`
-- Build output directory: `dist` (relativo ao root directory, **não**
+- Build output directory: `dist` (relative to the root directory, **not**
   `static/dist`)
-- Custom domains: `danielmala.co` e `www.danielmala.co`
+- Custom domains: `danielmala.co` and `www.danielmala.co`
 
-### Problema: `*.pages.dev` ficou público sem querer
+### Problem: `*.pages.dev` ended up public by accident
 
-Assim que o build passou, `personal-site-4fm.pages.dev` ficou **acessível a
-qualquer pessoa**, sem proteção nenhuma — as regras de WAF da zona
-`danielmala.co` (secção 4) não cobrem `*.pages.dev`, que é domínio da
-própria Cloudflare, fora da zona. Corrigido com uma **Zero Trust Access
-application** (secção 3), não com WAF.
+As soon as the build passed, `personal-site-4fm.pages.dev` became
+**accessible to anyone**, with no protection at all — the WAF rules on the
+`danielmala.co` zone (section 4) don't cover `*.pages.dev`, which is a
+Cloudflare-owned domain, outside the zone. Fixed with a **Zero Trust
+Access application** (section 3), not with WAF.
 
-## 3. Cloudflare Access — lockdown durante o desenvolvimento
+## 3. Cloudflare Access — lockdown during development
 
-> **Atualização (2026-07-31, confirmado pelo dono do repo):** a Access
-> deixou de bloquear `danielmala.co`/`www.danielmala.co` — a política WAF
-> geo (secção 5) é agora a proteção real para a produção, tal como previsto
-> abaixo. **`*.pages.dev` continua atrás de Access** (confirmado) — só a
-> aplicação/destination da produção foi ajustada; o resto desta secção
-> descreve o lockdown tal como foi configurado durante o desenvolvimento e
-> continua a aplicar-se às previews.
+> **Update (2026-07-31, confirmed by the repo owner):** Access no longer
+> blocks `danielmala.co`/`www.danielmala.co` — the WAF geo policy
+> (section 5) is now the real protection for production, as anticipated
+> below. **`*.pages.dev` is still behind Access** (confirmed) — only the
+> production application/destination was adjusted; the rest of this
+> section describes the lockdown as it was configured during development,
+> and it still applies to previews.
 
-Enquanto o site não estava pronto para lançamento público, ficava atrás de
-login por email (One-Time PIN) via Cloudflare Access — cobria `*.pages.dev`
-**e** `danielmala.co`/`www.danielmala.co` ao mesmo tempo, ao contrário do
-WAF de zona.
+While the site wasn't ready for public launch, it sat behind email login
+(One-Time PIN) via Cloudflare Access — covering `*.pages.dev` **and**
+`danielmala.co`/`www.danielmala.co` at the same time, unlike the zone WAF.
 
-`Zero Trust → Access → Applications` — a Cloudflare já tinha criado uma
-application "legacy" para o projeto Pages, mas mal configurada:
+`Zero Trust → Access → Applications` — Cloudflare had already created a
+"legacy" application for the Pages project, but misconfigured:
 
-- **Destinations**: só tinha `*.personal-site-4fm.pages.dev` (wildcard de
-  subdomínio) — cobria só os *previews*, não a produção
-  (`personal-site-4fm.pages.dev` exato, sem subdomínio). Corrigido:
-  acrescentar entradas sem subdomínio para `personal-site-4fm.pages.dev`,
-  `danielmala.co` e `www.danielmala.co`.
-- **Policy**: Source estava em "Everyone"/"All authenticated users" com
-  todos os identity providers — como o único IdP é o One-Time PIN, isto
-  deixava **qualquer pessoa** com qualquer email entrar. Corrigido: Source
-  mudado para `Emails` = só o email do dono.
+- **Destinations**: only had `*.personal-site-4fm.pages.dev` (subdomain
+  wildcard) — covered only the *previews*, not production
+  (`personal-site-4fm.pages.dev` exact, no subdomain). Fixed: added
+  no-subdomain entries for `personal-site-4fm.pages.dev`,
+  `danielmala.co`, and `www.danielmala.co`.
+- **Policy**: Source was set to "Everyone"/"All authenticated users" with
+  every identity provider — since the only IdP is the One-Time PIN, this
+  let **anyone** with any email in. Fixed: Source changed to `Emails` =
+  only the owner's email.
 
-Antes de lançar a sério (ver secção 5), esta Access é desligada/ajustada ao
-mesmo tempo que a regra WAF geo passa a ser a proteção real.
+Before launching for real (see section 5), this Access instance is
+disabled/adjusted at the same time the WAF geo rule becomes the real
+protection.
 
-## 4. Worker (`dynamic/worker/`) — deploy e problemas resolvidos
+## 4. Worker (`dynamic/worker/`) — deploy and problems solved
 
-Método usado: **Workers Builds** (deploy automático via Git), não
-`wrangler deploy` manual.
+Method used: **Workers Builds** (automatic deploy via Git), not a manual
+`wrangler deploy`.
 
 `Workers & Pages → Create application → Connect to Git` → repo
-`blindtk/personal-site` → configuração:
-- **Path**: `dynamic/worker` (crítico — é monorepo, o `wrangler.toml` não
-  está na raiz)
-- **Build command**: vazio (sem passo de build — confirmado no
-  `package.json`, só `wrangler deploy` trata do bundling)
+`blindtk/personal-site` → configuration:
+- **Path**: `dynamic/worker` (critical — it's a monorepo, `wrangler.toml`
+  isn't at the root)
+- **Build command**: empty (no build step — confirmed in `package.json`,
+  only `wrangler deploy` handles bundling)
 - **Deploy command**: `npx wrangler deploy`
-- **Builds for non-production branches**: **desligado** — ver problema
-  abaixo
+- **Builds for non-production branches**: **off** — see the problem below
 
-KV namespace criado via dashboard (`Storage & Databases → KV → Create a
-namespace`, um para produção e um `_PREVIEW`), e os IDs colados no
-`wrangler.toml`. Secrets (`RATE_SALT`, `NVD_API_KEY`) via `Settings →
-Variables and Secrets` do Worker, com **Encrypt** ativado — nunca no
-`wrangler.toml` (é ficheiro versionado; o gitleaks do CI apanha qualquer
-deslize).
+KV namespace created via the dashboard (`Storage & Databases → KV →
+Create a namespace`, one for production and one `_PREVIEW`), with the IDs
+pasted into `wrangler.toml`. Secrets (`RATE_SALT`, `NVD_API_KEY`) via
+`Settings → Variables and Secrets` on the Worker, with **Encrypt**
+enabled — never in `wrangler.toml` (it's a versioned file; CI's gitleaks
+catches any slip-up).
 
-### Problema 1: `workers.dev` e preview URLs públicos por omissão
+### Problem 1: `workers.dev` and preview URLs public by default
 
-O primeiro deploy publicou `personal-site-worker.<conta>.workers.dev` **sem
-proteção nenhuma** — fora do alcance da Access e do WAF de zona (mesma
-razão que o `*.pages.dev`: domínio da Cloudflare, não da zona). Corrigido
-no `wrangler.toml`:
+The first deploy published `personal-site-worker.<account>.workers.dev`
+**with no protection at all** — outside the reach of both Access and the
+zone WAF (same reason as `*.pages.dev`: a Cloudflare-owned domain, not
+part of the zone). Fixed in `wrangler.toml`:
 
 ```toml
 workers_dev = false
 preview_urls = false
 ```
 
-### Problema 2: previews de branch/PR continuavam expostos
+### Problem 2: branch/PR previews stayed exposed
 
-Mesmo com o acima, cada PR gerava dois URLs extra
-(`<hash>-personal-site-worker.<conta>.workers.dev` e
-`<branch>-personal-site-worker.<conta>.workers.dev`), publicados sem
-proteção num comentário do bot `cloudflare-workers-and-pages` no PR — visível
-a quem tiver acesso ao repo (hoje só o dono, mas passaria a todos se o repo
-for público). Corrigido desligando **"Builds for non-production branches"**
-nas Settings do Worker — deixa de gerar previews a cada PR.
+Even with the above, every PR generated two extra URLs
+(`<hash>-personal-site-worker.<account>.workers.dev` and
+`<branch>-personal-site-worker.<account>.workers.dev`), published with no
+protection in a comment from the `cloudflare-workers-and-pages` bot on the
+PR — the URLs themselves had no protection at all, reachable by anyone
+who obtained one regardless of repository access. Separately, *finding
+out* a URL existed was gated by repo access (only the owner, at the
+time; the repository was still private and went public later, on
+2026-07-31, so that discovery path would have extended to everyone had
+this not been fixed first). Fixed by turning off **"Builds for
+non-production branches"** in the Worker's Settings — stops generating
+previews on every PR.
 
-### Problema 3: `routes` lido como variável de ambiente
+### Problem 3: `routes` read as an environment variable
 
-O bug mais difícil de apanhar: o bloco `routes = [...]` estava colocado
-**depois** do cabeçalho `[vars]` no `wrangler.toml`. Em TOML, uma chave
-solta depois de abrir uma tabela pertence a essa tabela — por isso o
-`routes` estava a ser lido como `env.routes` (visível no log de deploy:
-`env.routes (...) Environment Variable`), nunca como configuração de rotas
-real. Sintoma: todos os deploys via CI diziam `No targets deployed`, apesar
-do upload do código correr sem erro. **Não era problema de permissões do
-token de API** (chegou a suspeitar-se disso primeiro, e a corrigir-se à
-mesma — sem efeito, porque não era a causa). A correção real foi mover
-`routes` para antes de qualquer tabela (`[[kv_namespaces]]`, `[vars]`) no
-ficheiro.
+The hardest bug to catch: the `routes = [...]` block was placed **after**
+the `[vars]` header in `wrangler.toml`. In TOML, a loose key after opening
+a table belongs to that table — so `routes` was being read as
+`env.routes` (visible in the deploy log: `env.routes (...) Environment
+Variable`), never as real route configuration. Symptom: every deploy via
+CI said `No targets deployed`, even though the code upload ran without
+error. **It wasn't an API token permissions problem** (that was suspected
+first, and fixed anyway — with no effect, because it wasn't the cause).
+The real fix was moving `routes` to before any table (`[[kv_namespaces]]`,
+`[vars]`) in the file.
 
-Enquanto isto não estava corrigido, as rotas foram adicionadas à mão no
-dashboard (`Worker → Domains → Custom Domains and Routes → Add Route`) como
-contorno temporário — deixou de ser necessário depois do fix.
+While this wasn't fixed, routes were added by hand in the dashboard
+(`Worker → Domains → Custom Domains and Routes → Add Route`) as a
+temporary workaround — no longer needed after the fix.
 
-## 5. WAF — regras da zona `danielmala.co`
+## 5. WAF — rules on the `danielmala.co` zone
 
-`Security → WAF → Custom rules` (zona, não o Worker/Pages).
+`Security → WAF → Custom rules` (the zone, not the Worker/Pages). These
+rules diverge from the original design prepared before launch — see
+["History: original design vs. production"](#history-original-design-vs-production)
+at the end of this section for what changed and why.
 
-> **Atualizado 2026-07-29** com as regras confirmadas em produção — divergem
-> do desenho original abaixo descrito (catch-all geo com lista de 27 países da
-> UE, sem regra dedicada aos paths-isco). O que mudou e porquê está na nota no
-> fim desta secção.
+Exact rule order in production (`Skip` rules come first; the honeypot
+rule comes before the country policy, and each rule acts **on evaluation
+order**):
 
-Ordem exata das regras em produção (as `Skip` vêm antes; a regra do honeypot
-vem antes da política de país, e cada regra que atua **para a evolução**):
-
-| # | Regra | Condição (resumo) | Ação |
+| # | Rule | Condition (summary) | Action |
 |---|---|---|---|
-| 1 | Bots verificados | `cf.client.bot` (bots verificados pela Cloudflare) | Skip |
-| 2 | CI headers check | `http.request.headers["x-ci-waf-token"][0] eq "<valor do secret CI_WAF_TOKEN>"` (migrado 2026-07-31 — ver nota abaixo) | Skip |
-| 3 | Honeypot Paths | Path é `/.env`, `/.git/config`, `/wp-login.php`, `/admin` ou começa por `/phpmyadmin` | **Managed Challenge**, pára a avaliação |
-| 4 | Allowed Countries - Site | fora dos paths acima **e** país é PT | **Managed Challenge**, pára a avaliação |
-| 5 | Blocked Countries - Site | fora dos paths acima **e** país não é PT | **Block**, pára a avaliação |
+| 1 | Verified bots | `cf.client.bot` (Cloudflare-verified bots) | Skip |
+| 2 | CI headers check | `http.request.headers["x-ci-waf-token"][0] eq "<CI_WAF_TOKEN secret value>"` (migrated 2026-07-31 — see note below) | Skip |
+| 3 | Honeypot Paths | Path is `/.env`, `/.git/config`, `/wp-login.php`, `/admin`, or starts with `/phpmyadmin` | **Managed Challenge**, stops evaluation |
+| 4 | Allowed Countries - Site | outside the paths above **and** country is PT | **Managed Challenge**, stops evaluation |
+| 5 | Blocked Countries - Site | outside the paths above **and** country is not PT | **Block**, stops evaluation |
 
-Porquê cada regra:
-- **2**: `.github/workflows/headers.yml` e `.github/workflows/invariants.yml`
-  fazem `fetch` à produção a partir de runners do GitHub (normalmente fora de
-  PT) — sem esta regra, ambos os workflows caem na política de país (regras
-  4/5) depois do lançamento e passam a reportar produção partida por causa
-  do próprio WAF, não de uma regressão real.
-  > **Nota (2026-07-30):** o match original ("User-Agent contém
-  > `headers-check`") era uma string pública, documentada neste próprio
-  > ficheiro — qualquer pedido de fora do mundo podia copiá-la e saltar a
-  > política de país (achado de uma sessão de validação de lançamento).
-  > **Resolvido (2026-07-31, confirmado pelo dono do repo):** a regra no
-  > dashboard já faz match pelo header assinado `X-Ci-Waf-Token`
-  > (`http.request.headers["x-ci-waf-token"][0] eq "<valor do secret>"`),
-  > não pelo User-Agent — os scripts (`check-headers.mjs`,
-  > `check-invariants.mjs`) já enviavam o segredo `CI_WAF_TOKEN` (GitHub
-  > Actions secret) neste header. Rotação: mudar o valor no GitHub Actions
-  > (Settings → Secrets → Actions → `CI_WAF_TOKEN`) e na regra WAF ao mesmo
-  > tempo, mesma disciplina do `RATE_SALT`/`CF_API_TOKEN`.
-- **3**: os cinco paths-isco do honeypot (`dynamic/worker/`, `DECOYS` em
-  `src/index.js`) recebem `Managed Challenge` em vez de passarem direto ao
-  Worker, para qualquer visitante — decisão explícita do dono do repo: os
-  iscos não ficam abertos ao mundo sem alguma barreira, mesmo sendo apenas
-  um sensor que devolve 404. **Consequência a assumir, não um efeito
-  colateral:** um Managed Challenge existe para filtrar bots automatizados —
-  é exatamente o tráfego que o honeypot existe para observar. Enquanto esta
-  regra estiver ativa, o honeypot só regista quem *resolve* o desafio (um
-  browser real com JS, nalguns casos scanners avançados com automação
-  tipo-browser), não o scanning de massa indiscriminado que domina a
-  Internet. Ver `docs/backlog.md` para um resumo da análise desta troca
-  (proteção vs. observabilidade) — o detalhe completo ficou no histórico do
-  git depois de `docs/proposals/` ser consolidado em 2026-07-31.
-- **4/5**: a política geográfica endureceu de "27 países da UE, Managed
-  Challenge" (desenho original abaixo) para "só PT passa, com desafio; todo o
-  resto é bloqueado" — mais restritivo do que o planeado, e sem a
-  aproximação por `ip.geoip.is_in_european_union` (esse campo continua a
-  exigir plano Business+, não está disponível no Free; deixou de ser
-  relevante porque a lista já não tenta aproximar a UE).
-- A ação **Log** (para observar sem afetar tráfego) continua **indisponível
-  no Free** para Custom Rules — só `Managed Challenge`/`Block`/etc.
+Why each rule:
+- **2**: `.github/workflows/headers.yml` and `.github/workflows/invariants.yml`
+  `fetch` production from GitHub runners (usually outside PT) — without
+  this rule, both workflows fall into the country policy (rules 4/5) after
+  launch and start reporting production as broken because of the WAF
+  itself, not a real regression.
+  > **Note (2026-07-30):** the original match ("User-Agent contains
+  > `headers-check`") was a public string, documented in this very
+  > file — any request from anywhere in the world could copy it and
+  > bypass the country policy (found during a launch-validation session).
+  > **Resolved (2026-07-31, confirmed by the repo owner):** the rule in
+  > the dashboard now matches on the signed header `X-Ci-Waf-Token`
+  > (`http.request.headers["x-ci-waf-token"][0] eq "<secret value>"`),
+  > not the User-Agent — the scripts (`check-headers.mjs`,
+  > `check-invariants.mjs`) were already sending the `CI_WAF_TOKEN`
+  > (GitHub Actions secret) in this header. Rotation: change the value in
+  > GitHub Actions (Settings → Secrets → Actions → `CI_WAF_TOKEN`) and in
+  > the WAF rule at the same time, same discipline as
+  > `RATE_SALT`/`CF_API_TOKEN`.
+- **3**: the honeypot's five decoy paths (`dynamic/worker/`, `DECOYS` in
+  `src/index.js`) get a `Managed Challenge` instead of passing straight
+  through to the Worker, for any visitor — an explicit decision by the
+  repo owner: the decoys don't stay open to the world without some
+  barrier, even though they're just a sensor returning a 404.
+  **A consequence to accept, not a side effect:** a Managed Challenge
+  exists to filter automated bots — exactly the traffic the honeypot
+  exists to observe. While this rule is active, the honeypot only
+  records whoever *solves* the challenge (a real browser with JS, in some
+  cases advanced scanners with browser-like automation), not the
+  indiscriminate mass scanning that dominates the Internet. See
+  `docs/backlog.md` for a summary of the analysis of this trade-off
+  (protection vs. observability) — the full detail lives in git history
+  after `docs/proposals/` was consolidated on 2026-07-31.
+- **4/5**: the geographic policy hardened from "27 EU countries, Managed
+  Challenge" (original design below) to "only PT gets through, with a
+  challenge; everything else is blocked" — more restrictive than
+  planned, and without the `ip.geoip.is_in_european_union`
+  approximation (that field still requires Business+, unavailable on
+  Free; it stopped mattering because the list no longer tries to
+  approximate the EU).
+- The **Log** action (to observe without affecting traffic) is still
+  **unavailable on Free** for Custom Rules — only `Managed
+  Challenge`/`Block`/etc.
 
-**Nota (2026-07-29) — divergência entre o plano original e a produção.** O
-desenho abaixo (bots + previews sociais + CI + IP do dono a *Skip*, catch-all
-de 27 países UE a `Managed Challenge`) foi o que ficou preparado com
-antecedência, com a Access (secção 3) como proteção real enquanto isso — a
-ideia registada era que a regra final ficaria já na ação definitiva sem
-risco, porque ninguém de fora conseguia lá chegar de qualquer forma. As
-regras hoje em produção são mais restritivas nalguns pontos (país único em
-vez de 27, `Block` em vez de `Managed Challenge` para o resto do mundo) e têm
-uma peça nova e deliberada (regra 3, dedicada ao honeypot) que o plano
-original não previa. Não ficou registado neste documento se as regras
-"Previews sociais" (bots do LinkedIn/Twitter/Facebook) e "O dono sempre" (skip
-por IP) do plano original chegaram a ser criadas e foram depois removidas, ou
-se nunca chegaram a sair do plano — confirmar antes do checklist da secção 7,
-para não assumir uma proteção (o IP do dono sempre passar) que pode não
-existir.
+### History: original design vs. production
 
-### Desenho original (histórico, substituído pela tabela acima)
+> This subsection is a historical record — it does not describe the
+> current state (the table above is the source of truth). Kept because it
+> explains *why* production diverges from what was planned.
 
-Preparado com antecedência, com a Access (secção 3) como proteção real
-enquanto isso — por isso a regra final ficou já na ação definitiva (`Managed
-Challenge`), sem risco, já que ninguém de fora conseguia lá chegar de
-qualquer forma.
+The design below (bots + social previews + CI + the owner's IP as
+*Skip*, a catch-all of 27 EU countries as `Managed Challenge`) was what
+got prepared ahead of time, with Access (section 3) as the real
+protection in the meantime — the recorded idea was that the final rule
+would already be in its definitive action with no risk, since nobody from
+outside could reach it anyway.
 
-| # | Regra | Expressão | Ação |
+| # | Rule | Expression | Action |
 |---|---|---|---|
-| 1 | Bots verificados (SEO) | `(cf.client.bot)` | Skip |
-| 2 | Previews sociais | `(http.user_agent contains "LinkedInBot") or (http.user_agent contains "Twitterbot") or (http.user_agent contains "facebookexternalhit")` | Skip |
-| 3 | CI do GitHub Actions | `(http.user_agent contains "headers-check")` | Skip |
-| 4 | O dono sempre | `(ip.src eq <IP>)` | Skip |
-| 5 | Catch-all geo | `not (ip.geoip.country in {"PT" "AT" "BE" "BG" "HR" "CY" "CZ" "DK" "EE" "FI" "FR" "DE" "GR" "HU" "IE" "IT" "LV" "LT" "LU" "MT" "NL" "PL" "RO" "SK" "SI" "ES" "SE"})` | Managed Challenge |
+| 1 | Verified bots (SEO) | `(cf.client.bot)` | Skip |
+| 2 | Social previews | `(http.user_agent contains "LinkedInBot") or (http.user_agent contains "Twitterbot") or (http.user_agent contains "facebookexternalhit")` | Skip |
+| 3 | GitHub Actions CI | `(http.user_agent contains "headers-check")` | Skip |
+| 4 | The owner, always | `(ip.src eq <IP>)` | Skip |
+| 5 | Geo catch-all | `not (ip.geoip.country in {"PT" "AT" "BE" "BG" "HR" "CY" "CZ" "DK" "EE" "FI" "FR" "DE" "GR" "HU" "IE" "IT" "LV" "LT" "LU" "MT" "NL" "PL" "RO" "SK" "SI" "ES" "SE"})` | Managed Challenge |
 
-## 6. Repositório GitHub
+**What changed, and why (2026-07-29):** the rules in production today are
+more restrictive in some ways (a single country instead of 27, `Block`
+instead of `Managed Challenge` for the rest of the world) and have one new,
+deliberate piece (rule 3, dedicated to the honeypot) that the original plan
+didn't anticipate. The "Social previews" and "The owner, always" rules
+from the original design **were not created, by choice, not by
+oversight** — confirmed 2026-07-29 (see section 7): social preview bots
+are already caught by rule 1 (`cf.client.bot` includes known preview
+crawlers), and as for the owner, traveling outside PT subjects them to
+rule 5 (Block) like any visitor — a decision kept on purpose.
 
-Ficou **privado** durante o desenvolvimento — a Cloudflare Pages/Workers
-Builds funcionam com repo privado (a GitHub App tem acesso concedido
-explicitamente, "Only select repositories"; ao contrário do GitHub Pages,
-não exige repo público). **Atualização: o repositório já é público**
-(2026-07-31). Checklist que devia
-ter sido confirmada antes disso — scan de segredos ao histórico completo,
-permissões de Actions para PRs de forks, branch protection, secret
-scanning — **não foi reverificada por este agente** (fora do alcance de
-uma sessão sem acesso às definições do repositório no GitHub); vale a pena
-confirmar manualmente que ficou feita.
+## 6. GitHub repository
 
-## 7. Checklist do que falta / decisões pendentes
+It was **private** during development — Cloudflare Pages/Workers Builds
+work with a private repo (the GitHub App is granted access explicitly,
+"Only select repositories"; unlike GitHub Pages, it doesn't require a
+public repo). **Update: the repository is now public** (2026-07-31). The
+checklist that should have been confirmed before that — full-history
+secret scan, Actions permissions for fork PRs, branch protection, secret
+scanning — **was not re-verified by this agent** (outside the scope of a
+session with no access to the repository's GitHub settings); worth
+confirming manually that it was done.
 
-- [x] **Lançamento (Fase 3) (2026-07-31, confirmado pelo dono do repo):** a
-  Access deixou de bloquear `danielmala.co`/`www.danielmala.co`; a regra 2
-  do WAF ("CI headers check") já faz match pelo header assinado
-  `X-Ci-Waf-Token` em vez do User-Agent público (secção 5). `*.pages.dev`
-  continua atrás de Access, por desenho.
-- [x] **Confirmado (2026-07-29, decisão do dono do repo):** as regras
-  "Previews sociais" e "O dono sempre" do desenho original **não** foram
-  criadas, **por escolha, não por esquecimento**. Os bots de preview social
-  (LinkedIn/Twitter/Facebook) já são apanhados pela regra 1 ("Bots
-  verificados", `cf.client.bot`) — a lista de bots verificados da Cloudflare
-  inclui os crawlers de preview conhecidos, tornando uma regra dedicada
-  redundante. Quanto ao dono: aceite que viajar para fora de PT o sujeita
-  à regra 5 (Block) como qualquer visitante — só PT passa (com Managed
-  Challenge), decisão mantida de propósito.
-- [x] `.github/expected-headers.json` → `url` esteve `SET-ME` enquanto a
-  Access (secção 3) bloqueava produção — o cron diário do `Headers` teria
-  falhado sempre por causa da página de login da Access, não de uma
-  regressão real de headers. **Resolvido (2026-07-31):** via a opção (b) já
-  prevista aqui — a Access foi desligada/ajustada na Fase 3, `url` aponta
-  agora para `https://danielmala.co/`.
-- [ ] CAA, HSTS preload, DNSSEC — checklist em `docs/dns-tls.md`, por
-  executar/confirmar.
-- [x] Alias de email (`me@danielmala.co`) em vez do Hotmail pessoal — feito
-  em `static/src/config.ts` e `docs/dns-tls.md` (2026-07-30). Nota: o
-  endereço antigo continua no histórico do git; a mitigação real é o alias
-  ser rotável.
-- [x] Repo público — já aconteceu; checklist de pré-requisitos da secção 6
-  não reverificada nesta sessão, confirmar manualmente.
+## 7. Current status and what's left
+
+**Done:** production launch (Phase 3, 2026-07-31 — Access disabled for
+`danielmala.co`/`www.danielmala.co`, WAF rule 2 now authenticated via a
+signed header instead of a public User-Agent, section 5); WAF design
+decisions confirmed as deliberate, not forgotten (section 5);
+`.github/expected-headers.json` now points at real production instead of
+`SET-ME`; email alias (`me@danielmala.co`) in `static/src/config.ts` and
+`docs/dns-tls.md` (2026-07-30); public repository (section 6) — section
+6's prerequisite checklist was not re-verified by this agent, worth
+confirming manually.
+
+**Left to do:**
+
+- [ ] HSTS preload — CAA and DNSSEC are done (see
+  [`docs/dns-tls.md`](dns-tls.md)); preload is the one item still pending
+  there.

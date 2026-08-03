@@ -1,38 +1,37 @@
-# ADR 0002 — Renovate para *version updates*, Dependabot só para *security updates*
+# ADR 0002 — Renovate for version updates, Dependabot only for security updates
 
-**Estado:** aceite e em produção (`renovate.json5`).
+**Status:** accepted and in production (`renovate.json5`).
 
-## Contexto
+## Context
 
-Duas ferramentas de gestão de dependências ativas ao mesmo tempo é
-normalmente um erro — colidem, abrem PRs duplicados para a mesma
-dependência, e ninguém sabe qual delas é "a fonte de verdade". A escolha óbvia
-seria uma ou outra, não as duas.
+Two dependency-management tools active at the same time is normally a
+mistake — they collide, open duplicate PRs for the same dependency, and
+nobody knows which one is "the source of truth." The obvious choice would
+be one or the other, not both.
 
-Mas têm cobertura diferente por design: o Renovate só abre PR para
-dependências **diretas** do `package.json` (o que está no lockfile por
-escolha). O Dependabot *security updates* consegue reagir a uma vulnerabilidade
-em qualquer nível da árvore, incluindo dependências **transitivas** — puxadas
-pelo `wrangler` em `dynamic/worker/` (ex.: `sharp`/`libvips`), nunca
-declaradas diretamente neste repositório.
+But they have different coverage by design: Renovate only opens PRs for
+**direct** dependencies of `package.json` (what's in the lockfile by
+choice). Dependabot's *security updates* can react to a vulnerability at
+any level of the tree, including **transitive** dependencies — pulled in
+by `wrangler` in `dynamic/worker/` (e.g. `sharp`/`libvips`), never
+declared directly in this repository.
 
-## Decisão
+## Decision
 
-- **Renovate**: todas as *version updates* de rotina e majors. `group:allNonMajor`
-  agrupa tudo o que não é major num único PR semanal; majors ficam separados
-  para revisão com calma. `minimumReleaseAge: 3 days` — janela de segurança
-  contra pacotes comprometidos publicados e retirados pouco depois.
-- **Dependabot**: **só** *security updates* (nunca *version updates* — colidiria
-  com o Renovate). Cobre exatamente a lacuna do Renovate: vulnerabilidades em
-  dependências transitivas que nenhum `package.json` deste repo lista.
+- **Renovate**: all routine and major *version updates*. `group:allNonMajor`
+  groups everything non-major into a single weekly PR; majors stay
+  separate for unhurried review. `minimumReleaseAge: 3 days` — a security
+  window against compromised packages published and pulled shortly after.
+- **Dependabot**: **only** *security updates* (never *version updates* —
+  that would collide with Renovate). Covers exactly Renovate's gap:
+  vulnerabilities in transitive dependencies that no `package.json` in
+  this repo lists.
 
-## Consequências
+## Consequences
 
-- Sem colisão: cada ferramenta tem uma responsabilidade exclusiva e não
-  sobreposta.
-- `prConcurrentLimit: 3` mantém o volume de PRs gerível à velocidade real do
-  repositório.
-- Se o Dependabot alguma vez começar a abrir PRs de *version update* (ex.: uma
-  mudança de configuração da app "Dependabot" no GitHub), isso é um sinal de
-  regressão desta decisão — verificar `Settings → Code security → Dependabot`
-  no repositório.
+- No collision: each tool has one exclusive, non-overlapping responsibility.
+- `prConcurrentLimit: 3` keeps PR volume manageable at the repo's actual pace.
+- If Dependabot ever starts opening *version update* PRs (e.g. a
+  configuration change to the "Dependabot" app on GitHub), that's a signal
+  this decision has regressed — check
+  `Settings → Code security → Dependabot` on the repository.

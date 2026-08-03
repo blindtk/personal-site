@@ -1,10 +1,5 @@
 # Security & engineering review — 2026-07-29
 
-> **Language note.** This document is written in English because the review was
-> requested in English, and because a threat model / maturity assessment is the
-> kind of artefact a reviewer (hiring manager, security engineer) is most likely
-> to read. The rest of `docs/` is in Portuguese. Happy to translate on request.
-
 > **Relation to the other security review.** This is the current snapshot,
 > linked from `README.md`. An earlier, round-by-round working log in
 > Portuguese existed alongside it (the findings here were partly drawn from

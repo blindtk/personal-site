@@ -1,17 +1,44 @@
 # ADRs (Architecture Decision Records)
 
-Registo curto das decisões de arquitetura com trade-offs reais — o que se
-escolheu, o que se recusou e porquê. A maior parte destas decisões já estava
-documentada em comentários no código ou em `dynamic/PLAN.md`; estes ficheiros
-resumem-nas num formato que não exige ler 500 linhas de planeamento para
-perceber o essencial.
+Short record of architecture decisions with real trade-offs — what was
+chosen, what was rejected, and why. Most of these decisions were already
+documented in code comments, in `dynamic/PLAN.md`, or in the security
+reviews in `docs/`; these files summarize them in a format that doesn't
+require reading hundreds of lines of planning to get the essentials.
 
-Formato: Contexto → Decisão → Consequências. Sem secções vazias, sem
-"Alternativas consideradas" a fingir opções que nunca existiram.
+Format: Context → Decision → Consequences. No empty sections, no
+"Alternatives considered" pretending there were options that never
+existed.
 
-| ADR | Decisão |
+## Site & Worker architecture
+
+| ADR | Decision |
 | --- | --- |
-| [0001](0001-csp-sem-inline.md) | CSP sem `unsafe-inline`, sem hashes: eliminar o inline em vez de o catalogar |
-| [0002](0002-renovate-dependabot-split.md) | Renovate para *version updates*, Dependabot só para *security updates* |
-| [0003](0003-rate-limit-kv-vs-nativo.md) | Rate limiting em KV (com falha fechada) como transição para uma regra nativa da Cloudflare |
-| [0004](0004-zero-pii-honeypot.md) | Honeypot e analytics zero-PII por escolha, não por limitação do plano |
+| [0001](0001-csp-sem-inline.md) | CSP without `unsafe-inline`, without per-block hashes: eliminate inline instead of cataloguing it |
+| [0003](0003-rate-limit-kv-vs-nativo.md) | Rate limiting in KV (fail-closed) as a transition to a native Cloudflare rule |
+| [0004](0004-zero-pii-honeypot.md) | Honeypot and analytics zero-PII by choice, not plan limitation |
+| [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget |
+| [0006](0006-caps-escrita-diarios.md) | Worker write caps: daily, sized to the budget, not to abuse resistance |
+| [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability |
+
+## Repository & tooling
+
+| ADR | Decision |
+| --- | --- |
+| [0002](0002-renovate-dependabot-split.md) | Renovate for version updates, Dependabot only for security updates |
+| [0008](0008-mcp-cloudflare-so-leitura.md) | Cloudflare MCP servers in `.mcp.json`: read-only, no `cloudflare-bindings` |
+| [0009](0009-repositorio-publico.md) | Public repository, not private |
+
+## CI/CD & security pipeline
+
+| ADR | Decision |
+| --- | --- |
+| [0010](0010-coderabbit-revisao-ia.md) | CodeRabbit for AI PR review, not Copilot Code Review or Strix in CI |
+| [0011](0011-sem-token-cloudflare-no-github-actions.md) | No Cloudflare deploy credential in GitHub Actions: Workers Builds over a CI-driven deploy |
+| [0012](0012-baseline-de-hardening-github-actions.md) | GitHub Actions hardening baseline: SHA-pinned actions, `permissions: {}`, no `persist-credentials` |
+| [0013](0013-osv-scanner-action-direta.md) | OSV-Scanner called directly, not via the official reusable workflow |
+| [0014](0014-astro-check-node-test-obrigatorios-ci.md) | `astro check` and `node --test` as required CI gates, not a human-confirmed checklist item |
+| [0015](0015-semgrep-severidade-e-rulesets-nao-pinaveis.md) | Semgrep: gated at ERROR and WARNING, with retry logic that never masks a real finding |
+| [0016](0016-check-npm-audit-wrapper.md) | A custom `check-npm-audit.mjs` wrapper instead of raw `npm audit` |
+| [0017](0017-gh-cli-em-vez-de-actions-terceiras.md) | Prefer the `gh` CLI over third-party Actions for simple GitHub operations |
+| [0018](0018-selecao-de-ferramentas-scan-producao.md) | Production-scan tool selection: automate by elimination, don't collect scanners |

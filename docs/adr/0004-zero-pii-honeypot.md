@@ -1,46 +1,47 @@
-# ADR 0004 — Zero-PII no honeypot e nos analytics, por escolha, não por limitação do plano
+# ADR 0004 — Zero-PII in the honeypot and analytics, by choice, not plan limitation
 
-**Estado:** aceite e em produção.
+**Status:** accepted and in production.
 
-## Contexto
+## Context
 
-O honeypot (`dynamic/worker/src/index.js`, `recordHoneypot`) e o painel
-"Estado da Cloudflare" (`cf-analytics.js`) precisam de agregar tráfego hostil
-por país/ASN/técnica/path para os dashboards de Threat Intelligence terem
-algum conteúdo. A tentação óbvia seria guardar o IP — é o campo mais útil para
-correlacionar ataques.
+The honeypot (`dynamic/worker/src/index.js`, `recordHoneypot`) and the
+"Cloudflare Status" panel (`cf-analytics.js`) need to aggregate hostile
+traffic by country/ASN/technique/path for the Threat Intelligence
+dashboards to have any content. The obvious temptation would be to store
+the IP — it's the single most useful field for correlating attacks.
 
-## Decisão
+## Decision
 
-**Nunca guardar o IP**, em lado nenhum:
+**Never store the IP**, anywhere:
 
-- `recordHoneypot` nunca lê `cf-connecting-ip` — só o `lib/ratelimit.js` o vê,
-  e mesmo aí só como hash truncado e salteado (`clientHash`), com o salt a
-  rodar automaticamente todos os dias (impossível reidentificar o mesmo IP
-  entre dias a partir da chave de rate limit).
-- O timestamp de cada evento do honeypot é arredondado a uma janela de 5 min
-  (`floorToWindow`) — impede correlação por instante preciso com logs de
-  terceiros.
-- No dataset cru de firewall da Cloudflare (`firewallEventsAdaptive`), o
-  campo `clientIP` **está disponível** — é literalmente o que provou, numa
-  correção documentada em `dynamic/PLAN.md`, que o texto antigo do painel
-  estava errado ao dizer que certos detalhes exigiam um dataset Pro+. Mesmo
-  disponível, `clientIP` nunca é pedido nem processado.
+- `recordHoneypot` never reads `cf-connecting-ip` — only
+  `lib/ratelimit.js` sees it, and even there only as a truncated, salted
+  hash (`clientHash`), with the salt rotating automatically every day
+  (impossible to re-identify the same IP across days from the rate-limit
+  key).
+- Each honeypot event's timestamp is rounded to a 5-minute window
+  (`floorToWindow`) — prevents correlation by precise instant with
+  third-party logs.
+- In Cloudflare's raw firewall dataset (`firewallEventsAdaptive`), the
+  `clientIP` field **is available** — it's literally what proved, in a
+  correction documented in `dynamic/PLAN.md`, that the panel's old copy
+  was wrong to say certain details required a Pro+ dataset. Even though
+  available, `clientIP` is never requested or processed.
 
-Ou seja: zero-PII aqui não é "o plano Free não deixa" — é uma escolha
-deliberada, feita mesmo quando o dado estava ao alcance da mão.
+In other words: zero-PII here isn't "the Free plan doesn't allow it" —
+it's a deliberate choice, made even when the data was within easy reach.
 
-## Consequências
+## Consequences
 
-- O honeypot não consegue distinguir dois eventos do mesmo atacante entre
-  dias, nem correlacionar IP com outras fontes — trade-off aceite: o objetivo
-  é mostrar *padrões* de ataque (país, ASN, técnica, path, hora do dia), não
-  construir um dossier por atacante.
-- Reforça a postura de privacidade do site: nenhum visitante — hostil ou
-  legítimo — tem o IP persistido em lado nenhum do Worker.
-- Risco residual aceite (ver `docs/security-review-2026-07-29.md`, achado
-  A2): sem um identificador estável por atacante, um adversário pode encher o
-  orçamento diário de escritas do honeypot com pedidos triviais e enviesar o
-  dashboard público. Mitigação futura possível (sub-cap por ASN) fica
-  registada como *nice-to-have*, não implementada — o custo de a fazer bem
-  (sem reintroduzir um proxy para IP) não se justificou ainda.
+- The honeypot can't distinguish two events from the same attacker across
+  days, nor correlate an IP with other sources — an accepted trade-off:
+  the goal is to show attack *patterns* (country, ASN, technique, path,
+  time of day), not build a per-attacker dossier.
+- Reinforces the site's privacy posture: no visitor — hostile or
+  legitimate — has their IP persisted anywhere in the Worker.
+- Accepted residual risk (see `docs/security-review-2026-07-29.md`,
+  finding A2): without a stable per-attacker identifier, an adversary can
+  fill the honeypot's daily write budget with trivial requests and skew
+  the public dashboard. A possible future mitigation (per-ASN sub-cap) is
+  recorded as a *nice-to-have*, not implemented — the cost of doing it
+  well (without reintroducing an IP proxy) hasn't been justified yet.
