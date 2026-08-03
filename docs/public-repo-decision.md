@@ -1,10 +1,9 @@
 # Going public: decision record and readiness checklist
 
-> **Language note.** English, for the same reason as
-> [`security-review-2026-07-29.md`](security-review-2026-07-29.md): this is a
-> reviewer-facing artefact. The rest of `docs/` is Portuguese.
-
-**Date:** 2026-07-29 · **Status:** recommendation, pending owner decision
+**Date:** 2026-07-29 · **Status:** Executed 2026-07-31 — kept as a historical
+decision record (see `docs/cloudflare-deploy.md` §6). The analysis and
+checklist below reflect the state of the repository on the day the
+recommendation was written, not the current state.
 **Scope reviewed:** full git history (149 commits, 132 PRs), `.github/`,
 `dynamic/worker/`, `static/`, `docs/`, `wrangler.toml`, `config.ts`.
 
@@ -48,73 +47,39 @@ rotating `config.ts` will not remove it. Fix before flipping, not after.
 
 ---
 
-## 2. Private vs public
+## 2. Private vs public — the reasoning behind the decision
 
-The honest framing is not "open source good". It is: **this repository's entire
-stated purpose is to be read by strangers who are deciding whether to hire its
-author. A private portfolio is a contradiction in terms.**
+Condensed now that the decision is executed; full tool-by-tool cost/benefit
+audit (Actions minutes, CodeQL, secret scanning, Dependency Review,
+attestations, Scorecard — all paid while private, free while public) is in
+[`security-review-2026-07-29.md`](security-review-2026-07-29.md) §0.
 
-### A) Keep it private
+The framing that settled it: **this repository's entire stated purpose is to
+be read by strangers deciding whether to hire its author. A private portfolio
+is a contradiction in terms** — and, concretely, the live site deep-links to
+the repo (`SITE.repo` in `config.ts`, the *Provas* page); while private, those
+links 404 for every visitor, breaking the site's own credibility mechanism.
+Security impact of going public was assessed as **net positive, not
+negative** — push protection and secret scanning are gained, and the actual
+attack surface (Cloudflare account, Worker endpoints) was already
+internet-facing regardless of repo visibility. Honeypot decoy disclosure was
+the one real tradeoff, judged acceptable (§7).
 
-- **Advantages:** zero disclosure risk; no inbound noise; total control.
-- **Disadvantages:** portfolio value is **zero** — not low, zero. Nobody can
-  read it. It also forfeits, on GitHub Free: unlimited Actions minutes, CodeQL,
-  native secret scanning + push protection, Dependency Review, artifact
-  attestations, OpenSSF Scorecard, full rulesets/branch protection. Every one
-  of those is paid (GHAS) while private and free while public. The repo is
-  currently paying a real capability tax for a benefit it does not receive.
-- **Long-term:** the gap widens. Each new security control added privately is
-  one more thing nobody can verify.
-- **Hiring impact:** strongly negative by omission. "I have a great private
-  repo" is unfalsifiable, and reviewers discount unfalsifiable claims to zero.
-- **Note:** the live site deep-links to the repo (`SITE.repo` in `config.ts`,
-  used on the *Provas* page). While private, **those links 404 for every
-  visitor** — the site's central credibility mechanism is currently broken.
+## 3. The five reviewers (condensed)
 
-### B) Make it public
-
-- **Advantages:** the portfolio starts existing; six paid capabilities become
-  free; the *Provas* deep-links resolve; verifiable claims become actually
-  verifiable — which is the entire thesis of the site.
-- **Disadvantages:** honeypot deception is disclosed (see §7); inbound issue
-  spam becomes possible; the repo's claims become falsifiable by strangers.
-- **Security impact:** **net positive, not negative.** You gain push protection
-  and secret scanning — controls that prevent the exact failure mode people
-  fear when going public. The attack surface that matters (the Cloudflare
-  account, the Worker endpoints) is already internet-facing regardless of repo
-  visibility. Making source readable does not widen it; the site is static plus
-  11 GET endpoints and 2 unauthenticated POSTs, all already reachable.
-- **Maintenance impact:** modest and controllable. Issues can be disabled or
-  templated; Discussions left off.
-- **Hiring impact:** this is the whole point. See §3.
-
----
-
-## 3. The five reviewers
-
-**Recruiter** — will not read code. Reads the README, the badges, the commit
-graph, and whether the site loads. Public matters; contents barely do. *Action:
-the README must be legible in 15 seconds and in English.*
-
-**Engineering Manager** — looks for evidence you finish things and work
-sustainably. 132 merged PRs with green CI is exactly that signal. Cares that
-the site is **live**, not just built.
-
-**Staff Engineer** — reads `docs/adr/` first and the tests second. Will find
-four ADRs that state trade-offs and consequences, and 186 tests including
-regression tests tied to specific past incidents. This is the strongest
-material in the repo. Will also ask, fairly: *is a personal site with a threat
-model and five CI workflows over-engineered?* — see §6.
-
-**Security Engineer** — goes straight to `.github/workflows/` and the git
-history, looking for leaked secrets and Actions misconfiguration. Finds SHA
-pinning, `permissions: {}`, no `pull_request_target`, a real threat model with
-an asset list, and ADR 0004 declining to collect IPs *when the data was
-available*. That last one is the single most credible artefact here: it is a
-privacy decision made against self-interest, which cannot be faked by tooling.
-
-**Principal Engineer** — cares about judgment under constraint. Will value the
-KV-quota incident and the rate-limit fail-closed fix more than any scanner.
+Five audiences read this repo for different reasons, and only one of them —
+the **recruiter** — reads only the README and decides in under two minutes;
+for them, public matters far more than contents, and the README has to be
+legible in 15 seconds. The **Engineering Manager** looks for evidence of
+finishing and sustaining work (132 merged PRs, green CI, a **live** site, not
+just a built one). The **Staff Engineer** reads `docs/adr/` and the tests
+first — and will fairly ask whether a personal site with a threat model and
+several CI workflows is over-engineered (§6 answers that). The **Security
+Engineer** goes straight to `.github/workflows/` and git history, and will
+find ADR 0004 (declining to collect IPs *when the data was available*) the
+single most credible artefact here — a privacy decision against self-interest
+that can't be faked by tooling. The **Principal Engineer** cares about
+judgment under constraint more than any scanner badge.
 
 **Does public improve chances? Yes, decisively — it is the difference between
 having a portfolio and not having one.**
