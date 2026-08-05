@@ -194,6 +194,13 @@ test('honeypotStats: 24h, top path, países 7d, tempo até 1.º scan', () => {
   assert.equal(stats.countryCount, 3); // RU, US, BR nos 7 dias
   assert.equal(stats.timeToFirstScanSec, 31);
   assert.equal(stats.recent.length, 1);
+  // Sem DEPLOY_TS configurado o Worker grava deployTs = ts do 1.º evento, e
+  // aí a diferença é zero por construção, não uma medição: tem de dar null
+  // (o painel mostra "—") em vez de anunciar "0s até ao 1.º scan".
+  assert.equal(
+    honeypotStats({ hourly: [h], days: [h], meta: { deployTs: 1000, firstScanTs: 1000 } }).timeToFirstScanSec,
+    null,
+  );
   // paths7d: contagens da semana ordenadas por contagem decrescente
   assert.deepEqual(stats.paths7d, [
     { path: '/wp-login.php', count: 2 },
@@ -609,8 +616,22 @@ test('normalizeAsn: inteiro no espaço 32-bit ou null', () => {
   assert.equal(normalizeAsn(0), null);
   assert.equal(normalizeAsn(-5), null);
   assert.equal(normalizeAsn(1.5), null);
-  assert.equal(normalizeAsn('64512'), null); // strings não passam
   assert.equal(normalizeAsn(undefined), null);
+});
+
+test('normalizeAsn: aceita a string de dígitos do clientAsn da Cloudflare', () => {
+  // O `request.cf.asn` do honeypot é número, mas o `clientAsn` do
+  // firewallEventsAdaptive vem como string — só se aceitar número, todos os
+  // `fw:<dia>` ficavam com byAsn {} (foi o que aconteceu em produção).
+  assert.equal(normalizeAsn('64512'), 64512);
+  assert.equal(normalizeAsn(' 32613 '), 32613);
+  assert.equal(normalizeAsn('4294967294'), 4_294_967_294);
+  assert.equal(normalizeAsn('0'), null);
+  assert.equal(normalizeAsn('4294967295'), null); // fora do espaço 32-bit
+  assert.equal(normalizeAsn('AS64512'), null); // já prefixado não é um ASN cru
+  assert.equal(normalizeAsn('-5'), null);
+  assert.equal(normalizeAsn('12.5'), null);
+  assert.equal(normalizeAsn(''), null);
 });
 
 test('floorToWindow arredonda ao início da janela (anonimização)', () => {
@@ -1530,6 +1551,20 @@ test('firewallDetailBreakdown: agrega por URL, user-agent e ASN, pesado por samp
   ]);
   assert.deepEqual(fw.firewallByAsn, [
     { key: 'AS64512', count: 11 },
+    { key: 'AS4837', count: 1 },
+  ]);
+});
+
+test('firewallDetailBreakdown: clientAsn em string (como a Cloudflare o devolve) conta na mesma', () => {
+  // Regressão do bug que deixou todos os snapshots `fw:<dia>` de produção
+  // com byAsn {} — a query de detalhe corria, mas o ASN era descartado.
+  const fw = firewallDetailBreakdown(firewallFixture([
+    { clientRequestPath: '/wp-login.php', userAgent: 'curl/8.0', clientAsn: '32613', sampleInterval: 5 },
+    { clientRequestPath: '/.env', userAgent: 'curl/8.0', clientAsn: '32613' },
+    { clientRequestPath: '/.env', userAgent: 'curl/8.0', clientAsn: 4837 }, // número continua a valer
+  ]));
+  assert.deepEqual(fw.firewallByAsn, [
+    { key: 'AS32613', count: 6 },
     { key: 'AS4837', count: 1 },
   ]);
 });

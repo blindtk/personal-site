@@ -13,12 +13,14 @@ const [dstX, dstY] = project(DESTINATION);
 
 const jsStrings = {
   eventsWord: m.eventsWord,
+  eventsWordOne: m.eventsWordOne,
   countriesWord: m.countriesWord,
+  countriesWordOne: m.countriesWordOne,
   unavailable: m.unavailable,
 };
 ---
 
-<section class="hostmap" id="hostmap" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)}>
+<section class="hostmap" id="hostmap" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
   <div class="section-title">
     <h2 id="h-hostmap">{m.title}</h2>
   </div>
@@ -50,9 +52,11 @@ const jsStrings = {
 
 <script>
   import { countryPoint, arcPath, project, DESTINATION } from '../scripts/geo.js';
+  import { plural } from '../scripts/observability.js';
 
   const root = document.getElementById('hostmap')!;
   const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
   const S = JSON.parse(root.dataset.strings!);
   const NS = 'http://www.w3.org/2000/svg';
   const arcsG = document.getElementById('map-arcs')!;
@@ -81,8 +85,14 @@ const jsStrings = {
       nodesG.append(label);
     }
     const totals = data.totals ?? {};
-    document.getElementById('map-totals')!.textContent =
-      `${totals.events7d ?? 0} ${S.eventsWord} · ${totals.countries7d ?? 0} ${S.countriesWord}`;
+    // Singular/plural pelas regras do idioma: com um só país de origem, o
+    // rodapé do mapa dizia "2 eventos · 1 países".
+    const nEvents = Number(totals.events7d) || 0;
+    const nCountries = Number(totals.countries7d) || 0;
+    document.getElementById('map-totals')!.textContent = [
+      `${nEvents} ${plural(nEvents, { one: S.eventsWordOne, other: S.eventsWord }, locale)}`,
+      `${nCountries} ${plural(nCountries, { one: S.countriesWordOne, other: S.countriesWord }, locale)}`,
+    ].join(' · ');
   }
 
   (async () => {

@@ -58,6 +58,17 @@ CT_EXPECTED_ISSUERS = ""
 # Marca temporal do deploy (epoch ms) para "tempo até 1.º scan". Opcional:
 # se vazio, usa a 1.ª tentativa registada. Define no deploy, ex.:
 #   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
+#
+# ATENÇÃO (2026-08): estando vazio, `deployTs` fica igual a `firstScanTs` e a
+# métrica é zero POR CONSTRUÇÃO — não é uma medição. Era o que estava em
+# produção (o painel anunciava "0s até ao 1.º scan"); honeypotStats passou a
+# devolver null nesse caso e o cartão mostra "—". Para o passar a medir a
+# sério não basta preencher esta var: o `meta` do KV só é escrito uma vez e
+# já tem os dois timestamps iguais. É preciso apagar a chave e voltar a
+# publicar com a var:
+#   npx wrangler kv key delete meta --binding KV --remote
+#   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
+# (o primeiro scan que chegar depois disso é que passa a ser cronometrado).
 DEPLOY_TS = ""
 # IDs da zona/conta para o painel "Estado da Cloudflare" (/api/cf-stats,
 # GraphQL Analytics API — NÃO o Radar, ver src/lib/cf-analytics.js). Não

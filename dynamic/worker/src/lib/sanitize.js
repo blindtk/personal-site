@@ -24,12 +24,26 @@ export function normalizeCountry(input) {
 
 /**
  * Normaliza um ASN para inteiro positivo dentro do espaço válido
- * (1..4_294_967_294, 32-bit) ou null. request.cf.asn já é numérico, mas
- * validamos na mesma antes de persistir.
+ * (1..4_294_967_294, 32-bit) ou null. Duas fontes com tipos diferentes:
+ *   · `request.cf.asn` (honeypot) — número;
+ *   · `clientAsn` do `firewallEventsAdaptive` (GraphQL da Cloudflare) —
+ *     **string** de dígitos.
+ * Só se aceitava número, por isso o `firewallDetailBreakdown` descartava
+ * TODOS os ASNs do firewall: em produção, cada snapshot diário `fw:<dia>`
+ * ficou gravado com `byAsn: {}`, e as tabelas de redes do painel (24h na
+ * tab Cloudflare, 7d nas Tendências) nunca mostraram uma linha vinda da
+ * Cloudflare. Aceita-se agora a string de dígitos, com a mesma validação.
  */
 export function normalizeAsn(input) {
-  if (typeof input !== 'number' || !Number.isInteger(input)) return null;
-  return input >= 1 && input <= 4_294_967_294 ? input : null;
+  let value = input;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    // Só dígitos: um "AS32613" ou "" não é um ASN válido para persistir.
+    if (!/^\d+$/.test(trimmed)) return null;
+    value = Number.parseInt(trimmed, 10);
+  }
+  if (typeof value !== 'number' || !Number.isInteger(value)) return null;
+  return value >= 1 && value <= 4_294_967_294 ? value : null;
 }
 
 /**

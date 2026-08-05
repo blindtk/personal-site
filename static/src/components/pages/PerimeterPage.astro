@@ -69,10 +69,23 @@ const jsStrings = {
   corrTitle: p.corrTitle,
   techNone: p.techNone,
   verdict: p.verdict,
+  // Formas singular/plural — as contagens reais deste site são baixas, e
+  // "1 países"/"1 toques" aparecia mesmo na página (ver plural() em
+  // scripts/observability.js).
+  statCountries: p.statCountries,
+  statCountriesOne: p.statCountriesOne,
   // Deteções (copy-to-clipboard)
   detCopy: d.copy,
   detCopied: d.copied,
+  detHits: d.hits7d,
+  detHitsOne: d.hits7dOne,
   // Cloudflare / Tendências / Logs — partilhadas com o antigo Analytics
+  tiEvents: s.tiEvents7d,
+  tiEventsOne: s.tiEvents7dOne,
+  tiCountries: s.tiCountries7d,
+  tiCountriesOne: s.tiCountries7dOne,
+  tiAsns: s.tiAsns7d,
+  tiAsnsOne: s.tiAsns7dOne,
   countriesEmpty: s.countriesEmpty,
   statusEmpty: s.statusEmpty,
   firewallEmpty: s.firewallEmpty,
@@ -81,6 +94,7 @@ const jsStrings = {
   tiDays: s.tiDays,
   logsEmpty: s.logsEmpty,
   logsPageOf: s.logsPageOf,
+  logsWindowNote: s.logsWindowNote,
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
   riskLowSample: s.riskLowSample,
@@ -117,7 +131,7 @@ const jsStrings = {
         <div class="stats-grid" id="hp-stats" hidden>
           <div class="stat"><div class="n" id="hp-attempts">—</div><div class="l">{p.statAttempts}</div></div>
           <div class="stat amber"><div class="n mono" id="hp-toppath">—</div><div class="l">{p.statTopPath}</div></div>
-          <div class="stat blue"><div class="n" id="hp-countries">—</div><div class="l">{p.statCountries}</div></div>
+          <div class="stat blue"><div class="n" id="hp-countries">—</div><div class="l" id="hp-countries-l">{p.statCountries}</div></div>
           <div class="stat"><div class="n" id="hp-firstscan">—</div><div class="l">{p.statFirstScan}</div></div>
         </div>
 
@@ -162,7 +176,7 @@ const jsStrings = {
                     {r.technique}
                   </a>
                   <span class="det-hits" data-path={r.path}>
-                    <span class="det-hits-n">—</span> {d.hits7d}
+                    <span class="det-hits-n">—</span> <span class="det-hits-w">{d.hits7d}</span>
                   </span>
                 </div>
               </header>
@@ -227,9 +241,9 @@ const jsStrings = {
         <p class="hp-fallback" id="ti-fallback">{s.tiEmpty}</p>
         <div id="ti-body" hidden>
           <div class="metric-grid">
-            <div class="stat amber"><div class="n" id="ti-events">—</div><div class="l">{s.tiEvents7d}</div></div>
-            <div class="stat blue"><div class="n" id="ti-countries">—</div><div class="l">{s.tiCountries7d}</div></div>
-            <div class="stat blue"><div class="n" id="ti-asns">—</div><div class="l">{s.tiAsns7d}</div></div>
+            <div class="stat amber"><div class="n" id="ti-events">—</div><div class="l" id="ti-events-l">{s.tiEvents7d}</div></div>
+            <div class="stat blue"><div class="n" id="ti-countries">—</div><div class="l" id="ti-countries-l">{s.tiCountries7d}</div></div>
+            <div class="stat blue"><div class="n" id="ti-asns">—</div><div class="l" id="ti-asns-l">{s.tiAsns7d}</div></div>
             <div class="stat"><div class="n" id="ti-peak">—</div><div class="l">{s.tiPeakHour}</div></div>
           </div>
           <div class="widget-grid an-mt">
@@ -261,6 +275,7 @@ const jsStrings = {
             <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="ti-fwaction"></div></Widget>
             <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="ti-fwsource"></div></Widget>
           </div>
+          <p class="note">{s.tiFirewallActionNote}</p>
           <div class="widget-grid an-mt">
             <Widget title={s.tiCountriesMerged} tone="warn" meta={s.windowNote} class="wide-widget">
               <div id="ti-tbl-countries"></div>
@@ -281,6 +296,7 @@ const jsStrings = {
         <div class="logs-toolbar">
           <input type="search" id="logs-search" class="logs-search" placeholder={s.logsSearch} aria-label={s.logsSearch} autocomplete="off" />
         </div>
+        <p class="note" id="logs-window" hidden></p>
         <p class="hp-fallback" id="logs-fallback">{s.tiEmpty}</p>
         <div class="table-scroll" id="logs-tablewrap" hidden tabindex="0" role="region" aria-label={p.tabLogs}>
           <table class="result-table wrap-normal hp-table">
@@ -311,7 +327,10 @@ const jsStrings = {
 </BaseLayout>
 
 <script>
-  import { formatNumber, formatPercent, threatRate, withBars, sparkPath } from '../../scripts/observability.js';
+  import {
+    formatNumber, formatPercent, threatRate, withBars, sparkPath,
+    plural, firewallActionTone,
+  } from '../../scripts/observability.js';
 
   const root = document.getElementById('perim-root')!;
   const base = root.dataset.api ?? '';
@@ -434,7 +453,9 @@ const jsStrings = {
       const data = await res.json();
       setText('hp-attempts', String(data.attempts24h ?? 0));
       setText('hp-toppath', data.topPath ?? '—');
-      setText('hp-countries', String(data.countryCount ?? 0));
+      const countryCount = Number(data.countryCount) || 0;
+      setText('hp-countries', String(countryCount));
+      setText('hp-countries-l', plural(countryCount, { one: S.statCountriesOne, other: S.statCountries }, locale));
       setText('hp-firstscan', fmtDuration(data.timeToFirstScanSec));
       const recent = Array.isArray(data.recent) ? data.recent : [];
       corrEl.hidden = !recent.some((ev: any) => {
@@ -463,8 +484,11 @@ const jsStrings = {
         return total;
       };
       for (const el of document.querySelectorAll<HTMLElement>('.det-hits')) {
+        const hits = hitsFor(el.dataset.path ?? '');
         const n = el.querySelector('.det-hits-n');
-        if (n) n.textContent = String(hitsFor(el.dataset.path ?? ''));
+        if (n) n.textContent = String(hits);
+        const w = el.querySelector('.det-hits-w');
+        if (w) w.textContent = plural(hits, { one: S.detHitsOne, other: S.detHits }, locale);
       }
     } catch {
       // Sem Worker publicado: fica o fallback já pintado (evita CLS).
@@ -724,9 +748,10 @@ const jsStrings = {
   }
 
   // Logs: estado de pesquisa + paginação (client-side sobre até 200 eventos).
-  const timeFmt = new Intl.DateTimeFormat(undefined, {
+  const timeFmt = new Intl.DateTimeFormat(locale, {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
   });
+  const dateFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
   let logEvents: any[] = [];
   let logCorr: Correlation = { active: new Set(), cve: {} };
   let logPage = 0;
@@ -803,9 +828,15 @@ const jsStrings = {
       const d = await res.json();
       const totals = d.totals ?? {};
 
-      setText('ti-events', formatNumber(totals.events7d ?? 0, locale));
-      setText('ti-countries', formatNumber(totals.countries7d ?? 0, locale));
-      setText('ti-asns', formatNumber(totals.asns7d ?? 0, locale));
+      // Valor + etiqueta concordantes em número (ver plural()): com 1 país,
+      // o cartão dizia "1 Países".
+      const kpi = (id: string, n: number, one: string, other: string) => {
+        setText(id, formatNumber(n, locale));
+        setText(`${id}-l`, plural(n, { one, other }, locale));
+      };
+      kpi('ti-events', Number(totals.events7d) || 0, S.tiEventsOne, S.tiEvents);
+      kpi('ti-countries', Number(totals.countries7d) || 0, S.tiCountriesOne, S.tiCountries);
+      kpi('ti-asns', Number(totals.asns7d) || 0, S.tiAsnsOne, S.tiAsns);
       setText('ti-peak', d.peakHour ? `${String(d.peakHour.hour).padStart(2, '0')}h` : '—');
 
       renderHeatmap(Array.isArray(d.heatmap) ? d.heatmap : []);
@@ -835,7 +866,18 @@ const jsStrings = {
       );
       renderBars('ti-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
       const fw = d.firewall7d ?? {};
-      renderBars('ti-fwaction', bars(fw.byAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      // Tom por CLASSE de ação, não âmbar para tudo: com 890 "skip" e 592
+      // desafios resolvidos, o painel pintava tráfego legítimo (o meu, de
+      // Portugal) da mesma cor que os 637 bloqueios reais.
+      renderBars(
+        'ti-fwaction',
+        (fw.byAction ?? []).map((r: any) => ({
+          label: String(r.key),
+          value: Number(r.count) || 0,
+          tone: firewallActionTone(r.key),
+        })),
+        S.firewallEmpty,
+      );
       renderBars('ti-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderSourceTable(
         'ti-tbl-countries',
@@ -876,6 +918,15 @@ const jsStrings = {
         document.getElementById('logs-fallback')!.hidden = true;
         document.getElementById('logs-tablewrap')!.hidden = false;
         document.getElementById('logs-pager')!.hidden = false;
+        // Janela desta lista, escrita: são os últimos 200 eventos guardados,
+        // sem corte a 7 dias — sem isto, "Eventos (7d): 2" nas Tendências ao
+        // lado de uma dúzia de linhas aqui lia-se como contradição.
+        const oldest = logEvents.reduce((min, e) => Math.min(min, Number(e?.ts) || Infinity), Infinity);
+        const windowEl = document.getElementById('logs-window')!;
+        windowEl.textContent = S.logsWindowNote
+          .replace('{n}', formatNumber(logEvents.length, locale))
+          .replace('{date}', Number.isFinite(oldest) ? dateFmt.format(new Date(oldest)) : '—');
+        windowEl.hidden = false;
         renderLogsPage();
       }
     } catch {

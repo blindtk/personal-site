@@ -68,10 +68,17 @@ function topKey(counts) {
 export function honeypotStats({ hourly = [], days = [], recent = [], meta = {} }) {
   const last24 = mergeBuckets(hourly);
   const week = mergeBuckets(days);
-  const timeToFirstScanSec =
-    meta.firstScanTs && meta.deployTs && meta.firstScanTs >= meta.deployTs
-      ? Math.round((meta.firstScanTs - meta.deployTs) / 1000)
-      : null;
+  // `deployTs` só é um marco de deploy a sério quando vem da var DEPLOY_TS.
+  // Sem essa var, o Worker escreve `deployTs = ts do 1.º evento` — e então
+  // `firstScanTs - deployTs` é ZERO por construção, não uma medição. Era o
+  // que estava em produção (meta com os dois timestamps iguais): o cartão
+  // anunciava "0s até ao 1.º scan", que se lê como um facto e não é um.
+  // Igualdade = não medido → null → o painel mostra "—".
+  const measurable =
+    meta.firstScanTs && meta.deployTs && meta.firstScanTs > meta.deployTs;
+  const timeToFirstScanSec = measurable
+    ? Math.round((meta.firstScanTs - meta.deployTs) / 1000)
+    : null;
   return {
     attempts24h: last24.total,
     topPath: topKey(last24.byPath) ?? topKey(week.byPath),

@@ -141,14 +141,18 @@ export const ui = {
       // ----- Threat Intelligence (dashboards do honeypot) -----
       tiEmpty: 'Sem dados de ataque acumulados ainda — o honeypot preenche isto ao longo do tempo.',
       tiEvents7d: 'Eventos (7d)',
+      tiEvents7dOne: 'Evento (7d)',
       tiCountries7d: 'Países',
+      tiCountries7dOne: 'País',
       tiAsns7d: 'Redes (ASN)',
+      tiAsns7dOne: 'Rede (ASN)',
       tiPeakHour: 'Hora de pico (UTC)',
       tiHeatmap: 'Heatmap de ataques (dia × hora, UTC)',
       tiHours: 'Ataques por hora do dia (UTC)',
       tiTechniques: 'Técnicas ATT&CK mais disparadas',
       tiTopPaths: 'Alvos mais visados',
       tiFirewallAction: 'Firewall por ação (7d)',
+      tiFirewallActionNote: 'Nem toda a ação da firewall é um ataque travado. «skip»/«allow» passaram; um desafio «bypassed» ou «solved» é um visitante legítimo que o resolveu — a maioria destes é tráfego próprio, de Portugal. Só block/drop (vermelho) e os desafios por resolver (âmbar) são mitigação efetiva; o resto fica neutro de propósito.',
       tiFirewallSource: 'Firewall por origem (7d)',
       // Junta países/redes do honeypot (URLs-isco) e do firewall da Cloudflare
       // (toda a zona) numa só tabela, com coluna de fonte — pedido do dono do
@@ -167,6 +171,11 @@ export const ui = {
       tiIntro: 'Dashboards próprios (não são cópia da Cloudflare) a partir do honeypot deste site — por rede, técnica, país e hora. Atacantes agrupados por ASN, nunca por IP.',
       // ----- Logs -----
       logsIntro: 'Eventos recentes do honeypot. Pesquisáveis e paginados — sem IP, por construção.',
+      // A janela desta lista NÃO é a das Tendências: são os últimos 200
+      // eventos guardados, sem corte a 7 dias. Sem isto escrito, ler «2
+      // eventos (7d)» numa tab e uma dúzia de linhas na outra parecia
+      // contradição.
+      logsWindowNote: '{n} eventos guardados (os últimos 200, sem corte de janela) · o mais antigo de {date}. As Tendências, ao lado, contam só os últimos 7 dias.',
       logsSearch: 'Pesquisar (país, ASN, path, técnica)…',
       logsEmpty: 'Sem eventos a mostrar.',
       logsPrev: '‹ Anterior',
@@ -441,6 +450,7 @@ export const ui = {
       statAttempts: 'tentativas nas últimas 24h',
       statTopPath: 'path mais tentado',
       statCountries: 'países de origem (7d)',
+      statCountriesOne: 'país de origem (7d)',
       statFirstScan: 'tempo até ao 1.º scan',
       verdict: 'registado + 404',
       techNone: '—',
@@ -464,6 +474,7 @@ export const ui = {
         { t: 'Regra Sigma', d: 'Para cada classe, a regra vendor-neutral que a apanharia — pronta a converter para Splunk, Elastic ou Sentinel com o sigma-cli.' },
       ],
       hits7d: 'toques · 7 dias',
+      hits7dOne: 'toque · 7 dias',
       techLabel: 'técnica',
       copy: 'copiar regra',
       copied: 'copiada ✓',
@@ -480,7 +491,9 @@ export const ui = {
       legend7d: 'últimos 7 dias',
       destination: 'danielmala.co',
       eventsWord: 'eventos',
+      eventsWordOne: 'evento',
       countriesWord: 'países',
+      countriesWordOne: 'país',
       unavailable: 'Sem dados de mapa até o Worker estar publicado.',
     },
     ticker: {
@@ -1121,14 +1134,18 @@ export const ui = {
       // ----- Threat Intelligence (honeypot dashboards) -----
       tiEmpty: 'No attack data accumulated yet — the honeypot fills this in over time.',
       tiEvents7d: 'Events (7d)',
+      tiEvents7dOne: 'Event (7d)',
       tiCountries7d: 'Countries',
+      tiCountries7dOne: 'Country',
       tiAsns7d: 'Networks (ASN)',
+      tiAsns7dOne: 'Network (ASN)',
       tiPeakHour: 'Peak hour (UTC)',
       tiHeatmap: 'Attack heatmap (day × hour, UTC)',
       tiHours: 'Attacks by hour of day (UTC)',
       tiTechniques: 'Most-triggered ATT&CK techniques',
       tiTopPaths: 'Most targeted paths',
       tiFirewallAction: 'Firewall by action (7d)',
+      tiFirewallActionNote: 'Not every firewall action is an attack stopped. "skip"/"allow" went through; a "bypassed" or "solved" challenge is a legitimate visitor who passed it — most of those are my own traffic, from Portugal. Only block/drop (red) and unsolved challenges (amber) are real mitigation; the rest is deliberately left neutral.',
       tiFirewallSource: 'Firewall by source (7d)',
       // Merges honeypot countries/networks (bait URLs) and Cloudflare
       // firewall countries/networks (whole zone) into one table with a
@@ -1147,6 +1164,7 @@ export const ui = {
       tiIntro: 'My own dashboards (not a Cloudflare copy) from this site\'s honeypot — by network, technique, country and hour. Attackers grouped by ASN, never by IP.',
       // ----- Logs -----
       logsIntro: 'Recent honeypot events. Searchable and paginated — no IP, by construction.',
+      logsWindowNote: '{n} stored events (the last 200, no window cutoff) · oldest from {date}. Trends, next door, counts only the last 7 days.',
       logsSearch: 'Search (country, ASN, path, technique)…',
       logsEmpty: 'No events to show.',
       logsPrev: '‹ Prev',
@@ -1421,6 +1439,7 @@ export const ui = {
       statAttempts: 'attempts in the last 24h',
       statTopPath: 'most-tried path',
       statCountries: 'origin countries (7d)',
+      statCountriesOne: 'origin country (7d)',
       statFirstScan: 'time to first scan',
       verdict: 'logged + 404',
       techNone: '—',
@@ -1444,6 +1463,7 @@ export const ui = {
         { t: 'Sigma rule', d: 'For each class, the vendor-neutral rule that would catch it — ready to convert to Splunk, Elastic or Sentinel with sigma-cli.' },
       ],
       hits7d: 'hits · 7 days',
+      hits7dOne: 'hit · 7 days',
       techLabel: 'technique',
       copy: 'copy rule',
       copied: 'copied ✓',
@@ -1460,7 +1480,9 @@ export const ui = {
       legend7d: 'last 7 days',
       destination: 'danielmala.co',
       eventsWord: 'events',
+      eventsWordOne: 'event',
       countriesWord: 'countries',
+      countriesWordOne: 'country',
       unavailable: 'No map data until the Worker is published.',
     },
     ticker: {

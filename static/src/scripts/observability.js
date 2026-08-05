@@ -116,3 +116,42 @@ export function threatRate(threats, requests) {
   if (!Number.isFinite(t) || !Number.isFinite(r) || r <= 0) return 0;
   return Math.min(1, Math.max(0, t / r));
 }
+
+/**
+ * Forma singular/plural pelas regras do idioma (Intl.PluralRules), não por
+ * `n === 1` à mão. Os painéis mostram contagens reais e baixas — com 1 país
+ * ou 1 toque, o texto lia-se "1 países de origem" / "1 toques".
+ * `forms` é { one, other }; sem correspondência devolve `other`.
+ */
+export function plural(n, forms, locale = 'en-GB') {
+  const rule = new Intl.PluralRules(locale).select(Number(n) || 0);
+  return forms[rule] ?? forms.other ?? '';
+}
+
+/**
+ * Classe de uma ação de firewall da Cloudflare, para o painel não pintar
+ * tudo de âmbar como se fosse ameaça. Três classes:
+ *   'blocked'   — o pedido não passou (block, drop);
+ *   'challenged'— foi desafiado/atrasado (managed_challenge, js_challenge,
+ *                 e o link_maze da AI Labyrinth);
+ *   'allowed'   — passou (skip/allow, e os desafios que o cliente RESOLVEU:
+ *                 *_bypassed, *_solved — são visitantes legítimos, não
+ *                 ataques bloqueados).
+ * A ordem importa: 'managed_challenge_bypassed' contém 'challenge', por isso
+ * os sufixos de resolução testam-se primeiro. Puro e testável.
+ */
+export function firewallActionClass(action) {
+  const a = String(action ?? '').toLowerCase();
+  if (/(bypassed|solved|allow|^skip$|^log$)/.test(a)) return 'allowed';
+  if (/(block|drop)/.test(a)) return 'blocked';
+  if (/(challenge|maze)/.test(a)) return 'challenged';
+  return 'allowed';
+}
+
+/** Tom de barra correspondente à classe (undefined = neutro). */
+export function firewallActionTone(action) {
+  const cls = firewallActionClass(action);
+  if (cls === 'blocked') return 'down';
+  if (cls === 'challenged') return 'warn';
+  return undefined;
+}
