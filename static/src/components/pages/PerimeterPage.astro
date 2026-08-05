@@ -263,12 +263,12 @@ const jsStrings = {
           </div>
           <div class="widget-grid an-mt">
             <Widget title={s.tiCountriesMerged} tone="warn" meta={s.windowNote} class="wide-widget">
-              <div id="ti-countries"></div>
+              <div id="ti-tbl-countries"></div>
             </Widget>
           </div>
           <div class="widget-grid an-mt">
             <Widget title={s.tiAsnsMerged} tone="warn" meta={s.windowNote} class="wide-widget">
-              <div id="ti-networks"></div>
+              <div id="ti-tbl-networks"></div>
             </Widget>
           </div>
           <p class="note">🛰️ {s.privacyNote}</p>
@@ -329,12 +329,26 @@ const jsStrings = {
     if (el) el.textContent = value;
   };
 
+  // Convenção dos paths-isco (a mesma de dynamic/worker/src/lib/decoys.js e
+  // attack-map.js): uma chave terminada em '/' cobre também tudo por baixo
+  // dela. O evento guarda o path CONCRETO que o scanner pediu
+  // (`/phpmyadmin/index.php`), não a chave do isco (`/phpmyadmin/`) — um
+  // lookup por igualdade exata falhava sempre nesses paths.
+  function byDecoyPath<T>(byKey: Record<string, T>, path: string | undefined): T | null {
+    if (!path) return null;
+    if (Object.hasOwn(byKey, path)) return byKey[path];
+    for (const key of Object.keys(byKey)) {
+      if (key.endsWith('/') && path.startsWith(key)) return byKey[key];
+    }
+    return null;
+  }
+
   // Técnica de um evento: preferir a que o Worker anexou; senão, lookup local
   // por path (mesma fonte de dados — belt and suspenders). Eventos antigos
   // sem `technique` gravado degradam para o lookup por path.
   function techOf(ev: any) {
-    const id = ev?.technique ?? TECH.byPath[ev?.path]?.id ?? null;
-    return id ? (TECH.byId[id] ?? TECH.byPath[ev?.path] ?? null) : null;
+    const id = ev?.technique ?? byDecoyPath(TECH.byPath, ev?.path)?.id ?? null;
+    return id ? (TECH.byId[id] ?? byDecoyPath(TECH.byPath, ev?.path) ?? null) : null;
   }
 
   type Correlation = { active: Set<string>; cve: Record<string, string> };
@@ -435,9 +449,22 @@ const jsStrings = {
       const detCounts = new Map<string, number>(
         (Array.isArray(data.paths7d) ? data.paths7d : []).map((row: any) => [String(row.path), Number(row.count) || 0]),
       );
+      // O `path` de uma regra pode ser um isco-prefixo ('/phpmyadmin/'),
+      // enquanto o `paths7d` traz os paths concretos que os scanners pediram
+      // ('/phpmyadmin/index.php', '/phpmyadmin/setup.php'). Somar por prefixo:
+      // com igualdade exata, essa regra mostrava sempre 0 toques mesmo com o
+      // honeypot a registá-los (mesma convenção de decoys.js).
+      const hitsFor = (rulePath: string) => {
+        if (!rulePath.endsWith('/')) return detCounts.get(rulePath) ?? 0;
+        let total = 0;
+        for (const [path, count] of detCounts) {
+          if (path === rulePath || path.startsWith(rulePath)) total += count;
+        }
+        return total;
+      };
       for (const el of document.querySelectorAll<HTMLElement>('.det-hits')) {
         const n = el.querySelector('.det-hits-n');
-        if (n) n.textContent = String(detCounts.get(el.dataset.path ?? '') ?? 0);
+        if (n) n.textContent = String(hitsFor(el.dataset.path ?? ''));
       }
     } catch {
       // Sem Worker publicado: fica o fallback já pintado (evita CLS).
@@ -794,13 +821,24 @@ const jsStrings = {
         })),
         S.tiNoneYet,
       );
-      renderBars('ti-tech', bars(d.topTechniques ?? [], 'key', 'count'), S.tiEmpty);
+      // Nome da técnica a par do ID: nos Logs e nas Deteções o ID cru ainda
+      // tem o `title`/link a explicá-lo, mas numa barra não há onde passar o
+      // rato — ficava só "T1110" sem dizer o que é.
+      renderBars(
+        'ti-tech',
+        (d.topTechniques ?? []).map((r: any) => {
+          const id = String(r.key);
+          const name = TECH.byId[id]?.name;
+          return { label: name ? `${id} · ${name}` : id, value: Number(r.count) || 0 };
+        }),
+        S.tiEmpty,
+      );
       renderBars('ti-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
       const fw = d.firewall7d ?? {};
       renderBars('ti-fwaction', bars(fw.byAction ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderBars('ti-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderSourceTable(
-        'ti-countries',
+        'ti-tbl-countries',
         [S.colCountry, S.colSource, S.colAction, S.colCount],
         [
           ...(d.topCountries ?? []).map((r: any): SourceRow => ({
@@ -814,7 +852,7 @@ const jsStrings = {
         S.tiEmpty,
       );
       renderSourceTable(
-        'ti-networks',
+        'ti-tbl-networks',
         [S.colNetwork, S.colSource, S.colCount],
         [
           ...(d.topAsns ?? []).map((r: any): SourceRow => ({

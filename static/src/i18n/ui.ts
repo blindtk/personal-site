@@ -94,7 +94,11 @@ export const ui = {
       cardRequests: 'Pedidos',
       cardThreats: 'Ameaças',
       cardBlocked: 'Bloqueados (4xx/5xx)',
-      cardChallenges: 'Managed challenges',
+      // Vem do dataset cru de eventos de firewall (retenção 24h no plano
+      // Free), ao contrário dos outros cartões desta linha, que são 7d — a
+      // janela tem de estar na etiqueta. Soma todas as ações de desafio
+      // (managed_challenge, js_challenge, challenge), não só a "managed".
+      cardChallenges: 'Desafios do firewall (24h)',
       cardBandwidth: 'Largura de banda',
       cardCacheRatio: 'Cache HIT',
       cardThreatRate: 'Taxa de ameaça',
@@ -1074,7 +1078,7 @@ export const ui = {
       cardRequests: 'Requests',
       cardThreats: 'Threats',
       cardBlocked: 'Blocked (4xx/5xx)',
-      cardChallenges: 'Managed challenges',
+      cardChallenges: 'Firewall challenges (24h)',
       cardBandwidth: 'Bandwidth',
       cardCacheRatio: 'Cache HIT',
       cardThreatRate: 'Threat rate',
