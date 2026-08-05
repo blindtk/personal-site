@@ -19,6 +19,6 @@
     "typescript": "^6.0.3"
   },
   "overrides": {
-    "fast-uri": "^3.1.5"
+    "fast-uri": "^4.0.0"
   }
 }
