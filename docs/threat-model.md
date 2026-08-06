@@ -33,9 +33,9 @@ browser DOM. Browser → POST endpoints → KV.
 
 ## Attack surfaces
 
-12 GET endpoints (most with no input); 2 unauthenticated POST endpoints
+11 GET endpoints (most with no input); 2 unauthenticated POST endpoints
 (`/api/csp-report`, `/api/vitals`); 5 decoy routes; the static site; the
-client-side tools (all local except `pwned`, `self-scan`, `mirror`); the
+client-side tools (all local except `pwned`, `mirror`); the
 GitHub Actions supply chain; the npm dependency tree; the Cloudflare
 dashboard/API credentials.
 
@@ -109,9 +109,6 @@ path.
 - `/api/pwned-range` as an HIBP proxy: contained — `normalizePrefix`
   restricts input to exactly 5 hex characters, rate limiting applies,
   results are cached for 24h.
-- `/api/scan` pointed at third parties: impossible — `SCAN_TARGET` is a
-  fixed var; `fetchSameOrigin` prevents credential leakage even if that
-  changes.
 
 ## Supply-chain risks
 
@@ -158,4 +155,10 @@ public. **2026-08-02 (translation pass):** corrected the "GitHub risks"
 section, which still described the repository as private — it went public
 on 2026-07-31 (`docs/cloudflare-deploy.md` §6); whether secret
 scanning/push protection are actually enabled is unverified from this
-session, noted explicitly rather than assumed.
+session, noted explicitly rather than assumed. **2026-08-06:** self-scan
+(`/api/scan`) removed — Cloudflare Bot Fight Mode/WAF was intercepting the
+Worker's own same-zone `fetch()` and grading its managed-challenge page
+instead of the real site (see `dynamic/PLAN.md`, 2026-08-06 entry).
+Corrected attack-surface count (11 GET endpoints, not 12) and dropped the
+now-removed `/api/scan`/`fetchSameOrigin` abuse-case entry; CSP violation
+tracking was kept, unaffected.

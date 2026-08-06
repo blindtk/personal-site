@@ -31,7 +31,6 @@ flowchart TB
     waf --> pages
     waf -->|"/api/*, decoy paths"| worker
     worker <--> kv
-    worker -->|"self-scan (fetchSameOrigin)"| waf
     worker --> hibp
     worker --> feeds
     worker --> crtsh
@@ -69,9 +68,7 @@ flowchart TB
    [`docs/threat-model.md`](threat-model.md) (finding H3, B2/B3) — not
    repeated here.
 3. **Worker → external APIs.** All calls are one-directional (the Worker
-   only reads), with a timeout (`AbortSignal.timeout`), and self-scan uses
-   `fetchSameOrigin` so Access credentials never follow a redirect off the
-   domain.
+   only reads), with a timeout (`AbortSignal.timeout`).
 
 ## One zone, two deploy paths
 

@@ -46,7 +46,7 @@ export const ui = {
       hubTitle: 'Mapa desta secção',
       archTitle: 'Arquitetura',
       archBody:
-        'O que chega ao teu browser é estático: HTML/CSS gerados no build, sem base de dados nem sessões. O pouco que precisa mesmo de servidor (honeypot, self-scan, telemetria) vive num Cloudflare Worker isolado, sem estado pessoal — e o site mantém-se inteiro sem ele. Tudo à borda da Cloudflare, com deploy automático a partir do GitHub.',
+        'O que chega ao teu browser é estático: HTML/CSS gerados no build, sem base de dados nem sessões. O pouco que precisa mesmo de servidor (honeypot, verificador de passwords, telemetria) vive num Cloudflare Worker isolado, sem estado pessoal — e o site mantém-se inteiro sem ele. Tudo à borda da Cloudflare, com deploy automático a partir do GitHub.',
       overviewProjectBody: 'O porquê de cada decisão de arquitetura — Astro sem framework client-side, o monorepo com o Worker separado do estático — está contado no projeto que serve este site.',
       overviewProjectCta: 'Ver o projeto Este site →',
       stackTitle: 'Stack',
@@ -246,7 +246,7 @@ export const ui = {
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
-        'A arquitetura — estática, sem contas nem sessões, com o pouco que precisa mesmo de servidor (honeypot, self-scan, verificador de passwords) isolado num Worker à parte — está descrita em Este Site. Para o modelo de ameaça, o que importa é a consequência: a superfície de ataque fica mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
+        'A arquitetura — estática, sem contas nem sessões, com o pouco que precisa mesmo de servidor (honeypot, verificador de passwords) isolado num Worker à parte — está descrita em Este Site. Para o modelo de ameaça, o que importa é a consequência: a superfície de ataque fica mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
       perimeterBody: 'Isto é o modelo — o que tenta mesmo entrar, ao vivo (honeypot e o que a Cloudflare bloqueia na zona), está no Perímetro.',
       perimeterCta: 'Ver o Perímetro →',
       // ----- Cabeçalhos e porquê -----
@@ -266,7 +266,7 @@ export const ui = {
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF, análise de CSP, laboratório de passkeys) processam tudo no teu browser — nenhum dado sai da máquina. As três ferramentas que falam com o Worker (verificador de passwords, self-scan, espelho) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF, análise de CSP, laboratório de passkeys) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, espelho) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -280,7 +280,7 @@ export const ui = {
       // ----- Provas -----
       evidenceTitle: 'Transparência verificável',
       evidenceBody:
-        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o scan aos cabeçalhos ao vivo (CSP incluída) e os workflows de CI, por push, cron ou tag.',
+        'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o contrato de cabeçalhos (CSP incluída) e os workflows de CI, por push, cron ou tag.',
       evidenceCta: 'Ver a página Provas →',
       // ----- Projeto (narrativa) -----
       projectBody:
@@ -302,9 +302,9 @@ export const ui = {
       commitDateLabel: 'data',
       commitPending:
         'Hash do commit indisponível neste build (fora de um clone git).',
-      headersTitle: 'Cabeçalhos, ao vivo',
+      headersTitle: 'Cabeçalhos de segurança',
       headersIntro:
-        'O mesmo self-scan que vive nas Ferramentas: uma nota aos cabeçalhos que a produção serve agora, com timestamp.',
+        'O contrato versionado abaixo é o que garante que a produção serve mesmo estes cabeçalhos — o mesmo verificado ao vivo pelos scanners externos ligados no fim desta página.',
       contractTitle: 'Contrato de cabeçalhos',
       contractIntro:
         'A lista versionada de cabeçalhos que a produção tem de servir — o workflow Headers falha se algum faltar:',
@@ -452,17 +452,6 @@ export const ui = {
       privacyNote:
         'Dados 100% públicos (logs CT, via crt.sh), com cache de 6 h no Worker. Sem input de visitantes — a query é fixa, derivada do próprio domínio: observabilidade, não é ferramenta de consulta.',
       unavailable: 'O vigia ao vivo ainda não está ligado — o Worker precisa de estar publicado nas rotas do domínio. A lógica e os testes estão em dynamic/worker/.',
-    },
-    selfscan: {
-      title: 'Self-scan ao vivo',
-      gradeLabel: 'cabeçalhos de segurança',
-      headersTitle: 'Cabeçalhos presentes',
-      lastScan: 'último scan',
-      runNow: 'correr scan agora',
-      running: 'a correr…',
-      rateLimited: 'demasiados pedidos — tenta daqui a pouco.',
-      unavailable: 'O scan ao vivo ainda não está ligado (o Worker precisa de estar publicado). Entretanto, corre os scanners públicos abaixo.',
-      loading: 'a carregar o último scan…',
     },
     pwned: {
       inputLabel: 'Password a verificar',
@@ -640,7 +629,7 @@ export const ui = {
     },
     tools: {
       title: 'Ferramentas',
-      intro: 'Utilitários de rede e segurança. A maioria corre inteiramente no browser; três falam com o Worker (dynamic/) — o badge de cada cartão diz qual é qual.',
+      intro: 'Utilitários de rede e segurança. A maioria corre inteiramente no browser; duas falam com o Worker (dynamic/) — o badge de cada cartão diz qual é qual.',
       openTool: 'abrir',
       back: '← Voltar às ferramentas',
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
@@ -806,10 +795,6 @@ export const ui = {
         unsupported: 'Este browser não expõe a WebAuthn (ou não há autenticador disponível). A dissecação abaixo continua a explicar o formato, mas sem uma passkey real.',
         createError: 'Criação cancelada ou falhada — nada foi guardado. Podes tentar de novo.',
         getError: 'Autenticação cancelada ou falhada.',
-      },
-      'self-scan': {
-        name: 'Self-scan de cabeçalhos',
-        desc: 'Verifica ao vivo os cabeçalhos de segurança HTTP que este site serve agora, via o Worker.',
       },
       subnets: {
         name: 'Calculadora de subnets',
@@ -1046,12 +1031,11 @@ export const ui = {
         'Depois, ferramentas com backend (ver dynamic/PLAN.md):',
         '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
         '  [ ] Whois de domínios e IPs',
-        '  [ ] Headers de segurança de sites terceiros (o self-scan',
-        '      deste site já existe: /ferramentas/self-scan/)',
+        '  [ ] Headers de segurança de sites terceiros',
         '  [ ] Verificação de blacklists de IP',
         '',
-        'As ferramentas deste Lab correm 100% no teu browser; as três',
-        'que falam com o Worker (pwned, self-scan, espelho) estão marcadas',
+        'As ferramentas deste Lab correm 100% no teu browser; as duas',
+        'que falam com o Worker (pwned, espelho) estão marcadas',
         'com «requer servidor» nas Ferramentas.',
       ],
       termWelcome: [
@@ -1110,7 +1094,7 @@ export const ui = {
       hubTitle: 'Map of this section',
       archTitle: 'Architecture',
       archBody:
-        'What reaches your browser is static: HTML/CSS generated at build, no database, no sessions. The little that genuinely needs a server (honeypot, self-scan, telemetry) lives in an isolated Cloudflare Worker with no personal state — and the site stays whole without it. Everything at Cloudflare\'s edge, deployed automatically from GitHub.',
+        'What reaches your browser is static: HTML/CSS generated at build, no database, no sessions. The little that genuinely needs a server (honeypot, password checker, telemetry) lives in an isolated Cloudflare Worker with no personal state — and the site stays whole without it. Everything at Cloudflare\'s edge, deployed automatically from GitHub.',
       overviewProjectBody: 'The why behind each architecture decision — Astro with no client-side framework, the monorepo with the Worker kept separate from the static site — is told in the project that serves this site.',
       overviewProjectCta: 'See the This site project →',
       stackTitle: 'Stack',
@@ -1287,7 +1271,7 @@ export const ui = {
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
-        'The architecture — static, no accounts or sessions, with the little that genuinely needs a server (honeypot, self-scan, password checker) isolated in a separate Worker — is described on This Site. For the threat model, what matters is the consequence: the attack surface stays minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
+        'The architecture — static, no accounts or sessions, with the little that genuinely needs a server (honeypot, password checker) isolated in a separate Worker — is described on This Site. For the threat model, what matters is the consequence: the attack surface stays minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
       perimeterBody: 'That is the model — what actually tries to get in, live (the honeypot and what Cloudflare blocks on the zone), is on the Perimeter.',
       perimeterCta: 'See the Perimeter →',
       // ----- Headers and why -----
@@ -1307,7 +1291,7 @@ export const ui = {
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
       privacyBody:
-        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF, CSP analyser, passkey lab) process everything in your browser — no data leaves your machine. The three tools that talk to the Worker (password checker, self-scan, mirror) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
+        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF, CSP analyser, passkey lab) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, mirror) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -1321,7 +1305,7 @@ export const ui = {
       // ----- Evidence -----
       evidenceTitle: 'Verifiable transparency',
       evidenceBody:
-        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the live header scan (CSP included), and the CI workflows, on push, cron, or tag.",
+        "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the header contract (CSP included), and the CI workflows, on push, cron, or tag.",
       evidenceCta: 'See the Evidence page →',
       // ----- Project (narrative) -----
       projectBody:
@@ -1343,9 +1327,9 @@ export const ui = {
       commitDateLabel: 'date',
       commitPending:
         'Commit hash unavailable in this build (outside a git clone).',
-      headersTitle: 'Headers, live',
+      headersTitle: 'Security headers',
       headersIntro:
-        'The same self-scan that lives in Tools: a grade for the headers production serves right now, with a timestamp.',
+        'The versioned contract below is what guarantees production actually serves these headers — the same thing checked live by the external scanners linked at the end of this page.',
       contractTitle: 'Header contract',
       contractIntro:
         'The versioned list of headers production must serve — the Headers workflow fails if any is missing:',
@@ -1481,17 +1465,6 @@ export const ui = {
       privacyNote:
         '100% public data (CT logs, via crt.sh), cached for 6 h in the Worker. No visitor input — the query is fixed, derived from the domain itself: observability, not a lookup tool.',
       unavailable: 'The live watch is not wired up yet — the Worker needs to be published on the domain routes. The logic and tests live in dynamic/worker/.',
-    },
-    selfscan: {
-      title: 'Live self-scan',
-      gradeLabel: 'security headers',
-      headersTitle: 'Headers present',
-      lastScan: 'last scan',
-      runNow: 'run scan now',
-      running: 'running…',
-      rateLimited: 'too many requests — try again shortly.',
-      unavailable: 'The live scan is not wired up yet (the Worker needs to be published). In the meantime, run the public scanners below.',
-      loading: 'loading the last scan…',
     },
     pwned: {
       inputLabel: 'Password to check',
@@ -1664,7 +1637,7 @@ export const ui = {
     },
     tools: {
       title: 'Tools',
-      intro: 'Networking and security utilities. Most run entirely in your browser; three talk to the Worker (dynamic/) — each card\'s badge says which is which.',
+      intro: 'Networking and security utilities. Most run entirely in your browser; two talk to the Worker (dynamic/) — each card\'s badge says which is which.',
       openTool: 'open',
       back: '← Back to tools',
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
@@ -1830,10 +1803,6 @@ export const ui = {
         unsupported: 'This browser does not expose WebAuthn (or no authenticator is available). The dissection below still explains the format, but without a real passkey.',
         createError: 'Creation cancelled or failed — nothing was stored. You can try again.',
         getError: 'Authentication cancelled or failed.',
-      },
-      'self-scan': {
-        name: 'Header self-scan',
-        desc: 'Live check of the HTTP security headers this site serves right now, via the Worker.',
       },
       subnets: {
         name: 'Subnet calculator',
@@ -2070,12 +2039,11 @@ export const ui = {
         'Then, backend tools (see dynamic/PLAN.md):',
         '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
         '  [ ] Domain and IP whois',
-        '  [ ] Security headers of third-party sites (this site’s own',
-        '      self-scan already exists: /en/tools/self-scan/)',
+        '  [ ] Security headers of third-party sites',
         '  [ ] IP blacklist checks',
         '',
-        'The tools in this Lab run 100% in your browser; the three that',
-        'talk to the Worker (pwned, self-scan, mirror) are flagged with',
+        'The tools in this Lab run 100% in your browser; the two that',
+        'talk to the Worker (pwned, mirror) are flagged with',
         '“requires server” on the Tools page.',
       ],
       termWelcome: [

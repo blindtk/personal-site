@@ -25,7 +25,7 @@ export default defineConfig({
   //     <link rel="stylesheet"> externo.
   //   - vite.build.assetsInlineLimit: 0 (abaixo) — todo o <script> hoisted
   //     vira <script src="/_astro/…"> externo. SEM isto, o Astro inlina
-  //     scripts pequenos num <script> sem src (o self-scan, o ticker, os
+  //     scripts pequenos num <script> sem src (o mirror, o ticker, os
   //     painéis da Segurança…), que ficariam BLOQUEADOS por script-src
   //     'self' — foi esse o bug que partiu os painéis quando se tentou o
   //     zero-inline sem este lever.
@@ -63,7 +63,7 @@ export default defineConfig({
   },
   vite: {
     // O par de inlineStylesheets: 'never' para JS. Sem isto o Astro inlina
-    // scripts hoisted pequenos (self-scan, ticker, painéis) num <script>
+    // scripts hoisted pequenos (mirror, ticker, painéis) num <script>
     // sem src, que script-src 'self' bloquearia. Com 0, tudo vira ficheiro
     // externo em /_astro/, coberto por 'self'. (Também externaliza pequenos
     // assets que seriam data: URIs — irrelevante aqui, o site não os tem.)

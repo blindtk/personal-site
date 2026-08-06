@@ -8,8 +8,8 @@ main = "src/index.js"
 # runtime da Cloudflare). Antes de fazer merge desta branch: validar com o
 # fluxo já documentado no CLAUDE.md (`git checkout <branch> && cd
 # dynamic/worker && npx wrangler deploy`, testar a partir da branch sem
-# merge) — correr `npm test` outra vez e visitar /api/health, /api/mirror,
-# /api/scan a partir do deploy da branch.
+# merge) — correr `npm test` outra vez e visitar /api/health, /api/mirror
+# a partir do deploy da branch.
 compatibility_date = "2026-01-01"
 
 # Sem subdomínio *.workers.dev nem preview URLs: o deploy final vive só nas
@@ -47,8 +47,13 @@ preview_id = "6ecf59e3f7a742748e4cc22c229543c3"
 # No deploy final (Worker em rotas do próprio domínio) fica vazio — as
 # chamadas são same-origin e a CSP connect-src 'self' basta.
 ALLOWED_ORIGINS = ""
-# Alvo do self-scan (o próprio site). O vigia CT (/api/ct) deriva daqui o
-# domínio a vigiar nos logs de Certificate Transparency.
+# Alvo do próprio site — nome herdado de quando também alimentava o
+# self-scan (removido; media os cabeçalhos que chegavam ao Worker a fazer
+# fetch a si mesmo, mas a Cloudflare desviava esse pedido para a página de
+# managed challenge da própria zona, o que dava um grau falso). O vigia CT
+# (/api/ct) continua a derivar daqui o domínio a vigiar nos logs de
+# Certificate Transparency, e o recetor de violações CSP usa-o para
+# confirmar que o `document-uri` de um relatório é mesmo deste site.
 SCAN_TARGET = "https://danielmala.co/"
 # Emissores esperados no vigia CT (CSV, match por substring). Vazio = a
 # lista por omissão em src/lib/ct.js (Let's Encrypt + Google Trust
@@ -116,11 +121,11 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # faltava esta nota, ao contrário do RATE_SALT que já a tinha.
 
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
-# A cada 30 min: aquece ticker/scan/ct/cf-stats/threat-intel (para as visitas
+# A cada 30 min: aquece ticker/ct/cf-stats/threat-intel (para as visitas
 # caírem sempre em cache). O snapshot da firewall (fw:<dia>, para acumular 7
 # dias a partir do dataset cru do Free, que só retém 24h) só é fotografado
 # quando o cf-stats É DE FACTO refrescado (TTL 6h, ~4×/dia) — não em cada um
-# dos 48 ticks. TTLs de threat-intel/cf-stats/scan/ct alinhados a 6h (≥
+# dos 48 ticks. TTLs de threat-intel/cf-stats/ct alinhados a 6h (≥
 # intervalo do cron): abaixo disso, cada tick encontrava a cache sempre
 # "stale" e repetia leituras caras ao KV (2026-07, alerta real de 50% do teto
 # diário do plano Free com o site ainda nem publicado — ver dynamic/PLAN.md).

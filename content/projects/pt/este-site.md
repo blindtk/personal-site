@@ -40,7 +40,7 @@ site) mantém o modelo de ameaça descrito na página de
 [Segurança](/seguranca/) o mais simples possível: sem backend, sem base de
 dados, sem input de utilizador que chegue a um servidor. As funcionalidades
 que precisam mesmo de servidor — o [honeypot](/projetos/honeypot/), o mapa de
-tráfego, self-scan de cabeçalhos, ticker de threat intel — vivem isoladas num
+tráfego, o vigia de Certificate Transparency, ticker de threat intel — vivem isoladas num
 Cloudflare Worker (`dynamic/worker/`), publicado à parte. Isso significa que
 o site estático continua a funcionar (e a cumprir a promessa de "sem
 backend") mesmo que o Worker esteja em baixo ou nem sequer publicado — as

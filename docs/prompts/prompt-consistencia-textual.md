@@ -51,7 +51,7 @@ Copia o bloco abaixo como pedido a um agente.
 >    certificação mencionada num sítio e ausente na página de Certificações).
 > 3. **Terminologia consistente.** O mesmo conceito deve usar sempre o mesmo
 >    termo (ex.: "Provas" ↔ "Evidence", "Perímetro" ↔ "Perimeter", "honeypot",
->    "self-scan", nomes das ferramentas, "camadas"). Presta atenção especial ao
+>    "vigia CT", nomes das ferramentas, "camadas"). Presta atenção especial ao
 >    bloco `layers` ("Este site, por camadas") em `ui.ts`: as descrições de
 >    Segurança, Provas, Perímetro, Deteções e ATT&CK têm de descrever
 >    fielmente o que cada uma dessas páginas realmente diz.

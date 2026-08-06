@@ -1,11 +1,10 @@
 # dynamic/ — dynamic app ("Lab") plan
 
 > **Status: in production.** `dynamic/worker/` (the Worker behind the
-> site's security features — honeypot, hostile-traffic map, header
-> self-scan, SOC ticker, and CSP-violation pipeline) is deployed on the
-> `danielmala.co` domain's routes. Deploy, gotchas, and infrastructure
-> (Access, WAF) are documented in `dynamic/worker/README.md` and
-> `docs/cloudflare-deploy.md`.
+> site's security features — honeypot, hostile-traffic map, SOC ticker,
+> and CSP-violation pipeline) is deployed on the `danielmala.co` domain's
+> routes. Deploy, gotchas, and infrastructure (Access, WAF) are
+> documented in `dynamic/worker/README.md` and `docs/cloudflare-deploy.md`.
 > The network tools below (DNS/whois/…) are still to be built; the
 > `/lab/` page ("under construction") will point to them once they exist.
 
@@ -550,6 +549,37 @@
   `.mcp.json`; the remaining five (`cloudflare-audit-logs`,
   `cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
   `cloudflare-observability`, `cloudflare-docs`) are the read-only set.
+
+- **2026-08-06 — Self-scan removed** (repo owner's decision, after two
+  problems traced to the same root cause): the "Header self-scan" widget
+  (`/api/scan`, Provas page) had been showing grade E in production, and
+  the CSP Violations panel kept logging `script-src-elem`/`self` and
+  `connect-src`/`self` violations that made no sense for a same-origin
+  request. Both turned out to be the same mechanism — Cloudflare Bot
+  Fight Mode / WAF intercepting the Worker's own same-zone `fetch()` to
+  `SCAN_TARGET` and serving a managed-challenge page instead of the real
+  site; the Worker then graded the challenge page's headers, not
+  danielmala.co's, producing a grade that measured Cloudflare's challenge
+  page rather than the site.
+  Two fixes were on the table: build a `SCAN_PROOF_TOKEN` bypass (a
+  shared secret so the WAF rule lets the Worker's own self-fetch through
+  unchallenged) or remove self-scan outright. The repo owner chose
+  removal: the security-headers table already documented in Provas is
+  static and doesn't need a live probe to be trustworthy, external
+  scanners (Mozilla Observatory, securityheaders.com, linked from Provas)
+  already cover the same ground without fighting the zone's own WAF, and
+  a bypass token adds a permanent secret + WAF rule to maintain for a
+  widget whose only failure mode was self-inflicted.
+  **What stayed:** CSP violation tracking — unlike self-scan, it's a
+  genuine detective control (catches real injected/third-party script
+  attempts, not just Cloudflare's own challenge noise) and losing it
+  would remove real security value, not just a broken metric. `ct.js`'s
+  CT-watch domain and the CSP-report handler's origin check both still
+  read `env.SCAN_TARGET`, so the var itself was kept — only the scan
+  route, its pure grading logic (`src/lib/scan.js`), and the
+  `fetchSameOrigin`/`runScan` machinery were removed. See
+  `dynamic/worker/wrangler.toml`'s `SCAN_TARGET` comment for the same
+  note inline.
 
 ## Shelved ideas (presented, **not approved** for implementation)
 

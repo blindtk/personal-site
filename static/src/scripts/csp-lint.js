@@ -293,7 +293,7 @@ export function fillMessage(finding, messages) {
   return tmpl.replace(/\{(\w+)\}/g, (_, k) => (finding[k] != null ? String(finding[k]) : ''));
 }
 
-/** Tom para o CSS do selo de nota (mesmos data-grade do self-scan). */
+/** Tom para o CSS do selo de nota (mesmos data-grade do .grade-badge partilhado). */
 export function gradeTone(grade) {
   if (/^A/.test(grade)) return 'good';
   if (/^[BC]/.test(grade)) return 'mid';

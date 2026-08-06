@@ -222,7 +222,7 @@ export function areaRadius(value, { minR = 4, k = 1 } = {}) {
  * domínio nem de emissor esperado nesta janela: um sinal em si mesmo, não
  * apenas dados em falta.
  */
-export function currentCertificate(certs, { domain, now = Date.now() } = {}) {
+export function currentCertificate(certs, { domain = '', now = Date.now() } = {}) {
   const candidates = (Array.isArray(certs) ? certs : []).filter(
     (c) => c && c.notBefore <= now && c.notAfter >= now
       && Array.isArray(c.names) && c.names.includes(domain) && c.expected,

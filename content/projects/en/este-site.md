@@ -39,7 +39,7 @@ the inline code instead of cataloguing it fixes the root cause.)
 [Security](/en/security/) page as simple as possible: no backend, no
 database, no user input that reaches a server. The features that genuinely
 need a server — the [honeypot](/en/projects/honeypot/), the traffic map, the
-header self-scan, the threat-intel ticker — live isolated in a Cloudflare
+Certificate Transparency watcher, the threat-intel ticker — live isolated in a Cloudflare
 Worker (`dynamic/worker/`), published separately. That means the static site
 keeps working (and keeps its "no backend" promise) even when the Worker is
 down or not published at all — the sections that depend on it degrade

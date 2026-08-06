@@ -1,8 +1,8 @@
 # personal-site-worker
 
 Backend for the site's security features (Block 3): honeypot, hostile
-traffic map, header self-scan, SOC ticker, and CSP violation receiver. A
-single Cloudflare Worker + one KV namespace.
+traffic map, SOC ticker, and CSP violation receiver. A single Cloudflare
+Worker + one KV namespace.
 
 > **Why it lives here and not in `static/`:** the monorepo rule is that
 > `static/` is 100% client, no backend. Anything that needs a server
@@ -15,7 +15,6 @@ single Cloudflare Worker + one KV namespace.
 | *(decoys)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Records only metadata (country, ASN, path, timestamp) and returns 404 | — | — |
 | `GET /api/honeypot` | Aggregated stats + last 30 attempts | 60 s | — |
 | `GET /api/map` | Origins by country (24 h / 7 d) | 60 s | — |
-| `GET /api/scan` | Note + checklist of the site's own headers | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | — | — |
 | `GET /api/ticker` | CISA KEV + critical NVD entries, sanitized | 1 h | — |
 | `POST /api/csp-report` | CSP violation receiver — **manual** send (button on the Evidence page), not automatic `report-uri`/`report-to` (removed from the CSP in 2026-07, see `docs/security-headers.md`) | — | 10/min per client (fails closed with 429 past this limit) + 50/day global write cap (silently dropped past the cap, still 204) |
@@ -153,8 +152,7 @@ normal path. `?refresh=1` forces a fresh request ahead of that — useful
 so you don't have to wait 6h after changing the data's shape (e.g. when
 `topCountries` was added, old KV entries lacked that field until they
 expired or a manual refresh replaced them) — and, since it accepts input
-(the parameter itself), it carries the same tight rate limit as
-`/api/scan` (3/10 min).
+(the parameter itself), it carries a tight rate limit (3/10 min).
 
 Pure logic in `src/lib/cf-analytics.js` (parses the GraphQL response,
 tested with known vectors — any missing field or schema change on
@@ -217,13 +215,6 @@ npx wrangler kv namespace create HONEYPOT --preview
 
 npx wrangler secret put RATE_SALT     # any long random string
 npx wrangler secret put NVD_API_KEY   # optional (raises the NVD rate limit)
-
-# Only needed if Cloudflare Access is active in front of SCAN_TARGET
-# (see docs/cloudflare-deploy.md) — without them, self-scan receives the
-# Access login page instead of the site. Create the Access Service Token
-# at dash.cloudflare.com → Zero Trust → Access → Service Auth.
-npx wrangler secret put ACCESS_CLIENT_ID
-npx wrangler secret put ACCESS_CLIENT_SECRET
 ```
 
 ### 2a. Deploy on the real domain (what's in production)
@@ -260,10 +251,8 @@ enough — nothing to change.
 | `RATE_SALT` | secret, **mandatory** | `wrangler secret put` | rate-limit hash; the secret itself is rotated manually WEEKLY (invalidates accumulated limits on purpose) — the *effective* rate-limit key derived from it already changes daily (see Privacy section above). **Unresolved risk:** if unset, the Worker logs `rate_salt_missing` but doesn't fail closed — it falls back to the public, hardcoded `'rotate-me'` string (`dailySalt` in `src/lib/ratelimit.js`), so rate-limiting continues to "work" with a predictable salt instead of stopping. Fixing this (reject requests when the secret is absent) is tracked as a separate Worker change, not a docs fix. |
 | `NVD_API_KEY` | secret | `wrangler secret put` | optional, NVD rate limit |
 | `CF_API_TOKEN` | secret | `wrangler secret put` | Analytics:Read (zone + account) + Firewall/WAF:Read (zone + account) token, for `/api/cf-stats` — see the "Cloudflare Status" section above |
-| `ACCESS_CLIENT_ID` | secret | `wrangler secret put` | optional — Access Service Token, only if Access is active in front of `SCAN_TARGET` |
-| `ACCESS_CLIENT_SECRET` | secret | `wrangler secret put` | same, paired with `ACCESS_CLIENT_ID` |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (mode 2b only) |
-| `SCAN_TARGET` | var | wrangler.toml | URL that self-scan inspects |
+| `SCAN_TARGET` | var | wrangler.toml | own site URL — feeds the CT watch's domain and the CSP report pipeline's origin check |
 | `DEPLOY_TS` | var | `--var` on deploy | "time to first scan" (optional) |
 | `CF_ZONE_TAG` | var | wrangler.toml | zone ID, for `/api/cf-stats` |
 | `CF_ACCOUNT_ID` | var | wrangler.toml | account ID, for `/api/cf-stats` |

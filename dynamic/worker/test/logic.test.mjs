@@ -14,7 +14,6 @@ import {
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
 } from '../src/lib/vitals.js';
-import { gradeFromHeaders } from '../src/lib/scan.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
 import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
@@ -217,23 +216,6 @@ test('mapData ordena países por contagem', () => {
   const data = mapData({ hourly: [h], days: [h] });
   assert.deepEqual(data.last24h, [{ country: 'RU', count: 2 }, { country: 'CN', count: 1 }]);
   assert.equal(data.totals.countries7d, 2);
-});
-
-test('gradeFromHeaders: A+ com tudo, F com nada', () => {
-  const full = gradeFromHeaders((n) => (n === 'content-security-policy' ? "default-src 'self'" : 'x'));
-  assert.equal(full.grade, 'A+');
-  assert.equal(full.checklist.every((c) => c.present), true);
-  const none = gradeFromHeaders(() => null);
-  assert.equal(none.grade, 'F');
-  assert.equal(none.checklist.some((c) => c.present), false);
-});
-
-test('gradeFromHeaders: nota intermédia sem CSP (peso 3 em falta)', () => {
-  // tudo presente menos a CSP (peso 3 de 12) → 9/12 = 0.75 → B
-  const g = gradeFromHeaders((n) => (n === 'content-security-policy' ? null : 'v'));
-  assert.equal(g.score, 9);
-  assert.equal(g.max, 12);
-  assert.equal(g.grade, 'B');
 });
 
 test('rate limit: janela fixa bloqueia ao atingir o máximo', () => {
@@ -921,113 +903,6 @@ test('cache expirada serve o valor stale e renova em background', async () => {
   const refreshed = JSON.parse(env.KV.store.get('cache:honeypot'));
   assert.ok(refreshed.exp > now, 'refresh em background devia ter renovado o exp');
   assert.equal(refreshed.data.attempts24h, 0); // buckets vazios → 0
-});
-
-// ---------- self-scan: segue redirects só na mesma origem (N7) ----------
-// Achado da revisão de segurança 2026-07 (ronda 4): CF-Access-Client-Id/
-// Secret, ao contrário do Authorization, não são despidos pelo Fetch spec
-// em redirects cross-origin. Com `redirect: 'follow'` normal, um 3xx do
-// alvo do self-scan para outra origem reenviava as credenciais da Access
-// para esse destino.
-
-test('self-scan: NÃO segue redirect para outra origem, e não reenvia as credenciais da Access', async () => {
-  const env = {
-    KV: fakeKV(),
-    SCAN_TARGET: 'https://danielmala.co/',
-    ACCESS_CLIENT_ID: 'cid',
-    ACCESS_CLIENT_SECRET: 'csecret',
-  };
-  const calls = [];
-  const orig = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    calls.push({ url: String(url), headers: opts?.headers ?? {} });
-    if (String(url) === 'https://danielmala.co/') {
-      return {
-        status: 302,
-        headers: { get: (h) => (h.toLowerCase() === 'location' ? 'https://evil.example/' : null) },
-      };
-    }
-    return { status: 200, headers: { get: () => null } }; // não devia ser chamado
-  };
-  try {
-    const res = await runFetch(fakeRequest('/api/scan'), env);
-    assert.equal(res.status, 200); // a rota devolve sempre 200 com o grade calculado
-    assert.equal(calls.length, 1, 'não deve seguir o redirect para fora da origem');
-    assert.equal(calls[0].headers['CF-Access-Client-Id'], 'cid'); // o pedido same-origin inicial leva as credenciais
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('self-scan: segue redirect same-origin e reenvia as credenciais da Access ao destino final', async () => {
-  const env = {
-    KV: fakeKV(),
-    SCAN_TARGET: 'https://danielmala.co/',
-    ACCESS_CLIENT_ID: 'cid',
-    ACCESS_CLIENT_SECRET: 'csecret',
-  };
-  const calls = [];
-  const orig = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    calls.push({ url: String(url), headers: opts?.headers ?? {} });
-    if (String(url) === 'https://danielmala.co/') {
-      return {
-        status: 301,
-        headers: { get: (h) => (h.toLowerCase() === 'location' ? 'https://danielmala.co/pt/' : null) },
-      };
-    }
-    return {
-      status: 200,
-      headers: { get: (h) => (h.toLowerCase() === 'x-content-type-options' ? 'nosniff' : null) },
-    };
-  };
-  try {
-    const res = await runFetch(fakeRequest('/api/scan'), env);
-    assert.equal(res.status, 200);
-    assert.equal(calls.length, 2, 'deve seguir o redirect same-origin');
-    assert.equal(calls[1].url, 'https://danielmala.co/pt/');
-    assert.equal(calls[1].headers['CF-Access-Client-Id'], 'cid'); // credenciais seguem no salto same-origin
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('/api/scan: leitura simples não é cacheável pelo browser (no-store) — só a KV controla frescura', async () => {
-  // Achado: `Cache-Control: public, max-age=1800` aqui deixava o browser (e
-  // qualquer cache partilhada) devolver a resposta antiga por até 30 min
-  // depois de um refresh manual já ter atualizado a KV — a nota "congelava"
-  // na última resposta pública que o browser tinha guardado, mesmo com a
-  // KV já a refletir a nota nova.
-  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
-  const orig = globalThis.fetch;
-  globalThis.fetch = async () => ({ status: 200, headers: { get: () => null } });
-  try {
-    const res = await runFetch(fakeRequest('/api/scan'), env);
-    assert.equal(res.status, 200);
-    assert.equal(res.headers.get('cache-control'), 'no-store');
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-// ---------- rate limit: pedido bloqueado não gasta escrita KV ----------
-
-test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
-  const kv = fakeKV();
-  let puts = 0;
-  const origPut = kv.put.bind(kv);
-  kv.put = async (...args) => { puts += 1; return origPut(...args); };
-  const env = { KV: kv };
-
-  // pré-carrega a janela do cliente no máximo (max=3 na rota scan)
-  const ip = '203.0.113.9';
-  const id = await clientHash(ip, dailySalt(undefined));
-  kv.store.set(`rl:scan:${id}`, JSON.stringify({ count: 3, windowStart: Date.now() }));
-
-  const res = await runFetch(fakeRequest('/api/scan?refresh=1', { ip }), env);
-  assert.equal(res.status, 429);
-  assert.ok(res.headers.get('retry-after'));
-  assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
 });
 
 // ---------- rate limit: teto global de escritas do próprio limiter ----------
@@ -1835,7 +1710,7 @@ test('/api/cf-stats: 200 devolve blockedByStatus a partir do responseStatusMap',
   }
 });
 
-test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan', async () => {
+test('/api/cf-stats?refresh=1: rate limit de 3/10min', async () => {
   const kv = fakeKV();
   let puts = 0;
   const origPut = kv.put.bind(kv);
@@ -1854,34 +1729,15 @@ test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan
   assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
 });
 
-// ---------- cap partilhado dos refresh manuais (scan + cf-stats) ----------
+// ---------- cap global dos refresh manuais (/api/cf-stats?refresh=1) ----------
 // Achado da revisão de segurança 2026-07 (ronda 4, N2): o rate limit por
-// cliente (3/10min) destas duas rotas ainda permite até 432 escritas/dia por
-// rota e por IP — sem cap global, a mesma classe de risco da lacuna #1
-// (rate limiter), só que aplicada tarde de mais a estes dois caminhos.
+// cliente (3/10min) desta rota ainda permite até 432 escritas/dia por IP —
+// sem cap global, a mesma classe de risco da lacuna #1 (rate limiter), só
+// que aplicada tarde de mais a este caminho. O cap em si é global (não
+// por-rota) por desenho — ver REFRESH_WRITE_CAP em src/index.js — para
+// cobrir sem esforço extra qualquer outra rota de refresh manual futura.
 
-test('/api/scan?refresh=1: cap partilhado no teto degrada para a cache existente, sem novo self-scan', async () => {
-  const env = { KV: fakeKV() };
-  const now = Date.now();
-  const capKey = `refreshcap:d:${new Date(now).toISOString().slice(0, 10)}`;
-  env.KV.store.set(capKey, JSON.stringify({ count: 20, windowStart: now })); // cap já no teto (max=20)
-  env.KV.store.set('cache:scan', JSON.stringify({ data: { grade: 'A', scannedAt: 1 }, exp: now + 3600_000 }));
-
-  const orig = globalThis.fetch;
-  let fetched = false;
-  globalThis.fetch = async () => { fetched = true; return { headers: { get: () => null } }; };
-  try {
-    const res = await runFetch(fakeRequest('/api/scan?refresh=1', { ip: '203.0.113.201' }), env);
-    assert.equal(res.status, 200);
-    const data = await res.json();
-    assert.equal(data.grade, 'A'); // veio da cache existente, não de um scan novo
-    assert.equal(fetched, false, 'com o cap partilhado no teto, não deve repetir o self-scan');
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('/api/cf-stats?refresh=1: cap partilhado no teto degrada para a cache existente, sem novo pedido à GraphQL API', async () => {
+test('/api/cf-stats?refresh=1: cap global no teto degrada para a cache existente, sem novo pedido à GraphQL API', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
@@ -1908,29 +1764,27 @@ test('/api/cf-stats?refresh=1: cap partilhado no teto degrada para a cache exist
   }
 });
 
-test('cap dos refresh manuais: partilhado entre /api/scan e /api/cf-stats — consumir num afeta o outro', async () => {
+test('cap global dos refresh manuais: acumula entre pedidos, não é por-cliente', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
   };
   const orig = globalThis.fetch;
-  globalThis.fetch = async (url) => {
-    if (String(url).includes('graphql')) return { ok: true, json: async () => graphqlFixture({}) };
-    return { headers: { get: () => null } }; // self-scan
-  };
+  globalThis.fetch = async () => ({ ok: true, json: async () => graphqlFixture({}) });
   try {
-    const r1 = await runFetch(fakeRequest('/api/scan?refresh=1', { ip: '203.0.113.202' }), env);
+    const r1 = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.202' }), env);
     assert.equal(r1.status, 200);
     const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('refreshcap:'));
-    assert.ok(capKey, 'devia ter criado o contador partilhado do cap de refresh');
+    assert.ok(capKey, 'devia ter criado o contador global do cap de refresh');
     assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
 
+    // outro cliente (IP diferente, para não bater no rate limit por-cliente)
     const r2 = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.203' }), env);
     assert.equal(r2.status, 200);
     assert.equal(
       JSON.parse(env.KV.store.get(capKey)).count,
       2,
-      'o mesmo contador de refresh acumula entre as duas rotas',
+      'o contador global acumula entre pedidos de clientes diferentes',
     );
   } finally {
     globalThis.fetch = orig;

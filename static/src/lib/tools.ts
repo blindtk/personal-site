@@ -13,6 +13,5 @@ export const TOOLS = [
   { slug: 'csp', kind: 'client' },
   { slug: 'passkeys', kind: 'client' },
   { slug: 'pwned', kind: 'server' },
-  { slug: 'self-scan', kind: 'server' },
   { slug: 'mirror', kind: 'server' },
 ] as const;

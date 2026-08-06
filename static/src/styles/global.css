@@ -1804,7 +1804,10 @@ select {
   font-size: 9px;
 }
 
-/* ---------- Self-scan (página Segurança) ---------- */
+/* ---------- Grade-badge (ferramenta CSP, Ferramentas) ----------
+   Nomes .self-scan/.scan-grade herdados do self-scan ao vivo (removido,
+   ver dynamic/PLAN.md 2026-08-06) — a ferramenta CSP client-side
+   (CspLint.astro) reutiliza o mesmo layout de badge de nota. */
 
 .self-scan {
   display: grid;
@@ -1842,28 +1845,6 @@ select {
   color: var(--muted);
   margin-top: 0.4rem;
 }
-.scan-status { color: var(--muted); font-size: 0.82rem; margin: 0 0 0.6rem; }
-.hdrlist { font-size: 0.8rem; }
-.hdrlist div {
-  display: flex;
-  gap: 0.6rem;
-  padding: 0.3rem 0;
-  border-bottom: 1px solid var(--border);
-  align-items: baseline;
-}
-.hdrlist div:last-child { border-bottom: 0; }
-.hdrlist .ok { color: var(--accent); }
-.hdrlist .no { color: var(--danger); }
-.hdrlist code { background: none; border: 0; padding: 0; color: var(--muted); }
-.scan-foot {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.9rem;
-}
-/* --muted e não --faint: é o timestamp real do último scan. */
-.scan-ts { font-size: 0.72rem; color: var(--muted); }
 
 /* ---------- Violações CSP (página Segurança) ---------- */
 

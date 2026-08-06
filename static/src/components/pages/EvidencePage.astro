@@ -3,7 +3,6 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SelfScan from '../tools/SelfScan.astro';
 import CtWatch from '../CtWatch.astro';
 import CspViolations from '../CspViolations.astro';
 import SiteLayers from '../SiteLayers.astro';
@@ -103,7 +102,6 @@ const scanners = [
       <h2 id="h-headers">{ev.headersTitle}</h2>
     </div>
     <p class="intro">{ev.headersIntro}</p>
-    <SelfScan lang={lang} />
     <p class="intro">{ev.contractIntro}</p>
     <div class="table-scroll">
       <table class="result-table ev-contract">

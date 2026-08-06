@@ -2,7 +2,6 @@
 // Um só Worker, um só namespace KV (chaves com prefixo). Serve:
 //   · endpoints-isco do honeypot (404 + só metadados, nunca IP)
 //   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
-//   · /api/scan                — self-scan de cabeçalhos (cache 6h)
 //   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
 //   · /api/csp-report (POST)   — recetor de violações CSP (envio manual, não
@@ -26,7 +25,6 @@ import {
   parseReports, normalizeViolation, emptyCspBucket, addCspEvent, cspStats,
   REPORT_CONTENT_TYPES, MAX_REPORTS_PER_REQUEST,
 } from './lib/csp-report.js';
-import { gradeFromHeaders } from './lib/scan.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
@@ -59,8 +57,8 @@ const ANON_WINDOW_MS = 5 * 60_000;
 // sair) — perde-se granularidade no Threat Intel, não a proteção do core.
 const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 };
 
-// Timeout para fetches a montante (self-scan) — não deixar um alvo lento
-// pendurar o pedido.
+// Timeout para fetches a montante (relay do HIBP em /api/pwned-range) — não
+// deixar um alvo lento pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
 
 // Violações CSP: corpo máximo aceite num POST (um batch reports+json legítimo
@@ -313,68 +311,6 @@ async function cached(env, ctx, key, ttlSec, producer) {
   return refresh();
 }
 
-// ---------- self-scan ----------
-
-// Máximo de saltos que o self-scan segue manualmente — ver fetchSameOrigin.
-const SCAN_MAX_REDIRECTS = 5;
-
-/**
- * fetch() que segue redirects À MÃO, e só enquanto ficam na MESMA origem do
- * pedido inicial. Existe só por causa dos headers CF-Access-Client-Id/
- * Secret: ao contrário do Authorization, o Fetch spec não os despe em
- * redirects cross-origin — com `redirect: 'follow'` normal, um 3xx para
- * outra origem reenviava as credenciais da Access para esse destino.
- * Hoje o risco é baixo (SCAN_TARGET é uma var fixa do próprio domínio, não
- * input de visitante), mas passa a ser real no dia em que o alvo for
- * configurável ou o site tiver um open redirect (revisão de segurança
- * 2026-07, ronda 4, N7). Um `signal` de timeout partilhado por todos os
- * saltos garante o mesmo teto de tempo total do fetch original.
- */
-async function fetchSameOrigin(url, opts, { maxRedirects = SCAN_MAX_REDIRECTS } = {}) {
-  let current = new URL(url);
-  const originalOrigin = current.origin;
-  for (let hop = 0; hop <= maxRedirects; hop++) {
-    // eslint-disable-next-line no-await-in-loop -- saltos são sequenciais por natureza (cada um depende do Location do anterior)
-    const res = await fetch(current, { ...opts, redirect: 'manual' });
-    const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
-    if (!location) return res;
-    const next = new URL(location, current);
-    if (next.origin !== originalOrigin) return res; // não segue para fora da origem — credenciais da Access não vazam
-    current = next;
-  }
-  return fetch(current, { ...opts, redirect: 'manual' }); // esgotou os saltos: última tentativa, sem seguir mais nada
-}
-
-async function runScan(env) {
-  const target = env.SCAN_TARGET || 'https://danielmala.co/';
-
-  const headers = {
-    'user-agent': 'personal-site-worker (self-scan)',
-  };
-
-  // Secrets opcionais, só necessários se a Cloudflare Access estiver ativa
-  // à frente de SCAN_TARGET (ver docs/cloudflare-deploy.md) — sem eles o
-  // self-scan recebe a página de login da Access em vez do site. Únicos
-  // segredos do Worker que não aparecem em `[vars]`/comentário deste
-  // ficheiro (achado da ronda 4, N7): `wrangler secret put ACCESS_CLIENT_ID`
-  // / `ACCESS_CLIENT_SECRET`, com um Access Service Token criado em
-  // dash.cloudflare.com → Zero Trust → Access → Service Auth.
-  if (env.ACCESS_CLIENT_ID && env.ACCESS_CLIENT_SECRET) {
-    headers['CF-Access-Client-Id'] = env.ACCESS_CLIENT_ID;
-    headers['CF-Access-Client-Secret'] = env.ACCESS_CLIENT_SECRET;
-  }
-
-  const res = await fetchSameOrigin(target, {
-    headers,
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-  });
-
-  return {
-    scannedAt: Date.now(),
-    ...gradeFromHeaders((name) => res.headers.get(name)),
-  };
-}
-
 // ---------- rate limiting ----------
 
 // Teto global (não por-cliente) de escritas do PRÓPRIO rate limiter, por
@@ -401,14 +337,14 @@ async function runScan(env) {
 // cf-stats sem refresh) continuam servidas da cache.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
 
-// Cap global de escritas dos refresh manuais (/api/scan?refresh=1 e
-// /api/cf-stats?refresh=1) — mesma classe de risco da lacuna #1 (rate
-// limiter), descoberta tarde de mais e aplicada só ao rate limiter na altura:
-// o rate limit por cliente destas duas rotas (3/10min) ainda permite até
-// 432 escritas/dia por rota e por IP — quase metade do teto diário da conta
-// SÓ NESTA ROTA, e mais que o dobro somando as duas. Partilhado entre as
-// duas (mesma capKey): é o mesmo orçamento de "atualizar agora", não dois
-// separados. Descoberto numa revisão de segurança (2026-07, ronda 4).
+// Cap global de escritas dos refresh manuais (/api/cf-stats?refresh=1) —
+// mesma classe de risco da lacuna #1 (rate limiter), descoberta tarde de
+// mais e aplicada só ao rate limiter na altura: o rate limit por cliente
+// desta rota (3/10min) ainda permite até 432 escritas/dia por IP — quase
+// metade do teto diário da conta SÓ NESTA ROTA. Global (não por-rota) por
+// desenho, para cobrir sem esforço extra qualquer outra rota de refresh
+// manual que venha a existir. Descoberto numa revisão de segurança (2026-07,
+// ronda 4).
 const REFRESH_WRITE_CAP = { windowMs: DAY_MS, max: 20 };
 
 /**
@@ -665,48 +601,6 @@ export default {
         return json(data, request, env, { maxAge: 60 });
       }
 
-      if (path === '/api/scan') {
-        const refresh = url.searchParams.get('refresh') === '1';
-        // o refresh manual aceita input (o botão) → rate limit apertado
-        if (refresh) {
-          const { allowed, retryAfterSec } = await rateLimit(env, request, 'scan', {
-            windowMs: 10 * 60_000,
-            max: 3,
-          });
-          if (!allowed) {
-            return json({ error: 'rate_limited' }, request, env, {
-              status: 429,
-              extra: { 'retry-after': String(retryAfterSec) },
-            });
-          }
-          // Cap global partilhado (ver REFRESH_WRITE_CAP): esgotado, degrada
-          // para a cache existente em vez de gastar mais orçamento de
-          // escrita — o botão continua a responder, só deixa de forçar.
-          if (!(await underRefreshCap(env, Date.now()))) {
-            const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
-            return json(data, request, env);
-          }
-          const data = await runScan(env);
-          await env.KV.put('cache:scan', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
-            expirationTtl: 6 * 3600 + 60,
-          });
-          return json(data, request, env);
-        }
-        // Sem `maxAge`: a KV (`cached()`, SWR, 6h) já é a única fonte de
-        // frescura. Um `Cache-Control: public, max-age=…` aqui deixava o
-        // browser (e qualquer cache partilhada) servir a resposta antiga
-        // por até 30 min DEPOIS de um refresh manual já ter atualizado a
-        // KV — o botão "correr scan agora" mudava a nota na hora, mas ao
-        // voltar à página (novo load(), mesmo URL sem query) o browser
-        // devolvia do seu próprio cache em vez de perguntar ao Worker,
-        // e a nota "congelava" na última resposta pública que tinha
-        // guardado. Sem cache HTTP, cada load() bate no Worker, que por
-        // sua vez responde da KV (leitura barata, sem novo fetch ao
-        // upstream salvo quando o TTL de facto expirou).
-        const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
-        return json(data, request, env);
-      }
-
       // Relay k-anónimo do HIBP: o cliente só manda os 5 primeiros hex do
       // SHA-1 (a password nunca chega cá). Prefixo validado a ferro (5 hex) —
       // não é reutilizável para pedir mais nada. Rate limit por cliente (é
@@ -784,9 +678,8 @@ export default {
       // invocações/erros deste Worker, via GraphQL Analytics API (dados só
       // desta zona/conta — não é o Radar, que é global e anónimo). A cache
       // de 6h já limita a frequência com que se bate na API da Cloudflare;
-      // o ?refresh=1 (mesmo padrão do /api/scan) força um pedido novo antes
-      // disso — por aceitar input (o parâmetro), leva o mesmo rate limit
-      // apertado.
+      // o ?refresh=1 força um pedido novo antes disso — por aceitar input (o
+      // parâmetro), leva rate limit apertado.
       if (path === '/api/cf-stats') {
         const refresh = url.searchParams.get('refresh') === '1';
         if (refresh) {
@@ -800,7 +693,7 @@ export default {
               extra: { 'retry-after': String(retryAfterSec) },
             });
           }
-          // Mesmo cap partilhado do /api/scan?refresh=1 (ver REFRESH_WRITE_CAP).
+          // Cap global de refresh manuais (ver REFRESH_WRITE_CAP).
           if (!(await underRefreshCap(env, Date.now()))) {
             const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
             return json(data, request, env, { maxAge: 1800 });
@@ -858,7 +751,6 @@ export default {
     ctx.waitUntil(
       Promise.all([
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
-        cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
         cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
         // Estado da Cloudflare + snapshot diário da firewall (acumula 7d). O
         // snapshot vive dentro do producer do `cached()` — corre só quando o

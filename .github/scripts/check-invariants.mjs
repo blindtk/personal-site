@@ -44,10 +44,9 @@ const accessHeaders = ACCESS_CLIENT_ID && ACCESS_CLIENT_SECRET
 const CI_WAF_TOKEN = process.env.CI_WAF_TOKEN || '';
 const wafHeaders = CI_WAF_TOKEN ? { 'x-ci-waf-token': CI_WAF_TOKEN } : {};
 
-// Mesma razão e mesma lógica do fetchSameOrigin em check-headers.mjs /
-// dynamic/worker/src/index.js (runScan): CF-Access-Client-Id/Secret não são
-// despidos pelo Fetch spec em redirects cross-origin, ao contrário de
-// Authorization.
+// Mesma razão e mesma lógica do fetchSameOrigin em check-headers.mjs:
+// CF-Access-Client-Id/Secret não são despidos pelo Fetch spec em redirects
+// cross-origin, ao contrário de Authorization.
 async function fetchSameOrigin(url, opts, maxRedirects = 5) {
   let current = new URL(url);
   const originalOrigin = current.origin;
