@@ -96,7 +96,10 @@ export function labelsWithoutCollision(points, { verticalTolerance = 16 } = {}) 
 export function timelinePoints(events, { now = Date.now(), windowMs, xMin, xMax, bucketPx = 6 }) {
   const start = now - windowMs;
   const inWindow = events
-    .filter((e) => Number(e?.ts) >= start)
+    .filter((e) => {
+      const ts = Number(e?.ts);
+      return ts >= start && ts <= now;
+    })
     .sort((a, b) => Number(a.ts) - Number(b.ts));
   const xOf = (ts) => xMin + ((ts - start) / windowMs) * (xMax - xMin);
   const bucketCount = new Map();

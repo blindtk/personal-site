@@ -502,6 +502,7 @@ export const ui = {
         'O contador carrega do mesmo /api/honeypot do painel. Se o Worker ainda não estiver publicado fica em “—” — as regras continuam válidas na mesma.',
       convertLead: 'As regras seguem as convenções webserver do SigmaHQ (campos c-uri, cs-method, sc-status). Converte para a tua plataforma com o sigma-cli:',
       convertCmd: 'sigma convert -t splunk detecao.yml',
+      cliLabel: 'conversão de regras com sigma-cli',
       seeAttack: 'Ver o heatmap ATT&CK →',
     },
     hostmap: {
@@ -1479,6 +1480,7 @@ export const ui = {
         'The counter loads from the same /api/honeypot as the panel. If the Worker is not published yet it stays at “—” — the rules remain just as valid.',
       convertLead: 'The rules follow SigmaHQ webserver conventions (c-uri, cs-method, sc-status fields). Convert to your platform with sigma-cli:',
       convertCmd: 'sigma convert -t splunk detection.yml',
+      cliLabel: 'rule conversion with sigma-cli',
       seeAttack: 'See the ATT&CK heatmap →',
     },
     hostmap: {

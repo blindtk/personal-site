@@ -70,11 +70,13 @@ test('timelinePoints: filtra pela janela e desloca eventos no mesmo bucket', () 
   const now = 1_000_000_000_000;
   const windowMs = 7 * 86400_000;
   const events = [
-    { ts: now - windowMs - 1000 }, // fora da janela
+    { ts: now - windowMs - 1000 }, // fora da janela (demasiado antigo)
     { ts: now - 1000 },
     { ts: now - 1000 }, // mesmo instante — desloca-se
+    { ts: now + 60_000 }, // futuro — fora do [now-windowMs, now] documentado
   ];
   const pts = timelinePoints(events, { now, windowMs, xMin: 0, xMax: 100, bucketPx: 6 });
   assert.equal(pts.length, 2);
   assert.notEqual(pts[0].x, pts[1].x);
+  assert.ok(pts.every((p) => p.event.ts <= now));
 });

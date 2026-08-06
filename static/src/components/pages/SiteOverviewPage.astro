@@ -218,6 +218,18 @@ const jsStrings = {
   };
 
   type SourceRow = { key: string; source: 'honeypot' | 'cloudflare'; count: number; action?: string | null; days?: number | null };
+
+  // Top `capEach` linhas de CADA fonte (já vêm ordenadas por contagem
+  // decrescente da API), depois combinadas e reordenadas para exibição —
+  // nunca um corte global ao conjunto junto, que deixava uma fonte com
+  // números maiores (tipicamente a Cloudflare, zona inteira) engolir as
+  // linhas todas de uma tabela que promete as duas fontes.
+  function topPerSource(rows: SourceRow[], capEach: number): SourceRow[] {
+    const honeypot = rows.filter((r) => r.source === 'honeypot').slice(0, capEach);
+    const cloudflare = rows.filter((r) => r.source === 'cloudflare').slice(0, capEach);
+    return [...honeypot, ...cloudflare].sort((a, b) => b.count - a.count);
+  }
+
   function renderSourceTable(id: string, headers: string[], rows: SourceRow[], withDays: boolean, empty: string) {
     const host = document.getElementById(id);
     if (!host) return;
@@ -242,10 +254,11 @@ const jsStrings = {
     }
     thead.append(headRow);
     const tbody = document.createElement('tbody');
-    // Só as 5 linhas de maior contagem: esta tabela vive no hub, que aponta
-    // para o detalhe completo em Honeypot/Cloudflare — não duplica a tabela
-    // inteira aqui.
-    for (const r of rows.slice(0, 5)) {
+    // `rows` já vem limitado por FONTE (ver topPerSource) — um corte global
+    // ao top-N depois de juntar as duas fontes deixava a Cloudflare (números
+    // muito maiores) preencher a tabela inteira e o honeypot desaparecer de
+    // uma tabela que se diz "honeypot + Cloudflare".
+    for (const r of rows) {
       const tr = document.createElement('tr');
       const tdKey = document.createElement('td');
       tdKey.textContent = r.key;
@@ -296,28 +309,34 @@ const jsStrings = {
       renderSourceTable(
         'numbers-countries',
         [NS.colCountry ?? '', NS.colSource, NS.colCount],
-        [
-          ...(ti.topCountries ?? []).map((r: any): SourceRow => ({
-            key: String(r.key), source: 'honeypot', count: Number(r.count) || 0,
-          })),
-          ...(fw.byCountry ?? []).map((r: any): SourceRow => ({
-            key: String(r.country), source: 'cloudflare', count: Number(r.count) || 0,
-          })),
-        ].sort((a, b) => b.count - a.count),
+        topPerSource(
+          [
+            ...(ti.topCountries ?? []).map((r: any): SourceRow => ({
+              key: String(r.key), source: 'honeypot', count: Number(r.count) || 0,
+            })),
+            ...(fw.byCountry ?? []).map((r: any): SourceRow => ({
+              key: String(r.country), source: 'cloudflare', count: Number(r.count) || 0,
+            })),
+          ],
+          3,
+        ),
         false,
         NS.tiEmpty,
       );
       renderSourceTable(
         'numbers-networks',
         [NS.colNetwork ?? '', NS.colSource, NS.colDaysSeen, NS.colCount],
-        [
-          ...(ti.topAsns ?? []).map((r: any): SourceRow => ({
-            key: String(r.key), source: 'honeypot', count: Number(r.count) || 0, days: daysByAsn.get(String(r.key)) ?? null,
-          })),
-          ...(fw.byAsn ?? []).map((r: any): SourceRow => ({
-            key: String(r.key), source: 'cloudflare', count: Number(r.count) || 0,
-          })),
-        ].sort((a, b) => b.count - a.count),
+        topPerSource(
+          [
+            ...(ti.topAsns ?? []).map((r: any): SourceRow => ({
+              key: String(r.key), source: 'honeypot', count: Number(r.count) || 0, days: daysByAsn.get(String(r.key)) ?? null,
+            })),
+            ...(fw.byAsn ?? []).map((r: any): SourceRow => ({
+              key: String(r.key), source: 'cloudflare', count: Number(r.count) || 0,
+            })),
+          ],
+          3,
+        ),
         true,
         NS.tiEmpty,
       );
