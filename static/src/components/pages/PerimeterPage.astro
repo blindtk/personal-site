@@ -74,6 +74,14 @@ const jsStrings = {
   // scripts/observability.js).
   statCountries: p.statCountries,
   statCountriesOne: p.statCountriesOne,
+  // Cadeia do perímetro (D1, acima das tabs)
+  chainRequests: p.chainRequests,
+  chainThreats: p.chainThreats,
+  chainMitigated: p.chainMitigated,
+  chainHoneypot: p.chainHoneypot,
+  chainSrcZone: p.chainSrcZone,
+  chainSrcFirewall: p.chainSrcFirewall,
+  chainSrcHoneypot: p.chainSrcHoneypot,
   // Deteções (copy-to-clipboard)
   detCopy: d.copy,
   detCopied: d.copied,
@@ -92,12 +100,27 @@ const jsStrings = {
   tiEmpty: s.tiEmpty,
   tiNoneYet: s.tiNoneYet,
   tiDays: s.tiDays,
+  tiHeatmapSparse: s.tiHeatmapSparse,
+  tiTimelineToday: s.tiTimelineToday,
+  tiDailyBlocked: s.tiDailyBlocked,
+  tiDailyChallenged: s.tiDailyChallenged,
+  tiDailyAllowed: s.tiDailyAllowed,
   logsEmpty: s.logsEmpty,
   logsPageOf: s.logsPageOf,
   logsWindowNote: s.logsWindowNote,
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
   riskLowSample: s.riskLowSample,
+  riskLegendHigh: s.riskLegendHigh,
+  riskLegendMed: s.riskLegendMed,
+  riskLegendLow: s.riskLegendLow,
+  riskLegendSample: s.riskLegendSample,
+  riskThresholdLeft: s.riskThresholdLeft,
+  riskThresholdRight: s.riskThresholdRight,
+  riskColRate: s.riskColRate,
+  cardRequests: s.cardRequests,
+  cardThreats: s.cardThreats,
+  riskTitle: s.tiRiskCountry,
   colCountry: s.logColCountry,
   colNetwork: s.logColAsn,
   colSource: s.colSource,
@@ -121,6 +144,36 @@ const jsStrings = {
     data-strings={JSON.stringify(jsStrings)}
     data-tech={JSON.stringify({ byPath, byId })}
   >
+    <!-- ---------- Cadeia do perímetro (de fora para dentro; sempre visível,
+         independente da tab ativa — as cinco tabs abaixo são fontes
+         separadas, isto é a única linha que as liga) ---------- -->
+    <section class="chain" aria-labelledby="h-chain">
+      <div class="section-title"><h2 id="h-chain">{p.chainTitle}</h2></div>
+      <div class="chain-grid">
+        <div class="stat">
+          <div class="n" id="chain-requests">—</div>
+          <div class="l">{p.chainRequests}</div>
+          <div class="chain-src">{p.chainSrcZone}</div>
+        </div>
+        <div class="stat amber">
+          <div class="n" id="chain-threats">—</div>
+          <div class="l" id="chain-threats-l">{p.chainThreats}</div>
+          <div class="chain-src">{p.chainSrcZone}</div>
+        </div>
+        <div class="stat red">
+          <div class="n" id="chain-mitigated">—</div>
+          <div class="l">{p.chainMitigated}</div>
+          <div class="chain-src">{p.chainSrcFirewall}</div>
+        </div>
+        <div class="stat blue">
+          <div class="n" id="chain-honeypot">—</div>
+          <div class="l">{p.chainHoneypot}</div>
+          <div class="chain-src">{p.chainSrcHoneypot}</div>
+        </div>
+      </div>
+      <p class="note">{p.chainNote}</p>
+    </section>
+
     <Tabs tabs={tabs} label={p.title}>
       <!-- ---------- Honeypot ---------- -->
       <div slot="honeypot">
@@ -221,10 +274,17 @@ const jsStrings = {
           </div>
           <div class="widget-grid an-mt">
             <Widget title={s.tiRiskCountry} tone="warn" meta={s.windowNote} class="wide-widget">
-              <div id="cf-risk"><Skeleton rows={4} /></div>
+              <div id="cf-risk" class="scatter-wrap"><Skeleton block /></div>
+              <div class="risk-legend mono">
+                <span><i class="dot high"></i>{s.riskLegendHigh}</span>
+                <span><i class="dot med"></i>{s.riskLegendMed}</span>
+                <span><i class="dot low"></i>{s.riskLegendLow}</span>
+                <span><i class="dot sample"></i>{s.riskLegendSample}</span>
+              </div>
+              <p class="note">{s.riskNote}</p>
+              <div id="cf-risk-table"></div>
             </Widget>
           </div>
-          <p class="note">{s.riskNote}</p>
           <div class="widget-grid an-mt">
             <Widget title={s.wFirewallPaths} tone="warn"><div id="cf-fw-paths"><Skeleton rows={4} /></div></Widget>
             <Widget title={s.wFirewallUserAgents} tone="warn"><div id="cf-fw-uas"><Skeleton rows={4} /></div></Widget>
@@ -247,17 +307,26 @@ const jsStrings = {
             <div class="stat"><div class="n" id="ti-peak">—</div><div class="l">{s.tiPeakHour}</div></div>
           </div>
           <div class="widget-grid an-mt">
-            <Widget title={s.tiHeatmap} tone="warn" class="wide-widget">
-              <div class="heatmap" id="ti-heatmap"></div>
-              <div class="heatmap-axis mono" aria-hidden="true">
-                <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
+            <Widget title={s.tiDailyTitle} tone="warn" meta={s.windowNote} class="wide-widget">
+              <div id="ti-daily"><Skeleton block /></div>
+            </Widget>
+          </div>
+          <div class="widget-grid an-mt" id="ti-heat-widgets">
+            <Widget title={s.tiHeatmap} tone="warn" class="wide-widget" id="ti-heatmap-widget">
+              <div id="ti-heatmap-visual">
+                <div class="heatmap" id="ti-heatmap"></div>
+                <div class="heatmap-axis mono" aria-hidden="true">
+                  <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
+                </div>
+                <div class="heatmap-legend">
+                  <span>{s.tiHeatLess}</span>
+                  <span class="swatch i1"></span><span class="swatch i2"></span>
+                  <span class="swatch i3"></span><span class="swatch i4"></span>
+                  <span>{s.tiHeatMore}</span>
+                </div>
               </div>
-              <div class="heatmap-legend">
-                <span>{s.tiHeatLess}</span>
-                <span class="swatch i1"></span><span class="swatch i2"></span>
-                <span class="swatch i3"></span><span class="swatch i4"></span>
-                <span>{s.tiHeatMore}</span>
-              </div>
+              <p class="note" id="ti-heatmap-sparse" hidden>{s.tiHeatmapSparse}</p>
+              <div id="ti-timeline" hidden></div>
             </Widget>
             <Widget title={s.tiHours} tone="warn" class="wide-widget">
               <div class="hours-strip" id="ti-hours"></div>
@@ -329,7 +398,7 @@ const jsStrings = {
 <script>
   import {
     formatNumber, formatPercent, threatRate, withBars, sparkPath,
-    plural, firewallActionTone,
+    plural, firewallActionTone, sumByActionClass, classifyDaily, logScaleX, areaRadius,
   } from '../../scripts/observability.js';
 
   const root = document.getElementById('perim-root')!;
@@ -610,6 +679,29 @@ const jsStrings = {
     host.append(wrap);
   }
 
+  // ---------- Cadeia do perímetro (D1, sempre visível acima das tabs) ----------
+  // Combina três respostas: cf-stats (pedidos/ameaças da zona), threat-intel
+  // (firewall7d.byAction para a soma bloqueado+desafiado — a MESMA
+  // classificação e os MESMOS 7 dias que alimentam as barras "Firewall por
+  // ação" e o gráfico "Mitigação por dia", para os números nunca se
+  // contradizerem entre painéis — e totals.events7d para o honeypot).
+  // Preenche-se só quando as duas chegam; nenhuma delas é obrigatória para
+  // as respetivas tabs continuarem a funcionar sozinhas.
+  let chainZone: any = null;
+  let chainFw: any = null;
+  let chainEvents7d: number | null = null;
+
+  function renderChain() {
+    if (!chainZone || !chainFw || chainEvents7d === null) return;
+    const requests = Number(chainZone.requests) || 0;
+    const threats = Number(chainZone.threats) || 0;
+    setText('chain-requests', formatNumber(requests, locale));
+    setText('chain-threats', formatNumber(threats, locale));
+    setText('chain-threats-l', `${S.chainThreats} (${formatPercent(threatRate(threats, requests))})`);
+    setText('chain-mitigated', formatNumber(sumByActionClass(chainFw.byAction ?? [], ['blocked', 'challenged']), locale));
+    setText('chain-honeypot', formatNumber(chainEvents7d, locale));
+  }
+
   const SVG_NS = 'http://www.w3.org/2000/svg';
   function renderSpark(id: string, series: any[], valueKey: string) {
     const host = document.getElementById(id);
@@ -648,6 +740,183 @@ const jsStrings = {
     host.append(cap);
   }
 
+  // ---------- Risco por país: dispersão pedidos × taxa (D3) ----------
+  // Substitui a antiga lista de barras: aí ES a 96,9% (127 pedidos) e GB a
+  // 100% (1 pedido) apareciam quase lado a lado, e uma nota de 5 linhas
+  // explicava porque não se comparavam. Num gráfico de dispersão a diferença
+  // de amostra é o eixo horizontal — não precisa de ser explicada em texto.
+  type RiskPoint = { x: number; y: number; r: number; row: any };
+
+  function riskDotClass(row: any): string {
+    if (row.lowSample) return 'sample';
+    const rate = Number(row.rate) || 0;
+    if (rate >= 0.5) return 'high';
+    if (rate >= 0.2) return 'med';
+    return 'low';
+  }
+
+  function renderRiskScatter(rows: any[]) {
+    const host = document.getElementById('cf-risk');
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = S.tiNoneYet;
+      host.append(el);
+      return;
+    }
+    const W = 620;
+    const H = 244;
+    const L = 46;
+    const R = 604;
+    const T = 20;
+    const B = 188;
+    const maxReq = Math.max(1, ...rows.map((r) => Number(r.requests) || 0));
+    const domainMax = Math.max(10, 10 ** Math.ceil(Math.log10(maxReq)));
+    const scaleX = (v: number) => logScaleX(v, { min: 1, max: domainMax, rangeMin: L, rangeMax: R });
+
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'scatter-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', S.riskTitle);
+
+    const line = (x1: number, y1: number, x2: number, y2: number, cls: string) => {
+      const el = document.createElementNS(SVG_NS, 'line');
+      el.setAttribute('x1', x1.toFixed(1));
+      el.setAttribute('y1', y1.toFixed(1));
+      el.setAttribute('x2', x2.toFixed(1));
+      el.setAttribute('y2', y2.toFixed(1));
+      el.setAttribute('class', cls);
+      svg.append(el);
+    };
+    const text = (x: number, y: number, anchor: string, cls: string, content: string) => {
+      const el = document.createElementNS(SVG_NS, 'text');
+      el.setAttribute('x', x.toFixed(1));
+      el.setAttribute('y', y.toFixed(1));
+      el.setAttribute('text-anchor', anchor);
+      el.setAttribute('class', cls);
+      el.textContent = content;
+      svg.append(el);
+    };
+
+    line(L, B, R, B, 'chart-axis');
+    for (const pct of [25, 50, 75, 100]) {
+      const y = B - (pct / 100) * (B - T);
+      line(L, y, R, y, 'chart-axis');
+      text(L - 8, y + 3, 'end', 'chart-lbl', `${pct}%`);
+    }
+    text(L - 8, B + 3, 'end', 'chart-lbl', '0');
+
+    // Limiar de amostra (100 pedidos): a mesma linha que separava "amostra
+    // pequena"/"amostra fiável" na antiga nota de texto, agora desenhada.
+    const thresholdX = scaleX(100);
+    const thr = document.createElementNS(SVG_NS, 'line');
+    thr.setAttribute('x1', thresholdX.toFixed(1));
+    thr.setAttribute('y1', String(T));
+    thr.setAttribute('x2', thresholdX.toFixed(1));
+    thr.setAttribute('y2', String(B));
+    thr.setAttribute('class', 'chart-threshold');
+    svg.append(thr);
+    // Perto do fundo, não do topo: um país de amostra fiável mas taxa alta
+    // (ex.: ES a 96,9%) fica perto do limiar exatamente no topo do gráfico —
+    // o rótulo colidia com o próprio ponto que estava a rotular.
+    text(thresholdX - 6, B - 6, 'end', 'chart-lbl', S.riskThresholdLeft);
+    text(thresholdX + 6, B - 6, 'start', 'chart-lbl', S.riskThresholdRight);
+
+    for (let v = 1; v <= domainMax + 1; v *= 10) {
+      text(scaleX(v), B + 20, 'middle', 'chart-lbl', formatNumber(v, locale));
+    }
+    text((L + R) / 2, B + 38, 'middle', 'chart-lbl', S.riskAxisRequests);
+
+    const pts: RiskPoint[] = rows.map((row) => {
+      const rate = Number(row.rate) || 0;
+      return {
+        x: scaleX(Number(row.requests) || 1),
+        y: B - Math.min(1, Math.max(0, rate)) * (B - T),
+        r: areaRadius(Number(row.threats) || 0, { minR: row.lowSample ? 5 : 6, k: 1 }),
+        row,
+      };
+    });
+    // Rótulos diretos só onde não colidem (grelha simples de exclusão): o
+    // ponto continua sempre visível e com tooltip, só o rótulo de texto que
+    // se omite quando ficaria em cima de outro já aceite.
+    const accepted: RiskPoint[] = [];
+    const labelled = new Set<number>();
+    pts
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => a.p.x - b.p.x)
+      .forEach(({ p, i }) => {
+        const collide = accepted.some((q) => Math.abs(q.x - p.x) < 34 && Math.abs(q.y - p.y) < 20);
+        if (!collide) {
+          accepted.push(p);
+          labelled.add(i);
+        }
+      });
+
+    pts.forEach((p, i) => {
+      const row = p.row;
+      const rate = Number(row.rate) || 0;
+      const g = document.createElementNS(SVG_NS, 'g');
+      const title = document.createElementNS(SVG_NS, 'title');
+      const raw = `${formatNumber(row.threats, locale)}/${formatNumber(row.requests, locale)}`;
+      title.textContent = `${row.country} — ${formatPercent(rate)} (${raw})${row.lowSample ? ` · ${S.riskLowSample}` : ''}`;
+      g.append(title);
+      const circle = document.createElementNS(SVG_NS, 'circle');
+      circle.setAttribute('cx', p.x.toFixed(1));
+      circle.setAttribute('cy', p.y.toFixed(1));
+      circle.setAttribute('r', p.r.toFixed(1));
+      circle.setAttribute('class', `scatter-dot ${riskDotClass(row)}`);
+      g.append(circle);
+      if (labelled.has(i)) {
+        text(p.x, p.y - p.r - 6, 'middle', 'chart-lbl strong', `${row.country} · ${formatPercent(rate)}`);
+      }
+      svg.append(g);
+    });
+
+    host.append(svg);
+  }
+
+  function renderRiskTable(rows: any[]) {
+    const host = document.getElementById('cf-risk-table');
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) return; // a dispersão acima já mostra o estado vazio
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    const table = document.createElement('table');
+    table.className = 'result-table wrap-normal';
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    for (const label of [S.colCountry, S.cardRequests, S.cardThreats, S.riskColRate]) {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headRow.append(th);
+    }
+    thead.append(headRow);
+    const tbody = document.createElement('tbody');
+    for (const row of rows) {
+      const tr = document.createElement('tr');
+      const tdCountry = document.createElement('td');
+      tdCountry.className = 'mono hp-cc';
+      tdCountry.textContent = String(row.country);
+      const tdReq = document.createElement('td');
+      tdReq.textContent = formatNumber(row.requests, locale);
+      const tdThreats = document.createElement('td');
+      tdThreats.textContent = formatNumber(row.threats, locale);
+      const tdRate = document.createElement('td');
+      tdRate.textContent = row.lowSample
+        ? `${formatPercent(row.rate)} (${S.riskLowSample})`
+        : formatPercent(row.rate);
+      tr.append(tdCountry, tdReq, tdThreats, tdRate);
+      tbody.append(tr);
+    }
+    table.append(thead, tbody);
+    wrap.append(table);
+    host.append(wrap);
+  }
+
   // ---------- Cloudflare (ameaças à zona, /api/cf-stats) ----------
   async function loadCfThreats() {
     try {
@@ -659,9 +928,11 @@ const jsStrings = {
       const requests = Number(zone.requests ?? 0);
       const threats = Number(zone.threats ?? 0);
       const blocked = (zone.blockedByStatus ?? []).reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
-      const challenges = (zone.firewallByAction ?? [])
-        .filter((r: any) => String(r.key).includes('challenge'))
-        .reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
+      // Mesma classificação de firewallActionClass usada em D1/D2 (não um
+      // filtro ad-hoc à parte): sem isto, "link_maze_injected" (o desafio da
+      // AI Labyrinth) ficava fora da contagem só por não ter "challenge" no
+      // nome, e este cartão desalinhava do resto da página.
+      const challenges = sumByActionClass(zone.firewallByAction ?? [], ['challenged']);
 
       setText('cf-threats', formatNumber(threats, locale));
       setText('cf-blocked', formatNumber(blocked, locale));
@@ -670,25 +941,9 @@ const jsStrings = {
 
       renderBars('cf-countries', bars(zone.topCountries ?? [], 'country', 'threats', 'warn'), S.countriesEmpty);
       renderBars('cf-status', bars(zone.blockedByStatus ?? [], 'key', 'count'), S.statusEmpty);
-      renderBars(
-        'cf-risk',
-        (zone.riskByCountry ?? []).map((r: any) => {
-          const rate = Number(r.rate) || 0;
-          const lowSample = !!r.lowSample;
-          const raw = `${formatNumber(r.threats, locale)}/${formatNumber(r.requests, locale)}`;
-          return {
-            label: String(r.country),
-            value: rate,
-            // Amostra pequena não pinta como alarme (down/warn) mesmo com
-            // taxa alta — o rácio não é fiável abaixo do limiar (ver riskNote).
-            tone: lowSample ? undefined : rate >= 0.5 ? 'down' : rate >= 0.2 ? 'warn' : undefined,
-            display: lowSample
-              ? `${formatPercent(rate)} (${raw} · ${S.riskLowSample})`
-              : `${formatPercent(rate)} (${raw})`,
-          };
-        }),
-        S.tiNoneYet,
-      );
+      const riskRows = Array.isArray(zone.riskByCountry) ? zone.riskByCountry : [];
+      renderRiskScatter(riskRows);
+      renderRiskTable(riskRows);
 
       // Detalhe por URL/user-agent/ASN (firewall, 24h) — vem do dataset CRU
       // firewallEventsAdaptive (ver planNote): nunca IP, mesmo esse campo
@@ -702,12 +957,215 @@ const jsStrings = {
 
       document.getElementById('cf-fallback')!.hidden = true;
       document.getElementById('cf-body')!.hidden = false;
+
+      chainZone = zone;
+      renderChain();
     } catch {
       // Sem Worker: fica o fallback já pintado.
     }
   }
 
   // ---------- Tendências 7d (honeypot + firewall acumulado, /api/threat-intel) ----------
+
+  // Abaixo deste total de eventos na janela, o heatmap 168 células vira uma
+  // única célula acesa — lê-se como painel avariado, não como "pouco
+  // tráfego". Troca-se por uma linha do tempo simples (ver renderTimeline).
+  const HEATMAP_MIN_EVENTS = 20;
+
+  const dayFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+
+  // ---------- Mitigação por dia (D2) ----------
+  // Os 7 snapshots diários de firewall só apareciam somados: um dia de
+  // ataque a sério e um dia de tráfego humano a resolver desafios ficavam
+  // indistinguíveis. `daily` vem de firewall7d.daily (mergeFirewall7d, no
+  // Worker) — o byAction cru de cada dia; a classificação em
+  // bloqueado/desafiado/passado é a mesma de firewallActionClass usada nas
+  // barras "Firewall por ação", por isso os totais nunca se contradizem.
+  function renderDailyBars(daily: any[]) {
+    const host = document.getElementById('ti-daily');
+    if (!host) return;
+    host.replaceChildren();
+    const rows = classifyDaily(daily);
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = S.tiNoneYet;
+      host.append(el);
+      return;
+    }
+    const W = 620;
+    const H = 216;
+    const ML = 42;
+    const MR = 8;
+    const TOP = 26;
+    const AXIS_Y = 178;
+    const GAP = 2;
+    const MINH = 2.2;
+    const n = rows.length;
+    const slot = (W - ML - MR) / n;
+    const barW = Math.min(58, slot * 0.72);
+    const max = Math.max(1, ...rows.map((r) => r.total));
+    const scale = (AXIS_Y - TOP - GAP * 2) / max;
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'daily-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', S.tiDailyBlocked);
+    const axis = document.createElementNS(SVG_NS, 'line');
+    axis.setAttribute('x1', String(ML));
+    axis.setAttribute('y1', String(AXIS_Y));
+    axis.setAttribute('x2', String(W - MR));
+    axis.setAttribute('y2', String(AXIS_Y));
+    axis.setAttribute('class', 'chart-axis');
+    svg.append(axis);
+
+    rows.forEach((r, i) => {
+      const x = ML + i * slot + (slot - barW) / 2;
+      const cx = x + barW / 2;
+      const g = document.createElementNS(SVG_NS, 'g');
+      const title = document.createElementNS(SVG_NS, 'title');
+      title.textContent = `${r.date} — ${S.tiDailyBlocked}: ${formatNumber(r.blocked, locale)} · `
+        + `${S.tiDailyChallenged}: ${formatNumber(r.challenged, locale)} · `
+        + `${S.tiDailyAllowed}: ${formatNumber(r.allowed, locale)}`;
+      g.append(title);
+
+      let y = AXIS_Y;
+      const seg = (value: number, cls: string) => {
+        if (value <= 0) return;
+        const h = Math.max(MINH, value * scale);
+        y -= h;
+        const rect = document.createElementNS(SVG_NS, 'rect');
+        rect.setAttribute('x', x.toFixed(1));
+        rect.setAttribute('y', y.toFixed(1));
+        rect.setAttribute('width', barW.toFixed(1));
+        rect.setAttribute('height', h.toFixed(1));
+        rect.setAttribute('rx', Math.min(4, h / 2).toFixed(1));
+        rect.setAttribute('class', `daily-seg ${cls}`);
+        g.append(rect);
+        y -= GAP;
+      };
+      seg(r.blocked, 'blocked');
+      seg(r.challenged, 'challenged');
+      seg(r.allowed, 'allowed');
+
+      if (r.total > 0) {
+        const val = document.createElementNS(SVG_NS, 'text');
+        val.setAttribute('x', cx.toFixed(1));
+        val.setAttribute('y', (y - 6).toFixed(1));
+        val.setAttribute('text-anchor', 'middle');
+        val.setAttribute('class', 'chart-val');
+        val.textContent = formatNumber(r.total, locale);
+        g.append(val);
+      }
+      const dayLbl = document.createElementNS(SVG_NS, 'text');
+      dayLbl.setAttribute('x', cx.toFixed(1));
+      dayLbl.setAttribute('y', String(AXIS_Y + 16));
+      dayLbl.setAttribute('text-anchor', 'middle');
+      dayLbl.setAttribute('class', r.date === todayIso ? 'chart-lbl strong' : 'chart-lbl');
+      dayLbl.textContent = dayFmt.format(new Date(`${r.date}T00:00:00Z`));
+      g.append(dayLbl);
+
+      svg.append(g);
+    });
+    host.append(svg);
+
+    const legend = document.createElement('div');
+    legend.className = 'chart-legend mono';
+    const totals = rows.reduce(
+      (acc, r) => ({ blocked: acc.blocked + r.blocked, challenged: acc.challenged + r.challenged, allowed: acc.allowed + r.allowed }),
+      { blocked: 0, challenged: 0, allowed: 0 },
+    );
+    const swatches: [string, string, number][] = [
+      ['blocked', S.tiDailyBlocked, totals.blocked],
+      ['challenged', S.tiDailyChallenged, totals.challenged],
+      ['allowed', S.tiDailyAllowed, totals.allowed],
+    ];
+    for (const [cls, label, count] of swatches) {
+      const span = document.createElement('span');
+      const dot = document.createElement('i');
+      dot.className = `chart-dot ${cls}`;
+      span.append(dot, document.createTextNode(`${label} · ${formatNumber(count, locale)}`));
+      legend.append(span);
+    }
+    host.append(legend);
+  }
+
+  // ---------- Linha do tempo (fallback do heatmap com poucos eventos) ----------
+  function renderTimeline(events: any[]) {
+    const host = document.getElementById('ti-timeline');
+    if (!host) return;
+    host.replaceChildren();
+    const WEEK_MS = 7 * 86400_000;
+    const now = Date.now();
+    const start = now - WEEK_MS;
+    const inWindow = events
+      .filter((e) => Number(e?.ts) >= start)
+      .sort((a, b) => Number(a.ts) - Number(b.ts));
+
+    const W = 620;
+    const H = 76;
+    const L = 16;
+    const R = 604;
+    const Y = 40;
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'timeline-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', S.tiHeatmapSparse);
+
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', String(L));
+    line.setAttribute('y1', String(Y));
+    line.setAttribute('x2', String(R));
+    line.setAttribute('y2', String(Y));
+    line.setAttribute('class', 'chart-axis');
+    svg.append(line);
+
+    // Eventos com o mesmo instante (a anonimização arredonda a 5 min)
+    // caem no mesmo x — em vez de se sobreporem, cada um seguinte desloca-se
+    // ligeiramente, como o cluster "AS32613 · 2 eventos" do mockup.
+    const xOf = (ts: number) => L + ((ts - start) / WEEK_MS) * (R - L);
+    const bucketCount = new Map<number, number>();
+    for (const e of inWindow) {
+      const rawX = xOf(Number(e.ts));
+      const bucket = Math.round(rawX / 6);
+      const idx = bucketCount.get(bucket) ?? 0;
+      bucketCount.set(bucket, idx + 1);
+      const x = rawX + idx * 6;
+
+      const g = document.createElementNS(SVG_NS, 'g');
+      const title = document.createElementNS(SVG_NS, 'title');
+      title.textContent = `${timeFmt.format(new Date(e.ts))} · ${e.country ?? 'XX'} · `
+        + `${e.asn ? `AS${e.asn}` : '—'} · ${e.path ?? ''}`;
+      g.append(title);
+      const dot = document.createElementNS(SVG_NS, 'circle');
+      dot.setAttribute('cx', x.toFixed(1));
+      dot.setAttribute('cy', String(Y));
+      dot.setAttribute('r', '5');
+      dot.setAttribute('class', 'timeline-dot');
+      g.append(dot);
+      svg.append(g);
+    }
+
+    const startLbl = document.createElementNS(SVG_NS, 'text');
+    startLbl.setAttribute('x', String(L));
+    startLbl.setAttribute('y', String(Y + 24));
+    startLbl.setAttribute('class', 'chart-lbl');
+    startLbl.textContent = dayFmt.format(new Date(start));
+    svg.append(startLbl);
+    const endLbl = document.createElementNS(SVG_NS, 'text');
+    endLbl.setAttribute('x', String(R));
+    endLbl.setAttribute('y', String(Y + 24));
+    endLbl.setAttribute('text-anchor', 'end');
+    endLbl.setAttribute('class', 'chart-lbl strong');
+    endLbl.textContent = S.tiTimelineToday;
+    svg.append(endLbl);
+
+    host.append(svg);
+  }
+
   function renderHeatmap(rows: { date: string; hours: number[] }[]) {
     const host = document.getElementById('ti-heatmap');
     if (!host) return;
@@ -839,7 +1297,16 @@ const jsStrings = {
       kpi('ti-asns', Number(totals.asns7d) || 0, S.tiAsnsOne, S.tiAsns);
       setText('ti-peak', d.peakHour ? `${String(d.peakHour.hour).padStart(2, '0')}h` : '—');
 
-      renderHeatmap(Array.isArray(d.heatmap) ? d.heatmap : []);
+      // Abaixo de HEATMAP_MIN_EVENTS eventos, o grid 168 células lê-se como
+      // painel avariado (uma única célula acesa) — troca-se por uma linha
+      // do tempo simples dos mesmos eventos.
+      const eventsInWindow = Number(totals.events7d) || 0;
+      const sparse = eventsInWindow < HEATMAP_MIN_EVENTS;
+      document.getElementById('ti-heatmap-visual')!.hidden = sparse;
+      document.getElementById('ti-heatmap-sparse')!.hidden = !sparse;
+      document.getElementById('ti-timeline')!.hidden = !sparse;
+      if (sparse) renderTimeline(Array.isArray(d.events) ? d.events : []);
+      else renderHeatmap(Array.isArray(d.heatmap) ? d.heatmap : []);
       renderHours(Array.isArray(d.byHourOfDay) ? d.byHourOfDay : []);
       renderBars('ti-newatk', bars(d.newAttackers ?? [], 'key', 'count', 'warn'), S.tiNoneYet);
       renderBars(
@@ -866,6 +1333,7 @@ const jsStrings = {
       );
       renderBars('ti-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
       const fw = d.firewall7d ?? {};
+      renderDailyBars(Array.isArray(fw.daily) ? fw.daily : []);
       // Tom por CLASSE de ação, não âmbar para tudo: com 890 "skip" e 592
       // desafios resolvidos, o painel pintava tráfego legítimo (o meu, de
       // Portugal) da mesma cor que os 637 bloqueios reais.
@@ -911,6 +1379,10 @@ const jsStrings = {
       document.getElementById('ti-fallback')!.hidden = true;
       document.getElementById('ti-body')!.hidden = false;
 
+      chainFw = fw;
+      chainEvents7d = eventsInWindow;
+      renderChain();
+
       // Logs
       logEvents = Array.isArray(d.events) ? d.events : [];
       logCorr = corr;
@@ -934,9 +1406,8 @@ const jsStrings = {
     }
   }
 
-  // Lazy-load: a Threat Intel faz uma leitura pesada (168 buckets horários no
-  // Worker) — só se busca quando a tab Tendências ou Logs é aberta pela
-  // primeira vez, não à carga da página.
+  // Guardas de idempotência (mantidas mesmo com a carga abaixo deixando de
+  // ser preguiçosa): um clique na tab nunca repete o pedido.
   let tiLoaded = false;
   function ensureThreatIntel() {
     if (tiLoaded) return;
@@ -946,8 +1417,6 @@ const jsStrings = {
   for (const tab of document.querySelectorAll('[data-tab="trends"], [data-tab="logs"]')) {
     tab.addEventListener('click', ensureThreatIntel);
   }
-  // Cloudflare também é best-effort e só se busca quando a tab abre — evita
-  // um pedido à API da Cloudflare em toda a visita ao Perímetro.
   let cfLoaded = false;
   function ensureCf() {
     if (cfLoaded) return;
@@ -961,6 +1430,13 @@ const jsStrings = {
   wireLogs();
   wireDetCopy();
   loadHoneypot();
+  // cf-stats e threat-intel deixam de ser só-ao-clique-na-tab: a cadeia do
+  // perímetro (D1, acima das tabs) precisa das duas já na carga da página.
+  // O KV já cacheia as duas respostas 6h no Worker — o custo extra de as
+  // pedir sempre é uma leitura de cache barata, não um novo pedido à API da
+  // Cloudflare a cada visita.
+  ensureCf();
+  ensureThreatIntel();
 </script>
 
 <style>
@@ -1152,4 +1628,43 @@ const jsStrings = {
     color: var(--accent);
     white-space: pre;
   }
+
+  /* ---------- Cadeia do perímetro (D1) ---------- */
+  .chain { margin-bottom: 1.6rem; }
+  .chain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: 0.7rem;
+  }
+  .chain-src {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--faint);
+    margin-top: 0.5rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed var(--border-strong);
+  }
+
+  /* ---------- Risco por país: legenda (D3) ---------- */
+  /* Só o wrapper e a legenda: são markup ESTÁTICO do template (por isso um
+     <style> com scope do Astro chega a estas classes). O <svg> em si e os
+     seus pontos são criados por JS em runtime — o Astro só aplica o hash de
+     scope a elementos escritos no template, nunca aos que um script cria
+     depois; essas regras (.scatter-dot, .chart-*, .daily-seg, .timeline-dot)
+     vivem em global.css, como o resto dos gráficos SVG desta página
+     (.bar-fill, .heat-cell, .spark-line — mesmo motivo). */
+  .scatter-wrap { margin-bottom: 0.5rem; }
+  .risk-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: 0.7rem 0;
+  }
+  .risk-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; vertical-align: middle; }
+  .risk-legend .dot.high { background: var(--danger); }
+  .risk-legend .dot.med { background: var(--accent-2); }
+  .risk-legend .dot.low { background: var(--accent); }
+  .risk-legend .dot.sample { background: none; border: 1.5px solid var(--muted); }
 </style>

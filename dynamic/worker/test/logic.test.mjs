@@ -9,7 +9,7 @@ import {
   normalizeCountry, normalizeAsn, floorToWindow,
 } from '../src/lib/sanitize.js';
 import {
-  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData, threatIntel,
+  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData, threatIntel, mergeFirewall7d,
 } from '../src/lib/aggregate.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
@@ -1735,6 +1735,13 @@ test('/api/threat-intel: funde snapshots fw:<dia> de vários dias em firewall7d.
   // AS1000 apareceu nos dois dias (3 + 2 = 5) — a soma da semana, não só o
   // último dia, é o que decide a ordenação.
   assert.deepEqual(data.firewall7d.byAsn, [{ key: 'AS1000', count: 5 }, { key: 'AS2000', count: 1 }]);
+  // daily: 7 dias (mesmo os sem fotografia), do mais antigo ao mais
+  // recente, hoje por último com o byAction cru desse dia.
+  assert.equal(data.firewall7d.daily.length, 7);
+  assert.equal(data.firewall7d.daily[6].date, new Date(now).toISOString().slice(0, 10));
+  assert.deepEqual(data.firewall7d.daily[6].byAction, { block: 3 });
+  assert.deepEqual(data.firewall7d.daily[5].byAction, { managed_challenge: 2 });
+  assert.deepEqual(data.firewall7d.daily[0].byAction, {});
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
@@ -2062,6 +2069,60 @@ test('threatIntel: entrada vazia não rebenta', () => {
   assert.equal(ti.peakHour, null);
   assert.deepEqual(ti.heatmap, []);
   assert.deepEqual(ti.topAsns, []);
+});
+
+// ---------- mergeFirewall7d (dashboard "Mitigação por dia") ----------
+
+test('mergeFirewall7d: tops iguais ao antigo readFirewall7d embutido no index.js', () => {
+  // Mesmo cenário do teste de integração '/api/threat-intel funde snapshots
+  // fw:<dia>…' — NL domina hoje com block=3, ontem com managed_challenge=2;
+  // a soma da semana continua a apontar 'block' como ação dominante de NL.
+  const fw = mergeFirewall7d([
+    {
+      date: '2026-08-05',
+      snap: {
+        byAction: { block: 3 }, bySource: { ratelimit: 3 },
+        byCountry: { NL: { action: 'block', count: 3 }, DE: { action: 'js_challenge', count: 1 } },
+        byAsn: { AS1000: 3 },
+      },
+    },
+    {
+      date: '2026-08-04',
+      snap: {
+        byAction: { managed_challenge: 2 }, bySource: { firewallCustom: 2 },
+        byCountry: { NL: { action: 'managed_challenge', count: 2 } },
+        byAsn: { AS1000: 2, AS2000: 1 },
+      },
+    },
+  ]);
+  assert.deepEqual(fw.byAction, [{ key: 'block', count: 3 }, { key: 'managed_challenge', count: 2 }]);
+  assert.deepEqual(fw.byCountry, [
+    { country: 'NL', action: 'block', count: 3 },
+    { country: 'DE', action: 'js_challenge', count: 1 },
+  ]);
+  assert.deepEqual(fw.byAsn, [{ key: 'AS1000', count: 5 }, { key: 'AS2000', count: 1 }]);
+});
+
+test('mergeFirewall7d: daily fica ordenado do mais antigo para o mais recente, com byAction cru por dia', () => {
+  // Entradas passadas fora de ordem (o chamador não garante ordem) e um dia
+  // sem fotografia (snap null) — tem de aparecer na mesma, com byAction {}.
+  const fw = mergeFirewall7d([
+    { date: '2026-08-03', snap: { byAction: { block: 5 } } },
+    { date: '2026-08-05', snap: { byAction: { skip: 10, block: 1 } } },
+    { date: '2026-08-04', snap: null },
+  ]);
+  assert.deepEqual(fw.daily, [
+    { date: '2026-08-03', byAction: { block: 5 } },
+    { date: '2026-08-04', byAction: {} },
+    { date: '2026-08-05', byAction: { skip: 10, block: 1 } },
+  ]);
+});
+
+test('mergeFirewall7d: entrada vazia não rebenta', () => {
+  const fw = mergeFirewall7d([]);
+  assert.deepEqual(fw.byAction, []);
+  assert.deepEqual(fw.byCountry, []);
+  assert.deepEqual(fw.daily, []);
 });
 
 // ---------- Core Web Vitals (vitals.js) ----------

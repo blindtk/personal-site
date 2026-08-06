@@ -17,7 +17,7 @@
 // Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
 
 import {
-  emptyBucket, addEvent, honeypotStats, mapData, threatIntel, THREAT_INTEL_HOURS,
+  emptyBucket, addEvent, honeypotStats, mapData, threatIntel, THREAT_INTEL_HOURS, mergeFirewall7d,
 } from './lib/aggregate.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, vitalsStats,
@@ -278,47 +278,14 @@ async function snapshotFirewall(env, stats, now) {
 }
 
 /**
- * Lê e funde os snapshots de firewall dos últimos 7 dias em tops por
- * ação/origem/rede (ASN), e por país (ação mais comum de cada país, somada
- * através dos dias — recalculada sobre a soma da semana, não só o vencedor
- * do último dia).
+ * Lê os snapshots de firewall dos últimos 7 dias e funde-os (`mergeFirewall7d`,
+ * lib/aggregate.js — pura e testável) em tops por ação/origem/rede/país MAIS
+ * a série diária crua que alimenta o dashboard "Mitigação por dia".
  */
 async function readFirewall7d(env, now) {
-  const keys = Array.from({ length: 7 }, (_, i) => fwDayKey(now - i * DAY_MS));
-  const snaps = await Promise.all(keys.map((k) => getJSON(env, k)));
-  const byAction = {};
-  const bySource = {};
-  const byAsn = {};
-  const byCountry = {}; // country -> { action -> count }
-  for (const s of snaps) {
-    if (!s) continue;
-    for (const [k, v] of Object.entries(s.byAction ?? {})) byAction[k] = (byAction[k] ?? 0) + (Number(v) || 0);
-    for (const [k, v] of Object.entries(s.bySource ?? {})) bySource[k] = (bySource[k] ?? 0) + (Number(v) || 0);
-    for (const [k, v] of Object.entries(s.byAsn ?? {})) byAsn[k] = (byAsn[k] ?? 0) + (Number(v) || 0);
-    for (const [country, entry] of Object.entries(s.byCountry ?? {})) {
-      const action = entry?.action;
-      const count = Number(entry?.count) || 0;
-      if (!action || count <= 0) continue;
-      byCountry[country] ??= {};
-      byCountry[country][action] = (byCountry[country][action] ?? 0) + count;
-    }
-  }
-  const top = (m) => Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 10);
-  const topCountry = Object.entries(byCountry)
-    .map(([country, actions]) => {
-      let bestAction = null;
-      let bestCount = -1;
-      let total = 0;
-      for (const [action, count] of Object.entries(actions)) {
-        total += count;
-        if (count > bestCount) { bestAction = action; bestCount = count; }
-      }
-      return { country, action: bestAction, count: bestCount, total };
-    })
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10)
-    .map(({ country, action, count }) => ({ country, action, count }));
-  return { byAction: top(byAction), bySource: top(bySource), byAsn: top(byAsn), byCountry: topCountry };
+  const dates = Array.from({ length: 7 }, (_, i) => new Date(now - i * DAY_MS).toISOString().slice(0, 10));
+  const snaps = await Promise.all(dates.map((date) => getJSON(env, `fw:${date}`)));
+  return mergeFirewall7d(dates.map((date, i) => ({ date, snap: snaps[i] })));
 }
 
 // ---------- caching de leitura ----------

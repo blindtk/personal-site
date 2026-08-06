@@ -759,6 +759,7 @@ a.card:hover {
 }
 .stat.amber .n { color: var(--accent-2); }
 .stat.blue .n { color: var(--accent-3); }
+.stat.red .n { color: var(--danger); }
 /* Stat clicável (nº de badges → página Certificações): parece um cartão de
    stat normal, mas com afordância de link no hover/foco. */
 .stat-link {
@@ -881,6 +882,26 @@ a.card:hover {
   font-family: var(--mono);
   margin-top: 0.4rem;
 }
+
+/* ---------- Gráficos SVG do Perímetro (Mitigação por dia, Risco por país,
+   linha do tempo) — SVG criado por script, mesma razão do bloco acima. ---------- */
+.daily-svg, .scatter-svg, .timeline-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart-axis { stroke: var(--border); stroke-width: 1; }
+.chart-threshold { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart-lbl { font-family: var(--mono); font-size: 9px; fill: var(--muted); }
+.chart-lbl.strong { fill: var(--text); }
+.chart-val { font-family: var(--mono); font-size: 9px; fill: var(--text); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; font-size: 0.72rem; color: var(--muted); margin-top: 0.6rem; }
+.chart-legend .chart-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; margin-right: 0.35rem; vertical-align: middle; }
+.chart-dot.blocked, .daily-seg.blocked { fill: var(--danger); background: var(--danger); }
+.chart-dot.challenged, .daily-seg.challenged { fill: var(--accent-2); background: var(--accent-2); }
+.chart-dot.allowed, .daily-seg.allowed { fill: var(--accent); background: var(--accent); }
+.scatter-dot { stroke: var(--bg-raise); stroke-width: 2; }
+.scatter-dot.high { fill: var(--danger); fill-opacity: 0.85; }
+.scatter-dot.med { fill: var(--accent-2); fill-opacity: 0.85; }
+.scatter-dot.low { fill: var(--accent); fill-opacity: 0.85; }
+.scatter-dot.sample { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+.timeline-dot { fill: var(--accent); stroke: var(--bg-raise); stroke-width: 2; }
 
 /* Lista chave→valor do painel de estado (versão, commit, branch…). */
 .kv-list {
@@ -1988,6 +2009,47 @@ select {
 /* --muted e não --faint: é a data real de emissão do certificado. */
 .ctw-date { white-space: nowrap; color: var(--muted); }
 .ctw-names { color: var(--muted); }
+
+/* ---------- Ciclo de vida do certificado ativo (D4) ---------- */
+.ctw-lifecycle { margin-bottom: 1.2rem; }
+.ctw-lifecycle-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  margin-bottom: 0.9rem;
+}
+.ctw-bar-wrap { margin-top: 0.2rem; }
+.ctw-bar-track {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--bg-raise-2);
+  overflow: visible;
+}
+.ctw-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+/* Marcador de "hoje": uma linha vertical no ponto exato do progresso,
+   sobreposta à barra — dá o mesmo "estás aqui" do mockup sem precisar de
+   dois elementos empilhados a fingir ser um. */
+.ctw-bar-today {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--text);
+  transform: translateX(-1px);
+}
+.ctw-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
+.ctw-bar-labels span:nth-child(2) { color: var(--text); }
 
 /* ---------- Heatmap ATT&CK ---------- */
 

@@ -111,7 +111,21 @@ export const ui = {
       wFirewallUserAgents: 'User-agents mais vistos (firewall · 24h)',
       wFirewallAsns: 'Redes mais vistas (firewall · 24h)',
       riskLowSample: 'amostra pequena',
-      riskNote: 'Todos os países com pelo menos 1 ameaça aparecem — nenhum fica escondido. Mas abaixo de 100 pedidos nos 7 dias a percentagem é pouco fiável (1 ameaça em 1 pedido dava "100%", sem significar nada): esses vêm marcados «amostra pequena», com a contagem bruta (ameaças/pedidos) ao lado da percentagem, e ordenados depois dos países com volume suficiente — para um valor de amostra pequena não saltar à frente de um risco real só por sorte.',
+      // Nota curta: o gráfico de dispersão (posição = pedidos, eixo log;
+      // círculo aberto = amostra pequena) já mostra a diferença de amostra
+      // visualmente — não precisa de a explicar em texto, ao contrário da
+      // lista de barras que isto substituiu (essa tinha uma nota de 5 linhas
+      // aqui porque ES a 96,9%/127 pedidos e GB a 100%/1 pedido apareciam
+      // lado a lado sem contexto nenhum).
+      riskNote: 'Cada ponto é um país: posição horizontal = pedidos na janela (escala logarítmica), vertical = percentagem desses pedidos classificada como ameaça. Círculo aberto = menos de 100 pedidos, onde a percentagem ainda não é fiável (1 ameaça em 1 pedido já dava "100%"). Área do círculo ∝ nº de ameaças. Tabela completa por baixo do gráfico.',
+      riskAxisRequests: 'pedidos na janela (escala logarítmica)',
+      riskLegendHigh: 'taxa ≥ 50%',
+      riskLegendMed: 'taxa 20–50%',
+      riskLegendLow: 'taxa < 20%',
+      riskLegendSample: 'amostra < 100 pedidos',
+      riskThresholdLeft: '← amostra pequena',
+      riskThresholdRight: 'amostra fiável →',
+      riskColRate: 'Taxa',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
       statusEmpty: 'Sem respostas 4xx/5xx na janela.',
       firewallEmpty: 'Sem eventos de firewall na janela (ou requer permissões de firewall no token).',
@@ -148,9 +162,23 @@ export const ui = {
       tiAsns7dOne: 'Rede (ASN)',
       tiPeakHour: 'Hora de pico (UTC)',
       tiHeatmap: 'Heatmap de ataques (dia × hora, UTC)',
+      // Com poucos eventos na janela, um grid de 168 células com uma única
+      // acesa lê-se como painel avariado, não como "pouco tráfego" — abaixo
+      // de tiHeatmapMinEvents troca-se por uma linha do tempo simples, que
+      // faz um episódio isolado parecer um episódio isolado.
+      tiHeatmapSparse: 'Poucos eventos na janela para um heatmap dizer alguma coisa — os mesmos eventos, na linha do tempo:',
+      tiTimelineToday: 'hoje',
       tiHours: 'Ataques por hora do dia (UTC)',
       tiTechniques: 'Técnicas ATT&CK mais disparadas',
       tiTopPaths: 'Alvos mais visados',
+      // ----- Mitigação por dia (dia a dia, não só o total da semana) -----
+      // Os 7 snapshots diários de firewall só apareciam somados — um dia de
+      // ataque a sério (ex.: 445 bloqueios) e um dia de tráfego humano a
+      // resolver desafios (ex.: 503 passagens) ficavam indistinguíveis.
+      tiDailyTitle: 'Mitigação por dia',
+      tiDailyBlocked: 'bloqueado',
+      tiDailyChallenged: 'desafiado',
+      tiDailyAllowed: 'passado',
       tiFirewallAction: 'Firewall por ação (7d)',
       tiFirewallActionNote: 'Nem toda a ação da firewall é um ataque travado. «skip»/«allow» passaram; um desafio «bypassed» ou «solved» é um visitante legítimo que o resolveu — a maioria destes é tráfego próprio, de Portugal. Só block/drop (vermelho) e os desafios por resolver (âmbar) são mitigação efetiva; o resto fica neutro de propósito.',
       tiFirewallSource: 'Firewall por origem (7d)',
@@ -383,6 +411,28 @@ export const ui = {
       title: 'Vigia de Certificate Transparency',
       intro:
         'Qualquer certificado TLS emitido para este domínio — incluindo um que um atacante conseguisse emitir após um takeover de DNS ou do registrar — fica registado em logs públicos de Certificate Transparency. O Worker vigia esses logs e compara cada emissão dos últimos 90 dias com a lista de emissores esperados: um certificado que eu não pedi aparece aqui antes de poder ser usado contra mim.',
+      // ----- Ciclo de vida do certificado ativo -----
+      // O único painel do site que avisa de algo ANTES de acontecer — tudo o
+      // resto é retrospetivo. "Ativo" é uma escolha entre os certificados
+      // válidos do domínio exato e de emissor esperado (ver
+      // currentCertificate em scripts/observability.js); o CT sozinho não
+      // diz qual a Cloudflare está de facto a servir.
+      lifecycleTitle: 'Validade do certificado em uso',
+      lifecycleDaysLeft: 'dias até expirar',
+      lifecycleDaysLeftOne: 'dia até expirar',
+      lifecycleIssued: 'emitido',
+      lifecycleExpires: 'expira',
+      lifecycleToday: 'hoje',
+      lifecycleElapsed: 'decorrido',
+      lifecycleRemaining: 'dias restantes',
+      // Sob 14 dias: o mesmo aviso antecipado que o painel promete, não só o
+      // registo passivo do que já aconteceu.
+      lifecycleSoon: 'Expira em breve — confirma que a renovação automática já correu.',
+      // Nenhum certificado válido do domínio exato e de emissor esperado
+      // nesta janela de 90 dias: ou o certificado ativo foi emitido há mais
+      // tempo do que a janela cobre, ou algo mudou de emissor — vale a pena
+      // olhar para a tabela abaixo.
+      lifecycleNone: 'Sem certificado válido do domínio exato e de emissor esperado nesta janela — confirma na tabela abaixo.',
       statCerts: 'certificados · 90d',
       statIssuers: 'emissores distintos',
       statUnexpected: 'emissões inesperadas',
@@ -462,6 +512,21 @@ export const ui = {
       unavailable: 'O painel ao vivo ainda não está ligado — o Worker do honeypot precisa de estar publicado nas rotas do domínio. O código e a garantia de privacidade estão no repositório.',
       projectNote: 'O porquê de isto viver num Worker e não no site estático — e a garantia de privacidade por construção — está nas decisões do projeto.',
       projectLink: 'Ver o projeto Honeypot →',
+      // ----- Cadeia do perímetro (de fora para dentro, acima das tabs) -----
+      // As cinco tabs são silos: "684 ameaças" na Cloudflare e "2 eventos" no
+      // Honeypot nunca se encontram. Esta faixa conta a história em quatro
+      // números, cada um com a fonte anotada por baixo — nunca se subtraem
+      // uns aos outros (a firewall vê a zona inteira, o honeypot só os
+      // iscos: universos diferentes, ver tiCountriesMerged/tiAsnsMerged).
+      chainTitle: 'Cadeia do perímetro',
+      chainRequests: 'pedidos à zona',
+      chainThreats: 'classificados como ameaça',
+      chainMitigated: 'travados ou desafiados',
+      chainHoneypot: 'tocaram num endpoint-isco',
+      chainSrcZone: 'Cloudflare · zona · 7d',
+      chainSrcFirewall: 'Cloudflare · firewall · 7d',
+      chainSrcHoneypot: 'Honeypot · 7d',
+      chainNote: 'Quatro medições de fontes diferentes, não uma subtração de uma pela outra: a firewall vê toda a zona, o honeypot só os endpoints-isco.',
     },
     detections: {
       title: 'Deteções',
@@ -1104,7 +1169,15 @@ export const ui = {
       wFirewallUserAgents: 'Most-seen user-agents (firewall · 24h)',
       wFirewallAsns: 'Most-seen networks (firewall · 24h)',
       riskLowSample: 'small sample',
-      riskNote: 'Every country with at least 1 threat shows up here — none are hidden. But below 100 requests over the 7 days the percentage is unreliable (1 threat in 1 request would read "100%", meaning nothing): those come marked "small sample", with the raw count (threats/requests) next to the percentage, and ranked after countries with enough volume — so a small-sample fluke never outranks a real risk just by chance.',
+      riskNote: 'Each point is a country: horizontal position = requests in the window (logarithmic scale), vertical = the percentage of those requests classed as threat. Open circle = under 100 requests, where the percentage is not yet reliable (1 threat in 1 request already reads "100%"). Circle area ∝ number of threats. Full table below the chart.',
+      riskAxisRequests: 'requests in the window (logarithmic scale)',
+      riskLegendHigh: 'rate ≥ 50%',
+      riskLegendMed: 'rate 20–50%',
+      riskLegendLow: 'rate < 20%',
+      riskLegendSample: 'sample < 100 requests',
+      riskThresholdLeft: '← small sample',
+      riskThresholdRight: 'reliable sample →',
+      riskColRate: 'Rate',
       countriesEmpty: 'No threats recorded by country in the window.',
       statusEmpty: 'No 4xx/5xx responses in the window.',
       firewallEmpty: 'No firewall events in the window (or requires firewall permissions on the token).',
@@ -1141,9 +1214,15 @@ export const ui = {
       tiAsns7dOne: 'Network (ASN)',
       tiPeakHour: 'Peak hour (UTC)',
       tiHeatmap: 'Attack heatmap (day × hour, UTC)',
+      tiHeatmapSparse: 'Too few events in the window for a heatmap to say anything — the same events, on a timeline:',
+      tiTimelineToday: 'today',
       tiHours: 'Attacks by hour of day (UTC)',
       tiTechniques: 'Most-triggered ATT&CK techniques',
       tiTopPaths: 'Most targeted paths',
+      tiDailyTitle: 'Mitigation by day',
+      tiDailyBlocked: 'blocked',
+      tiDailyChallenged: 'challenged',
+      tiDailyAllowed: 'allowed',
       tiFirewallAction: 'Firewall by action (7d)',
       tiFirewallActionNote: 'Not every firewall action is an attack stopped. "skip"/"allow" went through; a "bypassed" or "solved" challenge is a legitimate visitor who passed it — most of those are my own traffic, from Portugal. Only block/drop (red) and unsolved challenges (amber) are real mitigation; the rest is deliberately left neutral.',
       tiFirewallSource: 'Firewall by source (7d)',
@@ -1372,6 +1451,16 @@ export const ui = {
       title: 'Certificate Transparency watch',
       intro:
         'Any TLS certificate issued for this domain — including one an attacker managed to obtain after a DNS or registrar takeover — is recorded in public Certificate Transparency logs. The Worker watches those logs and checks every issuance from the last 90 days against the list of expected issuers: a certificate I did not request shows up here before it can be used against me.',
+      lifecycleTitle: 'Validity of the certificate in use',
+      lifecycleDaysLeft: 'days until expiry',
+      lifecycleDaysLeftOne: 'day until expiry',
+      lifecycleIssued: 'issued',
+      lifecycleExpires: 'expires',
+      lifecycleToday: 'today',
+      lifecycleElapsed: 'elapsed',
+      lifecycleRemaining: 'days remaining',
+      lifecycleSoon: 'Expiring soon — confirm the automatic renewal already ran.',
+      lifecycleNone: 'No valid certificate for the exact domain and an expected issuer in this window — check the table below.',
       statCerts: 'certificates · 90d',
       statIssuers: 'distinct issuers',
       statUnexpected: 'unexpected issuances',
@@ -1451,6 +1540,15 @@ export const ui = {
       unavailable: 'The live panel is not wired up yet — the honeypot Worker needs to be published on the domain routes. The code and the privacy guarantee are in the repository.',
       projectNote: 'Why this lives in a Worker and not the static site — and the privacy-by-construction guarantee — is written up in the project decisions.',
       projectLink: 'See the Honeypot project →',
+      chainTitle: 'The perimeter chain',
+      chainRequests: 'requests to the zone',
+      chainThreats: 'classed as threat',
+      chainMitigated: 'blocked or challenged',
+      chainHoneypot: 'touched a decoy endpoint',
+      chainSrcZone: 'Cloudflare · zone · 7d',
+      chainSrcFirewall: 'Cloudflare · firewall · 7d',
+      chainSrcHoneypot: 'Honeypot · 7d',
+      chainNote: 'Four measurements from different sources, not one subtracted from another: the firewall sees the whole zone, the honeypot only the decoy endpoints.',
     },
     detections: {
       title: 'Detections',
