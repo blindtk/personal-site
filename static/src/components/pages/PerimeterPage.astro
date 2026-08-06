@@ -839,18 +839,28 @@ const jsStrings = {
         row,
       };
     });
-    // Rótulos diretos só onde não colidem (grelha simples de exclusão): o
-    // ponto continua sempre visível e com tooltip, só o rótulo de texto que
-    // se omite quando ficaria em cima de outro já aceite.
-    const accepted: RiskPoint[] = [];
+    // Rótulos diretos só onde não colidem: o ponto continua sempre visível e
+    // com tooltip, só o rótulo de texto que se omite quando colidiria com um
+    // já aceite. O limiar tem de ser a LARGURA REAL do texto, não uma
+    // distância fixa — com vários países de amostra pequena (todos a 100%,
+    // apinhados no canto esquerdo da escala log) uma distância fixa pequena
+    // deixava rótulos como "GB · 100.0%" e "BE · 100.0%" sobrepostos,
+    // ilegíveis. ~5.6px/carácter é a largura aproximada do mono a 9px usado
+    // em .chart-lbl (ver global.css).
+    const MONO_CHAR_W = 5.6;
+    const labelText = (row: any) => `${row.country} · ${formatPercent(Number(row.rate) || 0)}`;
+    const halfWidth = (row: any) => (labelText(row).length * MONO_CHAR_W) / 2 + 4;
+    const accepted: { x: number; y: number; halfW: number }[] = [];
     const labelled = new Set<number>();
     pts
-      .map((p, i) => ({ p, i }))
+      .map((p, i) => ({ p, i, halfW: halfWidth(p.row) }))
       .sort((a, b) => a.p.x - b.p.x)
-      .forEach(({ p, i }) => {
-        const collide = accepted.some((q) => Math.abs(q.x - p.x) < 34 && Math.abs(q.y - p.y) < 20);
+      .forEach(({ p, i, halfW }) => {
+        const collide = accepted.some(
+          (q) => Math.abs(q.x - p.x) < (q.halfW + halfW) && Math.abs(q.y - p.y) < 16,
+        );
         if (!collide) {
-          accepted.push(p);
+          accepted.push({ x: p.x, y: p.y, halfW });
           labelled.add(i);
         }
       });
@@ -870,7 +880,7 @@ const jsStrings = {
       circle.setAttribute('class', `scatter-dot ${riskDotClass(row)}`);
       g.append(circle);
       if (labelled.has(i)) {
-        text(p.x, p.y - p.r - 6, 'middle', 'chart-lbl strong', `${row.country} · ${formatPercent(rate)}`);
+        text(p.x, p.y - p.r - 6, 'middle', 'chart-lbl strong', labelText(row));
       }
       svg.append(g);
     });
