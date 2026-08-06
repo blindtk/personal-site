@@ -195,7 +195,7 @@ export function classifyDaily(daily) {
  * que começa em 1. `min`/`max` iguais degrada para o centro do range.
  */
 export function logScaleX(value, { min, max, rangeMin, rangeMax }) {
-  if (!(max > min)) return (rangeMin + rangeMax) / 2;
+  if (!(min > 0) || !(max > min)) return (rangeMin + rangeMax) / 2;
   const v = Math.max(min, Math.min(max, Number(value) || min));
   const t = (Math.log10(v) - Math.log10(min)) / (Math.log10(max) - Math.log10(min));
   return rangeMin + t * (rangeMax - rangeMin);

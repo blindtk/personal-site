@@ -40,11 +40,13 @@ build-time generation, no per-page `<meta>`.
 > pipeline (local capture + a "Report" button on the Evidence page). The
 > manual pipeline was itself removed in 2026-08: most `self`/`self`
 > reports (nominally same-origin violations, which should be impossible
-> under this CSP) turned out to come from Cloudflare's own managed
-> challenge page intercepting the request, not from a build regression or
-> a real injection — a false signal, not evidence the CSP itself needed
-> reporting. The CSP is enforced either way; only the reporting layer on
-> top of it is gone. See `dynamic/PLAN.md`.
+> under this CSP) were suspected to come from Cloudflare's own managed
+> challenge page intercepting the request, rather than from a build
+> regression or a real injection — never fully confirmed for this
+> browser-reported case, but a detective control that can't tell a real
+> regression from noise on its own highest-severity alert isn't earning
+> its keep either way. The CSP is enforced either way; only the reporting
+> layer on top of it is gone. See `dynamic/PLAN.md`.
 >
 > The presence of these headers in production is checked automatically by
 > the `Headers` workflow (`.github/workflows/headers.yml`) against the

@@ -163,10 +163,12 @@ Corrected attack-surface count (11 GET endpoints, not 12) and dropped the
 now-removed `/api/scan`/`fetchSameOrigin` abuse-case entry; CSP violation
 tracking was kept, unaffected. **2026-08-06 (later same day):** CSP
 violation tracking removed too, on reflection by the repo owner — its
-`self`/`self` bucket suffered from the same false-signal problem as
-self-scan (the Cloudflare challenge page, not a real regression), and
-unlike self-scan the noise reached real visitors, not just the Worker's
-own probes. `/api/csp-report` and `/api/csp-violations` are gone; the CSP
-itself is unaffected (still enforced, just no longer reported on). Corrected
+`self`/`self` bucket was suspected to suffer from the same false-signal
+problem as self-scan (the Cloudflare challenge page, not a real
+regression), though unlike self-scan that cause was never confirmed for
+the browser-reported case specifically; unlike self-scan the noise also
+reached real visitors, not just the Worker's own probes. `/api/csp-report`
+and `/api/csp-violations` are gone; the CSP itself is unaffected (still
+enforced, just no longer reported on). Corrected
 attack-surface count again (10 GET endpoints, 1 POST endpoint) and removed
 the A3 finding's CSP half.

@@ -102,6 +102,7 @@ const jsStrings = {
   tiDays: s.tiDays,
   tiHeatmapSparse: s.tiHeatmapSparse,
   tiTimelineToday: s.tiTimelineToday,
+  tiDailyTitle: s.tiDailyTitle,
   tiDailyBlocked: s.tiDailyBlocked,
   tiDailyChallenged: s.tiDailyChallenged,
   tiDailyAllowed: s.tiDailyAllowed,
@@ -117,6 +118,7 @@ const jsStrings = {
   riskLegendSample: s.riskLegendSample,
   riskThresholdLeft: s.riskThresholdLeft,
   riskThresholdRight: s.riskThresholdRight,
+  riskAxisRequests: s.riskAxisRequests,
   riskColRate: s.riskColRate,
   cardRequests: s.cardRequests,
   cardThreats: s.cardThreats,
@@ -1022,7 +1024,7 @@ const jsStrings = {
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     svg.setAttribute('class', 'daily-svg');
     svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', S.tiDailyBlocked);
+    svg.setAttribute('aria-label', S.tiDailyTitle);
     const axis = document.createElementNS(SVG_NS, 'line');
     axis.setAttribute('x1', String(ML));
     axis.setAttribute('y1', String(AXIS_Y));

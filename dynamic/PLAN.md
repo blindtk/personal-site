@@ -551,16 +551,20 @@
   `cloudflare-observability`, `cloudflare-docs`) are the read-only set.
 
 - **2026-08-06 — Self-scan removed** (repo owner's decision, after two
-  problems traced to the same root cause): the "Header self-scan" widget
-  (`/api/scan`, Provas page) had been showing grade E in production, and
-  the CSP Violations panel kept logging `script-src-elem`/`self` and
-  `connect-src`/`self` violations that made no sense for a same-origin
-  request. Both turned out to be the same mechanism — Cloudflare Bot
-  Fight Mode / WAF intercepting the Worker's own same-zone `fetch()` to
-  `SCAN_TARGET` and serving a managed-challenge page instead of the real
-  site; the Worker then graded the challenge page's headers, not
-  danielmala.co's, producing a grade that measured Cloudflare's challenge
-  page rather than the site.
+  problems suspected to share the same root cause): the "Header
+  self-scan" widget (`/api/scan`, Provas page) had been showing grade E
+  in production, and the CSP Violations panel kept logging
+  `script-src-elem`/`self` and `connect-src`/`self` violations that made
+  no sense for a same-origin request. Only self-scan's cause was actually
+  confirmed here — Cloudflare Bot Fight Mode / WAF intercepting the
+  Worker's own same-zone `fetch()` to `SCAN_TARGET` and serving a
+  managed-challenge page instead of the real site; the Worker then graded
+  the challenge page's headers, not danielmala.co's, producing a grade
+  that measured Cloudflare's challenge page rather than the site. The CSP
+  self/self violations were suspected to come from the same mechanism
+  (a visitor's browser served the challenge page instead of the real
+  page), but that was never confirmed for the browser-reported case
+  specifically — see the "Reversed" entry below.
   Two fixes were on the table: build a `SCAN_PROOF_TOKEN` bypass (a
   shared secret so the WAF rule lets the Worker's own self-fetch through
   unchallenged) or remove self-scan outright. The repo owner chose

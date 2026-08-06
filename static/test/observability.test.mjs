@@ -167,7 +167,9 @@ test('logScaleX: mapeia 1..1000 para um range de pixels, clamped', () => {
   const opts = { min: 1, max: 1000, rangeMin: 0, rangeMax: 300 };
   assert.equal(logScaleX(1, opts), 0);
   assert.equal(logScaleX(1000, opts), 300);
-  assert.equal(logScaleX(31.622776601683793, opts), 150); // sqrt(1000), meio da escala log
+  // sqrt(1000) → meio da escala log; tolerância porque Math.log10 não é
+  // exatamente arredondado pela especificação.
+  assert.ok(Math.abs(logScaleX(31.622776601683793, opts) - 150) < 1e-9);
   // fora do domínio: clampa aos extremos, nunca NaN
   assert.equal(logScaleX(0, opts), 0);
   assert.equal(logScaleX(999999, opts), 300);
