@@ -90,16 +90,6 @@ const personSchema = {
 <html lang={lang}>
   <head>
     <meta charset="utf-8" />
-    <!-- Captor de violações CSP: primeiro recurso da página, de propósito
-         sem defer/async. A CSP já não tem report-uri/report-to (ver
-         _headers) — isto só liga o listener local securitypolicyviolation
-         (ver public/js/csp-report.js) o mais cedo possível, antes de
-         qualquer outro <script>/<link> que pudesse violar a CSP, para não
-         perder o sinal mais importante (regressão da própria build). Fica
-         em sessionStorage; o envio é manual, num botão na página Provas
-         (CspViolations.astro). Ficheiro minúsculo, mesma origem — o custo
-         de bloquear o parser por isto é desprezável. -->
-    <script src="/js/csp-report.js" is:inline></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={desc} />

@@ -101,7 +101,7 @@ const CRITICAL = ['/api/health'];
 // rotas diferentes a partir ao mesmo tempo já cheira a problema real do
 // Worker, não a um upstream específico em baixo).
 const INFORMATIONAL = [
-  '/api/honeypot', '/api/map', '/api/scan', '/api/csp-violations',
+  '/api/honeypot', '/api/map',
   '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror',
 ];
 

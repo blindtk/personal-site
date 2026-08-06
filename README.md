@@ -171,7 +171,6 @@ The site also runs several live cybersecurity showcases:
 | --- | --- | --- |
 | **MITRE ATT&CK heatmap** | `/attack` | No — 100% static (`content/attack.json`) |
 | **Perimeter** (honeypot panel, hostile-traffic map, detection rules, Cloudflare stats, trends, logs) | `/perimetro/` (`/en/perimeter/`) | Yes — `/api/honeypot`, `/api/map`, `/api/cf-stats`, `/api/threat-intel`, `/api/ct` |
-| **Self-scan of security headers** | Security page | Yes — `/api/scan` |
 | **SOC ticker** (CISA KEV + NVD) | top of Security page | Yes — `/api/ticker` |
 
 The Worker-backed features degrade gracefully when it isn't reachable (they

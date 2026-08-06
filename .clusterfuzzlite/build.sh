@@ -8,5 +8,4 @@
 # nenhuma alteração deste repo.
 npm ci --ignore-scripts
 
-compile_javascript_fuzzer repo .clusterfuzzlite/fuzz/csp_report_fuzz.js --sync
 compile_javascript_fuzzer repo .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync

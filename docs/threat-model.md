@@ -29,12 +29,12 @@ Developer laptop → GitHub → Cloudflare Workers Builds (automatic deploy,
 no verifiable provenance nor reviewer gate — *real gap, see H3*) →
 production (see `docs/architecture.md`). npm registry → lockfile → build →
 deployed artifact. Upstream feeds (NVD, CISA KEV, crt.sh, HIBP) → Worker →
-browser DOM. Browser → POST endpoints → KV.
+browser DOM. Browser → POST endpoint → KV.
 
 ## Attack surfaces
 
-11 GET endpoints (most with no input); 2 unauthenticated POST endpoints
-(`/api/csp-report`, `/api/vitals`); 5 decoy routes; the static site; the
+10 GET endpoints (most with no input); 1 unauthenticated POST endpoint
+(`/api/vitals`); 5 decoy routes; the static site; the
 client-side tools (all local except `pwned`, `mirror`); the
 GitHub Actions supply chain; the npm dependency tree; the Cloudflare
 dashboard/API credentials.
@@ -57,12 +57,12 @@ hiding genuine scanning. Low impact (no security control depends on this
 data); a possible mitigation (per-ASN sub-cap) is recorded as a
 *nice-to-have*.
 
-### A3 — Metric poisoning (Vitals/CSP)
-**Status: accepted residual risk, out of necessity.** Both POST endpoints
-are unauthenticated by nature (that's what makes them useful). An attacker
-can submit fabricated LCP/CLS values or fake CSP violations within the
-caps. Impact: cosmetic/reputational — mitigation: be explicit on the page
-that these are unauthenticated first-party beacons.
+### A3 — Metric poisoning (Vitals)
+**Status: accepted residual risk, out of necessity.** The POST endpoint
+is unauthenticated by nature (that's what makes it useful). An attacker
+can submit fabricated LCP/CLS values within the cap. Impact:
+cosmetic/reputational — mitigation: be explicit on the page that this is
+an unauthenticated first-party beacon.
 
 ### A4 — Dependency compromise via npm
 **Status: mitigated in depth.** `minimumReleaseAge: 3 days`, OSV-Scanner,
@@ -161,4 +161,12 @@ Worker's own same-zone `fetch()` and grading its managed-challenge page
 instead of the real site (see `dynamic/PLAN.md`, 2026-08-06 entry).
 Corrected attack-surface count (11 GET endpoints, not 12) and dropped the
 now-removed `/api/scan`/`fetchSameOrigin` abuse-case entry; CSP violation
-tracking was kept, unaffected.
+tracking was kept, unaffected. **2026-08-06 (later same day):** CSP
+violation tracking removed too, on reflection by the repo owner — its
+`self`/`self` bucket suffered from the same false-signal problem as
+self-scan (the Cloudflare challenge page, not a real regression), and
+unlike self-scan the noise reached real visitors, not just the Worker's
+own probes. `/api/csp-report` and `/api/csp-violations` are gone; the CSP
+itself is unaffected (still enforced, just no longer reported on). Corrected
+attack-surface count again (10 GET endpoints, 1 POST endpoint) and removed
+the A3 finding's CSP half.

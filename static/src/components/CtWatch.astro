@@ -3,8 +3,9 @@
  * Vigia CT — painel da página Segurança que mostra as emissões de
  * certificados para o próprio domínio, vindas dos logs públicos de
  * Certificate Transparency via GET /api/ct (Worker em dynamic/worker/).
- * Mesmo padrão do CspViolations: fallback visível por omissão, painel só
- * aparece quando a API responde; rendering sempre via textContent.
+ * Mesmo padrão dos outros painéis "requer servidor": fallback visível por
+ * omissão, painel só aparece quando a API responde; rendering sempre via
+ * textContent.
  */
 import { API_BASE, type Lang } from '../config';
 import { t } from '../i18n/ui';

@@ -4,9 +4,6 @@
 //   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
 //   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
-//   · /api/csp-report (POST)   — recetor de violações CSP (envio manual, não
-//                                 report-uri/report-to — ver docs/security-headers.md)
-//   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
 //   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 6h)
@@ -21,10 +18,6 @@ import {
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, vitalsStats,
 } from './lib/vitals.js';
-import {
-  parseReports, normalizeViolation, emptyCspBucket, addCspEvent, cspStats,
-  REPORT_CONTENT_TYPES, MAX_REPORTS_PER_REQUEST,
-} from './lib/csp-report.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
@@ -47,7 +40,7 @@ const ANON_WINDOW_MS = 5 * 60_000;
 // Cap global de escritas do honeypot por DIA (não por hora): limita
 // custo/abuso se alguém martelar os paths-isco. Ver lib/kvcap.js. O plano
 // Free tem um teto de ~1.000 escritas/dia PARA A CONTA INTEIRA, partilhado
-// com rate-limit/vitals/CSP/cron — um cap por HORA generoso (o valor antigo,
+// com rate-limit/vitals/cron — um cap por HORA generoso (o valor antigo,
 // 500/h) deixava um único burst de scanners consumir sozinho vários dias de
 // quota (500 eventos × 4-5 escritas = até 2.500 escritas numa hora, mais do
 // que o teto diário inteiro). Por isso o cap passou a ser diário e mais
@@ -61,17 +54,9 @@ const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 };
 // deixar um alvo lento pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
 
-// Violações CSP: corpo máximo aceite num POST (um batch reports+json legítimo
-// anda nos poucos KB) e cap global de escritas POR DIA — uma regressão real
-// gera 1 relatório × N visitantes, o teto limita o custo dessa rajada (e de
-// spam deliberado) sem perder o sinal: os agregados já contados ficam. Cap
-// diário (mesmo raciocínio do honeypot): 50 eventos/dia × 2 escritas = 100/dia.
-const CSP_REPORT_MAX_BODY = 16 * 1024;
-const CSP_WRITE_CAP = { windowMs: DAY_MS, max: 50 };
-
 // RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas POR
-// DIA (mesmo padrão do honeypot/CSP — ver comentário acima). Só agregados;
-// ver lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
+// DIA (mesmo padrão do honeypot — ver comentário acima). Só agregados; ver
+// lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
 // (5.000/hora) media a resiliência a abuso, não o orçamento real do plano
 // Free — tráfego orgânico normal já bastava para estourar o teto diário
 // muito antes de qualquer flood malicioso.
@@ -152,42 +137,6 @@ async function recordHoneypot(env, request, path, now) {
   await Promise.all(writes);
 }
 
-// ---------- violações CSP: escrita ----------
-
-const cspDayKey = (ms) => `cspd:${new Date(ms).toISOString().slice(0, 10)}`; // cspd:2026-07-17
-
-/**
- * Agrega violações CSP já normalizadas no bucket diário. Só agregados — ao
- * contrário do honeypot nem sequer há lista "recent": nenhum evento
- * individual é persistido, só contadores por diretiva/categoria/origem.
- */
-async function recordCspViolations(env, violations, now) {
-  if (violations.length === 0) return;
-  const capKey = `cspcap:${dayKey(now)}`;
-  const dayK = cspDayKey(now);
-  const [bucket, capPrev] = await Promise.all([
-    getJSON(env, dayK, emptyCspBucket()),
-    getJSON(env, capKey),
-  ]);
-
-  // Cap global de escritas por janela (mesmo padrão do honeypot): acima do
-  // teto os relatórios extra descartam-se — o browser recebe 204 na mesma.
-  const { allowed, state: capState } = underCap(capPrev, { now, ...CSP_WRITE_CAP });
-  if (!allowed) return;
-
-  for (const v of violations) addCspEvent(bucket, v);
-  await Promise.all([
-    env.KV.put(dayK, JSON.stringify(bucket), { expirationTtl: 9 * 86400 }),
-    env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(CSP_WRITE_CAP.windowMs / 1000) + 60 }),
-  ]);
-}
-
-/** Lê os 7 buckets diários de violações CSP (hoje primeiro). */
-async function readCspBuckets(env, now) {
-  const keys = Array.from({ length: 7 }, (_, i) => cspDayKey(now - i * DAY_MS));
-  return Promise.all(keys.map((k) => getJSON(env, k)));
-}
-
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
 
 const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; // vit:2026-07-24
@@ -195,7 +144,7 @@ const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; /
 /**
  * Acumula uma amostra de Web Vitals já normalizada no histograma diário. Só
  * agregados — nenhum valor individual, IP ou UA é persistido. Cap global de
- * escritas por janela, como o honeypot/CSP.
+ * escritas por janela, como o honeypot.
  */
 async function recordVitals(env, sample, now) {
   const capKey = `vitcap:${dayKey(now)}`;
@@ -314,11 +263,11 @@ async function cached(env, ctx, key, ttlSec, producer) {
 // ---------- rate limiting ----------
 
 // Teto global (não por-cliente) de escritas do PRÓPRIO rate limiter, por
-// dia — mesmo padrão do honeypot/CSP/vitals (ver lib/kvcap.js). Sem isto,
+// dia — mesmo padrão do honeypot/vitals (ver lib/kvcap.js). Sem isto,
 // um cliente dentro do limite por rota (ex.: 30/min em /api/mirror ou
 // /api/vitals) força até ~43 mil escritas/dia SÓ NESTA ROTA — muito acima
 // do teto de ~1.000 escritas/dia da conta inteira no plano Free, e
-// esgotá-lo apaga o orçamento de que honeypot/vitals/CSP/snapshot de
+// esgotá-lo apaga o orçamento de que honeypot/vitals/snapshot de
 // firewall dependem (todos escrevem no mesmo KV, mesma conta — descoberto
 // numa revisão de segurança, 2026-07).
 //
@@ -332,7 +281,7 @@ async function cached(env, ctx, key, ttlSec, producer) {
 // trade-off: em vez de "todos os pedidos passam", a rota devolve 429 a
 // todos até o cap global re-abrir — sem gastar nenhuma escrita extra (o
 // 429 continua grátis, ver o teste "sem nenhum put no KV"). Só afeta as
-// rotas que aceitam input de visitante (mirror/vitals/csp-report/pwned/
+// rotas que aceitam input de visitante (mirror/vitals/pwned/
 // refresh); as leituras públicas sem rate limit (honeypot/map/ticker/ct/
 // cf-stats sem refresh) continuam servidas da cache.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
@@ -486,58 +435,11 @@ export default {
       });
     }
 
-    // Recetor de relatórios CSP. Desde 2026-07 o envio é manual (botão na
-    // página Provas, static/public/js/csp-report.js) — a CSP não tem
-    // report-uri/report-to, por isso não há mais um POST por violação de
-    // cada visitante (poupa escritas no KV, plano Free). O formato do corpo
-    // não mudou (legado csp-report / batch reports+json), por isso este
-    // endpoint continua público por natureza (sem credenciais), com a mesma
-    // defesa em camadas — Content-Type estrito, corpo limitado, rate limit
-    // por cliente, validação da origem do documento na lib, e cap global de
-    // escritas. A resposta é sempre 204 nos casos "aceite" e "descartado":
-    // um forjador não distingue os dois.
-    if (path === '/api/csp-report' && request.method === 'POST') {
-      const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
-      if (!REPORT_CONTENT_TYPES.includes(ctype)) {
-        return json({ error: 'unsupported_media_type' }, request, env, { status: 415 });
-      }
-      const { allowed, retryAfterSec } = await rateLimit(env, request, 'cspr', {
-        windowMs: 60_000,
-        max: 10, // o batching nativo do browser raramente passa de 1-2/min
-      });
-      if (!allowed) {
-        return json({ error: 'rate_limited' }, request, env, {
-          status: 429,
-          extra: { 'retry-after': String(retryAfterSec) },
-        });
-      }
-      let text;
-      try {
-        text = await request.text();
-      } catch {
-        return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
-      }
-      if (text.length > CSP_REPORT_MAX_BODY) {
-        return json({ error: 'payload_too_large' }, request, env, { status: 413 });
-      }
-      const siteOrigin = new URL(env.SCAN_TARGET || 'https://danielmala.co/').origin;
-      const violations = parseReports(text, ctype)
-        .map((raw) => normalizeViolation(raw, siteOrigin))
-        .filter(Boolean)
-        .slice(0, MAX_REPORTS_PER_REQUEST);
-      ctx.waitUntil(
-        recordCspViolations(env, violations, Date.now()).catch((err) =>
-          console.error('csp_report_write_failed', err?.message ?? String(err)),
-        ),
-      );
-      return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
-    }
-
-    // Beacon de Core Web Vitals (RUM first-party). Segundo POST público do
-    // Worker — mesma defesa em camadas do recetor CSP: Content-Type restrito
-    // (navigator.sendBeacon envia text/plain por omissão), corpo minúsculo,
-    // rate limit por cliente, cap global de escritas, e só agregados no KV. A
-    // resposta é sempre 204 (aceite ou descartado — indistinguível).
+    // Beacon de Core Web Vitals (RUM first-party). Único POST público do
+    // Worker — defesa em camadas: Content-Type restrito (navigator.sendBeacon
+    // envia text/plain por omissão), corpo minúsculo, rate limit por
+    // cliente, cap global de escritas, e só agregados no KV. A resposta é
+    // sempre 204 (aceite ou descartado — indistinguível).
     if (path === '/api/vitals' && request.method === 'POST') {
       const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
       if (ctype !== '' && ctype !== 'application/json' && ctype !== 'text/plain') {
@@ -625,13 +527,6 @@ export default {
           suffixes: await fetchRange(prefix, { timeoutMs: UPSTREAM_TIMEOUT_MS }),
         }));
         return json(data, request, env, { maxAge: 3600 });
-      }
-
-      if (path === '/api/csp-violations') {
-        const data = await cached(env, ctx, 'cache:cspviolations', 60, async () =>
-          cspStats(await readCspBuckets(env, Date.now())),
-        );
-        return json(data, request, env, { maxAge: 60 });
       }
 
       // Threat Intelligence: dashboards próprios a partir dos buckets

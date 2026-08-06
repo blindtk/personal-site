@@ -1,16 +1,15 @@
-# ClusterFuzzLite (Jazzer.js) sobre as duas funções puras do Worker que
-# processam bytes vindos de fora da rede sem qualquer confiança prévia:
-# parseReports() (dynamic/worker/src/lib/csp-report.js) recebe o corpo bruto
-# que qualquer browser de visitante pode enviar ao endpoint de relatórios
-# CSP, e sanitizeText()/escapeHtml() (dynamic/worker/src/lib/sanitize.js) são
-# os sanitizadores clássicos de output derivado de fontes externas. Ao
-# contrário das ferramentas client-side de /ferramentas/ (sem rede, sem
-# fronteira de confiança real), estas duas funções são a fronteira de
-# confiança do Worker — daí serem o alvo, não as outras.
+# ClusterFuzzLite (Jazzer.js) sobre sanitizeText()/escapeHtml()
+# (dynamic/worker/src/lib/sanitize.js) — os sanitizadores clássicos de
+# output derivado de fontes externas, e a única fronteira de confiança do
+# Worker que ainda faz sentido fuzzar (o outro harness, sobre o recetor de
+# relatórios CSP, foi removido junto com esse pipeline — ver
+# dynamic/PLAN.md). Ao contrário das ferramentas client-side de
+# /ferramentas/ (sem rede, sem fronteira de confiança real), esta função
+# processa bytes vindos de fora sem confiança prévia — daí ser o alvo.
 #
-# Curto (60-120s por harness): o objetivo é o Scorecard reconhecer a
-# integração de fuzzing, não substituir os testes com vetores conhecidos já
-# existentes (node --test).
+# Curto (60-120s): o objetivo é o Scorecard reconhecer a integração de
+# fuzzing, não substituir os testes com vetores conhecidos já existentes
+# (node --test).
 #
 # SEM CRON, só workflow_dispatch — de propósito, não é o plano original.
 # language: javascript + sanitizer: coverage (a única combinação de
@@ -69,8 +68,7 @@ jobs:
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # 2 harnesses (csp_report_fuzz, sanitize_fuzz); ~120s cada,
-          # dentro do orçamento total abaixo.
-          fuzz-seconds: 240
+          # 1 harness (sanitize_fuzz).
+          fuzz-seconds: 120
           mode: 'batch'
           output-sarif: true

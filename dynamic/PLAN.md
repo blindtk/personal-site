@@ -2,7 +2,7 @@
 
 > **Status: in production.** `dynamic/worker/` (the Worker behind the
 > site's security features — honeypot, hostile-traffic map, SOC ticker,
-> and CSP-violation pipeline) is deployed on the `danielmala.co` domain's
+> and CT watch) is deployed on the `danielmala.co` domain's
 > routes. Deploy, gotchas, and infrastructure (Access, WAF) are
 > documented in `dynamic/worker/README.md` and `docs/cloudflare-deploy.md`.
 > The network tools below (DNS/whois/…) are still to be built; the
@@ -580,6 +580,29 @@
   `fetchSameOrigin`/`runScan` machinery were removed. See
   `dynamic/worker/wrangler.toml`'s `SCAN_TARGET` comment for the same
   note inline.
+
+  **Reversed (2026-08-06, later same day) — CSP violation tracking
+  removed too.** The repo owner reconsidered after the self-scan
+  postmortem above: the argument for keeping it ("genuine detective
+  control") was true in principle, but in practice the `self`/`self`
+  bucket suffered from the exact same false-signal problem — the
+  dashboard's own "possible build regression" alert had no way to tell a
+  real regression apart from a visitor's browser getting served
+  Cloudflare's managed-challenge page (the same mechanism diagnosed for
+  self-scan, this time hitting real visitors, not just the Worker's own
+  probe). Unlike self-scan, this was never fully confirmed — the
+  `DEBUG_EXPOSE_SELF_PATH` diagnostic (2026-07-29 entry above) was
+  reverted before nailing down the cause for the browser-reported case
+  specifically — but the owner judged a detective control that cries
+  wolf on its highest-severity alert isn't earning its complexity budget,
+  confirmed or not. Removed: `POST /api/csp-report`, `GET
+  /api/csp-violations`, `src/lib/csp-report.js`, the manual-send queue
+  (`static/public/js/csp-report.js`, `CspViolations.astro`), the "CSP
+  Violations" panel on Provas, and the `csp_report_fuzz.js` ClusterFuzzLite
+  harness (the other harness, `sanitize_fuzz.js`, is untouched). The CSP
+  header itself is unaffected — still enforced with zero `'unsafe-inline'`,
+  just no longer reported on. `env.SCAN_TARGET` is now read only by
+  `ct.js` (CT-watch domain).
 
 ## Shelved ideas (presented, **not approved** for implementation)
 

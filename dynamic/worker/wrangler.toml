@@ -50,10 +50,11 @@ ALLOWED_ORIGINS = ""
 # Alvo do próprio site — nome herdado de quando também alimentava o
 # self-scan (removido; media os cabeçalhos que chegavam ao Worker a fazer
 # fetch a si mesmo, mas a Cloudflare desviava esse pedido para a página de
-# managed challenge da própria zona, o que dava um grau falso). O vigia CT
-# (/api/ct) continua a derivar daqui o domínio a vigiar nos logs de
-# Certificate Transparency, e o recetor de violações CSP usa-o para
-# confirmar que o `document-uri` de um relatório é mesmo deste site.
+# managed challenge da própria zona, o que dava um grau falso) e o recetor
+# de violações CSP (removido; o mesmo mecanismo de challenge produzia
+# violações self/self falsas vindas de visitantes reais — ver
+# dynamic/PLAN.md). O vigia CT (/api/ct) continua a derivar daqui o domínio
+# a vigiar nos logs de Certificate Transparency.
 SCAN_TARGET = "https://danielmala.co/"
 # Emissores esperados no vigia CT (CSV, match por substring). Vazio = a
 # lista por omissão em src/lib/ct.js (Let's Encrypt + Google Trust
@@ -144,7 +145,7 @@ crons = ["*/30 * * * *"]
 # explícito aqui.
 
 # Observabilidade dos logs do Worker (console.error/log): sem isto, os
-# `honeypot_write_failed`/`csp_report_write_failed`/`request_failed`/
+# `honeypot_write_failed`/`vitals_write_failed`/`request_failed`/
 # `rate_salt_missing` nunca ficam retidos em lado nenhum — não há resposta a
 # incidentes possível, só reconstituição a partir de nada. head_sampling_rate
 # 1 = sem amostragem (o volume de pedidos aqui é baixo o suficiente para não
