@@ -1,0 +1,824 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Widget from '../site/Widget.astro';
+import HostMap from '../HostMap.astro';
+import SiteLayers from '../SiteLayers.astro';
+import Ticker from '../Ticker.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes, projectUrl } from '../../i18n/routes';
+// content/ é a fonte de verdade (ver CLAUDE.md): o mapa path-isco → técnica e
+// os nomes/táticas ATT&CK vêm daqui, os mesmos IDs que alimentam /attack.
+import attack from '../../../../content/attack.json';
+import hpAttack from '../../../../content/honeypot-attack.json';
+// Regras Sigma por path-isco (secção Deteções, fundida aqui a partir da
+// antiga página /detecoes/, depois da antiga tab Perímetro/Deteções) — um
+// teste no worker garante que paths/técnicas não divergem dos DECOYS reais.
+import detections from '../../../../content/detections.json';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const h = dict.honeypot;
+const s = dict.site;
+const d = dict.detections;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// Índice id → nome da técnica (1.ª ocorrência), a partir do heatmap ATT&CK.
+const techName = new Map<string, string>();
+for (const tactic of attack.tactics) {
+  for (const tech of tactic.techniques) {
+    if (!techName.has(tech.id)) techName.set(tech.id, tech.name);
+  }
+}
+
+// Deep-link para a entrada da técnica no heatmap, no idioma corrente.
+const attackBase = routes.attack[lang];
+type TechEntry = { id: string; name: string; href: string };
+const byPath: Record<string, TechEntry> = {};
+const byId: Record<string, TechEntry> = {};
+for (const [path, id] of Object.entries(hpAttack.paths)) {
+  const entry: TechEntry = { id, name: techName.get(id) ?? id, href: `${attackBase}#${id}` };
+  byPath[path] = entry;
+  byId[id] = entry;
+}
+
+// Regras Sigma (secção Deteções) — mesmo techName map do heatmap acima.
+const rules = detections.rules.map((r) => ({
+  path: r.path,
+  slug: r.slug,
+  technique: r.technique,
+  techniqueName: techName.get(r.technique) ?? r.technique,
+  title: r.title[lang],
+  summary: r.summary[lang],
+  sigma: r.sigma.join('\n'),
+}));
+
+const jsStrings = {
+  corrTitle: h.corrTitle,
+  techNone: h.techNone,
+  verdict: h.verdict,
+  ago: s.agoPrefix,
+  units: {
+    second: s.unitSecond, minute: s.unitMinute, hour: s.unitHour,
+    day: s.unitDay, month: s.unitMonth, year: s.unitYear,
+  },
+  // Formas singular/plural — as contagens reais deste site são baixas, e
+  // "1 países"/"1 toques" aparecia mesmo na página (ver plural() em
+  // scripts/observability.js).
+  statCountries: h.statCountries,
+  statCountriesOne: h.statCountriesOne,
+  detCopy: d.copy,
+  detCopied: d.copied,
+  detHits: d.hits7d,
+  detHitsOne: d.hits7dOne,
+  tiEmpty: s.tiEmpty,
+  tiNoneYet: s.tiNoneYet,
+  tiHeatmapSparse: s.tiHeatmapSparse,
+  tiTimelineToday: s.tiTimelineToday,
+  logsEmpty: s.logsEmpty,
+  logsPageOf: s.logsPageOf,
+  logsWindowNote: s.logsWindowNote,
+};
+---
+
+<BaseLayout lang={lang} title={h.metaTitle} altUrl={routes.honeypot[other]} active="honeypot" wide>
+  <div class="page-head">
+    <h1>{h.title}</h1>
+    <p class="intro">{h.intro}</p>
+  </div>
+
+  <div
+    id="hp-root"
+    data-api={API_BASE}
+    data-lang={lang}
+    data-strings={JSON.stringify(jsStrings)}
+    data-tech={JSON.stringify({ byPath, byId })}
+  >
+    <p class="hp-fallback" id="hp-fallback">{h.unavailable}</p>
+
+    <div class="stats-grid" id="hp-stats" hidden>
+      <div class="stat"><div class="n" id="hp-attempts">—</div><div class="l">{h.statAttempts}</div></div>
+      <div class="stat amber"><div class="n mono" id="hp-toppath">—</div><div class="l">{h.statTopPath}</div></div>
+      <div class="stat blue"><div class="n" id="hp-countries">—</div><div class="l" id="hp-countries-l">{h.statCountries}</div></div>
+      <div class="stat" id="hp-lasthit-wrap" hidden><div class="n mono" id="hp-lasthit">—</div><div class="l">{h.statLastHit}</div></div>
+    </div>
+
+    <Ticker lang={lang} />
+    <p class="hp-corr-banner" id="hp-corr" role="status" hidden><span class="hp-corr-spark" aria-hidden="true">⚡</span> {h.corrLead}</p>
+
+    <HostMap lang={lang} />
+
+    <p class="note">📐 {h.projectNote} <a href={projectUrl(lang, 'honeypot')}>{h.projectLink}</a></p>
+    <p class="note warn">🔒 {h.privacyNote}</p>
+
+    <!-- ---------- Deteções (pipeline honeypot → Sigma) ---------- -->
+    <section aria-labelledby="h-det-pipeline">
+      <div class="section-title"><h2 id="h-det-pipeline">{d.pipelineTitle}</h2></div>
+      <p class="intro">{d.intro}</p>
+      <ol class="det-pipeline">
+        {d.pipelineSteps.map((step, i) => (
+          <li class="det-step">
+            <span class="det-step-n mono" aria-hidden="true">{i + 1}</span>
+            <div>
+              <h3>{step.t}</h3>
+              <p>{step.d}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p class="note">{d.liveNote}</p>
+    </section>
+
+    <section id="det-rules" aria-label={d.title}>
+      {rules.map((r) => (
+        <article class="det-card" id={r.slug}>
+          <header class="det-head">
+            <h2 class="det-title">{r.title}</h2>
+            <div class="det-meta mono">
+              <span class="det-path">{r.path}</span>
+              <a class="det-tech" href={`${attackBase}#${r.technique}`} title={`${r.technique} · ${r.techniqueName}`}>
+                {r.technique}
+              </a>
+              <span class="det-hits" data-path={r.path}>
+                <span class="det-hits-n">—</span> <span class="det-hits-w">{d.hits7d}</span>
+              </span>
+            </div>
+          </header>
+          <p class="det-summary">{r.summary}</p>
+          <div class="det-rule">
+            <pre class="det-sigma"><code>{r.sigma}</code></pre>
+            <button class="det-copy mono" type="button" data-slug={r.slug} aria-live="polite" aria-atomic="true">{d.copy}</button>
+          </div>
+        </article>
+      ))}
+    </section>
+
+    <section aria-label="sigma-cli">
+      <p class="intro">{d.convertLead}</p>
+      <pre class="det-cmd mono"><code>{d.convertCmd}</code></pre>
+      <p class="note">→ <a href={attackBase}>{d.seeAttack}</a></p>
+    </section>
+
+    <!-- ---------- Ao longo da semana (7d, honeypot) ---------- -->
+    <section aria-labelledby="h-patterns">
+      <div class="section-title"><h2 id="h-patterns">{h.patternsTitle}</h2></div>
+      <div class="widget-grid an-mt" id="hp-heat-widgets">
+        <Widget title={s.tiHeatmap} tone="warn" class="wide-widget" id="hp-heatmap-widget">
+          <div id="hp-heatmap-visual">
+            <div class="heatmap" id="hp-heatmap"></div>
+            <div class="heatmap-axis mono" aria-hidden="true">
+              <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>23h</span>
+            </div>
+            <div class="heatmap-legend">
+              <span>{s.tiHeatLess}</span>
+              <span class="swatch i1"></span><span class="swatch i2"></span>
+              <span class="swatch i3"></span><span class="swatch i4"></span>
+              <span>{s.tiHeatMore}</span>
+            </div>
+          </div>
+          <p class="note" id="hp-heatmap-sparse" hidden>{s.tiHeatmapSparse}</p>
+          <div id="hp-timeline" hidden></div>
+        </Widget>
+      </div>
+      <div class="widget-grid an-mt">
+        <Widget title={s.tiTechniques}><div id="hp-tech"></div></Widget>
+        <Widget title={s.tiTopPaths}><div id="hp-toppaths"></div></Widget>
+      </div>
+    </section>
+
+    <!-- ---------- Registo (era a tab "Logs", tabela pesquisável, sem IP) ---------- -->
+    <section aria-labelledby="h-logs">
+      <div class="section-title"><h2 id="h-logs">{h.logsTitle}</h2></div>
+      <p class="note">{s.logsIntro}</p>
+      <div class="logs-toolbar">
+        <input type="search" id="logs-search" class="logs-search" placeholder={s.logsSearch} aria-label={s.logsSearch} autocomplete="off" />
+      </div>
+      <p class="note" id="logs-window" hidden></p>
+      <p class="hp-fallback" id="logs-fallback">{s.tiEmpty}</p>
+      <div class="table-scroll" id="logs-tablewrap" hidden tabindex="0" role="region" aria-label={h.logsTitle}>
+        <table class="result-table wrap-normal hp-table">
+          <thead>
+            <tr>
+              <th>{s.logColWhen}</th>
+              <th>{s.logColCountry}</th>
+              <th>{s.logColAsn}</th>
+              <th>{s.logColPath}</th>
+              <th>{s.logColTechnique}</th>
+              <th>{s.logColVerdict}</th>
+            </tr>
+          </thead>
+          <tbody id="logs-rows"></tbody>
+        </table>
+      </div>
+      <div class="logs-pager" id="logs-pager" hidden>
+        <button type="button" id="logs-prev" class="pager-btn">{s.logsPrev}</button>
+        <span id="logs-count" class="mono"></span>
+        <button type="button" id="logs-next" class="pager-btn">{s.logsNext}</button>
+      </div>
+    </section>
+  </div>
+
+  <SiteLayers lang={lang} current="honeypot" />
+</BaseLayout>
+
+<script>
+  import { plural, formatNumber, relativeTime } from '../../scripts/observability.js';
+  import { techOf, hitsForRulePath, timelinePoints } from '../../scripts/perimeter-charts.js';
+
+  const root = document.getElementById('hp-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+  // { byPath: {path:{id,name,href}}, byId: {id:{id,name,href}} } — estático,
+  // vindo de content/honeypot-attack.json + content/attack.json.
+  const TECH = JSON.parse(root.dataset.tech!) as {
+    byPath: Record<string, { id: string; name: string; href: string }>;
+    byId: Record<string, { id: string; name: string; href: string }>;
+  };
+
+  const setText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  type Correlation = { active: Set<string>; cve: Record<string, string> };
+
+  // Técnicas atualmente exploradas (ticker CISA KEV/NVD). Nunca rejeita: se o
+  // ticker falhar, a correlação simplesmente não acende (degradação graciosa).
+  // Uma só busca, partilhada pelo banner e pelo Registo.
+  let corrPromise: Promise<Correlation> | null = null;
+  function tickerCorrelation(): Promise<Correlation> {
+    if (corrPromise) return corrPromise;
+    corrPromise = (async () => {
+      const corr: Correlation = { active: new Set(), cve: {} };
+      try {
+        const res = await fetch(`${base}/api/ticker`, { headers: { accept: 'application/json' } });
+        const ctype = res.headers.get('content-type') ?? '';
+        if (!res.ok || !ctype.includes('application/json')) return corr;
+        const data = await res.json();
+        for (const item of Array.isArray(data.items) ? data.items : []) {
+          for (const tid of Array.isArray(item.techniques) ? item.techniques : []) {
+            corr.active.add(tid);
+            if (!corr.cve[tid]) corr.cve[tid] = item.id;
+          }
+        }
+      } catch {
+        /* sem ticker: correlação vazia */
+      }
+      return corr;
+    })();
+    return corrPromise;
+  }
+
+  // Célula da técnica (link para /attack#<id>). Se a técnica estiver a ser
+  // explorada agora (aparece no ticker CISA KEV), marca a linha e junta um
+  // selo ligado ao CVE — o cruzamento que junta honeypot + ATT&CK + ticker.
+  function techCell(ev: any, tr: HTMLTableRowElement, corr: Correlation): { td: HTMLTableCellElement } {
+    const td = document.createElement('td');
+    td.className = 'hp-tech';
+    const meta = techOf(ev, TECH);
+    if (!meta) {
+      td.textContent = S.techNone;
+      return { td };
+    }
+    const link = document.createElement('a');
+    link.href = meta.href;
+    link.className = 'mono hp-tech-id';
+    link.textContent = meta.id;
+    link.title = `${meta.id} · ${meta.name}`;
+    td.append(link);
+
+    if (corr.active.has(meta.id)) {
+      tr.classList.add('hp-corr-row');
+      const cve = corr.cve[meta.id];
+      const badge = document.createElement('a');
+      badge.className = 'hp-corr-badge mono';
+      badge.href = `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(cve)}`;
+      badge.rel = 'noopener';
+      badge.textContent = `⚡ ${cve}`;
+      badge.title = `${S.corrTitle}: ${cve}`;
+      td.append(document.createTextNode(' '), badge);
+    }
+    return { td };
+  }
+
+  // ---------- Stat cards + Deteções (24h/7d, /api/honeypot) ----------
+  async function loadHoneypot() {
+    const fallbackEl = document.getElementById('hp-fallback')!;
+    const corrEl = document.getElementById('hp-corr')!;
+    try {
+      const [res, corr] = await Promise.all([
+        fetch(`${base}/api/honeypot`, { headers: { accept: 'application/json' } }),
+        tickerCorrelation(),
+      ]);
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      setText('hp-attempts', String(data.attempts24h ?? 0));
+      setText('hp-toppath', data.topPath ?? '—');
+      const countryCount = Number(data.countryCount) || 0;
+      setText('hp-countries', String(countryCount));
+      setText('hp-countries-l', plural(countryCount, { one: S.statCountriesOne, other: S.statCountries }, locale));
+      const recent = Array.isArray(data.recent) ? data.recent : [];
+      // "Último toque": mesmo campo recent[0].ts, sem pedido extra — troca o
+      // cartão "tempo até ao 1.º scan" (estruturalmente "—" enquanto
+      // DEPLOY_TS não estiver configurado, ver wrangler.toml) por uma
+      // medida que existe sempre que há pelo menos um evento guardado.
+      const lastHitWrap = document.getElementById('hp-lasthit-wrap')!;
+      if (recent[0]?.ts) {
+        const { value, unit } = relativeTime(Number(recent[0].ts));
+        const unitLabel = (S.units ?? {})[unit] ?? unit;
+        setText('hp-lasthit', S.ago ? `${S.ago} ${value} ${unitLabel}` : `${value} ${unitLabel}`);
+        lastHitWrap.hidden = false;
+      }
+      corrEl.hidden = !recent.some((ev: any) => {
+        const meta = techOf(ev, TECH);
+        return meta && corr.active.has(meta.id);
+      });
+      fallbackEl.hidden = true;
+      document.getElementById('hp-stats')!.hidden = false;
+
+      // Contadores da secção Deteções — mesma resposta /api/honeypot, campo
+      // paths7d (evita um 2.º pedido só para as regras Sigma).
+      const detCounts = new Map<string, number>(
+        (Array.isArray(data.paths7d) ? data.paths7d : []).map((row: any) => [String(row.path), Number(row.count) || 0]),
+      );
+      for (const el of document.querySelectorAll<HTMLElement>('.det-hits')) {
+        const hits = hitsForRulePath(el.dataset.path ?? '', detCounts);
+        const n = el.querySelector('.det-hits-n');
+        if (n) n.textContent = String(hits);
+        const w = el.querySelector('.det-hits-w');
+        if (w) w.textContent = plural(hits, { one: S.detHitsOne, other: S.detHits }, locale);
+      }
+    } catch {
+      // Sem Worker publicado: fica o fallback já pintado (evita CLS).
+    }
+  }
+
+  // ---------- Deteções: copiar regra Sigma ----------
+  function wireDetCopy() {
+    for (const btn of document.querySelectorAll<HTMLButtonElement>('.det-copy')) {
+      btn.addEventListener('click', async () => {
+        const code = btn.closest('.det-rule')?.querySelector('code');
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code.textContent ?? '');
+          btn.textContent = S.detCopied;
+          setTimeout(() => { btn.textContent = S.detCopy; }, 1600);
+        } catch {
+          // clipboard indisponível (permissões/contexto): o texto continua
+          // selecionável à mão no <pre>.
+        }
+      });
+    }
+  }
+
+  // ---------- Barras horizontais (mesma lógica do antigo Analytics/Perímetro) ----------
+  function renderBars(id: string, rows: { label: string; value: number; tone?: string }[], empty: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = empty;
+      host.append(el);
+      return;
+    }
+    const max = Math.max(1, ...rows.map((r) => r.value));
+    const list = document.createElement('div');
+    list.className = 'bar-list';
+    for (const row of rows) {
+      const r = document.createElement('div');
+      r.className = 'bar-row';
+      const head = document.createElement('div');
+      head.className = 'bar-head';
+      const label = document.createElement('span');
+      label.className = 'bar-label';
+      label.textContent = row.label;
+      const val = document.createElement('span');
+      val.className = 'bar-val';
+      val.textContent = formatNumber(row.value, locale);
+      head.append(label, val);
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('div');
+      fill.className = row.tone ? `bar-fill ${row.tone}` : 'bar-fill';
+      fill.style.width = `${Math.max(2, Math.round((row.value / max) * 100))}%`;
+      track.append(fill);
+      r.append(head, track);
+      list.append(r);
+    }
+    host.append(list);
+  }
+
+  const bars = (rows: any[], keyField: string, valField: string, tone?: string) =>
+    rows.map((r) => ({ label: String(r[keyField]), value: Number(r[valField]) || 0, tone }));
+
+  // ---------- Heatmap / linha do tempo (fallback com poucos eventos) ----------
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const HEATMAP_MIN_EVENTS = 20;
+  const dayFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+  const timeFmt = new Intl.DateTimeFormat(locale, {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+  });
+  const dateFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  function renderTimeline(events: any[]) {
+    const host = document.getElementById('hp-timeline');
+    if (!host) return;
+    host.replaceChildren();
+    const WEEK_MS = 7 * 86400_000;
+    const now = Date.now();
+    const W = 620;
+    const H = 76;
+    const L = 16;
+    const R = 604;
+    const Y = 40;
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'timeline-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', S.tiHeatmapSparse);
+
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', String(L));
+    line.setAttribute('y1', String(Y));
+    line.setAttribute('x2', String(R));
+    line.setAttribute('y2', String(Y));
+    line.setAttribute('class', 'chart-axis');
+    svg.append(line);
+
+    for (const { event: e, x } of timelinePoints(events, { now, windowMs: WEEK_MS, xMin: L, xMax: R, bucketPx: 6 })) {
+      const g = document.createElementNS(SVG_NS, 'g');
+      const title = document.createElementNS(SVG_NS, 'title');
+      title.textContent = `${timeFmt.format(new Date(e.ts))} · ${e.country ?? 'XX'} · `
+        + `${e.asn ? `AS${e.asn}` : '—'} · ${e.path ?? ''}`;
+      g.append(title);
+      const dot = document.createElementNS(SVG_NS, 'circle');
+      dot.setAttribute('cx', x.toFixed(1));
+      dot.setAttribute('cy', String(Y));
+      dot.setAttribute('r', '5');
+      dot.setAttribute('class', 'timeline-dot');
+      g.append(dot);
+      svg.append(g);
+    }
+
+    const startLbl = document.createElementNS(SVG_NS, 'text');
+    startLbl.setAttribute('x', String(L));
+    startLbl.setAttribute('y', String(Y + 24));
+    startLbl.setAttribute('class', 'chart-lbl');
+    startLbl.textContent = dayFmt.format(new Date(now - WEEK_MS));
+    svg.append(startLbl);
+    const endLbl = document.createElementNS(SVG_NS, 'text');
+    endLbl.setAttribute('x', String(R));
+    endLbl.setAttribute('y', String(Y + 24));
+    endLbl.setAttribute('text-anchor', 'end');
+    endLbl.setAttribute('class', 'chart-lbl strong');
+    endLbl.textContent = S.tiTimelineToday;
+    svg.append(endLbl);
+
+    host.append(svg);
+  }
+
+  function renderHeatmap(rows: { date: string; hours: number[] }[]) {
+    const host = document.getElementById('hp-heatmap');
+    if (!host) return;
+    host.replaceChildren();
+    let max = 0;
+    for (const r of rows) for (const c of r.hours) if (c > max) max = c;
+    for (const r of rows) {
+      const rowEl = document.createElement('div');
+      rowEl.className = 'heatmap-row';
+      const label = document.createElement('span');
+      label.className = 'heat-label';
+      label.textContent = r.date.slice(5); // MM-DD
+      rowEl.append(label);
+      r.hours.forEach((count, hour) => {
+        const cell = document.createElement('span');
+        cell.className = 'heat-cell';
+        const intensity = max > 0 ? count / max : 0;
+        if (count > 0) cell.style.backgroundColor = `rgba(61, 220, 132, ${(0.15 + intensity * 0.85).toFixed(3)})`;
+        cell.title = `${r.date} ${String(hour).padStart(2, '0')}h · ${count}`;
+        rowEl.append(cell);
+      });
+      host.append(rowEl);
+    }
+  }
+
+  // ---------- Registo: estado de pesquisa + paginação ----------
+  let logEvents: any[] = [];
+  let logCorr: Correlation = { active: new Set(), cve: {} };
+  let logPage = 0;
+  const LOG_PAGE = 25;
+
+  function filteredEvents(): any[] {
+    const q = (document.getElementById('logs-search') as HTMLInputElement | null)?.value.trim().toLowerCase() ?? '';
+    if (!q) return logEvents;
+    return logEvents.filter((e) => {
+      const hay = `${e.country ?? ''} ${e.asn ? 'as' + e.asn : ''} ${e.path ?? ''} ${e.technique ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  function renderLogsPage() {
+    const rowsEl = document.getElementById('logs-rows');
+    if (!rowsEl) return;
+    const list = filteredEvents();
+    const pages = Math.max(1, Math.ceil(list.length / LOG_PAGE));
+    if (logPage >= pages) logPage = pages - 1;
+    rowsEl.replaceChildren();
+    const slice = list.slice(logPage * LOG_PAGE, logPage * LOG_PAGE + LOG_PAGE);
+    if (slice.length === 0) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6;
+      td.className = 'hp-loading';
+      td.textContent = S.logsEmpty;
+      tr.append(td);
+      rowsEl.append(tr);
+    }
+    for (const e of slice) {
+      const tr = document.createElement('tr');
+      const cells = [
+        timeFmt.format(new Date(e.ts)),
+        e.country ?? 'XX',
+        e.asn ? `AS${e.asn}` : '—',
+        e.path ?? '',
+      ];
+      cells.forEach((value, i) => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        if (i === 1) td.className = 'mono hp-cc';
+        if (i === 3) td.className = 'mono hp-path';
+        tr.append(td);
+      });
+      const { td } = techCell(e, tr, logCorr);
+      tr.append(td);
+      const verdict = document.createElement('td');
+      verdict.className = 'hp-verdict';
+      verdict.textContent = S.verdict;
+      tr.append(verdict);
+      rowsEl.append(tr);
+    }
+    setText('logs-count', `${list.length ? logPage + 1 : 0} ${S.logsPageOf} ${pages}`);
+    (document.getElementById('logs-prev') as HTMLButtonElement).disabled = logPage <= 0;
+    (document.getElementById('logs-next') as HTMLButtonElement).disabled = logPage >= pages - 1;
+  }
+
+  function wireLogs() {
+    document.getElementById('logs-search')?.addEventListener('input', () => { logPage = 0; renderLogsPage(); });
+    document.getElementById('logs-prev')?.addEventListener('click', () => { if (logPage > 0) { logPage--; renderLogsPage(); } });
+    document.getElementById('logs-next')?.addEventListener('click', () => { logPage++; renderLogsPage(); });
+  }
+
+  // ---------- Padrões (7d) + Registo, /api/threat-intel ----------
+  async function loadPatterns() {
+    try {
+      const [res, corr] = await Promise.all([
+        fetch(`${base}/api/threat-intel`, { headers: { accept: 'application/json' } }),
+        tickerCorrelation(),
+      ]);
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const d = await res.json();
+
+      const eventsInWindow = Number(d.totals?.events7d) || 0;
+      const sparse = eventsInWindow < HEATMAP_MIN_EVENTS;
+      document.getElementById('hp-heatmap-visual')!.hidden = sparse;
+      document.getElementById('hp-heatmap-sparse')!.hidden = !sparse;
+      document.getElementById('hp-timeline')!.hidden = !sparse;
+      if (sparse) renderTimeline(Array.isArray(d.events) ? d.events : []);
+      else renderHeatmap(Array.isArray(d.heatmap) ? d.heatmap : []);
+
+      renderBars(
+        'hp-tech',
+        (d.topTechniques ?? []).map((r: any) => {
+          const id = String(r.key);
+          const name = TECH.byId[id]?.name;
+          return { label: name ? `${id} · ${name}` : id, value: Number(r.count) || 0 };
+        }),
+        S.tiEmpty,
+      );
+      renderBars('hp-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
+
+      // Registo
+      logEvents = Array.isArray(d.events) ? d.events : [];
+      logCorr = corr;
+      if (logEvents.length > 0) {
+        document.getElementById('logs-fallback')!.hidden = true;
+        document.getElementById('logs-tablewrap')!.hidden = false;
+        document.getElementById('logs-pager')!.hidden = false;
+        // Janela desta lista, escrita: são os últimos 200 eventos guardados,
+        // sem corte a 7 dias — sem isto, os números de 7 dias no topo da
+        // página ao lado de uma dúzia de linhas aqui lia-se como contradição.
+        const oldest = logEvents.reduce((min, e) => Math.min(min, Number(e?.ts) || Infinity), Infinity);
+        const windowEl = document.getElementById('logs-window')!;
+        windowEl.textContent = S.logsWindowNote
+          .replace('{n}', formatNumber(logEvents.length, locale))
+          .replace('{date}', Number.isFinite(oldest) ? dateFmt.format(new Date(oldest)) : '—');
+        windowEl.hidden = false;
+        renderLogsPage();
+      }
+    } catch {
+      // Sem Worker/dados: ficam os fallbacks já pintados.
+    }
+  }
+
+  wireLogs();
+  wireDetCopy();
+  loadHoneypot();
+  loadPatterns();
+</script>
+
+<style>
+  .an-mt { margin-top: 0.9rem; }
+  .wide-widget { grid-column: 1 / -1; }
+
+  /* Registo: toolbar + paginação (mesmo padrão do antigo Analytics/Perímetro) */
+  .logs-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 1.2rem 0 0.7rem; }
+  .logs-search {
+    flex: 1;
+    min-width: 12rem;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.7rem;
+  }
+  .logs-search:focus-visible { outline: 2px solid var(--accent-3); outline-offset: 1px; }
+  .logs-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 0.7rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .pager-btn {
+    appearance: none;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+    cursor: pointer;
+  }
+  .pager-btn:hover:not(:disabled) { border-color: var(--accent); }
+  .pager-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ---------- Deteções (fundida de /detecoes/, depois da tab Perímetro) ---------- */
+  .det-pipeline {
+    list-style: none;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+  @media (min-width: 720px) {
+    .det-pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  .det-step {
+    display: flex;
+    gap: 0.8rem;
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+  }
+  .det-step-n {
+    color: var(--accent);
+    font-size: 1.4rem;
+    line-height: 1;
+  }
+  .det-step h3 {
+    margin: 0 0 0.3rem;
+    font-size: 0.95rem;
+  }
+  .det-step p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .det-card {
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.2rem;
+    margin: 1.2rem 0 0;
+  }
+  .det-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+  }
+  .det-title {
+    margin: 0;
+    font-size: 1.05rem;
+    flex: 1 1 16rem;
+  }
+  .det-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+  }
+  .det-path {
+    color: var(--accent-2);
+    overflow-wrap: anywhere;
+  }
+  .det-tech {
+    color: var(--accent-3);
+    text-decoration: none;
+  }
+  .det-tech:hover { text-decoration: underline; }
+  .det-hits {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .det-hits-n { color: var(--accent); }
+  .det-summary {
+    color: var(--muted);
+    margin: 0.7rem 0 0.9rem;
+    font-size: 0.9rem;
+  }
+  .det-rule { position: relative; }
+  .det-sigma {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    overflow-x: auto;
+    margin: 0;
+  }
+  .det-sigma code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: pre;
+  }
+  .det-copy {
+    /* inline-flex + min-height: alvo de toque de 44px, mesma técnica do
+       .btn.small global — esta classe é local e não herdava dessa correção. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    background: var(--bg-raise-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+  }
+  .det-copy:hover { border-color: var(--accent); }
+
+  /* Em mobile o .det-copy a 44px (alvo de toque) passava a tapar as
+     primeiras linhas do Sigma (title/id) em regras mais longas — o botão
+     sai do fluxo absoluto e desce para debaixo do código, sem alterar
+     nada no desktop. */
+  @media (max-width: 640px) {
+    .det-rule {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .det-copy {
+      position: static;
+      align-self: flex-end;
+    }
+  }
+
+  .det-cmd {
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.7rem 0.9rem;
+    overflow-x: auto;
+    margin: 0.6rem 0 0.8rem;
+  }
+  .det-cmd code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: pre;
+  }
+</style>

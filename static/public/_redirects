@@ -1,6 +1,12 @@
-/honeypot/ /perimetro/ 301
-/en/honeypot/ /en/perimeter/ 301
+/honeypot/ /este-site/honeypot/ 301
+/en/honeypot/ /en/this-site/honeypot/ 301
 /este-site/analytics/ /este-site/performance/ 301
 /en/this-site/analytics/ /en/this-site/performance/ 301
-/detecoes/ /perimetro/ 301
-/en/detections/ /en/perimeter/ 301
+/detecoes/ /este-site/honeypot/ 301
+/en/detections/ /en/this-site/honeypot/ 301
+/perimetro/ /este-site/honeypot/ 301
+/en/perimeter/ /en/this-site/honeypot/ 301
+/seguranca/ /este-site/seguranca/ 301
+/en/security/ /en/this-site/security/ 301
+/provas/ /este-site/provas/ 301
+/en/evidence/ /en/this-site/evidence/ 301

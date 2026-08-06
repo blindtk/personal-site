@@ -15,7 +15,8 @@ export const ui = {
       thisSite: 'Este Site',
       overview: 'Visão Geral',
       performance: 'Performance',
-      perimeter: 'Perímetro',
+      honeypot: 'Honeypot',
+      cloudflare: 'Cloudflare',
       projectThisSite: 'Projeto «Este site»',
       links: 'Links',
       contact: 'Contactos',
@@ -24,15 +25,16 @@ export const ui = {
       menuClose: 'Fechar',
     },
     // Bloco de cross-links partilhado pelas páginas do "sistema" do site
-    // (Segurança, Provas, Perímetro, Deteções, Performance e o projeto
+    // (Segurança, Honeypot, Cloudflare, Provas, Performance e o projeto
     // este-site — ATT&CK fica de fora de propósito, ver SiteLayers.astro).
     layers: {
       title: 'Este site, por camadas',
       intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
       overview: 'Visão Geral — stack e estado ao vivo',
       security: 'Segurança — postura, cabeçalhos e porquê',
+      honeypot: 'Honeypot — endpoints-isco, deteções Sigma e o registo de quem lhes toca',
+      cloudflare: 'Cloudflare — o que a Internet tenta contra a zona inteira, e o que é travado',
       evidence: 'Provas — tudo verificável, gerado no build',
-      perimeter: 'Perímetro — honeypot, deteções e Cloudflare, o que a Internet tenta contra este site',
       performance: 'Performance — tráfego, cache, latência e Core Web Vitals',
       project: 'Projeto «Este site» — arquitetura e decisões',
     },
@@ -40,10 +42,24 @@ export const ui = {
     site: {
       // ----- Visão Geral -----
       overviewMetaTitle: 'Este Site — como funciona por dentro',
-      overviewTitle: 'Este Site',
+      overviewTitle: 'Este site: visão geral',
       overviewIntro:
         'Uma vista pública, ao vivo, de como este site é construído, protegido e monitorizado. Não é um dashboard da Cloudflare colado aqui — é observabilidade própria: a mesma disciplina que aplico em produção, exposta para quem quiser inspecionar.',
       hubTitle: 'Mapa desta secção',
+      // ----- Este site, em números (era a "cadeia do perímetro", movida
+      // para aqui quando a página de 5 tabs se dividiu em Honeypot +
+      // Cloudflare — nenhuma das duas é dona destes 4 números, que cruzam
+      // as duas fontes; ver docs/this-site-section-audit-2026-08-06.md) -----
+      chainTitle: 'Este site, em números',
+      chainRequests: 'pedidos à zona',
+      chainThreats: 'classificados como ameaça',
+      chainMitigated: 'travados ou desafiados',
+      chainHoneypot: 'tocaram num endpoint-isco',
+      chainSrcZone: 'Cloudflare · zona · 7d',
+      chainSrcFirewall: 'Cloudflare · firewall · 7d',
+      chainSrcHoneypot: 'Honeypot · 7d',
+      chainNote: 'Quatro fontes diferentes, não um funil: a firewall vê a zona inteira — e conta também desafios resolvidos por visitantes legítimos — enquanto o honeypot só vê os endpoints-isco. Os números não se subtraem nem têm de descer da esquerda para a direita.',
+      colDaysSeen: 'dias vistos',
       archTitle: 'Arquitetura',
       archBody:
         'O que chega ao teu browser é estático: HTML/CSS gerados no build, sem base de dados nem sessões. O pouco que precisa mesmo de servidor (honeypot, verificador de passwords, telemetria) vive num Cloudflare Worker isolado, sem estado pessoal — e o site mantém-se inteiro sem ele. Tudo à borda da Cloudflare, com deploy automático a partir do GitHub.',
@@ -73,12 +89,9 @@ export const ui = {
       labelRegion: 'Região',
       valueProduction: 'Produção',
       componentsTitle: 'Componentes',
-      compEdge: 'Edge (Cloudflare)',
       compWorker: 'Worker / API',
-      compDns: 'DNS',
-      compTls: 'TLS',
       compNote:
-        'Edge, DNS e TLS estão operacionais por construção — se estás a ler isto, resolveram e entregaram esta página por HTTPS. O Worker é verificado ao vivo contra /api/health.',
+        'Edge, DNS e TLS resolveram e entregaram esta página por HTTPS — se estás a ler isto, já estão operacionais. O único componente que vale a pena verificar ao vivo é o Worker, contra /api/health.',
       tlsNote: 'Detalhe do certificado e notas SSL Labs / Observatory na página',
       tlsNoteLink: 'Provas',
       // relativo: "há {n} {unit}" — unidades no plural simples
@@ -118,7 +131,7 @@ export const ui = {
       // lista de barras que isto substituiu (essa tinha uma nota de 5 linhas
       // aqui porque ES a 96,9%/127 pedidos e GB a 100%/1 pedido apareciam
       // lado a lado sem contexto nenhum).
-      riskNote: 'Cada ponto é um país: posição horizontal = pedidos na janela (escala logarítmica), vertical = percentagem desses pedidos classificada como ameaça. Círculo aberto = menos de 100 pedidos, onde a percentagem ainda não é fiável (1 ameaça em 1 pedido já dava "100%"). Área do círculo ∝ nº de ameaças. Tabela completa por baixo do gráfico.',
+      riskNote: 'Cada ponto é um país: horizontal = pedidos na janela (escala logarítmica), vertical = quantos desses pedidos a Cloudflare classificou como ameaça; a área do círculo é proporcional ao número de ameaças. Círculo aberto = menos de 100 pedidos, onde a percentagem ainda não diz nada.',
       riskAxisRequests: 'pedidos na janela (escala logarítmica)',
       riskLegendHigh: 'taxa ≥ 50%',
       riskLegendMed: 'taxa 20–50%',
@@ -129,11 +142,18 @@ export const ui = {
       riskColRate: 'Taxa',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
       statusEmpty: 'Sem respostas 4xx/5xx na janela.',
-      firewallEmpty: 'Sem eventos de firewall na janela (ou requer permissões de firewall no token).',
+      firewallEmpty: 'Sem eventos de firewall nesta janela.',
       unavailable: 'Painel ao vivo indisponível — o Worker de telemetria não respondeu. O site é estático e funciona na mesma.',
-      planNote:
-        'Correção: o detalhe por URL, user-agent e ASN de todo o tráfego não exige Pro+ — só o dataset AGREGADO (firewallEventsAdaptiveGroups) exige. O dataset CRU (firewallEventsAdaptive), já usado aqui para ação/origem/país, também dá esse detalhe no plano Free — é o que alimenta as três tabelas abaixo (últimas 24h, o limite de retenção do cru). O IP também está disponível nesse dataset, mas este site nunca o pede nem mostra (zero PII, por escolha, não por limitação do plano). A ação/origem/país de firewall acumulados a 7 dias ficam na tab Padrões.',
       privacyNote: 'Zero PII: nenhum destes painéis pede, guarda ou mostra o IP de um visitante.',
+      // ----- Cloudflare (era a tab "Cloudflare (24h)" — a etiqueta "24h"
+      // já não era verdade para 5 dos 8 widgets, todos calculados sobre
+      // CF_STATS_WINDOW_DAYS = 7; a fusão numa página só, sem corte de
+      // tabs, remove a etiqueta errada em vez de a manter) -----
+      cloudflareMetaTitle: 'Cloudflare — o que a zona vê e trava, ao vivo',
+      cloudflareTitle: 'Cloudflare',
+      cloudflareIntro: 'O que a Cloudflare vê e trava em toda a zona deste site — pedidos, ameaças classificadas, e o que a firewall bloqueou ou desafiou. Só metadados agregados — nunca IPs.',
+      samplingNote: 'Os números da firewall vêm de um dataset amostrado da Cloudflare: cada evento traz o peso que representa, e é esse peso que é somado. São estimativas, não uma contagem exata.',
+      threatsDefNote: '«Ameaça» é a classificação da própria Cloudflare (heurísticas de WAF e reputação), não um juízo meu.',
       // ----- Performance -----
       perfMetaTitle: 'Performance — tráfego, cache e Core Web Vitals',
       perfTitle: 'Performance',
@@ -159,9 +179,6 @@ export const ui = {
       tiEvents7dOne: 'Evento (7d)',
       tiCountries7d: 'Países',
       tiCountries7dOne: 'País',
-      tiAsns7d: 'Redes (ASN)',
-      tiAsns7dOne: 'Rede (ASN)',
-      tiPeakHour: 'Hora de pico (UTC)',
       tiHeatmap: 'Heatmap de ataques (dia × hora, UTC)',
       // Com poucos eventos na janela, um grid de 168 células com uma única
       // acesa lê-se como painel avariado, não como "pouco tráfego" — abaixo
@@ -169,7 +186,6 @@ export const ui = {
       // faz um episódio isolado parecer um episódio isolado.
       tiHeatmapSparse: 'Poucos eventos na janela para um heatmap dizer alguma coisa — os mesmos eventos, na linha do tempo:',
       tiTimelineToday: 'hoje',
-      tiHours: 'Ataques por hora do dia (UTC)',
       tiTechniques: 'Técnicas ATT&CK mais disparadas',
       tiTopPaths: 'Alvos mais visados',
       // ----- Mitigação por dia (dia a dia, não só o total da semana) -----
@@ -181,7 +197,7 @@ export const ui = {
       tiDailyChallenged: 'desafiado',
       tiDailyAllowed: 'passado',
       tiFirewallAction: 'Firewall por ação (7d)',
-      tiFirewallActionNote: 'Nem toda a ação da firewall é um ataque travado. «skip»/«allow» passaram; um desafio «bypassed» ou «solved» é um visitante legítimo que o resolveu — a maioria destes é tráfego próprio, de Portugal. Só block/drop (vermelho) e os desafios por resolver (âmbar) são mitigação efetiva; o resto fica neutro de propósito.',
+      tiFirewallActionNote: 'Nem toda a ação da firewall é um ataque travado: «skip»/«allow» passaram, e um desafio «bypassed» ou «solved» é um visitante legítimo que o resolveu — grande parte é tráfego meu, de Portugal. Só os bloqueios (vermelho) e os desafios por resolver (âmbar) são mitigação.',
       tiFirewallSource: 'Firewall por origem (7d)',
       // Junta países/redes do honeypot (URLs-isco) e do firewall da Cloudflare
       // (toda a zona) numa só tabela, com coluna de fonte — pedido do dono do
@@ -197,14 +213,13 @@ export const ui = {
       sourceCloudflare: 'Cloudflare',
       tiHeatLess: 'menos',
       tiHeatMore: 'mais',
-      tiIntro: 'Dashboards próprios (não são cópia da Cloudflare) a partir do honeypot deste site — por rede, técnica, país e hora. Atacantes agrupados por ASN, nunca por IP.',
       // ----- Logs -----
       logsIntro: 'Eventos recentes do honeypot. Pesquisáveis e paginados — sem IP, por construção.',
-      // A janela desta lista NÃO é a dos Padrões: são os últimos 200
-      // eventos guardados, sem corte a 7 dias. Sem isto escrito, ler «2
-      // eventos (7d)» numa tab e uma dúzia de linhas na outra parecia
-      // contradição.
-      logsWindowNote: '{n} eventos guardados (os últimos 200, sem corte de janela) · o mais antigo de {date}. A tab Padrões, ao lado, conta só os últimos 7 dias.',
+      // A janela desta lista NÃO é a dos números de 7 dias no topo da
+      // página: são os últimos 200 eventos guardados, sem corte a 7 dias.
+      // Sem isto escrito, «2 eventos (7d)» ao lado de uma dúzia de linhas
+      // parecia contradição.
+      logsWindowNote: '{n} eventos guardados (os últimos 200, sem corte de janela) · o mais antigo de {date}. Os números de 7 dias, no topo desta página, contam uma janela diferente.',
       logsSearch: 'Pesquisar (país, ASN, path, técnica)…',
       logsEmpty: 'Sem eventos a mostrar.',
       logsPrev: '‹ Anterior',
@@ -222,8 +237,6 @@ export const ui = {
       tlThreats: 'Ameaças ao longo do tempo',
       tlPeak: 'pico',
       tlLast: 'último',
-      tiNewAttackers: 'Atacantes novos (ASN)',
-      tiRecurring: 'Atacantes recorrentes (ASN)',
       tiRiskCountry: 'Risk score por país',
       tiDays: 'dias',
       tiNoneYet: 'Nada ainda nesta janela.',
@@ -234,7 +247,8 @@ export const ui = {
       pathLabel: 'Percurso:',
       security: 'Segurança',
       evidence: 'Provas',
-      perimeter: 'Perímetro',
+      honeypot: 'Honeypot',
+      cloudflare: 'Cloudflare',
       attack: 'ATT&CK',
       certs: 'Certificações',
     },
@@ -247,8 +261,8 @@ export const ui = {
       threatTitle: 'Modelo de ameaça',
       threatBody:
         'A arquitetura — estática, sem contas nem sessões, com o pouco que precisa mesmo de servidor (honeypot, verificador de passwords) isolado num Worker à parte — está descrita em Este Site. Para o modelo de ameaça, o que importa é a consequência: a superfície de ataque fica mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
-      perimeterBody: 'Isto é o modelo — o que tenta mesmo entrar, ao vivo (honeypot e o que a Cloudflare bloqueia na zona), está no Perímetro.',
-      perimeterCta: 'Ver o Perímetro →',
+      perimeterBody: 'Isto é o modelo — o que tenta mesmo entrar, ao vivo (honeypot e o que a Cloudflare trava na zona), está no hub, em «Este site, em números», com detalhe em Honeypot e Cloudflare.',
+      perimeterCta: 'Ver os números ao vivo →',
       // ----- Cabeçalhos e porquê -----
       headersTitle: 'Cabeçalhos e porquê',
       headersIntro: 'O que é enviado em cada resposta, e a razão de ser:',
@@ -440,51 +454,39 @@ export const ui = {
       warning:
         'Isto é sobretudo uma demonstração do protocolo. Na prática, um bom gestor de passwords já faz esta verificação por ti — e gera passwords longas e únicas que nunca aparecem em fugas.',
     },
-    perimeter: {
-      metaTitle: 'Perímetro — honeypot e Cloudflare, ao vivo',
-      title: 'Perímetro',
-      intro: 'A postura de defesa deste site, por completo: o honeypot (endpoints-isco que só um scanner tocaria de propósito) e o que a Cloudflare vê e bloqueia na zona inteira. Só metadados e agregados — nunca IPs.',
-      tabHoneypot: 'Honeypot',
-      tabDetections: 'Deteções',
-      tabCloudflare: 'Cloudflare (24h)',
-      tabTrends: 'Padrões (7d)',
-      tabLogs: 'Logs',
-      honeypotIntro: 'Este site serve alguns endpoints-isco (páginas de login e ficheiros que só um scanner procura). Quem lhes toca fica registado aqui — só metadados, para mostrar quanto scan automático apanha até um site pessoal. A tabela completa e pesquisável está na tab Logs.',
+    // Honeypot (era "perimeter" — a página de 5 tabs dividiu-se em duas:
+    // Honeypot [este bloco, absorve Deteções e Logs como secções] e
+    // Cloudflare [dict.site.cloudflare*]. A cadeia de 4 números e as
+    // tabelas cruzadas honeypot+firewall mudaram-se para o hub
+    // (dict.site.chain*) — ver docs/this-site-section-audit-2026-08-06.md.
+    honeypot: {
+      metaTitle: 'Honeypot — endpoints-isco e o que os toca, ao vivo',
+      title: 'Honeypot',
+      intro: 'Alguns endpoints deste site são iscos: páginas de login e ficheiros que só um scanner procura. O que os toca — e a regra que o apanharia num SIEM — fica registado abaixo.',
       statAttempts: 'tentativas nas últimas 24h',
       statTopPath: 'path mais tentado',
       statCountries: 'países de origem (7d)',
       statCountriesOne: 'país de origem (7d)',
-      statFirstScan: 'tempo até ao 1.º scan',
+      statLastHit: 'último toque',
       verdict: 'registado + 404',
       techNone: '—',
-      techNote: 'Cada path-isco está classificado com a técnica MITRE ATT&CK que melhor o descreve — os mesmos IDs do heatmap.',
-      techNoteLink: 'Ver cobertura em /attack →',
-      corrLead: 'Correlação ao vivo — pelo menos uma técnica tentada neste honeypot está a ser explorada agora, em produção real, segundo o catálogo CISA KEV. O alvejamento automático que este site apanha não é teórico.',
+      // "não é teórico" cortado (2026-08-06, registo defensivo): o banner
+      // já prova o ponto com o link ao CVE, não precisa de o dizer também.
+      corrLead: 'Correlação ao vivo — pelo menos uma técnica tentada neste honeypot está a ser explorada agora, em produção real, segundo o catálogo CISA KEV.',
       corrTitle: 'explorada agora (CISA KEV)',
       privacyNote: 'Nenhum IP é armazenado — só país, ASN e path. A anonimização é verificável no código do Worker (dynamic/worker/).',
-      unavailable: 'O painel ao vivo ainda não está ligado — o Worker do honeypot precisa de estar publicado nas rotas do domínio. O código e a garantia de privacidade estão no repositório.',
+      unavailable: 'Painel ao vivo indisponível — o Worker do honeypot não respondeu. O resto da página é estático e continua a funcionar.',
       projectNote: 'O porquê de isto viver num Worker e não no site estático — e a garantia de privacidade por construção — está nas decisões do projeto.',
       projectLink: 'Ver o projeto Honeypot →',
-      // ----- Cadeia do perímetro (de fora para dentro, acima das tabs) -----
-      // As cinco tabs são silos: "684 ameaças" na Cloudflare e "2 eventos" no
-      // Honeypot nunca se encontram. Esta faixa conta a história em quatro
-      // números, cada um com a fonte anotada por baixo — nunca se subtraem
-      // uns aos outros (a firewall vê a zona inteira, o honeypot só os
-      // iscos: universos diferentes, ver tiCountriesMerged/tiAsnsMerged).
-      chainTitle: 'Cadeia do perímetro',
-      chainRequests: 'pedidos à zona',
-      chainThreats: 'classificados como ameaça',
-      chainMitigated: 'travados ou desafiados',
-      chainHoneypot: 'tocaram num endpoint-isco',
-      chainSrcZone: 'Cloudflare · zona · 7d',
-      chainSrcFirewall: 'Cloudflare · firewall · 7d',
-      chainSrcHoneypot: 'Honeypot · 7d',
-      chainNote: 'Quatro medições de fontes diferentes, não uma subtração de uma pela outra: a firewall vê toda a zona, o honeypot só os endpoints-isco.',
+      patternsTitle: 'Ao longo da semana',
+      logsTitle: 'Registo',
+      // Registo (era a tab "Logs") continua a usar dict.site.logs* — essas
+      // chaves já eram partilhadas, não específicas de "perimeter".
     },
     detections: {
       title: 'Deteções',
       intro:
-        'O passo a seguir ao honeypot: cada classe de ataque que este site apanha vem acompanhada da regra Sigma que a detetaria num SIEM. Não é uma lista teórica — o contador ao lado de cada regra são os toques reais dos últimos 7 dias nos endpoints-isco deste site.',
+        'O passo a seguir ao honeypot: cada classe de ataque que este site apanha vem acompanhada da regra Sigma que a detetaria num SIEM. O contador ao lado de cada regra mostra os toques reais dos últimos 7 dias nos endpoints-isco deste site.',
       pipelineTitle: 'O pipeline',
       pipelineSteps: [
         { t: 'O isco regista', d: 'Um scanner toca num endpoint-isco (/wp-login.php, /.env, …) e recebe um 404 seco. O Worker guarda só país, ASN e path — nunca o IP.' },
@@ -524,7 +526,7 @@ export const ui = {
       identity: 'identidade',
       statsLabel: 'stats do site',
       location: 'Porto, Portugal',
-      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes. Este site faz parte do trabalho: as ferramentas, o perímetro e as deteções estão públicos.',
+      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes. Este site faz parte do trabalho: as ferramentas, o honeypot e o que a Cloudflare vê estão públicos.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '9+ anos em redes & segurança'],
       // Credenciais: linha discreta ligada a /certificacoes/, com os nºs
       // calculados em build a partir de content/certs.json (comprimento total
@@ -1026,7 +1028,8 @@ export const ui = {
       thisSite: 'This Site',
       overview: 'Overview',
       performance: 'Performance',
-      perimeter: 'Perimeter',
+      honeypot: 'Honeypot',
+      cloudflare: 'Cloudflare',
       projectThisSite: 'This site project',
       links: 'Links',
       contact: 'Contact',
@@ -1035,15 +1038,16 @@ export const ui = {
       menuClose: 'Close',
     },
     // Shared cross-link block for the site's "system" pages (Security,
-    // Evidence, Perimeter, Detections, Performance and the este-site
+    // Honeypot, Cloudflare, Evidence, Performance and the este-site
     // project — ATT&CK is deliberately left out, see SiteLayers.astro).
     layers: {
       title: 'This site, layer by layer',
       intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
       overview: 'Overview — stack and live status',
       security: 'Security — posture, headers and why',
+      honeypot: 'Honeypot — decoy endpoints, Sigma detections and the log of whoever touches them',
+      cloudflare: 'Cloudflare — what the Internet tries against the whole zone, and what gets stopped',
       evidence: 'Evidence — everything verifiable, generated at build',
-      perimeter: 'Perimeter — honeypot, detections and Cloudflare, what the Internet tries against this site',
       performance: 'Performance — traffic, cache, latency and Core Web Vitals',
       project: '“This site” project — architecture and decisions',
     },
@@ -1051,10 +1055,23 @@ export const ui = {
     site: {
       // ----- Overview -----
       overviewMetaTitle: 'This Site — how it works inside',
-      overviewTitle: 'This Site',
+      overviewTitle: 'This site: overview',
       overviewIntro:
         'A public, live view of how this site is built, protected and monitored. Not a Cloudflare dashboard pasted in — it is my own observability: the same discipline I apply in production, exposed for anyone who wants to inspect it.',
       hubTitle: 'Map of this section',
+      // ----- This site, in numbers (was the "perimeter chain", moved
+      // here when the five-tab page split into Honeypot + Cloudflare —
+      // neither one owns these 4 numbers, which cross both sources) -----
+      chainTitle: 'This site, in numbers',
+      chainRequests: 'requests to the zone',
+      chainThreats: 'classed as threat',
+      chainMitigated: 'blocked or challenged',
+      chainHoneypot: 'touched a decoy endpoint',
+      chainSrcZone: 'Cloudflare · zone · 7d',
+      chainSrcFirewall: 'Cloudflare · firewall · 7d',
+      chainSrcHoneypot: 'Honeypot · 7d',
+      chainNote: 'Four different sources, not a funnel: the firewall sees the whole zone — including challenges solved by legitimate visitors — while the honeypot only sees the decoy endpoints. These numbers do not subtract, and they do not have to decrease left to right.',
+      colDaysSeen: 'days seen',
       archTitle: 'Architecture',
       archBody:
         'What reaches your browser is static: HTML/CSS generated at build, no database, no sessions. The little that genuinely needs a server (honeypot, password checker, telemetry) lives in an isolated Cloudflare Worker with no personal state — and the site stays whole without it. Everything at Cloudflare\'s edge, deployed automatically from GitHub.',
@@ -1084,12 +1101,9 @@ export const ui = {
       labelRegion: 'Region',
       valueProduction: 'Production',
       componentsTitle: 'Components',
-      compEdge: 'Edge (Cloudflare)',
       compWorker: 'Worker / API',
-      compDns: 'DNS',
-      compTls: 'TLS',
       compNote:
-        'Edge, DNS and TLS are operational by construction — if you are reading this, they resolved and delivered this page over HTTPS. The Worker is checked live against /api/health.',
+        'Edge, DNS and TLS resolved and delivered this page over HTTPS — if you are reading this, they are already operational. The one component worth checking live is the Worker, against /api/health.',
       tlsNote: 'Certificate detail and SSL Labs / Observatory notes on the',
       tlsNoteLink: 'Evidence',
       agoPrefix: '',
@@ -1118,7 +1132,7 @@ export const ui = {
       wFirewallUserAgents: 'Most-seen user-agents (firewall · 24h)',
       wFirewallAsns: 'Most-seen networks (firewall · 24h)',
       riskLowSample: 'small sample',
-      riskNote: 'Each point is a country: horizontal position = requests in the window (logarithmic scale), vertical = the percentage of those requests classed as threat. Open circle = under 100 requests, where the percentage is not yet reliable (1 threat in 1 request already reads "100%"). Circle area ∝ number of threats. Full table below the chart.',
+      riskNote: 'Each dot is a country: horizontal = requests in the window (log scale), vertical = how many of those Cloudflare classed as a threat; circle area is proportional to threat count. Open circle = under 100 requests, where the percentage says nothing yet.',
       riskAxisRequests: 'requests in the window (logarithmic scale)',
       riskLegendHigh: 'rate ≥ 50%',
       riskLegendMed: 'rate 20–50%',
@@ -1129,11 +1143,18 @@ export const ui = {
       riskColRate: 'Rate',
       countriesEmpty: 'No threats recorded by country in the window.',
       statusEmpty: 'No 4xx/5xx responses in the window.',
-      firewallEmpty: 'No firewall events in the window (or requires firewall permissions on the token).',
+      firewallEmpty: 'No firewall events in this window.',
       unavailable: 'Live panel unavailable — the telemetry Worker did not respond. The site is static and works regardless.',
-      planNote:
-        'Correction: per-URL, per-user-agent and per-ASN detail for all traffic does not require Pro+ — only the AGGREGATED dataset (firewallEventsAdaptiveGroups) does. The RAW dataset (firewallEventsAdaptive), already used here for action/source/country, also gives that detail on the Free plan — it feeds the three tables below (last 24h, the raw dataset\'s retention limit). The IP is available in that dataset too, but this site never requests or shows it (zero PII, by choice, not a plan limitation). Firewall action/source/country accumulated over 7 days lives on the Patterns tab.',
       privacyNote: 'Zero PII: none of these panels request, store or show a visitor\'s IP.',
+      // ----- Cloudflare (was the "Cloudflare (24h)" tab — the "24h" label
+      // was already wrong for 5 of its 8 widgets, all computed over
+      // CF_STATS_WINDOW_DAYS = 7; merging into one page without a tab
+      // boundary removes the wrong label instead of keeping it) -----
+      cloudflareMetaTitle: 'Cloudflare — what the zone sees and stops, live',
+      cloudflareTitle: 'Cloudflare',
+      cloudflareIntro: 'What Cloudflare sees and stops across this site\'s whole zone — requests, classified threats, and what the firewall blocked or challenged. Aggregated metadata only — never IPs.',
+      samplingNote: 'Firewall numbers come from a sampled Cloudflare dataset: each event carries the weight it represents, and that weight is what gets summed. These are estimates, not exact counts.',
+      threatsDefNote: '"Threat" is Cloudflare\'s own classification (WAF and reputation heuristics), not my judgement.',
       // ----- Performance -----
       perfMetaTitle: 'Performance — traffic, cache and Core Web Vitals',
       perfTitle: 'Performance',
@@ -1159,13 +1180,9 @@ export const ui = {
       tiEvents7dOne: 'Event (7d)',
       tiCountries7d: 'Countries',
       tiCountries7dOne: 'Country',
-      tiAsns7d: 'Networks (ASN)',
-      tiAsns7dOne: 'Network (ASN)',
-      tiPeakHour: 'Peak hour (UTC)',
       tiHeatmap: 'Attack heatmap (day × hour, UTC)',
       tiHeatmapSparse: 'Too few events in the window for a heatmap to say anything — the same events, on a timeline:',
       tiTimelineToday: 'today',
-      tiHours: 'Attacks by hour of day (UTC)',
       tiTechniques: 'Most-triggered ATT&CK techniques',
       tiTopPaths: 'Most targeted paths',
       tiDailyTitle: 'Mitigation by day',
@@ -1173,7 +1190,7 @@ export const ui = {
       tiDailyChallenged: 'challenged',
       tiDailyAllowed: 'allowed',
       tiFirewallAction: 'Firewall by action (7d)',
-      tiFirewallActionNote: 'Not every firewall action is an attack stopped. "skip"/"allow" went through; a "bypassed" or "solved" challenge is a legitimate visitor who passed it — most of those are my own traffic, from Portugal. Only block/drop (red) and unsolved challenges (amber) are real mitigation; the rest is deliberately left neutral.',
+      tiFirewallActionNote: 'Not every firewall action is an attack stopped: "skip"/"allow" went through, and a "bypassed" or "solved" challenge is a legitimate visitor who passed it — much of it is my own traffic, from Portugal. Only blocks (red) and unsolved challenges (amber) are mitigation.',
       tiFirewallSource: 'Firewall by source (7d)',
       // Merges honeypot countries/networks (bait URLs) and Cloudflare
       // firewall countries/networks (whole zone) into one table with a
@@ -1189,10 +1206,9 @@ export const ui = {
       sourceCloudflare: 'Cloudflare',
       tiHeatLess: 'less',
       tiHeatMore: 'more',
-      tiIntro: 'My own dashboards (not a Cloudflare copy) from this site\'s honeypot — by network, technique, country and hour. Attackers grouped by ASN, never by IP.',
       // ----- Logs -----
       logsIntro: 'Recent honeypot events. Searchable and paginated — no IP, by construction.',
-      logsWindowNote: '{n} stored events (the last 200, no window cutoff) · oldest from {date}. Patterns, next door, counts only the last 7 days.',
+      logsWindowNote: '{n} stored events (the last 200, no window cutoff) · oldest from {date}. The 7-day numbers, at the top of this page, count a different window.',
       logsSearch: 'Search (country, ASN, path, technique)…',
       logsEmpty: 'No events to show.',
       logsPrev: '‹ Prev',
@@ -1210,8 +1226,6 @@ export const ui = {
       tlThreats: 'Threats over time',
       tlPeak: 'peak',
       tlLast: 'last',
-      tiNewAttackers: 'New attackers (ASN)',
-      tiRecurring: 'Recurring attackers (ASN)',
       tiRiskCountry: 'Risk score by country',
       tiDays: 'days',
       tiNoneYet: 'Nothing yet in this window.',
@@ -1222,7 +1236,8 @@ export const ui = {
       pathLabel: 'Track record:',
       security: 'Security',
       evidence: 'Evidence',
-      perimeter: 'Perimeter',
+      honeypot: 'Honeypot',
+      cloudflare: 'Cloudflare',
       attack: 'ATT&CK',
       certs: 'Certifications',
     },
@@ -1235,8 +1250,8 @@ export const ui = {
       threatTitle: 'Threat model',
       threatBody:
         'The architecture — static, no accounts or sessions, with the little that genuinely needs a server (honeypot, password checker) isolated in a separate Worker — is described on This Site. For the threat model, what matters is the consequence: the attack surface stays minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
-      perimeterBody: 'That is the model — what actually tries to get in, live (the honeypot and what Cloudflare blocks on the zone), is on the Perimeter.',
-      perimeterCta: 'See the Perimeter →',
+      perimeterBody: 'That is the model — what actually tries to get in, live (the honeypot and what Cloudflare stops on the zone), is on the hub, under "This site, in numbers", with detail on Honeypot and Cloudflare.',
+      perimeterCta: 'See the live numbers →',
       // ----- Headers and why -----
       headersTitle: 'Headers and why',
       headersIntro: 'What is sent on every response, and the reason for it:',
@@ -1416,45 +1431,39 @@ export const ui = {
       warning:
         'This is mostly a demonstration of the protocol. In practice a good password manager already does this check for you — and generates long, unique passwords that never show up in breaches.',
     },
-    perimeter: {
-      metaTitle: 'Perimeter — honeypot and Cloudflare, live',
-      title: 'Perimeter',
-      intro: 'This site\'s full defense posture: the honeypot (decoy endpoints only a scanner would touch on purpose) and what Cloudflare sees and blocks across the whole zone. Metadata and aggregates only — never IPs.',
-      tabHoneypot: 'Honeypot',
-      tabDetections: 'Detections',
-      tabCloudflare: 'Cloudflare (24h)',
-      tabTrends: 'Patterns (7d)',
-      tabLogs: 'Logs',
-      honeypotIntro: 'This site serves a few decoy endpoints (login pages and files only a scanner looks for). Whoever touches them is logged here — metadata only, to show how much automated scanning even a personal site attracts. The full searchable table is on the Logs tab.',
+    // Honeypot (was "perimeter" — the five-tab page split into Honeypot
+    // [this block, absorbs Detections and Logs as sections] and Cloudflare
+    // [dict.site.cloudflare*]. The 4-number chain and the merged
+    // honeypot+firewall tables moved to the hub (dict.site.chain*) — see
+    // docs/this-site-section-audit-2026-08-06.md).
+    honeypot: {
+      metaTitle: 'Honeypot — decoy endpoints and what touches them, live',
+      title: 'Honeypot',
+      intro: 'A few endpoints on this site are decoys: login pages and files only a scanner looks for. What touches them — and the rule that would catch it in a SIEM — is logged below.',
       statAttempts: 'attempts in the last 24h',
       statTopPath: 'most-tried path',
       statCountries: 'origin countries (7d)',
       statCountriesOne: 'origin country (7d)',
-      statFirstScan: 'time to first scan',
+      statLastHit: 'last hit',
       verdict: 'logged + 404',
       techNone: '—',
-      techNote: 'Each decoy path is classified with the MITRE ATT&CK technique that best describes it — the same IDs as the heatmap.',
-      techNoteLink: 'See coverage on /attack →',
-      corrLead: 'Live correlation — at least one technique tried against this honeypot is being exploited right now, in the real world, per the CISA KEV catalog. The automated targeting this site catches is not theoretical.',
+      // "not theoretical" cut (2026-08-06, defensive register): the banner
+      // already proves the point with the CVE link, doesn't need to say it too.
+      corrLead: 'Live correlation — at least one technique tried against this honeypot is being exploited right now, in the real world, per the CISA KEV catalog.',
       corrTitle: 'exploited now (CISA KEV)',
       privacyNote: 'No IP is ever stored — only country, ASN and path. The anonymisation is verifiable in the Worker code (dynamic/worker/).',
-      unavailable: 'The live panel is not wired up yet — the honeypot Worker needs to be published on the domain routes. The code and the privacy guarantee are in the repository.',
+      unavailable: 'Live panel unavailable — the honeypot Worker did not respond. The rest of the page is static and still works.',
       projectNote: 'Why this lives in a Worker and not the static site — and the privacy-by-construction guarantee — is written up in the project decisions.',
       projectLink: 'See the Honeypot project →',
-      chainTitle: 'The perimeter chain',
-      chainRequests: 'requests to the zone',
-      chainThreats: 'classed as threat',
-      chainMitigated: 'blocked or challenged',
-      chainHoneypot: 'touched a decoy endpoint',
-      chainSrcZone: 'Cloudflare · zone · 7d',
-      chainSrcFirewall: 'Cloudflare · firewall · 7d',
-      chainSrcHoneypot: 'Honeypot · 7d',
-      chainNote: 'Four measurements from different sources, not one subtracted from another: the firewall sees the whole zone, the honeypot only the decoy endpoints.',
+      patternsTitle: 'Over the week',
+      logsTitle: 'Log',
+      // Logs (now a section, not a tab) still uses dict.site.logs* — those
+      // keys were already shared, not "perimeter"-specific.
     },
     detections: {
       title: 'Detections',
       intro:
-        'The step after the honeypot: every attack class this site catches comes with the Sigma rule that would detect it in a SIEM. Not a theoretical list — the counter next to each rule shows the real hits on this site\'s decoy endpoints over the last 7 days.',
+        'The step after the honeypot: every attack class this site catches comes with the Sigma rule that would detect it in a SIEM. The counter next to each rule shows the real hits on this site\'s decoy endpoints over the last 7 days.',
       pipelineTitle: 'The pipeline',
       pipelineSteps: [
         { t: 'The decoy logs', d: 'A scanner touches a decoy endpoint (/wp-login.php, /.env, …) and gets a dry 404. The Worker stores only country, ASN and path — never the IP.' },
@@ -1494,7 +1503,7 @@ export const ui = {
       identity: 'identity',
       statsLabel: 'site stats',
       location: 'Porto, Portugal',
-      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response. This site is part of the work: the tools, the perimeter, and the detections are public.',
+      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response. This site is part of the work: the tools, the honeypot, and what Cloudflare sees are public.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '9+ years in networking & security'],
       // Credentials: a discreet line linked to /certifications/, with the
       // numbers computed at build from content/certs.json (total length and

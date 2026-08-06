@@ -16,8 +16,8 @@ duplicated logic between languages.
 Security shaped the design from the start: strict
 Content-Security-Policy with no 'unsafe-inline', security headers, and a
 published responsible-disclosure policy. The why behind each layer is on
-[Security](/en/security/); the proof — commit, live header scan, workflows —
-is verifiable on [Evidence](/en/evidence/).
+[Security](/en/this-site/security/); the proof — commit, live header scan,
+workflows — is verifiable on [Evidence](/en/this-site/evidence/).
 
 ## Architecture decisions
 
@@ -36,7 +36,7 @@ the inline code instead of cataloguing it fixes the root cause.)
 
 **Why the Worker is separate from the static site in the monorepo.** The
 `static/` site (this one) keeps the threat model described on the
-[Security](/en/security/) page as simple as possible: no backend, no
+[Security](/en/this-site/security/) page as simple as possible: no backend, no
 database, no user input that reaches a server. The features that genuinely
 need a server — the [honeypot](/en/projects/honeypot/), the traffic map, the
 Certificate Transparency watcher, the threat-intel ticker — live isolated in a Cloudflare
@@ -44,4 +44,5 @@ Worker (`dynamic/worker/`), published separately. That means the static site
 keeps working (and keeps its "no backend" promise) even when the Worker is
 down or not published at all — the sections that depend on it degrade
 gracefully instead of breaking the rest of the site. The live result of
-these layers is on the [Perimeter](/en/perimeter/).
+these layers is on [Honeypot](/en/this-site/honeypot/) and
+[Cloudflare](/en/this-site/cloudflare/).

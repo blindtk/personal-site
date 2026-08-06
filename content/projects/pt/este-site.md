@@ -16,8 +16,8 @@ duplicar lógica entre idiomas.
 A segurança moldou o design desde o início: Content-Security-Policy
 estrita sem 'unsafe-inline', cabeçalhos de segurança e uma política de
 divulgação responsável publicada. O porquê de cada camada está em
-[Segurança](/seguranca/); as provas — commit, scan aos cabeçalhos ao vivo,
-workflows — são verificáveis em [Provas](/provas/).
+[Segurança](/este-site/seguranca/); as provas — commit, scan aos cabeçalhos
+ao vivo, workflows — são verificáveis em [Provas](/este-site/provas/).
 
 ## Decisões de arquitetura
 
@@ -37,7 +37,7 @@ o catalogar resolve na raiz.)
 
 **Porquê monorepo com o Worker separado do estático.** O `static/` (este
 site) mantém o modelo de ameaça descrito na página de
-[Segurança](/seguranca/) o mais simples possível: sem backend, sem base de
+[Segurança](/este-site/seguranca/) o mais simples possível: sem backend, sem base de
 dados, sem input de utilizador que chegue a um servidor. As funcionalidades
 que precisam mesmo de servidor — o [honeypot](/projetos/honeypot/), o mapa de
 tráfego, o vigia de Certificate Transparency, ticker de threat intel — vivem isoladas num
@@ -45,4 +45,5 @@ Cloudflare Worker (`dynamic/worker/`), publicado à parte. Isso significa que
 o site estático continua a funcionar (e a cumprir a promessa de "sem
 backend") mesmo que o Worker esteja em baixo ou nem sequer publicado — as
 secções que dependem dele degradam com graça em vez de partir o resto. O
-resultado ao vivo destas camadas está no [Perímetro](/perimetro/).
+resultado ao vivo destas camadas está no [Honeypot](/este-site/honeypot/)
+e na [Cloudflare](/este-site/cloudflare/).

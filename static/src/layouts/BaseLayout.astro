@@ -43,19 +43,21 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
 
 const currentPath = Astro.url.pathname;
 
-// "Este Site" agrupa na nav as seis camadas do mesmo sistema — a mesma
+// "Este Site" agrupa na nav as sete camadas do mesmo sistema — a mesma
 // lista e ordem do bloco de cross-links no fundo de cada uma delas (ver
 // SiteLayers.astro, que é a fonte de verdade desta ordem): Visão Geral,
-// Segurança, Perímetro (honeypot + deteções + ameaças Cloudflare, numa só
-// página com tabs), Provas, Performance (tráfego + Core Web Vitals) e o
-// projeto «Este site» (arquitetura e decisões). Perímetro (ataque ao vivo +
-// a regra que o apanharia) vem antes de Provas (o audit trail — commit,
-// cabeçalhos, CI) de propósito: mostra primeiro o que está a acontecer, só
-// depois o "não acredites, verifica".
+// Segurança, Honeypot (decoys + deteções Sigma + registo), Cloudflare
+// (ameaças à zona + firewall + mitigação), Provas, Performance (tráfego +
+// Core Web Vitals) e o projeto «Este site» (arquitetura e decisões).
+// Honeypot/Cloudflare (ataque ao vivo + a regra que o apanharia) vêm antes
+// de Provas (o audit trail — commit, cabeçalhos, CI) de propósito: mostra
+// primeiro o que está a acontecer, só depois o "não acredites, verifica".
+// Eram uma só página ("Perímetro", 5 tabs) até se dividirem por fonte de
+// dados — ver docs/this-site-section-audit-2026-08-06.md.
 // `href` explícito, não RouteKey: o projeto «Este site» vive nos posts de
 // /projetos/ (projectUrl), não é uma rota estática de routes.ts — e usar
-// href também para as outras cinco simplifica o aria-current para uma só
-// comparação (currentPath === item.href) que funciona para as seis.
+// href também para as outras seis simplifica o aria-current para uma só
+// comparação (currentPath === item.href) que funciona para as sete.
 // ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
 // são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
 // "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
@@ -63,7 +65,8 @@ const currentPath = Astro.url.pathname;
 const siteGroup: { href: string; label: string }[] = [
   { href: routes.siteOverview[lang], label: dict.nav.overview },
   { href: routes.security[lang], label: dict.nav.security },
-  { href: routes.perimeter[lang], label: dict.nav.perimeter },
+  { href: routes.honeypot[lang], label: dict.nav.honeypot },
+  { href: routes.cloudflare[lang], label: dict.nav.cloudflare },
   { href: routes.evidence[lang], label: dict.footer.evidence },
   { href: routes.performance[lang], label: dict.nav.performance },
   { href: projectUrl(lang, 'este-site'), label: dict.nav.projectThisSite },
@@ -217,7 +220,8 @@ const personSchema = {
         <span class="footer-group">
           {dict.footer.thisSiteLabel}{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
-          <a href={routes.perimeter[lang]}>{dict.footer.perimeter}</a> ·{' '}
+          <a href={routes.honeypot[lang]}>{dict.footer.honeypot}</a> ·{' '}
+          <a href={routes.cloudflare[lang]}>{dict.footer.cloudflare}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
         </span>
         <span class="footer-group">
