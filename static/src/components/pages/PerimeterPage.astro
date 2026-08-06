@@ -87,7 +87,7 @@ const jsStrings = {
   detCopied: d.copied,
   detHits: d.hits7d,
   detHitsOne: d.hits7dOne,
-  // Cloudflare / Tendências / Logs — partilhadas com o antigo Analytics
+  // Cloudflare / Padrões / Logs — partilhadas com o antigo Analytics
   tiEvents: s.tiEvents7d,
   tiEventsOne: s.tiEvents7dOne,
   tiCountries: s.tiCountries7d,
@@ -295,7 +295,7 @@ const jsStrings = {
         </div>
       </div>
 
-      <!-- ---------- Tendências (7d, honeypot + firewall acumulado) ---------- -->
+      <!-- ---------- Padrões (7d, honeypot + firewall acumulado) ---------- -->
       <div slot="trends">
         <p class="note">{s.tiIntro}</p>
         <p class="hp-fallback" id="ti-fallback">{s.tiEmpty}</p>
@@ -965,7 +965,7 @@ const jsStrings = {
     }
   }
 
-  // ---------- Tendências 7d (honeypot + firewall acumulado, /api/threat-intel) ----------
+  // ---------- Padrões (7d, honeypot + firewall acumulado, /api/threat-intel) ----------
 
   // Abaixo deste total de eventos na janela, o heatmap 168 células vira uma
   // única célula acesa — lê-se como painel avariado, não como "pouco
@@ -1391,7 +1391,7 @@ const jsStrings = {
         document.getElementById('logs-tablewrap')!.hidden = false;
         document.getElementById('logs-pager')!.hidden = false;
         // Janela desta lista, escrita: são os últimos 200 eventos guardados,
-        // sem corte a 7 dias — sem isto, "Eventos (7d): 2" nas Tendências ao
+        // sem corte a 7 dias — sem isto, "Eventos (7d): 2" nos Padrões ao
         // lado de uma dúzia de linhas aqui lia-se como contradição.
         const oldest = logEvents.reduce((min, e) => Math.min(min, Number(e?.ts) || Infinity), Infinity);
         const windowEl = document.getElementById('logs-window')!;

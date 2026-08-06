@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import { SITE, SITE_URL, type Lang } from '../config';
 import { t } from '../i18n/ui';
-import { routes, type RouteKey } from '../i18n/routes';
+import { routes, projectUrl, type RouteKey } from '../i18n/routes';
 import '../styles/global.css';
 
 interface Props {
@@ -41,27 +41,35 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
   { key: 'contact', label: dict.nav.contact },
 ];
 
-// "Este Site" agrupa na nav as páginas sobre a arquitetura e telemetria
-// DESTE site: Visão Geral, Segurança, Perímetro (honeypot + deteções +
-// ameaças Cloudflare, numa só página com tabs), Provas e Performance
-// (tráfego + Core Web Vitals). Perímetro (ataque ao vivo + a regra que o
-// apanharia) vem antes de Provas (o audit trail — commit, cabeçalhos, CI)
-// de propósito: mostra primeiro o que está a acontecer, só depois o "não
-// acredites, verifica".
+const currentPath = Astro.url.pathname;
+
+// "Este Site" agrupa na nav as seis camadas do mesmo sistema — a mesma
+// lista e ordem do bloco de cross-links no fundo de cada uma delas (ver
+// SiteLayers.astro, que é a fonte de verdade desta ordem): Visão Geral,
+// Segurança, Perímetro (honeypot + deteções + ameaças Cloudflare, numa só
+// página com tabs), Provas, Performance (tráfego + Core Web Vitals) e o
+// projeto «Este site» (arquitetura e decisões). Perímetro (ataque ao vivo +
+// a regra que o apanharia) vem antes de Provas (o audit trail — commit,
+// cabeçalhos, CI) de propósito: mostra primeiro o que está a acontecer, só
+// depois o "não acredites, verifica".
+// `href` explícito, não RouteKey: o projeto «Este site» vive nos posts de
+// /projetos/ (projectUrl), não é uma rota estática de routes.ts — e usar
+// href também para as outras cinco simplifica o aria-current para uma só
+// comparação (currentPath === item.href) que funciona para as seis.
 // ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
 // são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
 // "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
 // que já as linka em prosa; continuam também acessíveis pelo rodapé.
-const siteGroup: { key: RouteKey; label: string }[] = [
-  { key: 'siteOverview', label: dict.nav.overview },
-  { key: 'security', label: dict.nav.security },
-  { key: 'perimeter', label: dict.nav.perimeter },
-  { key: 'evidence', label: dict.footer.evidence },
-  { key: 'performance', label: dict.nav.performance },
+const siteGroup: { href: string; label: string }[] = [
+  { href: routes.siteOverview[lang], label: dict.nav.overview },
+  { href: routes.security[lang], label: dict.nav.security },
+  { href: routes.perimeter[lang], label: dict.nav.perimeter },
+  { href: routes.evidence[lang], label: dict.footer.evidence },
+  { href: routes.performance[lang], label: dict.nav.performance },
+  { href: projectUrl(lang, 'este-site'), label: dict.nav.projectThisSite },
 ];
-const siteActive = siteGroup.some((item) => item.key === active);
+const siteActive = siteGroup.some((item) => item.href === currentPath);
 
-const currentPath = Astro.url.pathname;
 // Imagem de partilha (LinkedIn, Twitter/X, etc.) — uma por idioma, gerada
 // a partir do mesmo design system do site.
 const ogImage = lang === 'pt' ? '/og-image.png' : '/og-image-en.png';
@@ -164,8 +172,8 @@ const personSchema = {
                 {siteGroup.map((item) => (
                   <li>
                     <a
-                      href={routes[item.key][lang]}
-                      aria-current={active === item.key ? 'page' : undefined}
+                      href={item.href}
+                      aria-current={currentPath === item.href ? 'page' : undefined}
                     >
                       {item.label}
                     </a>

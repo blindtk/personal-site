@@ -16,6 +16,7 @@ export const ui = {
       overview: 'Visão Geral',
       performance: 'Performance',
       perimeter: 'Perímetro',
+      projectThisSite: 'Projeto «Este site»',
       links: 'Links',
       contact: 'Contactos',
       lab: 'Lab',
@@ -131,7 +132,7 @@ export const ui = {
       firewallEmpty: 'Sem eventos de firewall na janela (ou requer permissões de firewall no token).',
       unavailable: 'Painel ao vivo indisponível — o Worker de telemetria não respondeu. O site é estático e funciona na mesma.',
       planNote:
-        'Correção: o detalhe por URL, user-agent e ASN de todo o tráfego não exige Pro+ — só o dataset AGREGADO (firewallEventsAdaptiveGroups) exige. O dataset CRU (firewallEventsAdaptive), já usado aqui para ação/origem/país, também dá esse detalhe no plano Free — é o que alimenta as três tabelas abaixo (últimas 24h, o limite de retenção do cru). O IP também está disponível nesse dataset, mas este site nunca o pede nem mostra (zero PII, por escolha, não por limitação do plano). A ação/origem/país de firewall acumulados a 7 dias ficam na tab Tendências.',
+        'Correção: o detalhe por URL, user-agent e ASN de todo o tráfego não exige Pro+ — só o dataset AGREGADO (firewallEventsAdaptiveGroups) exige. O dataset CRU (firewallEventsAdaptive), já usado aqui para ação/origem/país, também dá esse detalhe no plano Free — é o que alimenta as três tabelas abaixo (últimas 24h, o limite de retenção do cru). O IP também está disponível nesse dataset, mas este site nunca o pede nem mostra (zero PII, por escolha, não por limitação do plano). A ação/origem/país de firewall acumulados a 7 dias ficam na tab Padrões.',
       privacyNote: 'Zero PII: nenhum destes painéis pede, guarda ou mostra o IP de um visitante.',
       // ----- Performance -----
       perfMetaTitle: 'Performance — tráfego, cache e Core Web Vitals',
@@ -199,11 +200,11 @@ export const ui = {
       tiIntro: 'Dashboards próprios (não são cópia da Cloudflare) a partir do honeypot deste site — por rede, técnica, país e hora. Atacantes agrupados por ASN, nunca por IP.',
       // ----- Logs -----
       logsIntro: 'Eventos recentes do honeypot. Pesquisáveis e paginados — sem IP, por construção.',
-      // A janela desta lista NÃO é a das Tendências: são os últimos 200
+      // A janela desta lista NÃO é a dos Padrões: são os últimos 200
       // eventos guardados, sem corte a 7 dias. Sem isto escrito, ler «2
       // eventos (7d)» numa tab e uma dúzia de linhas na outra parecia
       // contradição.
-      logsWindowNote: '{n} eventos guardados (os últimos 200, sem corte de janela) · o mais antigo de {date}. As Tendências, ao lado, contam só os últimos 7 dias.',
+      logsWindowNote: '{n} eventos guardados (os últimos 200, sem corte de janela) · o mais antigo de {date}. A tab Padrões, ao lado, conta só os últimos 7 dias.',
       logsSearch: 'Pesquisar (país, ASN, path, técnica)…',
       logsEmpty: 'Sem eventos a mostrar.',
       logsPrev: '‹ Anterior',
@@ -494,7 +495,7 @@ export const ui = {
       tabHoneypot: 'Honeypot',
       tabDetections: 'Deteções',
       tabCloudflare: 'Cloudflare',
-      tabTrends: 'Tendências (7d)',
+      tabTrends: 'Padrões',
       tabLogs: 'Logs',
       honeypotIntro: 'Este site serve alguns endpoints-isco (páginas de login e ficheiros que só um scanner procura). Quem lhes toca fica registado aqui — só metadados, para mostrar quanto scan automático apanha até um site pessoal. A tabela completa e pesquisável está na tab Logs.',
       statAttempts: 'tentativas nas últimas 24h',
@@ -1079,6 +1080,7 @@ export const ui = {
       overview: 'Overview',
       performance: 'Performance',
       perimeter: 'Perimeter',
+      projectThisSite: 'This site project',
       links: 'Links',
       contact: 'Contact',
       lab: 'Lab',
@@ -1183,7 +1185,7 @@ export const ui = {
       firewallEmpty: 'No firewall events in the window (or requires firewall permissions on the token).',
       unavailable: 'Live panel unavailable — the telemetry Worker did not respond. The site is static and works regardless.',
       planNote:
-        'Correction: per-URL, per-user-agent and per-ASN detail for all traffic does not require Pro+ — only the AGGREGATED dataset (firewallEventsAdaptiveGroups) does. The RAW dataset (firewallEventsAdaptive), already used here for action/source/country, also gives that detail on the Free plan — it feeds the three tables below (last 24h, the raw dataset\'s retention limit). The IP is available in that dataset too, but this site never requests or shows it (zero PII, by choice, not a plan limitation). Firewall action/source/country accumulated over 7 days lives on the Trends tab.',
+        'Correction: per-URL, per-user-agent and per-ASN detail for all traffic does not require Pro+ — only the AGGREGATED dataset (firewallEventsAdaptiveGroups) does. The RAW dataset (firewallEventsAdaptive), already used here for action/source/country, also gives that detail on the Free plan — it feeds the three tables below (last 24h, the raw dataset\'s retention limit). The IP is available in that dataset too, but this site never requests or shows it (zero PII, by choice, not a plan limitation). Firewall action/source/country accumulated over 7 days lives on the Patterns tab.',
       privacyNote: 'Zero PII: none of these panels request, store or show a visitor\'s IP.',
       // ----- Performance -----
       perfMetaTitle: 'Performance — traffic, cache and Core Web Vitals',
@@ -1243,7 +1245,7 @@ export const ui = {
       tiIntro: 'My own dashboards (not a Cloudflare copy) from this site\'s honeypot — by network, technique, country and hour. Attackers grouped by ASN, never by IP.',
       // ----- Logs -----
       logsIntro: 'Recent honeypot events. Searchable and paginated — no IP, by construction.',
-      logsWindowNote: '{n} stored events (the last 200, no window cutoff) · oldest from {date}. Trends, next door, counts only the last 7 days.',
+      logsWindowNote: '{n} stored events (the last 200, no window cutoff) · oldest from {date}. Patterns, next door, counts only the last 7 days.',
       logsSearch: 'Search (country, ASN, path, technique)…',
       logsEmpty: 'No events to show.',
       logsPrev: '‹ Prev',
@@ -1522,7 +1524,7 @@ export const ui = {
       tabHoneypot: 'Honeypot',
       tabDetections: 'Detections',
       tabCloudflare: 'Cloudflare',
-      tabTrends: 'Trends (7d)',
+      tabTrends: 'Patterns',
       tabLogs: 'Logs',
       honeypotIntro: 'This site serves a few decoy endpoints (login pages and files only a scanner looks for). Whoever touches them is logged here — metadata only, to show how much automated scanning even a personal site attracts. The full searchable table is on the Logs tab.',
       statAttempts: 'attempts in the last 24h',
