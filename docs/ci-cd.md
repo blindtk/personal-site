@@ -85,7 +85,7 @@ or genuinely ad-hoc):
 | Scanner | What it checks | Grade | Report |
 | --- | --- | --- | --- |
 | ImmuniWeb | Full website security test — HTTP security headers (including CSP directive-by-directive), GDPR/PCI DSS compliance signals, cookie privacy, external content and CMS/component fingerprinting, AI-crawler/bot-scraping protection (`robots.txt` + Cloudflare AI Crawl Control), and DNSSEC chain validation | A | [immuniweb.com](https://www.immuniweb.com/websec/danielmala.co/) |
-| Qualys SSL Labs | TLS/cipher/certificate grade | — | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
+| Qualys SSL Labs | TLS/cipher/certificate grade | A+ | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
 | Security Headers | HTTP security header grade (A+–F) — an independent scorecard on the same headers `headers.yml` already pins to an exact expected set | — | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
 | Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half | A+ | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
 | Hardenize | DNS/TLS/email configuration monitoring | — | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
