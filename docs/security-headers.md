@@ -30,25 +30,23 @@ build-time generation, no per-page `<meta>`.
 > the second hash alongside the first in `script-src` — it grows by
 > *content variant*, not by page.
 >
-> **Violation reporting — automatic until 2026-07, manual now.** The CSP
-> used to have `report-uri /api/csp-report` + `report-to csp-endpoint`
-> (`Reporting-Endpoints` header): the browser sent a POST on every
-> violation from ANY visitor, no exceptions. With zero inline content, a
-> `script-src`/`style-src` violation could only mean one thing (a build
-> regression or a real injection) — but in practice, the overwhelming
-> majority of reports were noise from browser extensions (ad-blockers,
-> password managers) injecting content into visitors' pages. Every
-> accepted POST costs KV writes on the Worker (`dynamic/worker/`), and
-> Cloudflare's Free plan has a tight daily ceiling, shared with
-> honeypot/vitals/cron — the volume of automatic noise pushed the account
-> close to that ceiling. Removed all three headers; replaced with 100%
-> local capture (`static/public/js/csp-report.js`, listens for
-> `securitypolicyviolation` and stores in `sessionStorage`) + manual
-> sending via a button on the Evidence page (`CspViolations.astro`) —
-> zero writes until someone actually decides to report. The receiver is
-> still the same Worker (`POST /api/csp-report`), which aggregates
-> anonymously; only how the request gets there changed. See
-> `dynamic/PLAN.md`.
+> **Violation reporting — removed (2026-08), after two prior forms.** The
+> CSP used to have `report-uri /api/csp-report` + `report-to
+> csp-endpoint` (`Reporting-Endpoints` header): the browser sent a POST on
+> every violation from ANY visitor, no exceptions. That was removed in
+> 2026-07 — every accepted POST cost KV writes on the Worker
+> (`dynamic/worker/`), and Cloudflare's Free plan has a tight daily
+> ceiling, shared with honeypot/vitals/cron — and replaced with a manual
+> pipeline (local capture + a "Report" button on the Evidence page). The
+> manual pipeline was itself removed in 2026-08: most `self`/`self`
+> reports (nominally same-origin violations, which should be impossible
+> under this CSP) were suspected to come from Cloudflare's own managed
+> challenge page intercepting the request, rather than from a build
+> regression or a real injection — never fully confirmed for this
+> browser-reported case, but a detective control that can't tell a real
+> regression from noise on its own highest-severity alert isn't earning
+> its keep either way. The CSP is enforced either way; only the reporting
+> layer on top of it is gone. See `dynamic/PLAN.md`.
 >
 > The presence of these headers in production is checked automatically by
 > the `Headers` workflow (`.github/workflows/headers.yml`) against the

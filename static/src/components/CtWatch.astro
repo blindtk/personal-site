@@ -3,8 +3,9 @@
  * Vigia CT — painel da página Segurança que mostra as emissões de
  * certificados para o próprio domínio, vindas dos logs públicos de
  * Certificate Transparency via GET /api/ct (Worker em dynamic/worker/).
- * Mesmo padrão do CspViolations: fallback visível por omissão, painel só
- * aparece quando a API responde; rendering sempre via textContent.
+ * Mesmo padrão dos outros painéis "requer servidor": fallback visível por
+ * omissão, painel só aparece quando a API responde; rendering sempre via
+ * textContent.
  */
 import { API_BASE, type Lang } from '../config';
 import { t } from '../i18n/ui';
@@ -20,6 +21,14 @@ const jsStrings = {
   badgeUnexpected: c.badgeUnexpected,
   lastCheck: c.lastCheck,
   empty: c.empty,
+  lifecycleDaysLeft: c.lifecycleDaysLeft,
+  lifecycleDaysLeftOne: c.lifecycleDaysLeftOne,
+  lifecycleIssued: c.lifecycleIssued,
+  lifecycleExpires: c.lifecycleExpires,
+  lifecycleToday: c.lifecycleToday,
+  lifecycleElapsed: c.lifecycleElapsed,
+  lifecycleSoon: c.lifecycleSoon,
+  lifecycleNone: c.lifecycleNone,
 };
 ---
 
@@ -27,6 +36,34 @@ const jsStrings = {
   <p class="hp-fallback" id="ctw-fallback">{c.unavailable}</p>
 
   <div id="ctw-body" hidden>
+    <!-- ---------- Ciclo de vida do certificado ativo (D4) ---------- -->
+    <div class="ctw-lifecycle" id="ctw-lifecycle" hidden>
+      <div class="section-title"><h3 id="ctw-lifecycle-title">{c.lifecycleTitle}</h3></div>
+      <div class="stats-grid ctw-lifecycle-stats">
+        <div class="stat">
+          <div class="n" id="ctw-days">—</div>
+          <div class="l" id="ctw-days-l">{c.lifecycleDaysLeft}</div>
+        </div>
+        <div class="stat blue">
+          <div class="n mono" id="ctw-issuer-name">—</div>
+          <div class="l">{c.tableIssuer}</div>
+        </div>
+      </div>
+      <div class="ctw-bar-wrap">
+        <div class="ctw-bar-track">
+          <div class="ctw-bar-fill" id="ctw-bar-fill"></div>
+          <div class="ctw-bar-today" id="ctw-bar-today"></div>
+        </div>
+        <div class="ctw-bar-labels mono">
+          <span id="ctw-bar-issued">—</span>
+          <span id="ctw-bar-progress"></span>
+          <span id="ctw-bar-expires">—</span>
+        </div>
+      </div>
+      <p class="note warn" id="ctw-lifecycle-soon" hidden>⚠️ {c.lifecycleSoon}</p>
+    </div>
+    <p class="note warn" id="ctw-lifecycle-none" hidden>{c.lifecycleNone}</p>
+
     <div class="stats-grid">
       <div class="stat"><div class="n" id="ctw-total">—</div><div class="l">{c.statCerts}</div></div>
       <div class="stat blue"><div class="n" id="ctw-issuers">—</div><div class="l">{c.statIssuers}</div></div>
@@ -56,6 +93,8 @@ const jsStrings = {
 </div>
 
 <script>
+  import { currentCertificate, daysUntil, certProgressPct, plural } from '../scripts/observability.js';
+
   const root = document.getElementById('ctw')!;
   const base = root.dataset.api ?? '';
   const lang = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
@@ -64,6 +103,39 @@ const jsStrings = {
   const setText = (id: string, value: string) => {
     document.getElementById(id)!.textContent = value;
   };
+
+  // Abaixo deste nº de dias, o aviso antecipado acende — o único painel do
+  // site que avisa de algo ANTES de acontecer, não só regista o que já
+  // aconteceu (a renovação automática do Let's Encrypt corre por volta dos
+  // 30 dias antes de expirar; 14 dá margem para reagir se falhar).
+  const LIFECYCLE_WARN_DAYS = 14;
+
+  function renderLifecycle(certs: any[], domain: string) {
+    const wrap = document.getElementById('ctw-lifecycle')!;
+    const noneEl = document.getElementById('ctw-lifecycle-none')!;
+    const current = currentCertificate(certs, { domain });
+    if (!current) {
+      wrap.hidden = true;
+      noneEl.hidden = false;
+      return;
+    }
+    noneEl.hidden = true;
+    wrap.hidden = false;
+
+    const days = daysUntil(current.notAfter);
+    setText('ctw-days', String(days));
+    setText('ctw-days-l', plural(days, { one: S.lifecycleDaysLeftOne, other: S.lifecycleDaysLeft }, lang));
+    setText('ctw-issuer-name', current.issuer);
+
+    const pct = certProgressPct(current.notBefore, current.notAfter);
+    (document.getElementById('ctw-bar-fill') as HTMLElement).style.width = `${pct}%`;
+    (document.getElementById('ctw-bar-today') as HTMLElement).style.left = `${pct}%`;
+    setText('ctw-bar-issued', `${S.lifecycleIssued} ${new Date(current.notBefore).toLocaleDateString(lang)}`);
+    setText('ctw-bar-expires', `${S.lifecycleExpires} ${new Date(current.notAfter).toLocaleDateString(lang)}`);
+    setText('ctw-bar-progress', `${S.lifecycleToday} · ${pct}% ${S.lifecycleElapsed}`);
+
+    document.getElementById('ctw-lifecycle-soon')!.hidden = days > LIFECYCLE_WARN_DAYS;
+  }
 
   const isoDate = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
@@ -120,6 +192,7 @@ const jsStrings = {
       banner.classList.toggle('alert', alarmed);
       banner.textContent = alarmed ? `▲ ${S.alertBanner}` : `✓ ${S.okBanner}`;
 
+      renderLifecycle(Array.isArray(data.certs) ? data.certs : [], String(data.domain ?? ''));
       renderRows(data.certs ?? []);
       if (data.fetchedAt) {
         setText('ctw-ts', `${S.lastCheck}: ${new Date(data.fetchedAt).toLocaleString(lang)}`);

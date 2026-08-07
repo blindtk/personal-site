@@ -7,15 +7,14 @@ import PasswordGen from '../tools/PasswordGen.astro';
 import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import ExifTool from '../tools/ExifTool.astro';
 import PwnedCheck from '../tools/PwnedCheck.astro';
-import SelfScan from '../tools/SelfScan.astro';
 import CspLint from '../tools/CspLint.astro';
 import Mirror from '../tools/Mirror.astro';
 import PasskeyLab from '../tools/PasskeyLab.astro';
-import { SITE_URL, type Lang } from '../../config';
+import { type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, toolUrl } from '../../i18n/routes';
 
-type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'self-scan' | 'csp' | 'mirror' | 'passkeys';
+type ToolSlug = 'subnets' | 'hashes' | 'encoder' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'csp' | 'mirror' | 'passkeys';
 
 // 'server': fala com o Worker (dynamic/) — mostra serverNote em vez de
 // clientSideNote no rodapé da página. Ver dynamic/PLAN.md.
@@ -27,7 +26,6 @@ const KIND: Record<ToolSlug, 'client' | 'server'> = {
   'email-headers': 'client',
   exif: 'client',
   pwned: 'server',
-  'self-scan': 'server',
   csp: 'client',
   mirror: 'server',
   passkeys: 'client',
@@ -50,24 +48,12 @@ const components = {
   'email-headers': EmailHeaderTool,
   exif: ExifTool,
   pwned: PwnedCheck,
-  'self-scan': SelfScan,
   csp: CspLint,
   mirror: Mirror,
   passkeys: PasskeyLab,
 } as const;
 const ToolComponent = components[tool];
 const kind = KIND[tool];
-
-// O texto de fallback do self-scan ("corre os scanners públicos abaixo")
-// exige que os scanners estejam mesmo abaixo — os mesmos links da Segurança.
-const host = new URL(SITE_URL).host;
-const scanners =
-  tool === 'self-scan'
-    ? [
-        { label: dict.evidence.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
-        { label: dict.evidence.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
-      ]
-    : [];
 ---
 
 <BaseLayout
@@ -82,27 +68,12 @@ const scanners =
     <p class="intro">{meta.desc}</p>
   </div>
   <ToolComponent lang={lang} />
-  {scanners.length > 0 && (
-    <ul class="tool-scanners mono">
-      {scanners.map((l) => (
-        <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
-      ))}
-    </ul>
-  )}
   <p class="note">{kind === 'server' ? `🛰️ ${dict.tools.serverNote}` : `🔒 ${dict.tools.clientSideNote}`}</p>
   <hr class="tool-hr" />
   <a href={routes.tools[lang]} class="mono">{dict.tools.back}</a>
 </BaseLayout>
 
 <style>
-  .tool-scanners {
-    list-style: none;
-    padding: 0;
-    margin: 1.2rem 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
   /* Mesmo ritmo do <hr> + retorno das páginas de projeto. */
   .tool-hr {
     margin: 1.6rem 0 1.3rem;

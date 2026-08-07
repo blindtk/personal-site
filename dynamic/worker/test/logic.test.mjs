@@ -9,12 +9,11 @@ import {
   normalizeCountry, normalizeAsn, floorToWindow,
 } from '../src/lib/sanitize.js';
 import {
-  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData, threatIntel,
+  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData, threatIntel, mergeFirewall7d,
 } from '../src/lib/aggregate.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
 } from '../src/lib/vitals.js';
-import { gradeFromHeaders } from '../src/lib/scan.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
 import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
@@ -24,10 +23,6 @@ import {
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
 import { parseCfStats, firewallBreakdown, firewallDetailBreakdown } from '../src/lib/cf-analytics.js';
-import {
-  parseReports, normalizeViolation, emptyCspBucket, addCspEvent, mergeCspBuckets, cspStats,
-  MAX_SOURCES_PER_BUCKET,
-} from '../src/lib/csp-report.js';
 import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import { serverView } from '../src/lib/mirror.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from '../src/lib/notfound.js';
@@ -194,6 +189,13 @@ test('honeypotStats: 24h, top path, países 7d, tempo até 1.º scan', () => {
   assert.equal(stats.countryCount, 3); // RU, US, BR nos 7 dias
   assert.equal(stats.timeToFirstScanSec, 31);
   assert.equal(stats.recent.length, 1);
+  // Sem DEPLOY_TS configurado o Worker grava deployTs = ts do 1.º evento, e
+  // aí a diferença é zero por construção, não uma medição: tem de dar null
+  // (o painel mostra "—") em vez de anunciar "0s até ao 1.º scan".
+  assert.equal(
+    honeypotStats({ hourly: [h], days: [h], meta: { deployTs: 1000, firstScanTs: 1000 } }).timeToFirstScanSec,
+    null,
+  );
   // paths7d: contagens da semana ordenadas por contagem decrescente
   assert.deepEqual(stats.paths7d, [
     { path: '/wp-login.php', count: 2 },
@@ -210,23 +212,6 @@ test('mapData ordena países por contagem', () => {
   const data = mapData({ hourly: [h], days: [h] });
   assert.deepEqual(data.last24h, [{ country: 'RU', count: 2 }, { country: 'CN', count: 1 }]);
   assert.equal(data.totals.countries7d, 2);
-});
-
-test('gradeFromHeaders: A+ com tudo, F com nada', () => {
-  const full = gradeFromHeaders((n) => (n === 'content-security-policy' ? "default-src 'self'" : 'x'));
-  assert.equal(full.grade, 'A+');
-  assert.equal(full.checklist.every((c) => c.present), true);
-  const none = gradeFromHeaders(() => null);
-  assert.equal(none.grade, 'F');
-  assert.equal(none.checklist.some((c) => c.present), false);
-});
-
-test('gradeFromHeaders: nota intermédia sem CSP (peso 3 em falta)', () => {
-  // tudo presente menos a CSP (peso 3 de 12) → 9/12 = 0.75 → B
-  const g = gradeFromHeaders((n) => (n === 'content-security-policy' ? null : 'v'));
-  assert.equal(g.score, 9);
-  assert.equal(g.max, 12);
-  assert.equal(g.grade, 'B');
 });
 
 test('rate limit: janela fixa bloqueia ao atingir o máximo', () => {
@@ -382,214 +367,6 @@ test('pwned-range: rate limit por cliente devolve 429', async () => {
   assert.ok(res.headers.get('retry-after'));
 });
 
-// ---------- violações CSP: parse dos formatos reais dos browsers ----------
-
-const SITE = 'https://danielmala.co';
-
-test('parseReports: formato legado do Chrome/Firefox (application/csp-report)', () => {
-  // vetor real (Chrome 126, report-uri) — campos kebab-case
-  const body = JSON.stringify({
-    'csp-report': {
-      'document-uri': 'https://danielmala.co/seguranca/',
-      referrer: '',
-      'violated-directive': 'script-src-elem',
-      'effective-directive': 'script-src-elem',
-      'original-policy': "default-src 'self'; script-src 'self'",
-      disposition: 'enforce',
-      'blocked-uri': 'https://evil.example/x.js?token=SECRET',
-      'line-number': 1,
-      'status-code': 200,
-    },
-  });
-  const out = parseReports(body, 'application/csp-report');
-  assert.equal(out.length, 1);
-  assert.equal(out[0].documentUri, 'https://danielmala.co/seguranca/');
-  assert.equal(out[0].directive, 'script-src-elem');
-  assert.equal(out[0].blockedUri, 'https://evil.example/x.js?token=SECRET');
-});
-
-test('parseReports: Reporting API do Chrome (application/reports+json, batch)', () => {
-  // vetor real (Chrome, report-to) — lista, campos camelCase dentro de body
-  const body = JSON.stringify([
-    {
-      age: 10,
-      type: 'csp-violation',
-      url: 'https://danielmala.co/',
-      user_agent: 'Mozilla/5.0 …',
-      body: {
-        blockedURL: 'chrome-extension://abcdefghijklmnop/inject.js',
-        disposition: 'enforce',
-        documentURL: 'https://danielmala.co/',
-        effectiveDirective: 'script-src-elem',
-        originalPolicy: "default-src 'self'",
-        statusCode: 200,
-      },
-    },
-    { age: 12, type: 'deprecation', url: 'https://danielmala.co/', body: {} },
-  ]);
-  const out = parseReports(body, 'application/reports+json; charset=utf-8');
-  assert.equal(out.length, 1); // o relatório que não é csp-violation cai
-  assert.equal(out[0].documentUri, 'https://danielmala.co/');
-  assert.equal(out[0].blockedUri, 'chrome-extension://abcdefghijklmnop/inject.js');
-});
-
-test('parseReports: Safari legado com diretiva com valores e blocked-uri "data"', () => {
-  const body = JSON.stringify({
-    'csp-report': {
-      'document-uri': 'https://danielmala.co/en/',
-      'violated-directive': "img-src 'self'",
-      'blocked-uri': 'data',
-    },
-  });
-  const out = parseReports(body, 'application/csp-report');
-  assert.equal(out.length, 1);
-  const v = normalizeViolation(out[0], SITE);
-  assert.deepEqual(v, { directive: 'img-src', category: 'other', source: 'data:' });
-});
-
-test('parseReports: corpo inválido ou formato errado devolve []', () => {
-  assert.deepEqual(parseReports('not json', 'application/csp-report'), []);
-  assert.deepEqual(parseReports('{"foo":1}', 'application/csp-report'), []);
-  assert.deepEqual(parseReports('{"csp-report":"str"}', 'application/csp-report'), []);
-  assert.deepEqual(parseReports('{}', 'application/reports+json'), []); // não é lista
-  assert.deepEqual(parseReports('[]', 'application/reports+json'), []);
-});
-
-test('normalizeViolation: rejeita documentos que não são do próprio site', () => {
-  const forged = { documentUri: 'https://outro-site.example/', directive: 'script-src', blockedUri: 'inline' };
-  assert.equal(normalizeViolation(forged, SITE), null);
-  const noDoc = { documentUri: '', directive: 'script-src', blockedUri: 'inline' };
-  assert.equal(normalizeViolation(noDoc, SITE), null);
-});
-
-test('normalizeViolation: rejeita diretivas malformadas (chave de agregação limpa)', () => {
-  const bad = (d) => normalizeViolation({ documentUri: `${SITE}/`, directive: d, blockedUri: 'inline' }, SITE);
-  assert.equal(bad('<script>alert(1)</script>'), null);
-  assert.equal(bad(''), null);
-  assert.equal(bad('x'.repeat(60)), null);
-  assert.ok(bad('script-src-elem')); // válida passa
-});
-
-test('normalizeViolation: extensões bucketizam por scheme, sem ID da extensão', () => {
-  const v = normalizeViolation(
-    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: 'moz-extension://uuid-que-identifica/user.js' },
-    SITE,
-  );
-  assert.deepEqual(v, { directive: 'script-src-elem', category: 'extension', source: 'moz-extension://' });
-});
-
-test('normalizeViolation: origem terceira guarda SÓ a origem — path/query nunca', () => {
-  const v = normalizeViolation(
-    { documentUri: `${SITE}/`, directive: 'connect-src', blockedUri: 'https://telemetry.example:8443/collect?token=SECRET#frag' },
-    SITE,
-  );
-  assert.deepEqual(v, { directive: 'connect-src', category: 'external', source: 'https://telemetry.example:8443' });
-  assert.equal(v.source.includes('SECRET'), false);
-  assert.equal(v.source.includes('/collect'), false);
-});
-
-test('normalizeViolation: inline/eval/vazio e origem própria são categoria self', () => {
-  const mk = (blockedUri) => normalizeViolation({ documentUri: `${SITE}/`, directive: 'script-src', blockedUri }, SITE);
-  assert.deepEqual(mk('inline'), { directive: 'script-src', category: 'self', source: 'inline' });
-  assert.deepEqual(mk('eval'), { directive: 'script-src', category: 'self', source: 'eval' });
-  assert.deepEqual(mk(''), { directive: 'script-src', category: 'self', source: 'inline' });
-  assert.deepEqual(mk(`${SITE}/js/x.js`), { directive: 'script-src', category: 'self', source: 'self' });
-});
-
-test('normalizeViolation: "inline" com sourceFile de extensão é ruído, não self', () => {
-  // Uma extensão que injeta um <script> diretamente (em vez de o carregar de
-  // chrome-extension://) produz blocked-uri "inline" — indistinguível de uma
-  // regressão real da build pelo blocked-uri sozinho. sourceFile (de onde
-  // partiu a chamada) é o único sinal que sobra.
-  const v = normalizeViolation(
-    {
-      documentUri: `${SITE}/`,
-      directive: 'script-src-elem',
-      blockedUri: 'inline',
-      sourceFile: 'chrome-extension://abcdefghijklmnop/inject.js',
-    },
-    SITE,
-  );
-  assert.deepEqual(v, { directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://' });
-});
-
-test('normalizeViolation: "inline" sem sourceFile ou com sourceFile do próprio site continua self', () => {
-  const semSourceFile = normalizeViolation(
-    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: 'inline' },
-    SITE,
-  );
-  assert.equal(semSourceFile.category, 'self');
-  const sourceFilePropio = normalizeViolation(
-    { documentUri: `${SITE}/`, directive: 'script-src-elem', blockedUri: 'inline', sourceFile: `${SITE}/js/nav.js` },
-    SITE,
-  );
-  assert.equal(sourceFilePropio.category, 'self');
-});
-
-test('normalizeViolation: blocked-uri da própria origem com sourceFile de extensão também é ruído', () => {
-  // 'self' num script-src/connect-src nunca deveria bloquear um pedido
-  // genuinamente same-origin — quando o browser reporta isto mesmo assim,
-  // com sourceFile a apontar para uma extensão, é ela (não o nosso código)
-  // a fazer o pedido a partir do contexto da página.
-  const v = normalizeViolation(
-    {
-      documentUri: `${SITE}/`,
-      directive: 'connect-src',
-      blockedUri: `${SITE}/algum-caminho`,
-      sourceFile: 'moz-extension://uuid-que-identifica/content.js',
-    },
-    SITE,
-  );
-  assert.deepEqual(v, { directive: 'connect-src', category: 'extension', source: 'moz-extension://' });
-
-  const semExtensao = normalizeViolation(
-    { documentUri: `${SITE}/`, directive: 'connect-src', blockedUri: `${SITE}/algum-caminho` },
-    SITE,
-  );
-  assert.deepEqual(semExtensao, { directive: 'connect-src', category: 'self', source: 'self' });
-});
-
-test('addCspEvent: cap de cardinalidade — fontes a mais caem em ~other', () => {
-  const b = emptyCspBucket();
-  for (let i = 0; i < MAX_SOURCES_PER_BUCKET + 10; i += 1) {
-    addCspEvent(b, { directive: 'connect-src', category: 'external', source: `https://forjado-${i}.example` });
-  }
-  assert.equal(b.total, MAX_SOURCES_PER_BUCKET + 10);
-  assert.equal(Object.keys(b.bySource).length, MAX_SOURCES_PER_BUCKET + 1); // as N + '~other'
-  assert.equal(b.bySource['~other'], 10);
-  // uma fonte já conhecida continua a incrementar a sua própria chave
-  addCspEvent(b, { directive: 'connect-src', category: 'external', source: 'https://forjado-0.example' });
-  assert.equal(b.bySource['connect-src|external|https://forjado-0.example'], 2);
-});
-
-test('cspStats: agrega 7 dias, top diretiva, categorias e série diária', () => {
-  const d0 = emptyCspBucket(); // hoje
-  addCspEvent(d0, { directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://' });
-  addCspEvent(d0, { directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://' });
-  addCspEvent(d0, { directive: 'script-src-elem', category: 'self', source: 'inline' });
-  const d1 = emptyCspBucket(); // ontem
-  addCspEvent(d1, { directive: 'style-src-elem', category: 'extension', source: 'moz-extension://' });
-  const stats = cspStats([d0, d1, null, null, null, null, null]);
-  assert.equal(stats.reports7d, 4);
-  assert.equal(stats.topDirective, 'script-src-elem');
-  assert.equal(stats.sourceCount, 3); // chrome-ext, inline, moz-ext
-  assert.deepEqual(stats.byCategory, { extension: 3, self: 1, external: 0, other: 0 });
-  assert.deepEqual(stats.daily, [0, 0, 0, 0, 0, 1, 3]); // mais antigo → hoje
-  assert.equal(stats.sources[0].count, 2);
-  assert.deepEqual(stats.sources[0], {
-    directive: 'script-src-elem', category: 'extension', source: 'chrome-extension://', count: 2,
-  });
-});
-
-test('mergeCspBuckets ignora nulos e soma tudo', () => {
-  const a = emptyCspBucket();
-  addCspEvent(a, { directive: 'script-src', category: 'self', source: 'inline' });
-  const m = mergeCspBuckets([a, null, a]);
-  assert.equal(m.total, 2);
-  assert.equal(m.byDirective['script-src'], 2);
-  assert.equal(m.bySource['script-src|self|inline'], 2);
-});
-
 // ---------- validação de input (Sessão 6, tarefa 1/5) ----------
 
 test('normalizeCountry: só aceita 2 letras, resto vira XX', () => {
@@ -609,8 +386,22 @@ test('normalizeAsn: inteiro no espaço 32-bit ou null', () => {
   assert.equal(normalizeAsn(0), null);
   assert.equal(normalizeAsn(-5), null);
   assert.equal(normalizeAsn(1.5), null);
-  assert.equal(normalizeAsn('64512'), null); // strings não passam
   assert.equal(normalizeAsn(undefined), null);
+});
+
+test('normalizeAsn: aceita a string de dígitos do clientAsn da Cloudflare', () => {
+  // O `request.cf.asn` do honeypot é número, mas o `clientAsn` do
+  // firewallEventsAdaptive vem como string — só se aceitar número, todos os
+  // `fw:<dia>` ficavam com byAsn {} (foi o que aconteceu em produção).
+  assert.equal(normalizeAsn('64512'), 64512);
+  assert.equal(normalizeAsn(' 32613 '), 32613);
+  assert.equal(normalizeAsn('4294967294'), 4_294_967_294);
+  assert.equal(normalizeAsn('0'), null);
+  assert.equal(normalizeAsn('4294967295'), null); // fora do espaço 32-bit
+  assert.equal(normalizeAsn('AS64512'), null); // já prefixado não é um ASN cru
+  assert.equal(normalizeAsn('-5'), null);
+  assert.equal(normalizeAsn('12.5'), null);
+  assert.equal(normalizeAsn(''), null);
 });
 
 test('floorToWindow arredonda ao início da janela (anonimização)', () => {
@@ -752,106 +543,6 @@ test('honeypot: abaixo do teto escreve normalmente', async () => {
   assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
 });
 
-// ---------- integração: POST /api/csp-report e GET /api/csp-violations ----------
-
-function fakeCspPost(body, { ip = '203.0.113.50', contentType = 'application/csp-report' } = {}) {
-  const h = new Map([
-    ['cf-connecting-ip', ip],
-    ['content-type', contentType],
-  ]);
-  return {
-    url: 'https://danielmala.co/api/csp-report',
-    method: 'POST',
-    headers: { get: (k) => h.get(String(k).toLowerCase()) ?? null },
-    cf: {},
-    text: async () => body,
-  };
-}
-
-const LEGACY_REPORT = JSON.stringify({
-  'csp-report': {
-    'document-uri': 'https://danielmala.co/seguranca/',
-    'effective-directive': 'script-src-elem',
-    'blocked-uri': 'https://evil.example/payload.js?tok=SECRET',
-  },
-});
-
-test('csp-report: POST válido devolve 204 e agrega só a origem no bucket diário', async () => {
-  const env = { KV: fakeKV() };
-  const res = await runFetch(fakeCspPost(LEGACY_REPORT), env);
-  assert.equal(res.status, 204);
-  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
-
-  const dayK = [...env.KV.store.keys()].find((k) => k.startsWith('cspd:'));
-  assert.ok(dayK, 'devia ter escrito o bucket diário');
-  const bucket = JSON.parse(env.KV.store.get(dayK));
-  assert.equal(bucket.total, 1);
-  assert.equal(bucket.byDirective['script-src-elem'], 1);
-  assert.equal(bucket.byCategory.external, 1);
-  // do URL bloqueado só a origem — path e query nunca entram no KV
-  for (const v of env.KV.store.values()) {
-    assert.equal(v.includes('SECRET'), false, `query fugiu para o KV: ${v}`);
-    assert.equal(v.includes('payload.js'), false, `path fugiu para o KV: ${v}`);
-  }
-});
-
-test('csp-report: relatório forjado (documento de outro site) descarta-se com o mesmo 204', async () => {
-  const env = { KV: fakeKV() };
-  const forged = JSON.stringify({
-    'csp-report': {
-      'document-uri': 'https://site-de-terceiros.example/',
-      'effective-directive': 'script-src',
-      'blocked-uri': 'inline',
-    },
-  });
-  const res = await runFetch(fakeCspPost(forged), env);
-  assert.equal(res.status, 204); // indistinguível de um aceite
-  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('cspd:')), false);
-});
-
-test('csp-report: Content-Type errado → 415, corpo acima do teto → 413', async () => {
-  const env = { KV: fakeKV() };
-  const badType = await runFetch(fakeCspPost(LEGACY_REPORT, { contentType: 'text/plain' }), env);
-  assert.equal(badType.status, 415);
-  const tooBig = await runFetch(fakeCspPost('x'.repeat(17 * 1024)), env);
-  assert.equal(tooBig.status, 413);
-  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('cspd:')), false);
-});
-
-test('csp-report: cap global de escritas descarta acima do teto (204 na mesma)', async () => {
-  const env = { KV: fakeKV() };
-  const now = Date.now();
-  const capKey = `cspcap:d:${new Date(now).toISOString().slice(0, 10)}`;
-  env.KV.store.set(capKey, JSON.stringify({ count: 50, windowStart: now }));
-
-  const res = await runFetch(fakeCspPost(LEGACY_REPORT), env);
-  assert.equal(res.status, 204);
-  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('cspd:')), false);
-});
-
-test('csp-report: rate limit por cliente devolve 429', async () => {
-  const env = { KV: fakeKV() };
-  const ip = '203.0.113.51';
-  const id = await clientHash(ip, dailySalt(undefined));
-  env.KV.store.set(`rl:cspr:${id}`, JSON.stringify({ count: 10, windowStart: Date.now() }));
-  const res = await runFetch(fakeCspPost(LEGACY_REPORT, { ip }), env);
-  assert.equal(res.status, 429);
-  assert.ok(res.headers.get('retry-after'));
-});
-
-test('csp-violations: GET devolve os agregados dos buckets diários', async () => {
-  const env = { KV: fakeKV() };
-  await runFetch(fakeCspPost(LEGACY_REPORT), env);
-  const res = await runFetch(fakeRequest('/api/csp-violations'), env);
-  assert.equal(res.status, 200);
-  const data = await res.json();
-  assert.equal(data.reports7d, 1);
-  assert.equal(data.topDirective, 'script-src-elem');
-  assert.equal(data.byCategory.external, 1);
-  assert.equal(data.sources[0].source, 'https://evil.example');
-  assert.equal(data.daily.length, 7);
-  assert.equal(data.daily[6], 1); // hoje é o último da série
-});
 
 // ---------- cabeçalhos de segurança das respostas do Worker ----------
 // O _headers do Pages não cobre as rotas do Worker — cada resposta tem de
@@ -902,119 +593,12 @@ test('cache expirada serve o valor stale e renova em background', async () => {
   assert.equal(refreshed.data.attempts24h, 0); // buckets vazios → 0
 });
 
-// ---------- self-scan: segue redirects só na mesma origem (N7) ----------
-// Achado da revisão de segurança 2026-07 (ronda 4): CF-Access-Client-Id/
-// Secret, ao contrário do Authorization, não são despidos pelo Fetch spec
-// em redirects cross-origin. Com `redirect: 'follow'` normal, um 3xx do
-// alvo do self-scan para outra origem reenviava as credenciais da Access
-// para esse destino.
-
-test('self-scan: NÃO segue redirect para outra origem, e não reenvia as credenciais da Access', async () => {
-  const env = {
-    KV: fakeKV(),
-    SCAN_TARGET: 'https://danielmala.co/',
-    ACCESS_CLIENT_ID: 'cid',
-    ACCESS_CLIENT_SECRET: 'csecret',
-  };
-  const calls = [];
-  const orig = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    calls.push({ url: String(url), headers: opts?.headers ?? {} });
-    if (String(url) === 'https://danielmala.co/') {
-      return {
-        status: 302,
-        headers: { get: (h) => (h.toLowerCase() === 'location' ? 'https://evil.example/' : null) },
-      };
-    }
-    return { status: 200, headers: { get: () => null } }; // não devia ser chamado
-  };
-  try {
-    const res = await runFetch(fakeRequest('/api/scan'), env);
-    assert.equal(res.status, 200); // a rota devolve sempre 200 com o grade calculado
-    assert.equal(calls.length, 1, 'não deve seguir o redirect para fora da origem');
-    assert.equal(calls[0].headers['CF-Access-Client-Id'], 'cid'); // o pedido same-origin inicial leva as credenciais
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('self-scan: segue redirect same-origin e reenvia as credenciais da Access ao destino final', async () => {
-  const env = {
-    KV: fakeKV(),
-    SCAN_TARGET: 'https://danielmala.co/',
-    ACCESS_CLIENT_ID: 'cid',
-    ACCESS_CLIENT_SECRET: 'csecret',
-  };
-  const calls = [];
-  const orig = globalThis.fetch;
-  globalThis.fetch = async (url, opts) => {
-    calls.push({ url: String(url), headers: opts?.headers ?? {} });
-    if (String(url) === 'https://danielmala.co/') {
-      return {
-        status: 301,
-        headers: { get: (h) => (h.toLowerCase() === 'location' ? 'https://danielmala.co/pt/' : null) },
-      };
-    }
-    return {
-      status: 200,
-      headers: { get: (h) => (h.toLowerCase() === 'x-content-type-options' ? 'nosniff' : null) },
-    };
-  };
-  try {
-    const res = await runFetch(fakeRequest('/api/scan'), env);
-    assert.equal(res.status, 200);
-    assert.equal(calls.length, 2, 'deve seguir o redirect same-origin');
-    assert.equal(calls[1].url, 'https://danielmala.co/pt/');
-    assert.equal(calls[1].headers['CF-Access-Client-Id'], 'cid'); // credenciais seguem no salto same-origin
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('/api/scan: leitura simples não é cacheável pelo browser (no-store) — só a KV controla frescura', async () => {
-  // Achado: `Cache-Control: public, max-age=1800` aqui deixava o browser (e
-  // qualquer cache partilhada) devolver a resposta antiga por até 30 min
-  // depois de um refresh manual já ter atualizado a KV — a nota "congelava"
-  // na última resposta pública que o browser tinha guardado, mesmo com a
-  // KV já a refletir a nota nova.
-  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
-  const orig = globalThis.fetch;
-  globalThis.fetch = async () => ({ status: 200, headers: { get: () => null } });
-  try {
-    const res = await runFetch(fakeRequest('/api/scan'), env);
-    assert.equal(res.status, 200);
-    assert.equal(res.headers.get('cache-control'), 'no-store');
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-// ---------- rate limit: pedido bloqueado não gasta escrita KV ----------
-
-test('rate limit bloqueado devolve 429 sem nenhum put no KV', async () => {
-  const kv = fakeKV();
-  let puts = 0;
-  const origPut = kv.put.bind(kv);
-  kv.put = async (...args) => { puts += 1; return origPut(...args); };
-  const env = { KV: kv };
-
-  // pré-carrega a janela do cliente no máximo (max=3 na rota scan)
-  const ip = '203.0.113.9';
-  const id = await clientHash(ip, dailySalt(undefined));
-  kv.store.set(`rl:scan:${id}`, JSON.stringify({ count: 3, windowStart: Date.now() }));
-
-  const res = await runFetch(fakeRequest('/api/scan?refresh=1', { ip }), env);
-  assert.equal(res.status, 429);
-  assert.ok(res.headers.get('retry-after'));
-  assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
-});
-
 // ---------- rate limit: teto global de escritas do próprio limiter ----------
 // Achado da revisão de segurança de 2026-07: um cliente dentro do limite
 // por rota (ex.: 30/min em /api/mirror) força uma escrita KV por pedido —
 // sem este cap, ~43 mil escritas/dia SÓ NESTA ROTA, muito acima do teto de
 // ~1.000/dia da conta inteira no plano Free, esgotando o orçamento que o
-// honeypot/vitals/CSP também precisam.
+// honeypot/vitals também precisam.
 //
 // ATUALIZADO 2026-07-29 (achado A1, docs/security-review-2026-07-29.md): a
 // versão original deste teste afirmava `res.status === 200` com o cap
@@ -1031,7 +615,7 @@ test('rate limit: cap global diário no teto falha fechado (429) sem escrever na
   const kv = fakeKV();
   const env = { KV: kv };
   const now = Date.now();
-  // rlcap:d:<dia> — o "d:" vem de dayKey() (ver honeypot/CSP: mesmo padrão)
+  // rlcap:d:<dia> — o "d:" vem de dayKey() (ver honeypot: mesmo padrão)
   const capKey = `rlcap:d:${new Date(now).toISOString().slice(0, 10)}`;
   // pré-carrega o cap GLOBAL do rate limiter já no teto (max=300)
   kv.store.set(capKey, JSON.stringify({ count: 300, windowStart: now }));
@@ -1534,6 +1118,20 @@ test('firewallDetailBreakdown: agrega por URL, user-agent e ASN, pesado por samp
   ]);
 });
 
+test('firewallDetailBreakdown: clientAsn em string (como a Cloudflare o devolve) conta na mesma', () => {
+  // Regressão do bug que deixou todos os snapshots `fw:<dia>` de produção
+  // com byAsn {} — a query de detalhe corria, mas o ASN era descartado.
+  const fw = firewallDetailBreakdown(firewallFixture([
+    { clientRequestPath: '/wp-login.php', userAgent: 'curl/8.0', clientAsn: '32613', sampleInterval: 5 },
+    { clientRequestPath: '/.env', userAgent: 'curl/8.0', clientAsn: '32613' },
+    { clientRequestPath: '/.env', userAgent: 'curl/8.0', clientAsn: 4837 }, // número continua a valer
+  ]));
+  assert.deepEqual(fw.firewallByAsn, [
+    { key: 'AS32613', count: 6 },
+    { key: 'AS4837', count: 1 },
+  ]);
+});
+
 test('firewallDetailBreakdown: nunca processa clientIP (mesmo se viesse na resposta), sanitiza path/UA e ignora ASN inválido', () => {
   const fw = firewallDetailBreakdown(firewallFixture([
     { clientIP: '203.0.113.7', clientRequestPath: '/<script>x</script>', userAgent: 'a'.repeat(200), clientAsn: -1 },
@@ -1700,6 +1298,13 @@ test('/api/threat-intel: funde snapshots fw:<dia> de vários dias em firewall7d.
   // AS1000 apareceu nos dois dias (3 + 2 = 5) — a soma da semana, não só o
   // último dia, é o que decide a ordenação.
   assert.deepEqual(data.firewall7d.byAsn, [{ key: 'AS1000', count: 5 }, { key: 'AS2000', count: 1 }]);
+  // daily: 7 dias (mesmo os sem fotografia), do mais antigo ao mais
+  // recente, hoje por último com o byAction cru desse dia.
+  assert.equal(data.firewall7d.daily.length, 7);
+  assert.equal(data.firewall7d.daily[6].date, new Date(now).toISOString().slice(0, 10));
+  assert.deepEqual(data.firewall7d.daily[6].byAction, { block: 3 });
+  assert.deepEqual(data.firewall7d.daily[5].byAction, { managed_challenge: 2 });
+  assert.deepEqual(data.firewall7d.daily[0].byAction, {});
 });
 
 test('/api/cf-stats: 200 com o resumo quando a GraphQL API responde', async () => {
@@ -1793,7 +1398,7 @@ test('/api/cf-stats: 200 devolve blockedByStatus a partir do responseStatusMap',
   }
 });
 
-test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan', async () => {
+test('/api/cf-stats?refresh=1: rate limit de 3/10min', async () => {
   const kv = fakeKV();
   let puts = 0;
   const origPut = kv.put.bind(kv);
@@ -1812,34 +1417,15 @@ test('/api/cf-stats?refresh=1: rate limit de 3/10min, mesmo padrão do /api/scan
   assert.equal(puts, 0, 'um 429 não pode custar uma escrita KV');
 });
 
-// ---------- cap partilhado dos refresh manuais (scan + cf-stats) ----------
+// ---------- cap global dos refresh manuais (/api/cf-stats?refresh=1) ----------
 // Achado da revisão de segurança 2026-07 (ronda 4, N2): o rate limit por
-// cliente (3/10min) destas duas rotas ainda permite até 432 escritas/dia por
-// rota e por IP — sem cap global, a mesma classe de risco da lacuna #1
-// (rate limiter), só que aplicada tarde de mais a estes dois caminhos.
+// cliente (3/10min) desta rota ainda permite até 432 escritas/dia por IP —
+// sem cap global, a mesma classe de risco da lacuna #1 (rate limiter), só
+// que aplicada tarde de mais a este caminho. O cap em si é global (não
+// por-rota) por desenho — ver REFRESH_WRITE_CAP em src/index.js — para
+// cobrir sem esforço extra qualquer outra rota de refresh manual futura.
 
-test('/api/scan?refresh=1: cap partilhado no teto degrada para a cache existente, sem novo self-scan', async () => {
-  const env = { KV: fakeKV() };
-  const now = Date.now();
-  const capKey = `refreshcap:d:${new Date(now).toISOString().slice(0, 10)}`;
-  env.KV.store.set(capKey, JSON.stringify({ count: 20, windowStart: now })); // cap já no teto (max=20)
-  env.KV.store.set('cache:scan', JSON.stringify({ data: { grade: 'A', scannedAt: 1 }, exp: now + 3600_000 }));
-
-  const orig = globalThis.fetch;
-  let fetched = false;
-  globalThis.fetch = async () => { fetched = true; return { headers: { get: () => null } }; };
-  try {
-    const res = await runFetch(fakeRequest('/api/scan?refresh=1', { ip: '203.0.113.201' }), env);
-    assert.equal(res.status, 200);
-    const data = await res.json();
-    assert.equal(data.grade, 'A'); // veio da cache existente, não de um scan novo
-    assert.equal(fetched, false, 'com o cap partilhado no teto, não deve repetir o self-scan');
-  } finally {
-    globalThis.fetch = orig;
-  }
-});
-
-test('/api/cf-stats?refresh=1: cap partilhado no teto degrada para a cache existente, sem novo pedido à GraphQL API', async () => {
+test('/api/cf-stats?refresh=1: cap global no teto degrada para a cache existente, sem novo pedido à GraphQL API', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
@@ -1866,29 +1452,27 @@ test('/api/cf-stats?refresh=1: cap partilhado no teto degrada para a cache exist
   }
 });
 
-test('cap dos refresh manuais: partilhado entre /api/scan e /api/cf-stats — consumir num afeta o outro', async () => {
+test('cap global dos refresh manuais: acumula entre pedidos, não é por-cliente', async () => {
   const env = {
     KV: fakeKV(),
     CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
   };
   const orig = globalThis.fetch;
-  globalThis.fetch = async (url) => {
-    if (String(url).includes('graphql')) return { ok: true, json: async () => graphqlFixture({}) };
-    return { headers: { get: () => null } }; // self-scan
-  };
+  globalThis.fetch = async () => ({ ok: true, json: async () => graphqlFixture({}) });
   try {
-    const r1 = await runFetch(fakeRequest('/api/scan?refresh=1', { ip: '203.0.113.202' }), env);
+    const r1 = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.202' }), env);
     assert.equal(r1.status, 200);
     const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('refreshcap:'));
-    assert.ok(capKey, 'devia ter criado o contador partilhado do cap de refresh');
+    assert.ok(capKey, 'devia ter criado o contador global do cap de refresh');
     assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
 
+    // outro cliente (IP diferente, para não bater no rate limit por-cliente)
     const r2 = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.203' }), env);
     assert.equal(r2.status, 200);
     assert.equal(
       JSON.parse(env.KV.store.get(capKey)).count,
       2,
-      'o mesmo contador de refresh acumula entre as duas rotas',
+      'o contador global acumula entre pedidos de clientes diferentes',
     );
   } finally {
     globalThis.fetch = orig;
@@ -2027,6 +1611,60 @@ test('threatIntel: entrada vazia não rebenta', () => {
   assert.equal(ti.peakHour, null);
   assert.deepEqual(ti.heatmap, []);
   assert.deepEqual(ti.topAsns, []);
+});
+
+// ---------- mergeFirewall7d (dashboard "Mitigação por dia") ----------
+
+test('mergeFirewall7d: tops iguais ao antigo readFirewall7d embutido no index.js', () => {
+  // Mesmo cenário do teste de integração '/api/threat-intel funde snapshots
+  // fw:<dia>…' — NL domina hoje com block=3, ontem com managed_challenge=2;
+  // a soma da semana continua a apontar 'block' como ação dominante de NL.
+  const fw = mergeFirewall7d([
+    {
+      date: '2026-08-05',
+      snap: {
+        byAction: { block: 3 }, bySource: { ratelimit: 3 },
+        byCountry: { NL: { action: 'block', count: 3 }, DE: { action: 'js_challenge', count: 1 } },
+        byAsn: { AS1000: 3 },
+      },
+    },
+    {
+      date: '2026-08-04',
+      snap: {
+        byAction: { managed_challenge: 2 }, bySource: { firewallCustom: 2 },
+        byCountry: { NL: { action: 'managed_challenge', count: 2 } },
+        byAsn: { AS1000: 2, AS2000: 1 },
+      },
+    },
+  ]);
+  assert.deepEqual(fw.byAction, [{ key: 'block', count: 3 }, { key: 'managed_challenge', count: 2 }]);
+  assert.deepEqual(fw.byCountry, [
+    { country: 'NL', action: 'block', count: 3 },
+    { country: 'DE', action: 'js_challenge', count: 1 },
+  ]);
+  assert.deepEqual(fw.byAsn, [{ key: 'AS1000', count: 5 }, { key: 'AS2000', count: 1 }]);
+});
+
+test('mergeFirewall7d: daily fica ordenado do mais antigo para o mais recente, com byAction cru por dia', () => {
+  // Entradas passadas fora de ordem (o chamador não garante ordem) e um dia
+  // sem fotografia (snap null) — tem de aparecer na mesma, com byAction {}.
+  const fw = mergeFirewall7d([
+    { date: '2026-08-03', snap: { byAction: { block: 5 } } },
+    { date: '2026-08-05', snap: { byAction: { skip: 10, block: 1 } } },
+    { date: '2026-08-04', snap: null },
+  ]);
+  assert.deepEqual(fw.daily, [
+    { date: '2026-08-03', byAction: { block: 5 } },
+    { date: '2026-08-04', byAction: {} },
+    { date: '2026-08-05', byAction: { skip: 10, block: 1 } },
+  ]);
+});
+
+test('mergeFirewall7d: entrada vazia não rebenta', () => {
+  const fw = mergeFirewall7d([]);
+  assert.deepEqual(fw.byAction, []);
+  assert.deepEqual(fw.byCountry, []);
+  assert.deepEqual(fw.daily, []);
 });
 
 // ---------- Core Web Vitals (vitals.js) ----------

@@ -1,11 +1,10 @@
 # dynamic/ — dynamic app ("Lab") plan
 
 > **Status: in production.** `dynamic/worker/` (the Worker behind the
-> site's security features — honeypot, hostile-traffic map, header
-> self-scan, SOC ticker, and CSP-violation pipeline) is deployed on the
-> `danielmala.co` domain's routes. Deploy, gotchas, and infrastructure
-> (Access, WAF) are documented in `dynamic/worker/README.md` and
-> `docs/cloudflare-deploy.md`.
+> site's security features — honeypot, hostile-traffic map, SOC ticker,
+> and CT watch) is deployed on the `danielmala.co` domain's
+> routes. Deploy, gotchas, and infrastructure (Access, WAF) are
+> documented in `dynamic/worker/README.md` and `docs/cloudflare-deploy.md`.
 > The network tools below (DNS/whois/…) are still to be built; the
 > `/lab/` page ("under construction") will point to them once they exist.
 
@@ -550,6 +549,64 @@
   `.mcp.json`; the remaining five (`cloudflare-audit-logs`,
   `cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
   `cloudflare-observability`, `cloudflare-docs`) are the read-only set.
+
+- **2026-08-06 — Self-scan removed** (repo owner's decision, after two
+  problems suspected to share the same root cause): the "Header
+  self-scan" widget (`/api/scan`, Provas page) had been showing grade E
+  in production, and the CSP Violations panel kept logging
+  `script-src-elem`/`self` and `connect-src`/`self` violations that made
+  no sense for a same-origin request. Only self-scan's cause was actually
+  confirmed here — Cloudflare Bot Fight Mode / WAF intercepting the
+  Worker's own same-zone `fetch()` to `SCAN_TARGET` and serving a
+  managed-challenge page instead of the real site; the Worker then graded
+  the challenge page's headers, not danielmala.co's, producing a grade
+  that measured Cloudflare's challenge page rather than the site. The CSP
+  self/self violations were suspected to come from the same mechanism
+  (a visitor's browser served the challenge page instead of the real
+  page), but that was never confirmed for the browser-reported case
+  specifically — see the "Reversed" entry below.
+  Two fixes were on the table: build a `SCAN_PROOF_TOKEN` bypass (a
+  shared secret so the WAF rule lets the Worker's own self-fetch through
+  unchallenged) or remove self-scan outright. The repo owner chose
+  removal: the security-headers table already documented in Provas is
+  static and doesn't need a live probe to be trustworthy, external
+  scanners (Mozilla Observatory, securityheaders.com, linked from Provas)
+  already cover the same ground without fighting the zone's own WAF, and
+  a bypass token adds a permanent secret + WAF rule to maintain for a
+  widget whose only failure mode was self-inflicted.
+  **What stayed:** CSP violation tracking — unlike self-scan, it's a
+  genuine detective control (catches real injected/third-party script
+  attempts, not just Cloudflare's own challenge noise) and losing it
+  would remove real security value, not just a broken metric. `ct.js`'s
+  CT-watch domain and the CSP-report handler's origin check both still
+  read `env.SCAN_TARGET`, so the var itself was kept — only the scan
+  route, its pure grading logic (`src/lib/scan.js`), and the
+  `fetchSameOrigin`/`runScan` machinery were removed. See
+  `dynamic/worker/wrangler.toml`'s `SCAN_TARGET` comment for the same
+  note inline.
+
+  **Reversed (2026-08-06, later same day) — CSP violation tracking
+  removed too.** The repo owner reconsidered after the self-scan
+  postmortem above: the argument for keeping it ("genuine detective
+  control") was true in principle, but in practice the `self`/`self`
+  bucket suffered from the exact same false-signal problem — the
+  dashboard's own "possible build regression" alert had no way to tell a
+  real regression apart from a visitor's browser getting served
+  Cloudflare's managed-challenge page (the same mechanism diagnosed for
+  self-scan, this time hitting real visitors, not just the Worker's own
+  probe). Unlike self-scan, this was never fully confirmed — the
+  `DEBUG_EXPOSE_SELF_PATH` diagnostic (2026-07-29 entry above) was
+  reverted before nailing down the cause for the browser-reported case
+  specifically — but the owner judged a detective control that cries
+  wolf on its highest-severity alert isn't earning its complexity budget,
+  confirmed or not. Removed: `POST /api/csp-report`, `GET
+  /api/csp-violations`, `src/lib/csp-report.js`, the manual-send queue
+  (`static/public/js/csp-report.js`, `CspViolations.astro`), the "CSP
+  Violations" panel on Provas, and the `csp_report_fuzz.js` ClusterFuzzLite
+  harness (the other harness, `sanitize_fuzz.js`, is untouched). The CSP
+  header itself is unaffected — still enforced with zero `'unsafe-inline'`,
+  just no longer reported on. `env.SCAN_TARGET` is now read only by
+  `ct.js` (CT-watch domain).
 
 ## Shelved ideas (presented, **not approved** for implementation)
 

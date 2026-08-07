@@ -7,5 +7,5 @@ Contact: https://danielmala.co/en/contact/
 Expires: 2027-07-17T00:00:00.000Z
 Preferred-Languages: pt, en
 Canonical: https://danielmala.co/.well-known/security.txt
-Policy: https://danielmala.co/seguranca/
-Policy: https://danielmala.co/en/security/
+Policy: https://danielmala.co/este-site/seguranca/
+Policy: https://danielmala.co/en/this-site/security/

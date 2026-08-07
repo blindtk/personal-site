@@ -40,12 +40,10 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
    deploy --dry-run` — production deploy itself is automatic (Cloudflare
    Workers Builds, on push to `main`), not something a PR triggers; see
    [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) §4.
-5. If you touched `dynamic/worker/src/lib/csp-report.js` or
-   `sanitize.js`, also run the fuzzing harnesses locally
-   (`.clusterfuzzlite/fuzz/`) for a few seconds, to confirm they still
-   compile and run without crashing:
+5. If you touched `dynamic/worker/src/lib/sanitize.js`, also run the
+   fuzzing harness locally (`.clusterfuzzlite/fuzz/`) for a few seconds,
+   to confirm it still compiles and runs without crashing:
    ```bash
-   npx --yes -p @jazzer.js/core@4.0.0 jazzer .clusterfuzzlite/fuzz/csp_report_fuzz.js --sync -- -max_total_time=5
    npx --yes -p @jazzer.js/core@4.0.0 jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=5
    ```
 6. Open the Pull Request — the template

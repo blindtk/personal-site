@@ -31,8 +31,8 @@ not accidental — see
 | Folder | What it is | Status |
 | --- | --- | --- |
 | `content/` | All editorial content in markdown/JSON (posts, about, projects, links, ATT&CK/detection data) — **the single source of truth** | ✅ active |
-| `static/` | The static site (Astro): blog, 11 security tools, all pages | ✅ active |
-| `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, self-scan, SOC ticker, CSP-violation pipeline | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `static/` | The static site (Astro): blog, 10 security tools, all pages | ✅ active |
+| `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, CT watch, SOC ticker | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
 ## Architecture, threat model, and the four decisions worth reading
 
@@ -154,15 +154,14 @@ Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 
 ### Interactive tools
 
-`/ferramentas/` (`/en/tools/`) has **11 tools**. 8 run entirely client-side —
+`/ferramentas/` (`/en/tools/`) has **10 tools**. 8 run entirely client-side —
 subnet calculator, hash functions, encoder/decoder, password strength,
 email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
-no network calls, no backend dependency. The other 3 talk to the Worker
+no network calls, no backend dependency. The other 2 talk to the Worker
 because the check genuinely can't run in a browser: `pwned` (k-anonymity
-breach check), `self-scan` (header analysis of an arbitrary target), and
-`mirror` (what the server sees about you). The three server-backed ones are
-marked with a "requires server" badge on the tools index; they are never
-hidden as if they were client-side.
+breach check) and `mirror` (what the server sees about you). The two
+server-backed ones are marked with a "requires server" badge on the tools
+index; they are never hidden as if they were client-side.
 
 ### Live demonstrations
 
@@ -172,7 +171,6 @@ The site also runs several live cybersecurity showcases:
 | --- | --- | --- |
 | **MITRE ATT&CK heatmap** | `/attack` | No — 100% static (`content/attack.json`) |
 | **Perimeter** (honeypot panel, hostile-traffic map, detection rules, Cloudflare stats, trends, logs) | `/perimetro/` (`/en/perimeter/`) | Yes — `/api/honeypot`, `/api/map`, `/api/cf-stats`, `/api/threat-intel`, `/api/ct` |
-| **Self-scan of security headers** | Security page | Yes — `/api/scan` |
 | **SOC ticker** (CISA KEV + NVD) | top of Security page | Yes — `/api/ticker` |
 
 The Worker-backed features degrade gracefully when it isn't reachable (they

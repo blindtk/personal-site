@@ -126,7 +126,7 @@ const jsStrings = {
       if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
       data = await res.json();
     } catch {
-      // Sem Worker publicado: degrada com graça (mesmo padrão do self-scan).
+      // Sem Worker publicado: degrada com graça.
       verdict(S.unavailable, 'bad');
       return;
     }

@@ -8,8 +8,8 @@ main = "src/index.js"
 # runtime da Cloudflare). Antes de fazer merge desta branch: validar com o
 # fluxo já documentado no CLAUDE.md (`git checkout <branch> && cd
 # dynamic/worker && npx wrangler deploy`, testar a partir da branch sem
-# merge) — correr `npm test` outra vez e visitar /api/health, /api/mirror,
-# /api/scan a partir do deploy da branch.
+# merge) — correr `npm test` outra vez e visitar /api/health, /api/mirror
+# a partir do deploy da branch.
 compatibility_date = "2026-01-01"
 
 # Sem subdomínio *.workers.dev nem preview URLs: o deploy final vive só nas
@@ -47,8 +47,14 @@ preview_id = "6ecf59e3f7a742748e4cc22c229543c3"
 # No deploy final (Worker em rotas do próprio domínio) fica vazio — as
 # chamadas são same-origin e a CSP connect-src 'self' basta.
 ALLOWED_ORIGINS = ""
-# Alvo do self-scan (o próprio site). O vigia CT (/api/ct) deriva daqui o
-# domínio a vigiar nos logs de Certificate Transparency.
+# Alvo do próprio site — nome herdado de quando também alimentava o
+# self-scan (removido; media os cabeçalhos que chegavam ao Worker a fazer
+# fetch a si mesmo, mas a Cloudflare desviava esse pedido para a página de
+# managed challenge da própria zona, o que dava um grau falso) e o recetor
+# de violações CSP (removido; o mesmo mecanismo de challenge produzia
+# violações self/self falsas vindas de visitantes reais — ver
+# dynamic/PLAN.md). O vigia CT (/api/ct) continua a derivar daqui o domínio
+# a vigiar nos logs de Certificate Transparency.
 SCAN_TARGET = "https://danielmala.co/"
 # Emissores esperados no vigia CT (CSV, match por substring). Vazio = a
 # lista por omissão em src/lib/ct.js (Let's Encrypt + Google Trust
@@ -58,6 +64,17 @@ CT_EXPECTED_ISSUERS = ""
 # Marca temporal do deploy (epoch ms) para "tempo até 1.º scan". Opcional:
 # se vazio, usa a 1.ª tentativa registada. Define no deploy, ex.:
 #   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
+#
+# ATENÇÃO (2026-08): estando vazio, `deployTs` fica igual a `firstScanTs` e a
+# métrica é zero POR CONSTRUÇÃO — não é uma medição. Era o que estava em
+# produção (o painel anunciava "0s até ao 1.º scan"); honeypotStats passou a
+# devolver null nesse caso e o cartão mostra "—". Para o passar a medir a
+# sério não basta preencher esta var: o `meta` do KV só é escrito uma vez e
+# já tem os dois timestamps iguais. É preciso apagar a chave e voltar a
+# publicar com a var:
+#   npx wrangler kv key delete meta --binding KV --remote
+#   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
+# (o primeiro scan que chegar depois disso é que passa a ser cronometrado).
 DEPLOY_TS = ""
 # IDs da zona/conta para o painel "Estado da Cloudflare" (/api/cf-stats,
 # GraphQL Analytics API — NÃO o Radar, ver src/lib/cf-analytics.js). Não
@@ -105,11 +122,11 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # faltava esta nota, ao contrário do RATE_SALT que já a tinha.
 
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
-# A cada 30 min: aquece ticker/scan/ct/cf-stats/threat-intel (para as visitas
+# A cada 30 min: aquece ticker/ct/cf-stats/threat-intel (para as visitas
 # caírem sempre em cache). O snapshot da firewall (fw:<dia>, para acumular 7
 # dias a partir do dataset cru do Free, que só retém 24h) só é fotografado
 # quando o cf-stats É DE FACTO refrescado (TTL 6h, ~4×/dia) — não em cada um
-# dos 48 ticks. TTLs de threat-intel/cf-stats/scan/ct alinhados a 6h (≥
+# dos 48 ticks. TTLs de threat-intel/cf-stats/ct alinhados a 6h (≥
 # intervalo do cron): abaixo disso, cada tick encontrava a cache sempre
 # "stale" e repetia leituras caras ao KV (2026-07, alerta real de 50% do teto
 # diário do plano Free com o site ainda nem publicado — ver dynamic/PLAN.md).
@@ -128,7 +145,7 @@ crons = ["*/30 * * * *"]
 # explícito aqui.
 
 # Observabilidade dos logs do Worker (console.error/log): sem isto, os
-# `honeypot_write_failed`/`csp_report_write_failed`/`request_failed`/
+# `honeypot_write_failed`/`vitals_write_failed`/`request_failed`/
 # `rate_salt_missing` nunca ficam retidos em lado nenhum — não há resposta a
 # incidentes possível, só reconstituição a partir de nada. head_sampling_rate
 # 1 = sem amostragem (o volume de pedidos aqui é baixo o suficiente para não

@@ -89,7 +89,7 @@ const statLinks: Record<string, string> = {
   pages: routes.siteOverview[lang],
   tools: routes.tools[lang],
   headers: routes.evidence[lang],
-  decoys: routes.perimeter[lang],
+  decoys: routes.honeypot[lang],
 };
 const statLink = (key: string) => statLinks[key] ?? routes.siteOverview[lang];
 

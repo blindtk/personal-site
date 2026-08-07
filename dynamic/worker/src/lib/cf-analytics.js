@@ -457,12 +457,19 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     const fwRes = await post(CF_FIREWALL_QUERY);
     if (fwRes.ok) {
       const fwRaw = await fwRes.json();
-      if (!(Array.isArray(fwRaw?.errors) && fwRaw.errors.length > 0)) {
+      if (Array.isArray(fwRaw?.errors) && fwRaw.errors.length > 0) {
+        // "Best-effort" não pode querer dizer "invisível": uma tabela vazia
+        // no painel era indistinguível de "não houve eventos". Com o
+        // [observability] do wrangler.toml, isto fica retido e diz porquê.
+        console.error('cf_firewall_query_errors', JSON.stringify(fwRaw.errors).slice(0, 300));
+      } else {
         Object.assign(stats.zone, firewallBreakdown(fwRaw));
       }
+    } else {
+      console.error('cf_firewall_query_http', fwRes.status);
     }
-  } catch {
-    // Timeout/rede/permissão: fica com as tabelas de firewall vazias.
+  } catch (err) {
+    console.error('cf_firewall_query_failed', err?.message ?? String(err));
   }
 
   // Detalhe por URL/user-agent/ASN das últimas 24h — pedido SEPARADO do de
@@ -472,12 +479,16 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     const fwDetailRes = await post(CF_FIREWALL_DETAIL_QUERY);
     if (fwDetailRes.ok) {
       const fwDetailRaw = await fwDetailRes.json();
-      if (!(Array.isArray(fwDetailRaw?.errors) && fwDetailRaw.errors.length > 0)) {
+      if (Array.isArray(fwDetailRaw?.errors) && fwDetailRaw.errors.length > 0) {
+        console.error('cf_firewall_detail_query_errors', JSON.stringify(fwDetailRaw.errors).slice(0, 300));
+      } else {
         Object.assign(stats.zone, firewallDetailBreakdown(fwDetailRaw));
       }
+    } else {
+      console.error('cf_firewall_detail_query_http', fwDetailRes.status);
     }
-  } catch {
-    // Timeout/rede/permissão: fica com as tabelas de detalhe vazias.
+  } catch (err) {
+    console.error('cf_firewall_detail_query_failed', err?.message ?? String(err));
   }
 
   return stats;

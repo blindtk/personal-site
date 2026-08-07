@@ -1,0 +1,572 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Widget from '../site/Widget.astro';
+import Skeleton from '../site/Skeleton.astro';
+import SiteLayers from '../SiteLayers.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.site;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const jsStrings = {
+  countriesEmpty: s.countriesEmpty,
+  statusEmpty: s.statusEmpty,
+  firewallEmpty: s.firewallEmpty,
+  tiNoneYet: s.tiNoneYet,
+  riskLowSample: s.riskLowSample,
+  riskThresholdLeft: s.riskThresholdLeft,
+  riskThresholdRight: s.riskThresholdRight,
+  riskAxisRequests: s.riskAxisRequests,
+  riskColRate: s.riskColRate,
+  cardRequests: s.cardRequests,
+  cardThreats: s.cardThreats,
+  riskTitle: s.tiRiskCountry,
+  colCountry: s.logColCountry,
+  tlPeak: s.tlPeak,
+  tlLast: s.tlLast,
+  tiDailyTitle: s.tiDailyTitle,
+  tiDailyBlocked: s.tiDailyBlocked,
+  tiDailyChallenged: s.tiDailyChallenged,
+  tiDailyAllowed: s.tiDailyAllowed,
+};
+---
+
+<BaseLayout lang={lang} title={s.cloudflareMetaTitle} altUrl={routes.cloudflare[other]} active="cloudflare" wide>
+  <div class="page-head">
+    <h1>{s.cloudflareTitle}</h1>
+    <p class="intro">{s.cloudflareIntro}</p>
+  </div>
+
+  <div id="cf-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+    <p class="hp-fallback" id="cf-fallback">{s.unavailable}</p>
+    <div id="cf-body" hidden>
+      <div class="metric-grid">
+        <div class="stat amber"><div class="n" id="cf-threats">—</div><div class="l">{s.cardThreats}</div></div>
+        <div class="stat amber"><div class="n" id="cf-blocked">—</div><div class="l">{s.cardBlocked}</div></div>
+        <div class="stat"><div class="n" id="cf-challenges">—</div><div class="l">{s.cardChallenges}</div></div>
+        <div class="stat amber"><div class="n" id="cf-threatrate">—</div><div class="l">{s.cardThreatRate}</div></div>
+      </div>
+      <p class="note">{s.threatsDefNote}</p>
+
+      <div class="widget-grid an-mt">
+        <Widget title={s.tlThreats} tone="warn" meta={s.windowNote} class="wide-widget">
+          <div class="spark warn" id="cf-tl-threats"><Skeleton block /></div>
+        </Widget>
+      </div>
+      <div class="widget-grid an-mt">
+        <Widget title={s.wTopCountries} tone="warn" meta={s.windowNote}>
+          <div id="cf-countries"><Skeleton rows={4} /></div>
+        </Widget>
+        <Widget title={s.wTopStatus} meta={s.windowNote}>
+          <div id="cf-status"><Skeleton rows={4} /></div>
+        </Widget>
+      </div>
+      <div class="widget-grid an-mt">
+        <Widget title={s.tiRiskCountry} tone="warn" meta={s.windowNote} class="wide-widget">
+          <div id="cf-risk" class="scatter-wrap"><Skeleton block /></div>
+          <div class="risk-legend mono">
+            <span><i class="dot high"></i>{s.riskLegendHigh}</span>
+            <span><i class="dot med"></i>{s.riskLegendMed}</span>
+            <span><i class="dot low"></i>{s.riskLegendLow}</span>
+            <span><i class="dot sample"></i>{s.riskLegendSample}</span>
+          </div>
+          <p class="note">{s.riskNote}</p>
+          <div id="cf-risk-table"></div>
+        </Widget>
+      </div>
+
+      <div class="widget-grid an-mt">
+        <Widget title={s.wFirewallPaths} tone="warn"><div id="cf-fw-paths"><Skeleton rows={4} /></div></Widget>
+        <Widget title={s.wFirewallUserAgents} tone="warn"><div id="cf-fw-uas"><Skeleton rows={4} /></div></Widget>
+        <Widget title={s.wFirewallAsns} tone="warn"><div id="cf-fw-asns"><Skeleton rows={4} /></div></Widget>
+      </div>
+      <p class="note">{s.samplingNote}</p>
+
+      <div class="widget-grid an-mt">
+        <Widget title={s.tiDailyTitle} tone="warn" meta={s.windowNote} class="wide-widget">
+          <div id="cf-daily"><Skeleton block /></div>
+        </Widget>
+      </div>
+      <div class="widget-grid an-mt">
+        <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="cf-fwaction"></div></Widget>
+        <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="cf-fwsource"></div></Widget>
+      </div>
+      <p class="note">{s.tiFirewallActionNote}</p>
+
+      <p class="note">🛰️ {s.privacyNote}</p>
+    </div>
+  </div>
+
+  <SiteLayers lang={lang} current="cloudflare" />
+</BaseLayout>
+
+<script>
+  import {
+    formatNumber, formatPercent, threatRate, withBars, sparkPath,
+    firewallActionTone, classifyDaily, logScaleX, areaRadius,
+  } from '../../scripts/observability.js';
+  import { riskDotClass, labelsWithoutCollision } from '../../scripts/perimeter-charts.js';
+
+  const root = document.getElementById('cf-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+
+  const setText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  // ---------- Barras horizontais (mesma lógica do antigo Analytics/Perímetro) ----------
+  function renderBars(
+    id: string,
+    rows: { label: string; value: number; tone?: string; display?: string }[],
+    empty: string,
+  ) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = empty;
+      host.append(el);
+      return;
+    }
+    const list = document.createElement('div');
+    list.className = 'bar-list';
+    for (const row of withBars(rows)) {
+      const r = document.createElement('div');
+      r.className = 'bar-row';
+      const head = document.createElement('div');
+      head.className = 'bar-head';
+      const label = document.createElement('span');
+      label.className = 'bar-label';
+      label.textContent = row.label;
+      const val = document.createElement('span');
+      val.className = 'bar-val';
+      val.textContent = (row as any).display ?? formatNumber(row.value, locale);
+      head.append(label, val);
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('div');
+      fill.className = row.tone ? `bar-fill ${row.tone}` : 'bar-fill';
+      fill.style.width = `${(row as any).pct}%`;
+      track.append(fill);
+      r.append(head, track);
+      list.append(r);
+    }
+    host.append(list);
+  }
+
+  const bars = (rows: any[], keyField: string, valField: string, tone?: string) =>
+    rows.map((r) => ({ label: String(r[keyField]), value: Number(r[valField]) || 0, tone }));
+
+  function renderSpark(id: string, series: any[], valueKey: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    const values = series.map((d) => Number(d?.[valueKey]) || 0);
+    if (values.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = S.tiNoneYet;
+      host.append(el);
+      return;
+    }
+    const { line, area, max } = sparkPath(values);
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'spark-svg');
+    svg.setAttribute('viewBox', '0 0 100 30');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('role', 'img');
+    const areaEl = document.createElementNS(SVG_NS, 'path');
+    areaEl.setAttribute('class', 'spark-area');
+    areaEl.setAttribute('d', area);
+    const lineEl = document.createElementNS(SVG_NS, 'path');
+    lineEl.setAttribute('class', 'spark-line');
+    lineEl.setAttribute('d', line);
+    lineEl.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.append(areaEl, lineEl);
+    host.append(svg);
+    const cap = document.createElement('div');
+    cap.className = 'spark-cap';
+    const last = document.createElement('span');
+    last.textContent = `${S.tlLast}: ${formatNumber(values[values.length - 1], locale)}`;
+    const peak = document.createElement('span');
+    peak.textContent = `${S.tlPeak}: ${formatNumber(max, locale)}`;
+    cap.append(last, peak);
+    host.append(cap);
+  }
+
+  // ---------- Risco por país: dispersão pedidos × taxa ----------
+  type RiskPoint = { x: number; y: number; r: number; row: any };
+
+  function renderRiskScatter(rows: any[]) {
+    const host = document.getElementById('cf-risk');
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = S.tiNoneYet;
+      host.append(el);
+      return;
+    }
+    const W = 620;
+    const H = 244;
+    const L = 46;
+    const R = 604;
+    const T = 20;
+    const B = 188;
+    const maxReq = Math.max(1, ...rows.map((r) => Number(r.requests) || 0));
+    const domainMax = Math.max(10, 10 ** Math.ceil(Math.log10(maxReq)));
+    const scaleX = (v: number) => logScaleX(v, { min: 1, max: domainMax, rangeMin: L, rangeMax: R });
+
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'scatter-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', S.riskTitle);
+
+    const line = (x1: number, y1: number, x2: number, y2: number, cls: string) => {
+      const el = document.createElementNS(SVG_NS, 'line');
+      el.setAttribute('x1', x1.toFixed(1));
+      el.setAttribute('y1', y1.toFixed(1));
+      el.setAttribute('x2', x2.toFixed(1));
+      el.setAttribute('y2', y2.toFixed(1));
+      el.setAttribute('class', cls);
+      svg.append(el);
+    };
+    const text = (x: number, y: number, anchor: string, cls: string, content: string) => {
+      const el = document.createElementNS(SVG_NS, 'text');
+      el.setAttribute('x', x.toFixed(1));
+      el.setAttribute('y', y.toFixed(1));
+      el.setAttribute('text-anchor', anchor);
+      el.setAttribute('class', cls);
+      el.textContent = content;
+      svg.append(el);
+    };
+
+    line(L, B, R, B, 'chart-axis');
+    for (const pct of [25, 50, 75, 100]) {
+      const y = B - (pct / 100) * (B - T);
+      line(L, y, R, y, 'chart-axis');
+      text(L - 8, y + 3, 'end', 'chart-lbl', `${pct}%`);
+    }
+    text(L - 8, B + 3, 'end', 'chart-lbl', '0');
+
+    const thresholdX = scaleX(100);
+    const thr = document.createElementNS(SVG_NS, 'line');
+    thr.setAttribute('x1', thresholdX.toFixed(1));
+    thr.setAttribute('y1', String(T));
+    thr.setAttribute('x2', thresholdX.toFixed(1));
+    thr.setAttribute('y2', String(B));
+    thr.setAttribute('class', 'chart-threshold');
+    svg.append(thr);
+    text(thresholdX - 6, B - 6, 'end', 'chart-lbl', S.riskThresholdLeft);
+    text(thresholdX + 6, B - 6, 'start', 'chart-lbl', S.riskThresholdRight);
+
+    for (let v = 1; v <= domainMax + 1; v *= 10) {
+      text(scaleX(v), B + 20, 'middle', 'chart-lbl', formatNumber(v, locale));
+    }
+    text((L + R) / 2, B + 38, 'middle', 'chart-lbl', S.riskAxisRequests);
+
+    const pts: RiskPoint[] = rows.map((row) => {
+      const rate = Number(row.rate) || 0;
+      return {
+        x: scaleX(Number(row.requests) || 1),
+        y: B - Math.min(1, Math.max(0, rate)) * (B - T),
+        r: areaRadius(Number(row.threats) || 0, { minR: row.lowSample ? 5 : 6, k: 1 }),
+        row,
+      };
+    });
+    // Rótulos diretos só onde não colidem — ver labelsWithoutCollision em
+    // perimeter-charts.js (largura real do texto, não uma distância fixa).
+    const MONO_CHAR_W = 5.6;
+    const labelText = (row: any) => `${row.country} · ${formatPercent(Number(row.rate) || 0)}`;
+    const labelled = labelsWithoutCollision(
+      pts.map((p) => ({ x: p.x, y: p.y, halfWidth: (labelText(p.row).length * MONO_CHAR_W) / 2 + 4 })),
+    );
+
+    pts.forEach((p, i) => {
+      const row = p.row;
+      const rate = Number(row.rate) || 0;
+      const g = document.createElementNS(SVG_NS, 'g');
+      const title = document.createElementNS(SVG_NS, 'title');
+      const raw = `${formatNumber(row.threats, locale)}/${formatNumber(row.requests, locale)}`;
+      title.textContent = `${row.country} — ${formatPercent(rate)} (${raw})${row.lowSample ? ` · ${S.riskLowSample}` : ''}`;
+      g.append(title);
+      const circle = document.createElementNS(SVG_NS, 'circle');
+      circle.setAttribute('cx', p.x.toFixed(1));
+      circle.setAttribute('cy', p.y.toFixed(1));
+      circle.setAttribute('r', p.r.toFixed(1));
+      circle.setAttribute('class', `scatter-dot ${riskDotClass(row)}`);
+      g.append(circle);
+      if (labelled.has(i)) {
+        text(p.x, p.y - p.r - 6, 'middle', 'chart-lbl strong', labelText(row));
+      }
+      svg.append(g);
+    });
+
+    host.append(svg);
+  }
+
+  function renderRiskTable(rows: any[]) {
+    const host = document.getElementById('cf-risk-table');
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) return; // a dispersão acima já mostra o estado vazio
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    const table = document.createElement('table');
+    table.className = 'result-table wrap-normal';
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    for (const label of [S.colCountry, S.cardRequests, S.cardThreats, S.riskColRate]) {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headRow.append(th);
+    }
+    thead.append(headRow);
+    const tbody = document.createElement('tbody');
+    for (const row of rows) {
+      const tr = document.createElement('tr');
+      const tdCountry = document.createElement('td');
+      tdCountry.className = 'mono hp-cc';
+      tdCountry.textContent = String(row.country);
+      const tdReq = document.createElement('td');
+      tdReq.textContent = formatNumber(row.requests, locale);
+      const tdThreats = document.createElement('td');
+      tdThreats.textContent = formatNumber(row.threats, locale);
+      const tdRate = document.createElement('td');
+      tdRate.textContent = row.lowSample
+        ? `${formatPercent(row.rate)} (${S.riskLowSample})`
+        : formatPercent(row.rate);
+      tr.append(tdCountry, tdReq, tdThreats, tdRate);
+      tbody.append(tr);
+    }
+    table.append(thead, tbody);
+    wrap.append(table);
+    host.append(wrap);
+  }
+
+  // ---------- Cloudflare (ameaças à zona, /api/cf-stats) ----------
+  async function loadCfThreats() {
+    try {
+      const res = await fetch(`${base}/api/cf-stats`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const zone = (await res.json()).zone ?? {};
+
+      const requests = Number(zone.requests ?? 0);
+      const threats = Number(zone.threats ?? 0);
+      const blocked = (zone.blockedByStatus ?? []).reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
+      const challenges = (zone.firewallByAction ?? []).reduce(
+        (a: number, r: any) => (firewallActionTone(r.key) === 'warn' ? a + (Number(r.count) || 0) : a), 0,
+      );
+
+      setText('cf-threats', formatNumber(threats, locale));
+      setText('cf-blocked', formatNumber(blocked, locale));
+      setText('cf-challenges', formatNumber(challenges, locale));
+      setText('cf-threatrate', formatPercent(threatRate(threats, requests)));
+
+      renderBars('cf-countries', bars(zone.topCountries ?? [], 'country', 'threats', 'warn'), S.countriesEmpty);
+      renderBars('cf-status', bars(zone.blockedByStatus ?? [], 'key', 'count'), S.statusEmpty);
+      const riskRows = Array.isArray(zone.riskByCountry) ? zone.riskByCountry : [];
+      renderRiskScatter(riskRows);
+      renderRiskTable(riskRows);
+
+      // Detalhe por URL/user-agent/ASN — vem do dataset CRU
+      // firewallEventsAdaptive (ver samplingNote): nunca IP, mesmo esse
+      // campo estando disponível na fonte.
+      renderBars('cf-fw-paths', bars(zone.firewallByPath ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars('cf-fw-uas', bars(zone.firewallByUserAgent ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars('cf-fw-asns', bars(zone.firewallByAsn ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+
+      const series = Array.isArray(zone.series) ? zone.series : [];
+      renderSpark('cf-tl-threats', series, 'threats');
+
+      document.getElementById('cf-fallback')!.hidden = true;
+      document.getElementById('cf-body')!.hidden = false;
+    } catch {
+      // Sem Worker: fica o fallback já pintado.
+    }
+  }
+
+  // ---------- Mitigação por dia + firewall por ação/origem (/api/threat-intel) ----------
+  const dayFmt = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', timeZone: 'UTC' });
+
+  function renderDailyBars(daily: any[]) {
+    const host = document.getElementById('cf-daily');
+    if (!host) return;
+    host.replaceChildren();
+    const rows = classifyDaily(daily);
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = S.tiNoneYet;
+      host.append(el);
+      return;
+    }
+    const W = 620;
+    const H = 216;
+    const ML = 42;
+    const MR = 8;
+    const TOP = 26;
+    const AXIS_Y = 178;
+    const GAP = 2;
+    const MINH = 2.2;
+    const n = rows.length;
+    const slot = (W - ML - MR) / n;
+    const barW = Math.min(58, slot * 0.72);
+    const max = Math.max(1, ...rows.map((r) => r.total));
+    const scale = (AXIS_Y - TOP - GAP * 2) / max;
+    const todayIso = new Date().toISOString().slice(0, 10);
+
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'daily-svg');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', S.tiDailyTitle);
+    const axis = document.createElementNS(SVG_NS, 'line');
+    axis.setAttribute('x1', String(ML));
+    axis.setAttribute('y1', String(AXIS_Y));
+    axis.setAttribute('x2', String(W - MR));
+    axis.setAttribute('y2', String(AXIS_Y));
+    axis.setAttribute('class', 'chart-axis');
+    svg.append(axis);
+
+    rows.forEach((r, i) => {
+      const x = ML + i * slot + (slot - barW) / 2;
+      const cx = x + barW / 2;
+      const g = document.createElementNS(SVG_NS, 'g');
+      const title = document.createElementNS(SVG_NS, 'title');
+      title.textContent = `${r.date} — ${S.tiDailyBlocked}: ${formatNumber(r.blocked, locale)} · `
+        + `${S.tiDailyChallenged}: ${formatNumber(r.challenged, locale)} · `
+        + `${S.tiDailyAllowed}: ${formatNumber(r.allowed, locale)}`;
+      g.append(title);
+
+      let y = AXIS_Y;
+      const seg = (value: number, cls: string) => {
+        if (value <= 0) return;
+        const h = Math.max(MINH, value * scale);
+        y -= h;
+        const rect = document.createElementNS(SVG_NS, 'rect');
+        rect.setAttribute('x', x.toFixed(1));
+        rect.setAttribute('y', y.toFixed(1));
+        rect.setAttribute('width', barW.toFixed(1));
+        rect.setAttribute('height', h.toFixed(1));
+        rect.setAttribute('rx', Math.min(4, h / 2).toFixed(1));
+        rect.setAttribute('class', `daily-seg ${cls}`);
+        g.append(rect);
+        y -= GAP;
+      };
+      seg(r.blocked, 'blocked');
+      seg(r.challenged, 'challenged');
+      seg(r.allowed, 'allowed');
+
+      if (r.total > 0) {
+        const val = document.createElementNS(SVG_NS, 'text');
+        val.setAttribute('x', cx.toFixed(1));
+        val.setAttribute('y', (y - 6).toFixed(1));
+        val.setAttribute('text-anchor', 'middle');
+        val.setAttribute('class', 'chart-val');
+        val.textContent = formatNumber(r.total, locale);
+        g.append(val);
+      }
+      const dayLbl = document.createElementNS(SVG_NS, 'text');
+      dayLbl.setAttribute('x', cx.toFixed(1));
+      dayLbl.setAttribute('y', String(AXIS_Y + 16));
+      dayLbl.setAttribute('text-anchor', 'middle');
+      dayLbl.setAttribute('class', r.date === todayIso ? 'chart-lbl strong' : 'chart-lbl');
+      dayLbl.textContent = dayFmt.format(new Date(`${r.date}T00:00:00Z`));
+      g.append(dayLbl);
+
+      svg.append(g);
+    });
+    host.append(svg);
+
+    const legend = document.createElement('div');
+    legend.className = 'chart-legend mono';
+    const totals = rows.reduce(
+      (acc, r) => ({ blocked: acc.blocked + r.blocked, challenged: acc.challenged + r.challenged, allowed: acc.allowed + r.allowed }),
+      { blocked: 0, challenged: 0, allowed: 0 },
+    );
+    const swatches: [string, string, number][] = [
+      ['blocked', S.tiDailyBlocked, totals.blocked],
+      ['challenged', S.tiDailyChallenged, totals.challenged],
+      ['allowed', S.tiDailyAllowed, totals.allowed],
+    ];
+    for (const [cls, label, count] of swatches) {
+      const span = document.createElement('span');
+      const dot = document.createElement('i');
+      dot.className = `chart-dot ${cls}`;
+      span.append(dot, document.createTextNode(`${label} · ${formatNumber(count, locale)}`));
+      legend.append(span);
+    }
+    host.append(legend);
+  }
+
+  async function loadFirewallTrends() {
+    try {
+      const res = await fetch(`${base}/api/threat-intel`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const d = await res.json();
+      const fw = d.firewall7d ?? {};
+      renderDailyBars(Array.isArray(fw.daily) ? fw.daily : []);
+      // Tom por CLASSE de ação, não âmbar para tudo.
+      renderBars(
+        'cf-fwaction',
+        (fw.byAction ?? []).map((r: any) => ({
+          label: String(r.key),
+          value: Number(r.count) || 0,
+          tone: firewallActionTone(r.key),
+        })),
+        S.firewallEmpty,
+      );
+      renderBars('cf-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+    } catch {
+      // Sem Worker/dados: fica o fallback já pintado no widget-container.
+    }
+  }
+
+  loadCfThreats();
+  loadFirewallTrends();
+</script>
+
+<style>
+  .an-mt { margin-top: 0.9rem; }
+  .wide-widget { grid-column: 1 / -1; }
+
+  /* ---------- Risco por país: legenda ---------- */
+  /* Só o wrapper e a legenda: são markup ESTÁTICO do template (por isso um
+     <style> com scope do Astro chega a estas classes). O <svg> em si e os
+     seus pontos são criados por JS em runtime — o Astro só aplica o hash de
+     scope a elementos escritos no template, nunca aos que um script cria
+     depois; essas regras (.scatter-dot, .chart-*, .daily-seg) vivem em
+     global.css, como o resto dos gráficos SVG do site (.bar-fill,
+     .spark-line — mesmo motivo). */
+  .scatter-wrap { margin-bottom: 0.5rem; }
+  .risk-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: 0.7rem 0;
+  }
+  .risk-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; vertical-align: middle; }
+  .risk-legend .dot.high { background: var(--danger); }
+  .risk-legend .dot.med { background: var(--accent-2); }
+  .risk-legend .dot.low { background: var(--accent); }
+  .risk-legend .dot.sample { background: none; border: 1.5px solid var(--muted); }
+</style>

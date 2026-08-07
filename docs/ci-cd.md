@@ -20,10 +20,10 @@ this table is the full version.
 | **`npm audit signatures` + SBOM** | `supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
 | **Production invariants** | `invariants.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the honeypot/threat-intel dashboards otherwise leave open — they're pull-only, so nothing used to alert anyone without someone looking. |
 | **TLS/cipher/vuln scan in production** | `tls-check.yml` (monthly + manual) | Runs [testssl.sh](https://testssl.sh) against production; findings are classified by testssl.sh's own severity — CRITICAL/HIGH (weak protocols, known vulnerabilities like Heartbleed/POODLE, an invalid/expired cert) fail the workflow, MEDIUM/LOW only warn. |
-| **DNS hygiene in production** | `dns-check.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against what [`docs/dns-tls.md`](dns-tls.md) documents as already correct — a regression fails the workflow; a still-missing CAA record (a known, documented gap) only warns. |
+| **DNS hygiene in production** | `dns-check.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against the already-correct baseline — a regression fails the workflow; a still-missing CAA record (a known gap) only warns. |
 | **Mozilla Observatory grade in production** | `observatory-check.yml` (weekly + manual) | Calls the free [Mozilla HTTP Observatory](https://github.com/mdn/mdn-http-observatory) API — a second, independent grading rubric (cookies, redirect chain, cross-origin isolation) on top of the exact-header checks in `headers.yml`. Grade D/F fails the workflow, B/C only warns. |
 | **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `fuzzing.yml` (manual only — see note below) | Two harnesses fuzz the three Worker functions that parse untrusted network input — `parseReports()` (CSP-report parsing) and the output sanitizers `sanitizeText()`/`escapeHtml()` — since those, unlike the client-side tools, are a real trust boundary. |
-| **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy — that's automatic via Cloudflare (Pages + Workers Builds on push to `main`), outside this workflow; see [`docs/cloudflare-deploy.md`](cloudflare-deploy.md). |
+| **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy — that's automatic via Cloudflare (Pages + Workers Builds on push to `main`), outside this workflow. |
 
 ## Cross-cutting practices
 
@@ -34,13 +34,7 @@ keeps the digests current and batches updates into a weekly PR),
 `npm ci --ignore-scripts` in `ci.yml` (no dependency runs an arbitrary
 postinstall in CI). The CSP is one static line in
 `static/public/_headers` — no hashes, because there's no inline
-`<script>`/`<style>` on the site (see
-[`docs/security-headers.md`](security-headers.md) and
-[ADR 0001](adr/0001-csp-sem-inline.md)). The DNS/TLS plan (CAA, HSTS
-preload, DNSSEC) lives in [`docs/dns-tls.md`](dns-tls.md). The Cloudflare
-deploy process (domain, Pages, Worker, Access, WAF) and the real
-incidents hit along the way are in
-[`docs/cloudflare-deploy.md`](cloudflare-deploy.md).
+`<script>`/`<style>` on the site.
 
 ## Cadence
 
@@ -49,8 +43,7 @@ predates the repository going public, when Actions minutes were metered
 against the private-repo free tier (2,000 min/month). Public repos get
 unlimited Actions minutes, but the weekly cadence stayed — SBOM drift and
 signature checks don't need per-PR granularity, and there was no reason
-to change a schedule that was already working. Full context in
-[`docs/security-review-2026-07-29.md`](security-review-2026-07-29.md) §0.
+to change a schedule that was already working.
 
 **Fuzzing has no cron.** `fuzzing.yml` has no cron for now — `language:
 javascript` + `sanitizer: coverage` (the only `SANITIZER` value accepted
@@ -74,17 +67,16 @@ changes the tag's behavior enough to unblock the JS sanitizer bug above.
 Beyond the automated checks above, these third-party scanners run
 manually against production, not wired into CI — either because they have
 no API, the API is redundant with a check this repo already runs, or the
-free tier doesn't fit a recurring cron (tool-by-tool reasoning in
-[PR #155](https://github.com/blindtk/personal-site/pull/155)). Each link
-below is a live report for `danielmala.co`, not a static snapshot:
+free tier doesn't fit a recurring cron. Each link below is a live report
+for `danielmala.co`, not a static snapshot:
 
 | Scanner | What it checks | Report |
 | --- | --- | --- |
+| ImmuniWeb | Full website security test — headers, CSP, cookies, GDPR/PCI DSS signals, CMS fingerprinting, AI-crawler blocking, DNSSEC | [immuniweb.com](https://www.immuniweb.com/websec/danielmala.co/) |
 | Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
-| Security Headers | HTTP security headers | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
-| Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
+| Security Headers | HTTP security header grade (A+–F) | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
+| Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
 | Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
-| DNSViz | Independent DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
-| ImmuniWeb | Web/SSL security score | [immuniweb.com](https://www.immuniweb.com/cyberscore/danielmala.co/) |
-| Cloudflare Agent Readiness | AI-agent discoverability/legibility — see the `Link` header work in [PR #154](https://github.com/blindtk/personal-site/pull/154) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
+| DNSViz | DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
+| Cloudflare Agent Readiness | AI-agent/LLM discoverability — canonical/hreflang signals via HTTP `Link` headers | [isitagentready.com](https://isitagentready.com/danielmala.co) |
 | MXToolbox | Ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |

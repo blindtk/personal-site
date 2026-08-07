@@ -9,6 +9,16 @@ import {
   withBars,
   threatRate,
   sparkPath,
+  plural,
+  firewallActionClass,
+  firewallActionTone,
+  sumByActionClass,
+  classifyDaily,
+  logScaleX,
+  areaRadius,
+  currentCertificate,
+  daysUntil,
+  certProgressPct,
 } from '../src/scripts/observability.js';
 
 test('formatNumber: milhares e não-números', () => {
@@ -92,4 +102,118 @@ test('threatRate: clamp e defesa', () => {
   assert.equal(threatRate(5, 0), 0);
   assert.equal(threatRate(2000, 1000), 1);
   assert.equal(threatRate('x', 10), 0);
+});
+
+test('plural: pelas regras do idioma, não por n===1 à mão', () => {
+  assert.equal(plural(1, { one: 'país', other: 'países' }, 'pt-PT'), 'país');
+  assert.equal(plural(0, { one: 'país', other: 'países' }, 'pt-PT'), 'países');
+  assert.equal(plural(2, { one: 'país', other: 'países' }, 'pt-PT'), 'países');
+  assert.equal(plural(1, { one: 'country', other: 'countries' }, 'en-GB'), 'country');
+  assert.equal(plural(5, { one: 'country', other: 'countries' }, 'en-GB'), 'countries');
+  // sem 'one' definido, degrada para 'other'
+  assert.equal(plural(1, { other: 'x' }, 'en-GB'), 'x');
+});
+
+test('firewallActionClass: bypassed/solved contam como passado, não como desafiado', () => {
+  assert.equal(firewallActionClass('block'), 'blocked');
+  assert.equal(firewallActionClass('drop'), 'blocked');
+  assert.equal(firewallActionClass('skip'), 'allowed');
+  assert.equal(firewallActionClass('allow'), 'allowed');
+  assert.equal(firewallActionClass('log'), 'allowed');
+  assert.equal(firewallActionClass('managed_challenge'), 'challenged');
+  assert.equal(firewallActionClass('js_challenge'), 'challenged');
+  assert.equal(firewallActionClass('link_maze_injected'), 'challenged');
+  // a ordem importa: "bypassed"/"solved" contêm "challenge" mas são passagens
+  assert.equal(firewallActionClass('managed_challenge_bypassed'), 'allowed');
+  assert.equal(firewallActionClass('managed_challenge_non_interactive_solved'), 'allowed');
+  // desconhecida degrada para 'allowed' (nunca inventa um alarme)
+  assert.equal(firewallActionClass('something_new'), 'allowed');
+});
+
+test('firewallActionTone: só bloqueado/desafiado pintam; passado fica neutro', () => {
+  assert.equal(firewallActionTone('block'), 'down');
+  assert.equal(firewallActionTone('managed_challenge'), 'warn');
+  assert.equal(firewallActionTone('skip'), undefined);
+  assert.equal(firewallActionTone('managed_challenge_bypassed'), undefined);
+});
+
+test('sumByActionClass: soma só as linhas cuja classe está na lista', () => {
+  const rows = [
+    { key: 'skip', count: 411 },
+    { key: 'block', count: 39 },
+    { key: 'managed_challenge', count: 21 },
+    { key: 'managed_challenge_bypassed', count: 24 },
+  ];
+  assert.equal(sumByActionClass(rows, ['blocked', 'challenged']), 60); // 39+21
+  assert.equal(sumByActionClass(rows, ['allowed']), 435); // 411+24
+  assert.equal(sumByActionClass([], ['blocked']), 0);
+});
+
+test('classifyDaily: reparte byAction cru de cada dia em bloqueado/desafiado/passado', () => {
+  const out = classifyDaily([
+    { date: '2026-08-01', byAction: { block: 445, managed_challenge: 111, skip: 311 } },
+    { date: '2026-08-02', byAction: {} },
+    { date: '2026-08-03', byAction: { managed_challenge_bypassed: 444, block: 42 } },
+  ]);
+  assert.deepEqual(out, [
+    { date: '2026-08-01', blocked: 445, challenged: 111, allowed: 311, total: 867 },
+    { date: '2026-08-02', blocked: 0, challenged: 0, allowed: 0, total: 0 },
+    { date: '2026-08-03', blocked: 42, challenged: 0, allowed: 444, total: 486 },
+  ]);
+  assert.deepEqual(classifyDaily(undefined), []);
+});
+
+test('logScaleX: mapeia 1..1000 para um range de pixels, clamped', () => {
+  const opts = { min: 1, max: 1000, rangeMin: 0, rangeMax: 300 };
+  assert.equal(logScaleX(1, opts), 0);
+  assert.equal(logScaleX(1000, opts), 300);
+  // sqrt(1000) → meio da escala log; tolerância porque Math.log10 não é
+  // exatamente arredondado pela especificação.
+  assert.ok(Math.abs(logScaleX(31.622776601683793, opts) - 150) < 1e-9);
+  // fora do domínio: clampa aos extremos, nunca NaN
+  assert.equal(logScaleX(0, opts), 0);
+  assert.equal(logScaleX(999999, opts), 300);
+  // min===max: degrada para o centro do range, sem dividir por zero
+  assert.equal(logScaleX(5, { min: 10, max: 10, rangeMin: 0, rangeMax: 300 }), 150);
+});
+
+test('areaRadius: cresce em raiz quadrada, nunca abaixo do mínimo', () => {
+  assert.equal(areaRadius(0), 4); // mínimo
+  assert.equal(areaRadius(-5), 4); // negativo degrada para 0 → mínimo
+  assert.equal(areaRadius(100, { minR: 4, k: 1 }), 10); // sqrt(100)=10
+  assert.equal(areaRadius(4, { minR: 4, k: 2 }), 4); // sqrt(4)*2=4, empata no mínimo
+});
+
+test('currentCertificate: escolhe o válido, do domínio exato, de emissor esperado, mais recente', () => {
+  const now = 1_700_000_000_000;
+  const DAY = 86_400_000;
+  const certs = [
+    // wildcard: não cobre o domínio exato nos `names`
+    { notBefore: now - 5 * DAY, notAfter: now + 80 * DAY, issuer: 'Let\'s Encrypt', names: ['*.danielmala.co'], expected: true },
+    // expirado
+    { notBefore: now - 100 * DAY, notAfter: now - 10 * DAY, issuer: 'Let\'s Encrypt', names: ['danielmala.co'], expected: true },
+    // emissor inesperado
+    { notBefore: now - 2 * DAY, notAfter: now + 88 * DAY, issuer: 'Evil CA', names: ['danielmala.co'], expected: false },
+    // válido, domínio exato, esperado — o mais antigo dos dois válidos
+    { notBefore: now - 10 * DAY, notAfter: now + 80 * DAY, issuer: 'Google Trust Services WR1', names: ['danielmala.co'], expected: true },
+    // válido, domínio exato, esperado — notBefore mais recente: este ganha
+    { notBefore: now - 1 * DAY, notAfter: now + 89 * DAY, issuer: 'Google Trust Services WE1', names: ['danielmala.co'], expected: true },
+  ];
+  const current = currentCertificate(certs, { domain: 'danielmala.co', now });
+  assert.equal(current.issuer, 'Google Trust Services WE1');
+  assert.equal(currentCertificate([], { domain: 'danielmala.co', now }), null);
+  assert.equal(currentCertificate(certs, { domain: 'outro.dominio', now }), null);
+});
+
+test('daysUntil e certProgressPct: contagem regressiva e progresso do certificado', () => {
+  const now = 1_700_000_000_000;
+  const DAY = 86_400_000;
+  assert.equal(daysUntil(now + 73 * DAY + 1, now), 74); // arredonda para cima
+  assert.equal(daysUntil(now - DAY, now), 0); // já passou → nunca negativo
+  assert.equal(daysUntil(now, now), 0);
+  // 18% decorrido: emitido há 13 dias, validade de 73 dias
+  const notBefore = now - 13 * DAY;
+  const notAfter = now + 60 * DAY;
+  assert.equal(certProgressPct(notBefore, notAfter, now), 18);
+  assert.equal(certProgressPct(now, now, now), 0); // span 0 não rebenta
 });

@@ -116,3 +116,130 @@ export function threatRate(threats, requests) {
   if (!Number.isFinite(t) || !Number.isFinite(r) || r <= 0) return 0;
   return Math.min(1, Math.max(0, t / r));
 }
+
+/**
+ * Forma singular/plural pelas regras do idioma (Intl.PluralRules), não por
+ * `n === 1` à mão. Os painéis mostram contagens reais e baixas — com 1 país
+ * ou 1 toque, o texto lia-se "1 países de origem" / "1 toques".
+ * `forms` é { one, other }; sem correspondência devolve `other`.
+ */
+export function plural(n, forms, locale = 'en-GB') {
+  const rule = new Intl.PluralRules(locale).select(Number(n) || 0);
+  return forms[rule] ?? forms.other ?? '';
+}
+
+/**
+ * Classe de uma ação de firewall da Cloudflare, para o painel não pintar
+ * tudo de âmbar como se fosse ameaça. Três classes:
+ *   'blocked'   — o pedido não passou (block, drop);
+ *   'challenged'— foi desafiado/atrasado (managed_challenge, js_challenge,
+ *                 e o link_maze da AI Labyrinth);
+ *   'allowed'   — passou (skip/allow, e os desafios que o cliente RESOLVEU:
+ *                 *_bypassed, *_solved — são visitantes legítimos, não
+ *                 ataques bloqueados).
+ * A ordem importa: 'managed_challenge_bypassed' contém 'challenge', por isso
+ * os sufixos de resolução testam-se primeiro. Puro e testável.
+ */
+export function firewallActionClass(action) {
+  const a = String(action ?? '').toLowerCase();
+  if (/(bypassed|solved|allow|^skip$|^log$)/.test(a)) return 'allowed';
+  if (/(block|drop)/.test(a)) return 'blocked';
+  if (/(challenge|maze)/.test(a)) return 'challenged';
+  return 'allowed';
+}
+
+/** Tom de barra correspondente à classe (undefined = neutro). */
+export function firewallActionTone(action) {
+  const cls = firewallActionClass(action);
+  if (cls === 'blocked') return 'down';
+  if (cls === 'challenged') return 'warn';
+  return undefined;
+}
+
+/** Soma as linhas {key,count} cuja classe (firewallActionClass) está em `classes`. */
+export function sumByActionClass(rows, classes) {
+  return (Array.isArray(rows) ? rows : []).reduce((sum, r) => {
+    const n = Number(r?.count) || 0;
+    return classes.includes(firewallActionClass(r?.key)) ? sum + n : sum;
+  }, 0);
+}
+
+/**
+ * Reparte a série diária crua da firewall (`firewall7d.daily`, do Worker —
+ * `[{date, byAction}]`) em bloqueado/desafiado/passado por dia, pela mesma
+ * classificação de `firewallActionClass`. Sem isto, dois dias de natureza
+ * oposta (um de ataque a sério, outro de tráfego humano a resolver desafios)
+ * ficavam indistinguíveis quando só se via o total da semana — ver dashboard
+ * "Mitigação por dia".
+ */
+export function classifyDaily(daily) {
+  return (Array.isArray(daily) ? daily : []).map(({ date, byAction }) => {
+    let blocked = 0;
+    let challenged = 0;
+    let allowed = 0;
+    for (const [action, count] of Object.entries(byAction ?? {})) {
+      const n = Number(count) || 0;
+      const cls = firewallActionClass(action);
+      if (cls === 'blocked') blocked += n;
+      else if (cls === 'challenged') challenged += n;
+      else allowed += n;
+    }
+    return { date, blocked, challenged, allowed, total: blocked + challenged + allowed };
+  });
+}
+
+/**
+ * Posição X numa escala logarítmica de `min`..`max`, mapeada para
+ * `rangeMin`..`rangeMax`. Valores fora do domínio (incl. ≤0) clampam ao
+ * extremo — nunca devolve NaN/Infinity, mesmo com 1 pedido contra um domínio
+ * que começa em 1. `min`/`max` iguais degrada para o centro do range.
+ */
+export function logScaleX(value, { min, max, rangeMin, rangeMax }) {
+  if (!(min > 0) || !(max > min)) return (rangeMin + rangeMax) / 2;
+  const v = Math.max(min, Math.min(max, Number(value) || min));
+  const t = (Math.log10(v) - Math.log10(min)) / (Math.log10(max) - Math.log10(min));
+  return rangeMin + t * (rangeMax - rangeMin);
+}
+
+/**
+ * Raio de um círculo de ÁREA proporcional a `value` (escala em raiz
+ * quadrada — a perceção de tamanho num scatter é pela área, não pelo raio),
+ * com um mínimo para o ponto continuar clicável/visível mesmo a valor 0.
+ */
+export function areaRadius(value, { minR = 4, k = 1 } = {}) {
+  return Math.max(minR, k * Math.sqrt(Math.max(0, Number(value) || 0)));
+}
+
+/**
+ * Escolhe, entre os certificados devolvidos por /api/ct, o mais provável de
+ * estar ATIVO agora: válido no instante `now` (notBefore ≤ now ≤ notAfter),
+ * cobrindo o domínio exato (não só um wildcard/subdomínio) e de emissor
+ * esperado. O CT não diz qual certificado a Cloudflare está de facto a
+ * servir (podem coexistir vários válidos, ex. primário + backup) — o
+ * desempate é pelo `notBefore` mais recente (o mais provável de ser o
+ * "atual") e, ainda empatado, pelo `notAfter` mais distante. `null` se
+ * nenhum bater — nesse caso, não há um certificado válido do próprio
+ * domínio nem de emissor esperado nesta janela: um sinal em si mesmo, não
+ * apenas dados em falta.
+ */
+export function currentCertificate(certs, { domain = '', now = Date.now() } = {}) {
+  const candidates = (Array.isArray(certs) ? certs : []).filter(
+    (c) => c && c.notBefore <= now && c.notAfter >= now
+      && Array.isArray(c.names) && c.names.includes(domain) && c.expected,
+  );
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => b.notBefore - a.notBefore || b.notAfter - a.notAfter);
+  return candidates[0];
+}
+
+/** Dias inteiros até `ms` (arredondado para cima; nunca negativo). */
+export function daysUntil(ms, now = Date.now()) {
+  return Math.max(0, Math.ceil((Number(ms) - now) / 86400_000));
+}
+
+/** Percentagem [0,100] já decorrida do intervalo [notBefore, notAfter]. */
+export function certProgressPct(notBefore, notAfter, now = Date.now()) {
+  const span = Number(notAfter) - Number(notBefore);
+  if (!(span > 0)) return 0;
+  return Math.min(100, Math.max(0, Math.round(((now - notBefore) / span) * 100)));
+}

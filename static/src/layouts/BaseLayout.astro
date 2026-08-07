@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import { SITE, SITE_URL, type Lang } from '../config';
 import { t } from '../i18n/ui';
-import { routes, type RouteKey } from '../i18n/routes';
+import { routes, projectUrl, type RouteKey } from '../i18n/routes';
 import '../styles/global.css';
 
 interface Props {
@@ -41,27 +41,38 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
   { key: 'contact', label: dict.nav.contact },
 ];
 
-// "Este Site" agrupa na nav as páginas sobre a arquitetura e telemetria
-// DESTE site: Visão Geral, Segurança, Perímetro (honeypot + deteções +
-// ameaças Cloudflare, numa só página com tabs), Provas e Performance
-// (tráfego + Core Web Vitals). Perímetro (ataque ao vivo + a regra que o
-// apanharia) vem antes de Provas (o audit trail — commit, cabeçalhos, CI)
-// de propósito: mostra primeiro o que está a acontecer, só depois o "não
-// acredites, verifica".
+const currentPath = Astro.url.pathname;
+
+// "Este Site" agrupa na nav as sete camadas do mesmo sistema — a mesma
+// lista e ordem do bloco de cross-links no fundo de cada uma delas (ver
+// SiteLayers.astro, que é a fonte de verdade desta ordem): Visão Geral,
+// Segurança, Honeypot (decoys + deteções Sigma + registo), Cloudflare
+// (ameaças à zona + firewall + mitigação), Provas, Performance (tráfego +
+// Core Web Vitals) e o projeto «Este site» (arquitetura e decisões).
+// Honeypot/Cloudflare (ataque ao vivo + a regra que o apanharia) vêm antes
+// de Provas (o audit trail — commit, cabeçalhos, CI) de propósito: mostra
+// primeiro o que está a acontecer, só depois o "não acredites, verifica".
+// Eram uma só página ("Perímetro", 5 tabs) até se dividirem por fonte de
+// dados — ver docs/this-site-section-audit-2026-08-06.md.
+// `href` explícito, não RouteKey: o projeto «Este site» vive nos posts de
+// /projetos/ (projectUrl), não é uma rota estática de routes.ts — e usar
+// href também para as outras seis simplifica o aria-current para uma só
+// comparação (currentPath === item.href) que funciona para as sete.
 // ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
 // são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
 // "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
 // que já as linka em prosa; continuam também acessíveis pelo rodapé.
-const siteGroup: { key: RouteKey; label: string }[] = [
-  { key: 'siteOverview', label: dict.nav.overview },
-  { key: 'security', label: dict.nav.security },
-  { key: 'perimeter', label: dict.nav.perimeter },
-  { key: 'evidence', label: dict.footer.evidence },
-  { key: 'performance', label: dict.nav.performance },
+const siteGroup: { href: string; label: string }[] = [
+  { href: routes.siteOverview[lang], label: dict.nav.overview },
+  { href: routes.security[lang], label: dict.nav.security },
+  { href: routes.honeypot[lang], label: dict.nav.honeypot },
+  { href: routes.cloudflare[lang], label: dict.nav.cloudflare },
+  { href: routes.evidence[lang], label: dict.footer.evidence },
+  { href: routes.performance[lang], label: dict.nav.performance },
+  { href: projectUrl(lang, 'este-site'), label: dict.nav.projectThisSite },
 ];
-const siteActive = siteGroup.some((item) => item.key === active);
+const siteActive = siteGroup.some((item) => item.href === currentPath);
 
-const currentPath = Astro.url.pathname;
 // Imagem de partilha (LinkedIn, Twitter/X, etc.) — uma por idioma, gerada
 // a partir do mesmo design system do site.
 const ogImage = lang === 'pt' ? '/og-image.png' : '/og-image-en.png';
@@ -82,16 +93,6 @@ const personSchema = {
 <html lang={lang}>
   <head>
     <meta charset="utf-8" />
-    <!-- Captor de violações CSP: primeiro recurso da página, de propósito
-         sem defer/async. A CSP já não tem report-uri/report-to (ver
-         _headers) — isto só liga o listener local securitypolicyviolation
-         (ver public/js/csp-report.js) o mais cedo possível, antes de
-         qualquer outro <script>/<link> que pudesse violar a CSP, para não
-         perder o sinal mais importante (regressão da própria build). Fica
-         em sessionStorage; o envio é manual, num botão na página Provas
-         (CspViolations.astro). Ficheiro minúsculo, mesma origem — o custo
-         de bloquear o parser por isto é desprezável. -->
-    <script src="/js/csp-report.js" is:inline></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={desc} />
@@ -164,8 +165,8 @@ const personSchema = {
                 {siteGroup.map((item) => (
                   <li>
                     <a
-                      href={routes[item.key][lang]}
-                      aria-current={active === item.key ? 'page' : undefined}
+                      href={item.href}
+                      aria-current={currentPath === item.href ? 'page' : undefined}
                     >
                       {item.label}
                     </a>
@@ -219,7 +220,8 @@ const personSchema = {
         <span class="footer-group">
           {dict.footer.thisSiteLabel}{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
-          <a href={routes.perimeter[lang]}>{dict.footer.perimeter}</a> ·{' '}
+          <a href={routes.honeypot[lang]}>{dict.footer.honeypot}</a> ·{' '}
+          <a href={routes.cloudflare[lang]}>{dict.footer.cloudflare}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
         </span>
         <span class="footer-group">

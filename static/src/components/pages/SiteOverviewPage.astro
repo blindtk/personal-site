@@ -2,7 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Widget from '../site/Widget.astro';
 import StatusBadge from '../site/StatusBadge.astro';
-import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, INFRA, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, projectUrl } from '../../i18n/routes';
@@ -30,7 +29,10 @@ const stack: { label: string; value: string }[] = [
 // tempo relativo a partir de builtAt.
 const builtAbs = new Date(BUILD_INFO.builtAt).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
-// Strings que o ilhéu de estado precisa (tempo relativo + verificação ao vivo).
+// Strings que o ilhéu de estado precisa (tempo relativo + verificação ao vivo
+// + a secção "Este site, em números", que cruza honeypot+Cloudflare e por
+// isso não pertence só a nenhuma das duas páginas de detalhe — ver
+// docs/this-site-section-audit-2026-08-06.md).
 const jsStrings = {
   ago: s.agoPrefix,
   units: {
@@ -41,6 +43,16 @@ const jsStrings = {
   stateDegraded: s.stateDegraded,
   stateDown: s.stateDown,
   lastCheck: s.lastCheck,
+  chainThreats: s.chainThreats,
+  colCountry: s.logColCountry,
+  colNetwork: s.logColAsn,
+  colSource: s.colSource,
+  colCount: s.colCount,
+  colDaysSeen: s.colDaysSeen,
+  sourceHoneypot: s.sourceHoneypot,
+  sourceCloudflare: s.sourceCloudflare,
+  tiEmpty: s.tiEmpty,
+  tiDays: s.tiDays,
 };
 ---
 
@@ -55,10 +67,55 @@ const jsStrings = {
     <p class="intro">{dict.layers.intro}</p>
     <ul class="sec-links mono">
       <li><a href={routes.security[lang]}>{dict.layers.security}</a></li>
+      <li><a href={routes.honeypot[lang]}>{dict.layers.honeypot}</a></li>
+      <li><a href={routes.cloudflare[lang]}>{dict.layers.cloudflare}</a></li>
       <li><a href={routes.evidence[lang]}>{dict.layers.evidence}</a></li>
-      <li><a href={routes.perimeter[lang]}>{dict.layers.perimeter}</a></li>
       <li><a href={routes.performance[lang]}>{dict.layers.performance}</a></li>
     </ul>
+  </section>
+
+  <!-- ---------- Este site, em números (era a "cadeia do perímetro" —
+       cruza honeypot + Cloudflare, por isso mudou-se para o hub quando a
+       página de 5 tabs se dividiu em duas, ver docs/this-site-section-
+       audit-2026-08-06.md) ---------- -->
+  <section aria-labelledby="h-numbers" id="numbers-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+    <div class="section-title"><h2 id="h-numbers">{s.chainTitle}</h2></div>
+    <div class="chain-grid">
+      <div class="stat">
+        <div class="n" id="chain-requests">—</div>
+        <div class="l">{s.chainRequests}</div>
+        <div class="chain-src">{s.chainSrcZone}</div>
+      </div>
+      <div class="stat amber">
+        <div class="n" id="chain-threats">—</div>
+        <div class="l" id="chain-threats-l">{s.chainThreats}</div>
+        <div class="chain-src">{s.chainSrcZone}</div>
+      </div>
+      <div class="stat red">
+        <div class="n" id="chain-mitigated">—</div>
+        <div class="l">{s.chainMitigated}</div>
+        <div class="chain-src">{s.chainSrcFirewall}</div>
+      </div>
+      <div class="stat blue">
+        <div class="n" id="chain-honeypot">—</div>
+        <div class="l">{s.chainHoneypot}</div>
+        <div class="chain-src">{s.chainSrcHoneypot}</div>
+      </div>
+    </div>
+    <p class="note">{s.chainNote}</p>
+
+    <div class="widget-grid an-mt">
+      <Widget title={s.tiCountriesMerged} tone="warn" meta={s.windowNote} class="wide-widget">
+        <div id="numbers-countries"></div>
+        <p class="note">→ <a href={routes.honeypot[lang]}>{dict.nav.honeypot}</a> · <a href={routes.cloudflare[lang]}>{dict.nav.cloudflare}</a></p>
+      </Widget>
+    </div>
+    <div class="widget-grid an-mt">
+      <Widget title={s.tiAsnsMerged} tone="warn" meta={s.windowNote} class="wide-widget">
+        <div id="numbers-networks"></div>
+        <p class="note">→ <a href={routes.honeypot[lang]}>{dict.nav.honeypot}</a> · <a href={routes.cloudflare[lang]}>{dict.nav.cloudflare}</a></p>
+      </Widget>
+    </div>
   </section>
 
   <section aria-labelledby="h-arch">
@@ -87,10 +144,7 @@ const jsStrings = {
 
     <Widget title={s.componentsTitle} class="components-widget">
       <ul class="components-list">
-        <li><StatusBadge state="ok" label={s.compEdge} id="ss-edge" /></li>
-        <li><StatusBadge state="pending" label={s.compWorker} id="ss-worker" /></li>
-        <li><StatusBadge state="ok" label={s.compDns} id="ss-dns" /></li>
-        <li><StatusBadge state="ok" label={s.compTls} id="ss-tls" /></li>
+        <li><StatusBadge state="pending" label={s.stateChecking} id="ss-worker" /></li>
       </ul>
       <p class="note">{s.compNote}</p>
       <p class="note">🔒 {s.tlsNote} <a href={routes.evidence[lang]}>{s.tlsNoteLink}</a>.</p>
@@ -109,12 +163,10 @@ const jsStrings = {
       ))}
     </dl>
   </section>
-
-  <SiteLayers lang={lang} current="overview" />
 </BaseLayout>
 
 <script>
-  import { relativeTime } from '../../scripts/observability.js';
+  import { relativeTime, formatNumber, formatPercent, threatRate, sumByActionClass } from '../../scripts/observability.js';
 
   const data = document.getElementById('ss-data');
   const S = JSON.parse(data?.dataset.strings ?? '{}');
@@ -137,16 +189,14 @@ const jsStrings = {
     rel.textContent = S.ago ? `${S.ago} ${value} ${unitLabel}` : `${value} ${unitLabel}`;
   }
 
-  // Verificação ao vivo do Worker/API. Edge/DNS/TLS já estão "ok" (esta página
-  // chegou por HTTPS = resolveram e entregaram). O estado global segue o Worker.
+  // Verificação ao vivo do Worker/API — o único componente que vale a pena
+  // verificar ao vivo (Edge/DNS/TLS resolveram esta própria página).
   async function checkWorker() {
     const base = data?.dataset.api ?? '';
     try {
       const res = await fetch(`${base}/api/health`, { headers: { accept: 'application/json' } });
       const ok = res.ok && (res.headers.get('content-type') ?? '').includes('application/json');
       setState('ss-worker', ok ? 'ok' : 'down', ok ? S.stateOperational : S.stateDown);
-      // O site estático está de pé (esta página chegou); se o Worker falha, o
-      // conjunto está "degradado" (amarelo), não totalmente em baixo.
       setState('ss-overall', ok ? 'ok' : 'warn', ok ? S.stateOperational : S.stateDegraded);
     } catch {
       setState('ss-worker', 'down', S.stateDown);
@@ -155,6 +205,147 @@ const jsStrings = {
   }
 
   checkWorker();
+
+  // ---------- Este site, em números (D1, cruza honeypot + Cloudflare) ----------
+  const numbersRoot = document.getElementById('numbers-root');
+  const NS = JSON.parse(numbersRoot?.getAttribute('data-strings') ?? '{}');
+  const nBase = numbersRoot?.getAttribute('data-api') ?? '';
+  const nLocale = numbersRoot?.getAttribute('data-lang') === 'pt' ? 'pt-PT' : 'en-GB';
+
+  const setNText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  type SourceRow = { key: string; source: 'honeypot' | 'cloudflare'; count: number; action?: string | null; days?: number | null };
+
+  // Top `capEach` linhas de CADA fonte (já vêm ordenadas por contagem
+  // decrescente da API), depois combinadas e reordenadas para exibição —
+  // nunca um corte global ao conjunto junto, que deixava uma fonte com
+  // números maiores (tipicamente a Cloudflare, zona inteira) engolir as
+  // linhas todas de uma tabela que promete as duas fontes.
+  function topPerSource(rows: SourceRow[], capEach: number): SourceRow[] {
+    const honeypot = rows.filter((r) => r.source === 'honeypot').slice(0, capEach);
+    const cloudflare = rows.filter((r) => r.source === 'cloudflare').slice(0, capEach);
+    return [...honeypot, ...cloudflare].sort((a, b) => b.count - a.count);
+  }
+
+  function renderSourceTable(id: string, headers: string[], rows: SourceRow[], withDays: boolean, empty: string) {
+    const host = document.getElementById(id);
+    if (!host) return;
+    host.replaceChildren();
+    if (rows.length === 0) {
+      const el = document.createElement('p');
+      el.className = 'note';
+      el.textContent = empty;
+      host.append(el);
+      return;
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    const table = document.createElement('table');
+    table.className = 'result-table wrap-normal';
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    for (const label of headers) {
+      const th = document.createElement('th');
+      th.textContent = label;
+      headRow.append(th);
+    }
+    thead.append(headRow);
+    const tbody = document.createElement('tbody');
+    // `rows` já vem limitado por FONTE (ver topPerSource) — um corte global
+    // ao top-N depois de juntar as duas fontes deixava a Cloudflare (números
+    // muito maiores) preencher a tabela inteira e o honeypot desaparecer de
+    // uma tabela que se diz "honeypot + Cloudflare".
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      const tdKey = document.createElement('td');
+      tdKey.textContent = r.key;
+      const tdSource = document.createElement('td');
+      tdSource.textContent = r.source === 'honeypot' ? NS.sourceHoneypot : NS.sourceCloudflare;
+      tr.append(tdKey, tdSource);
+      if (withDays) {
+        const tdDays = document.createElement('td');
+        tdDays.textContent = r.days ? `${r.days} ${NS.tiDays}` : '—';
+        tr.append(tdDays);
+      }
+      const tdCount = document.createElement('td');
+      tdCount.textContent = formatNumber(r.count, nLocale);
+      tr.append(tdCount);
+      tbody.append(tr);
+    }
+    table.append(thead, tbody);
+    wrap.append(table);
+    host.append(wrap);
+  }
+
+  async function loadNumbers() {
+    try {
+      const [cfRes, tiRes] = await Promise.all([
+        fetch(`${nBase}/api/cf-stats`, { headers: { accept: 'application/json' } }),
+        fetch(`${nBase}/api/threat-intel`, { headers: { accept: 'application/json' } }),
+      ]);
+      const cfCtype = cfRes.headers.get('content-type') ?? '';
+      const tiCtype = tiRes.headers.get('content-type') ?? '';
+      if (!cfRes.ok || !cfCtype.includes('application/json')) throw new Error('no cf-stats');
+      if (!tiRes.ok || !tiCtype.includes('application/json')) throw new Error('no threat-intel');
+      const zone = (await cfRes.json()).zone ?? {};
+      const ti = await tiRes.json();
+      const fw = ti.firewall7d ?? {};
+
+      const requests = Number(zone.requests) || 0;
+      const threats = Number(zone.threats) || 0;
+      setNText('chain-requests', formatNumber(requests, nLocale));
+      setNText('chain-threats', formatNumber(threats, nLocale));
+      setNText('chain-threats-l', `${NS.chainThreats} (${formatPercent(threatRate(threats, requests))})`);
+      setNText('chain-mitigated', formatNumber(sumByActionClass(fw.byAction ?? [], ['blocked', 'challenged']), nLocale));
+      setNText('chain-honeypot', formatNumber(Number(ti.totals?.events7d) || 0, nLocale));
+
+      const daysByAsn = new Map<string, number>(
+        (Array.isArray(ti.recurringAttackers) ? ti.recurringAttackers : []).map((r: any) => [String(r.key), Number(r.days) || 0]),
+      );
+
+      renderSourceTable(
+        'numbers-countries',
+        [NS.colCountry ?? '', NS.colSource, NS.colCount],
+        topPerSource(
+          [
+            ...(ti.topCountries ?? []).map((r: any): SourceRow => ({
+              key: String(r.key), source: 'honeypot', count: Number(r.count) || 0,
+            })),
+            ...(fw.byCountry ?? []).map((r: any): SourceRow => ({
+              key: String(r.country), source: 'cloudflare', count: Number(r.count) || 0,
+            })),
+          ],
+          3,
+        ),
+        false,
+        NS.tiEmpty,
+      );
+      renderSourceTable(
+        'numbers-networks',
+        [NS.colNetwork ?? '', NS.colSource, NS.colDaysSeen, NS.colCount],
+        topPerSource(
+          [
+            ...(ti.topAsns ?? []).map((r: any): SourceRow => ({
+              key: String(r.key), source: 'honeypot', count: Number(r.count) || 0, days: daysByAsn.get(String(r.key)) ?? null,
+            })),
+            ...(fw.byAsn ?? []).map((r: any): SourceRow => ({
+              key: String(r.key), source: 'cloudflare', count: Number(r.count) || 0,
+            })),
+          ],
+          3,
+        ),
+        true,
+        NS.tiEmpty,
+      );
+    } catch {
+      // Sem Worker/dados: a secção fica com os travessões já pintados.
+    }
+  }
+
+  loadNumbers();
 </script>
 
 <style>
@@ -196,5 +387,22 @@ const jsStrings = {
   }
   .stack-list dd {
     text-align: right;
+  }
+  .an-mt { margin-top: 0.9rem; }
+  .wide-widget { grid-column: 1 / -1; }
+  /* ---------- Este site, em números (D1) ---------- */
+  .chain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+  }
+  .chain-src {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--faint);
+    margin-top: 0.5rem;
+    padding-top: 0.4rem;
+    border-top: 1px dashed var(--border-strong);
   }
 </style>

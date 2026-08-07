@@ -10,8 +10,8 @@ Alguns paths que nenhum humano visita de propósito — `/wp-login.php`,
 uma razão: são isco. Quem lhes toca é, por definição, um scanner automático.
 Um Cloudflare Worker regista a tentativa (só metadados) e devolve o 404 de
 sempre, indistinguível de um path que nunca existisse. O resultado ao vivo
-— a par do que a Cloudflare bloqueia na zona inteira — está no painel
-[Perímetro](/perimetro/).
+está no painel [Honeypot](/este-site/honeypot/) — o que a Cloudflare
+bloqueia na zona inteira está à parte, na [Cloudflare](/este-site/cloudflare/).
 
 ## Porque vive no Worker, não no site estático
 

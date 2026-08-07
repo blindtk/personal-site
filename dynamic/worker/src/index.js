@@ -2,12 +2,8 @@
 // Um só Worker, um só namespace KV (chaves com prefixo). Serve:
 //   · endpoints-isco do honeypot (404 + só metadados, nunca IP)
 //   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
-//   · /api/scan                — self-scan de cabeçalhos (cache 6h)
 //   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
-//   · /api/csp-report (POST)   — recetor de violações CSP (envio manual, não
-//                                 report-uri/report-to — ver docs/security-headers.md)
-//   · /api/csp-violations      — agregados 7d das violações (painel Segurança)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
 //   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 6h)
@@ -17,16 +13,11 @@
 // Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
 
 import {
-  emptyBucket, addEvent, honeypotStats, mapData, threatIntel, THREAT_INTEL_HOURS,
+  emptyBucket, addEvent, honeypotStats, mapData, threatIntel, THREAT_INTEL_HOURS, mergeFirewall7d,
 } from './lib/aggregate.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, vitalsStats,
 } from './lib/vitals.js';
-import {
-  parseReports, normalizeViolation, emptyCspBucket, addCspEvent, cspStats,
-  REPORT_CONTENT_TYPES, MAX_REPORTS_PER_REQUEST,
-} from './lib/csp-report.js';
-import { gradeFromHeaders } from './lib/scan.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { fetchTicker } from './lib/feeds.js';
@@ -49,7 +40,7 @@ const ANON_WINDOW_MS = 5 * 60_000;
 // Cap global de escritas do honeypot por DIA (não por hora): limita
 // custo/abuso se alguém martelar os paths-isco. Ver lib/kvcap.js. O plano
 // Free tem um teto de ~1.000 escritas/dia PARA A CONTA INTEIRA, partilhado
-// com rate-limit/vitals/CSP/cron — um cap por HORA generoso (o valor antigo,
+// com rate-limit/vitals/cron — um cap por HORA generoso (o valor antigo,
 // 500/h) deixava um único burst de scanners consumir sozinho vários dias de
 // quota (500 eventos × 4-5 escritas = até 2.500 escritas numa hora, mais do
 // que o teto diário inteiro). Por isso o cap passou a ser diário e mais
@@ -59,21 +50,13 @@ const ANON_WINDOW_MS = 5 * 60_000;
 // sair) — perde-se granularidade no Threat Intel, não a proteção do core.
 const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 };
 
-// Timeout para fetches a montante (self-scan) — não deixar um alvo lento
-// pendurar o pedido.
+// Timeout para fetches a montante (relay do HIBP em /api/pwned-range) — não
+// deixar um alvo lento pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
 
-// Violações CSP: corpo máximo aceite num POST (um batch reports+json legítimo
-// anda nos poucos KB) e cap global de escritas POR DIA — uma regressão real
-// gera 1 relatório × N visitantes, o teto limita o custo dessa rajada (e de
-// spam deliberado) sem perder o sinal: os agregados já contados ficam. Cap
-// diário (mesmo raciocínio do honeypot): 50 eventos/dia × 2 escritas = 100/dia.
-const CSP_REPORT_MAX_BODY = 16 * 1024;
-const CSP_WRITE_CAP = { windowMs: DAY_MS, max: 50 };
-
 // RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas POR
-// DIA (mesmo padrão do honeypot/CSP — ver comentário acima). Só agregados;
-// ver lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
+// DIA (mesmo padrão do honeypot — ver comentário acima). Só agregados; ver
+// lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
 // (5.000/hora) media a resiliência a abuso, não o orçamento real do plano
 // Free — tráfego orgânico normal já bastava para estourar o teto diário
 // muito antes de qualquer flood malicioso.
@@ -154,42 +137,6 @@ async function recordHoneypot(env, request, path, now) {
   await Promise.all(writes);
 }
 
-// ---------- violações CSP: escrita ----------
-
-const cspDayKey = (ms) => `cspd:${new Date(ms).toISOString().slice(0, 10)}`; // cspd:2026-07-17
-
-/**
- * Agrega violações CSP já normalizadas no bucket diário. Só agregados — ao
- * contrário do honeypot nem sequer há lista "recent": nenhum evento
- * individual é persistido, só contadores por diretiva/categoria/origem.
- */
-async function recordCspViolations(env, violations, now) {
-  if (violations.length === 0) return;
-  const capKey = `cspcap:${dayKey(now)}`;
-  const dayK = cspDayKey(now);
-  const [bucket, capPrev] = await Promise.all([
-    getJSON(env, dayK, emptyCspBucket()),
-    getJSON(env, capKey),
-  ]);
-
-  // Cap global de escritas por janela (mesmo padrão do honeypot): acima do
-  // teto os relatórios extra descartam-se — o browser recebe 204 na mesma.
-  const { allowed, state: capState } = underCap(capPrev, { now, ...CSP_WRITE_CAP });
-  if (!allowed) return;
-
-  for (const v of violations) addCspEvent(bucket, v);
-  await Promise.all([
-    env.KV.put(dayK, JSON.stringify(bucket), { expirationTtl: 9 * 86400 }),
-    env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(CSP_WRITE_CAP.windowMs / 1000) + 60 }),
-  ]);
-}
-
-/** Lê os 7 buckets diários de violações CSP (hoje primeiro). */
-async function readCspBuckets(env, now) {
-  const keys = Array.from({ length: 7 }, (_, i) => cspDayKey(now - i * DAY_MS));
-  return Promise.all(keys.map((k) => getJSON(env, k)));
-}
-
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
 
 const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; // vit:2026-07-24
@@ -197,7 +144,7 @@ const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; /
 /**
  * Acumula uma amostra de Web Vitals já normalizada no histograma diário. Só
  * agregados — nenhum valor individual, IP ou UA é persistido. Cap global de
- * escritas por janela, como o honeypot/CSP.
+ * escritas por janela, como o honeypot.
  */
 async function recordVitals(env, sample, now) {
   const capKey = `vitcap:${dayKey(now)}`;
@@ -278,47 +225,14 @@ async function snapshotFirewall(env, stats, now) {
 }
 
 /**
- * Lê e funde os snapshots de firewall dos últimos 7 dias em tops por
- * ação/origem/rede (ASN), e por país (ação mais comum de cada país, somada
- * através dos dias — recalculada sobre a soma da semana, não só o vencedor
- * do último dia).
+ * Lê os snapshots de firewall dos últimos 7 dias e funde-os (`mergeFirewall7d`,
+ * lib/aggregate.js — pura e testável) em tops por ação/origem/rede/país MAIS
+ * a série diária crua que alimenta o dashboard "Mitigação por dia".
  */
 async function readFirewall7d(env, now) {
-  const keys = Array.from({ length: 7 }, (_, i) => fwDayKey(now - i * DAY_MS));
-  const snaps = await Promise.all(keys.map((k) => getJSON(env, k)));
-  const byAction = {};
-  const bySource = {};
-  const byAsn = {};
-  const byCountry = {}; // country -> { action -> count }
-  for (const s of snaps) {
-    if (!s) continue;
-    for (const [k, v] of Object.entries(s.byAction ?? {})) byAction[k] = (byAction[k] ?? 0) + (Number(v) || 0);
-    for (const [k, v] of Object.entries(s.bySource ?? {})) bySource[k] = (bySource[k] ?? 0) + (Number(v) || 0);
-    for (const [k, v] of Object.entries(s.byAsn ?? {})) byAsn[k] = (byAsn[k] ?? 0) + (Number(v) || 0);
-    for (const [country, entry] of Object.entries(s.byCountry ?? {})) {
-      const action = entry?.action;
-      const count = Number(entry?.count) || 0;
-      if (!action || count <= 0) continue;
-      byCountry[country] ??= {};
-      byCountry[country][action] = (byCountry[country][action] ?? 0) + count;
-    }
-  }
-  const top = (m) => Object.entries(m).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count).slice(0, 10);
-  const topCountry = Object.entries(byCountry)
-    .map(([country, actions]) => {
-      let bestAction = null;
-      let bestCount = -1;
-      let total = 0;
-      for (const [action, count] of Object.entries(actions)) {
-        total += count;
-        if (count > bestCount) { bestAction = action; bestCount = count; }
-      }
-      return { country, action: bestAction, count: bestCount, total };
-    })
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 10)
-    .map(({ country, action, count }) => ({ country, action, count }));
-  return { byAction: top(byAction), bySource: top(bySource), byAsn: top(byAsn), byCountry: topCountry };
+  const dates = Array.from({ length: 7 }, (_, i) => new Date(now - i * DAY_MS).toISOString().slice(0, 10));
+  const snaps = await Promise.all(dates.map((date) => getJSON(env, `fw:${date}`)));
+  return mergeFirewall7d(dates.map((date, i) => ({ date, snap: snaps[i] })));
 }
 
 // ---------- caching de leitura ----------
@@ -346,76 +260,14 @@ async function cached(env, ctx, key, ttlSec, producer) {
   return refresh();
 }
 
-// ---------- self-scan ----------
-
-// Máximo de saltos que o self-scan segue manualmente — ver fetchSameOrigin.
-const SCAN_MAX_REDIRECTS = 5;
-
-/**
- * fetch() que segue redirects À MÃO, e só enquanto ficam na MESMA origem do
- * pedido inicial. Existe só por causa dos headers CF-Access-Client-Id/
- * Secret: ao contrário do Authorization, o Fetch spec não os despe em
- * redirects cross-origin — com `redirect: 'follow'` normal, um 3xx para
- * outra origem reenviava as credenciais da Access para esse destino.
- * Hoje o risco é baixo (SCAN_TARGET é uma var fixa do próprio domínio, não
- * input de visitante), mas passa a ser real no dia em que o alvo for
- * configurável ou o site tiver um open redirect (revisão de segurança
- * 2026-07, ronda 4, N7). Um `signal` de timeout partilhado por todos os
- * saltos garante o mesmo teto de tempo total do fetch original.
- */
-async function fetchSameOrigin(url, opts, { maxRedirects = SCAN_MAX_REDIRECTS } = {}) {
-  let current = new URL(url);
-  const originalOrigin = current.origin;
-  for (let hop = 0; hop <= maxRedirects; hop++) {
-    // eslint-disable-next-line no-await-in-loop -- saltos são sequenciais por natureza (cada um depende do Location do anterior)
-    const res = await fetch(current, { ...opts, redirect: 'manual' });
-    const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
-    if (!location) return res;
-    const next = new URL(location, current);
-    if (next.origin !== originalOrigin) return res; // não segue para fora da origem — credenciais da Access não vazam
-    current = next;
-  }
-  return fetch(current, { ...opts, redirect: 'manual' }); // esgotou os saltos: última tentativa, sem seguir mais nada
-}
-
-async function runScan(env) {
-  const target = env.SCAN_TARGET || 'https://danielmala.co/';
-
-  const headers = {
-    'user-agent': 'personal-site-worker (self-scan)',
-  };
-
-  // Secrets opcionais, só necessários se a Cloudflare Access estiver ativa
-  // à frente de SCAN_TARGET (ver docs/cloudflare-deploy.md) — sem eles o
-  // self-scan recebe a página de login da Access em vez do site. Únicos
-  // segredos do Worker que não aparecem em `[vars]`/comentário deste
-  // ficheiro (achado da ronda 4, N7): `wrangler secret put ACCESS_CLIENT_ID`
-  // / `ACCESS_CLIENT_SECRET`, com um Access Service Token criado em
-  // dash.cloudflare.com → Zero Trust → Access → Service Auth.
-  if (env.ACCESS_CLIENT_ID && env.ACCESS_CLIENT_SECRET) {
-    headers['CF-Access-Client-Id'] = env.ACCESS_CLIENT_ID;
-    headers['CF-Access-Client-Secret'] = env.ACCESS_CLIENT_SECRET;
-  }
-
-  const res = await fetchSameOrigin(target, {
-    headers,
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-  });
-
-  return {
-    scannedAt: Date.now(),
-    ...gradeFromHeaders((name) => res.headers.get(name)),
-  };
-}
-
 // ---------- rate limiting ----------
 
 // Teto global (não por-cliente) de escritas do PRÓPRIO rate limiter, por
-// dia — mesmo padrão do honeypot/CSP/vitals (ver lib/kvcap.js). Sem isto,
+// dia — mesmo padrão do honeypot/vitals (ver lib/kvcap.js). Sem isto,
 // um cliente dentro do limite por rota (ex.: 30/min em /api/mirror ou
 // /api/vitals) força até ~43 mil escritas/dia SÓ NESTA ROTA — muito acima
 // do teto de ~1.000 escritas/dia da conta inteira no plano Free, e
-// esgotá-lo apaga o orçamento de que honeypot/vitals/CSP/snapshot de
+// esgotá-lo apaga o orçamento de que honeypot/vitals/snapshot de
 // firewall dependem (todos escrevem no mesmo KV, mesma conta — descoberto
 // numa revisão de segurança, 2026-07).
 //
@@ -429,19 +281,19 @@ async function runScan(env) {
 // trade-off: em vez de "todos os pedidos passam", a rota devolve 429 a
 // todos até o cap global re-abrir — sem gastar nenhuma escrita extra (o
 // 429 continua grátis, ver o teste "sem nenhum put no KV"). Só afeta as
-// rotas que aceitam input de visitante (mirror/vitals/csp-report/pwned/
+// rotas que aceitam input de visitante (mirror/vitals/pwned/
 // refresh); as leituras públicas sem rate limit (honeypot/map/ticker/ct/
 // cf-stats sem refresh) continuam servidas da cache.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
 
-// Cap global de escritas dos refresh manuais (/api/scan?refresh=1 e
-// /api/cf-stats?refresh=1) — mesma classe de risco da lacuna #1 (rate
-// limiter), descoberta tarde de mais e aplicada só ao rate limiter na altura:
-// o rate limit por cliente destas duas rotas (3/10min) ainda permite até
-// 432 escritas/dia por rota e por IP — quase metade do teto diário da conta
-// SÓ NESTA ROTA, e mais que o dobro somando as duas. Partilhado entre as
-// duas (mesma capKey): é o mesmo orçamento de "atualizar agora", não dois
-// separados. Descoberto numa revisão de segurança (2026-07, ronda 4).
+// Cap global de escritas dos refresh manuais (/api/cf-stats?refresh=1) —
+// mesma classe de risco da lacuna #1 (rate limiter), descoberta tarde de
+// mais e aplicada só ao rate limiter na altura: o rate limit por cliente
+// desta rota (3/10min) ainda permite até 432 escritas/dia por IP — quase
+// metade do teto diário da conta SÓ NESTA ROTA. Global (não por-rota) por
+// desenho, para cobrir sem esforço extra qualquer outra rota de refresh
+// manual que venha a existir. Descoberto numa revisão de segurança (2026-07,
+// ronda 4).
 const REFRESH_WRITE_CAP = { windowMs: DAY_MS, max: 20 };
 
 /**
@@ -583,58 +435,11 @@ export default {
       });
     }
 
-    // Recetor de relatórios CSP. Desde 2026-07 o envio é manual (botão na
-    // página Provas, static/public/js/csp-report.js) — a CSP não tem
-    // report-uri/report-to, por isso não há mais um POST por violação de
-    // cada visitante (poupa escritas no KV, plano Free). O formato do corpo
-    // não mudou (legado csp-report / batch reports+json), por isso este
-    // endpoint continua público por natureza (sem credenciais), com a mesma
-    // defesa em camadas — Content-Type estrito, corpo limitado, rate limit
-    // por cliente, validação da origem do documento na lib, e cap global de
-    // escritas. A resposta é sempre 204 nos casos "aceite" e "descartado":
-    // um forjador não distingue os dois.
-    if (path === '/api/csp-report' && request.method === 'POST') {
-      const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
-      if (!REPORT_CONTENT_TYPES.includes(ctype)) {
-        return json({ error: 'unsupported_media_type' }, request, env, { status: 415 });
-      }
-      const { allowed, retryAfterSec } = await rateLimit(env, request, 'cspr', {
-        windowMs: 60_000,
-        max: 10, // o batching nativo do browser raramente passa de 1-2/min
-      });
-      if (!allowed) {
-        return json({ error: 'rate_limited' }, request, env, {
-          status: 429,
-          extra: { 'retry-after': String(retryAfterSec) },
-        });
-      }
-      let text;
-      try {
-        text = await request.text();
-      } catch {
-        return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
-      }
-      if (text.length > CSP_REPORT_MAX_BODY) {
-        return json({ error: 'payload_too_large' }, request, env, { status: 413 });
-      }
-      const siteOrigin = new URL(env.SCAN_TARGET || 'https://danielmala.co/').origin;
-      const violations = parseReports(text, ctype)
-        .map((raw) => normalizeViolation(raw, siteOrigin))
-        .filter(Boolean)
-        .slice(0, MAX_REPORTS_PER_REQUEST);
-      ctx.waitUntil(
-        recordCspViolations(env, violations, Date.now()).catch((err) =>
-          console.error('csp_report_write_failed', err?.message ?? String(err)),
-        ),
-      );
-      return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
-    }
-
-    // Beacon de Core Web Vitals (RUM first-party). Segundo POST público do
-    // Worker — mesma defesa em camadas do recetor CSP: Content-Type restrito
-    // (navigator.sendBeacon envia text/plain por omissão), corpo minúsculo,
-    // rate limit por cliente, cap global de escritas, e só agregados no KV. A
-    // resposta é sempre 204 (aceite ou descartado — indistinguível).
+    // Beacon de Core Web Vitals (RUM first-party). Único POST público do
+    // Worker — defesa em camadas: Content-Type restrito (navigator.sendBeacon
+    // envia text/plain por omissão), corpo minúsculo, rate limit por
+    // cliente, cap global de escritas, e só agregados no KV. A resposta é
+    // sempre 204 (aceite ou descartado — indistinguível).
     if (path === '/api/vitals' && request.method === 'POST') {
       const ctype = (request.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
       if (ctype !== '' && ctype !== 'application/json' && ctype !== 'text/plain') {
@@ -698,48 +503,6 @@ export default {
         return json(data, request, env, { maxAge: 60 });
       }
 
-      if (path === '/api/scan') {
-        const refresh = url.searchParams.get('refresh') === '1';
-        // o refresh manual aceita input (o botão) → rate limit apertado
-        if (refresh) {
-          const { allowed, retryAfterSec } = await rateLimit(env, request, 'scan', {
-            windowMs: 10 * 60_000,
-            max: 3,
-          });
-          if (!allowed) {
-            return json({ error: 'rate_limited' }, request, env, {
-              status: 429,
-              extra: { 'retry-after': String(retryAfterSec) },
-            });
-          }
-          // Cap global partilhado (ver REFRESH_WRITE_CAP): esgotado, degrada
-          // para a cache existente em vez de gastar mais orçamento de
-          // escrita — o botão continua a responder, só deixa de forçar.
-          if (!(await underRefreshCap(env, Date.now()))) {
-            const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
-            return json(data, request, env);
-          }
-          const data = await runScan(env);
-          await env.KV.put('cache:scan', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
-            expirationTtl: 6 * 3600 + 60,
-          });
-          return json(data, request, env);
-        }
-        // Sem `maxAge`: a KV (`cached()`, SWR, 6h) já é a única fonte de
-        // frescura. Um `Cache-Control: public, max-age=…` aqui deixava o
-        // browser (e qualquer cache partilhada) servir a resposta antiga
-        // por até 30 min DEPOIS de um refresh manual já ter atualizado a
-        // KV — o botão "correr scan agora" mudava a nota na hora, mas ao
-        // voltar à página (novo load(), mesmo URL sem query) o browser
-        // devolvia do seu próprio cache em vez de perguntar ao Worker,
-        // e a nota "congelava" na última resposta pública que tinha
-        // guardado. Sem cache HTTP, cada load() bate no Worker, que por
-        // sua vez responde da KV (leitura barata, sem novo fetch ao
-        // upstream salvo quando o TTL de facto expirou).
-        const data = await cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env));
-        return json(data, request, env);
-      }
-
       // Relay k-anónimo do HIBP: o cliente só manda os 5 primeiros hex do
       // SHA-1 (a password nunca chega cá). Prefixo validado a ferro (5 hex) —
       // não é reutilizável para pedir mais nada. Rate limit por cliente (é
@@ -764,13 +527,6 @@ export default {
           suffixes: await fetchRange(prefix, { timeoutMs: UPSTREAM_TIMEOUT_MS }),
         }));
         return json(data, request, env, { maxAge: 3600 });
-      }
-
-      if (path === '/api/csp-violations') {
-        const data = await cached(env, ctx, 'cache:cspviolations', 60, async () =>
-          cspStats(await readCspBuckets(env, Date.now())),
-        );
-        return json(data, request, env, { maxAge: 60 });
       }
 
       // Threat Intelligence: dashboards próprios a partir dos buckets
@@ -817,9 +573,8 @@ export default {
       // invocações/erros deste Worker, via GraphQL Analytics API (dados só
       // desta zona/conta — não é o Radar, que é global e anónimo). A cache
       // de 6h já limita a frequência com que se bate na API da Cloudflare;
-      // o ?refresh=1 (mesmo padrão do /api/scan) força um pedido novo antes
-      // disso — por aceitar input (o parâmetro), leva o mesmo rate limit
-      // apertado.
+      // o ?refresh=1 força um pedido novo antes disso — por aceitar input (o
+      // parâmetro), leva rate limit apertado.
       if (path === '/api/cf-stats') {
         const refresh = url.searchParams.get('refresh') === '1';
         if (refresh) {
@@ -833,7 +588,7 @@ export default {
               extra: { 'retry-after': String(retryAfterSec) },
             });
           }
-          // Mesmo cap partilhado do /api/scan?refresh=1 (ver REFRESH_WRITE_CAP).
+          // Cap global de refresh manuais (ver REFRESH_WRITE_CAP).
           if (!(await underRefreshCap(env, Date.now()))) {
             const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
             return json(data, request, env, { maxAge: 1800 });
@@ -891,7 +646,6 @@ export default {
     ctx.waitUntil(
       Promise.all([
         cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
-        cached(env, ctx, 'cache:scan', 6 * 3600, () => runScan(env)).catch(() => {}),
         cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
         // Estado da Cloudflare + snapshot diário da firewall (acumula 7d). O
         // snapshot vive dentro do producer do `cached()` — corre só quando o

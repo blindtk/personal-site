@@ -5,7 +5,7 @@ Personal site monorepo. Three areas with rigid responsibilities:
 - `content/` — markdown/JSON content. **Never** put code here.
 - `static/` — Astro static site. Reads `content/` via loaders (`glob`, JSON import).
 - `dynamic/` — backend (Cloudflare Worker in `dynamic/worker/`: honeypot,
-  traffic map, self-scan, ticker). Pure logic in `src/lib/*` tested with
+  traffic map, CT watch, ticker). Pure logic in `src/lib/*` tested with
   `node --test` (run before any PR that touches this). New tools only with
   an explicit decision from the repo owner (see `dynamic/PLAN.md`).
 
@@ -40,8 +40,8 @@ npm run preview   # serve the build locally
   tested in Node; components in `src/components/tools/*.astro` only do the
   DOM wiring.
 - Most are **100% client-side**: no network calls, no backend dependency.
-  The three exceptions (`pwned` — password breach check via k-anonymity;
-  `self-scan` of headers; `mirror` — what the server sees about you) talk
+  The two exceptions (`pwned` — password breach check via k-anonymity;
+  `mirror` — what the server sees about you) talk
   to the Worker in `dynamic/worker/` — they live in the same index, but
   with a "requires server" badge (`ToolsIndexPage.astro`/`ToolPage.astro`,
   a `kind` key per tool), never hidden as if they were client-side. New

@@ -41,13 +41,13 @@ const wafHeaders = CI_WAF_TOKEN ? { 'x-ci-waf-token': CI_WAF_TOKEN } : {};
 
 /**
  * fetch() que segue redirects à mão, só enquanto ficam na MESMA origem do
- * pedido inicial — mesmo motivo e mesma lógica do fetchSameOrigin em
- * dynamic/worker/src/index.js (runScan): ao contrário de Authorization, o
- * Fetch spec não despe CF-Access-Client-Id/Secret em redirects
- * cross-origin. Sem isto, um 3xx para outra origem reenviaria as
- * credenciais da Access para esse destino. Sem Access Service Token
- * configurado, `opts.headers` nunca as contém, por isso o risco só existe
- * a partir do dia em que estes dois secrets forem definidos.
+ * pedido inicial — mesma lógica do fetchSameOrigin em check-invariants.mjs:
+ * ao contrário de Authorization, o Fetch spec não despe
+ * CF-Access-Client-Id/Secret em redirects cross-origin. Sem isto, um 3xx
+ * para outra origem reenviaria as credenciais da Access para esse destino.
+ * Sem Access Service Token configurado, `opts.headers` nunca as contém, por
+ * isso o risco só existe a partir do dia em que estes dois secrets forem
+ * definidos.
  */
 async function fetchSameOrigin(url, opts, maxRedirects = 5) {
   let current = new URL(url);
