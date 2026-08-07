@@ -2,17 +2,9 @@
 # vulnerabilidade que escolhemos NÃO barrar, e tem de trazer sempre uma
 # justificação e uma data de expiração (ignoreUntil) para forçar revisão.
 # Ligado ao workflow em .github/workflows/security.yml (--config).
-
-[[IgnoredVulns]]
-# Falso positivo do feed ossf/malicious-packages (origem: amazon-inspector).
-# O astro 7.1.0 é o release OFICIAL (withastro/astro): publicado por trusted
-# publishing OIDC do GitHub Actions, com provenance SLSA, e o sha do tarball
-# citado no advisory coincide exatamente com o tarball oficial no npm. As
-# alegadas "typosquat" (obug, piccolore, @astrojs/markdown-satteri) são
-# dependências legítimas do próprio monorepo do Astro. O advisory assenta na
-# premissa desatualizada de que o Astro estaria na linha v5.x.
-# Correção a caminho: https://github.com/ossf/malicious-packages/pull/1383
-# Remover esta entrada assim que o advisory for retirado do feed.
-id = "MAL-2026-10726"
-ignoreUntil = 2026-10-01
-reason = "Falso positivo em astro 7.1.0 (release oficial). Ver ossf/malicious-packages#1383."
+#
+# MAL-2026-10726 (falso positivo do feed ossf/malicious-packages para o
+# astro 7.1.0 — ver ossf/malicious-packages#1383) removido em 2026-08-07: o
+# osv-scanner passou a reportá-lo como "unused ignores" depois do astro
+# subir para 7.1.5 (o advisory já não bate certo com a versão instalada).
+# Sem entradas de momento.
