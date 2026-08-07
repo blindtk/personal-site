@@ -74,9 +74,8 @@ changes the tag's behavior enough to unblock the JS sanitizer bug above.
 Beyond the automated checks above, these third-party scanners run
 manually against production, not wired into CI — either because they have
 no API, the API is redundant with a check this repo already runs, or the
-free tier doesn't fit a recurring cron (tool-by-tool reasoning in
-[PR #155](https://github.com/blindtk/personal-site/pull/155)). Each link
-below is a live report for `danielmala.co`, not a static snapshot:
+free tier doesn't fit a recurring cron. Each link below is a live report
+for `danielmala.co`, not a static snapshot:
 
 | Scanner | What it checks | Report |
 | --- | --- | --- |
