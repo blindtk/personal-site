@@ -80,11 +80,11 @@ below is a live report for `danielmala.co`, not a static snapshot:
 
 | Scanner | What it checks | Report |
 | --- | --- | --- |
+| ImmuniWeb | Full website security test — HTTP security headers (including CSP directive-by-directive), GDPR/PCI DSS compliance signals, cookie privacy, external content and CMS/component fingerprinting, AI-crawler/bot-scraping protection (`robots.txt` + Cloudflare AI Crawl Control), and DNSSEC chain validation | [immuniweb.com](https://www.immuniweb.com/websec/danielmala.co/) |
 | Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
 | Security Headers | HTTP security headers | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
 | Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
 | Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
 | DNSViz | Independent DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
-| ImmuniWeb | Web/SSL security score | [immuniweb.com](https://www.immuniweb.com/cyberscore/danielmala.co/) |
 | Cloudflare Agent Readiness | AI-agent discoverability/legibility — see the `Link` header work in [PR #154](https://github.com/blindtk/personal-site/pull/154) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
 | MXToolbox | Ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |
