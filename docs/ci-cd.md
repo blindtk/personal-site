@@ -76,19 +76,15 @@ manually against production, not wired into CI — either because they have
 no API, the API is redundant with a check this repo already runs, or the
 free tier doesn't fit a recurring cron (tool-by-tool reasoning in
 [PR #155](https://github.com/blindtk/personal-site/pull/155)). Each link
-below is a live report for `danielmala.co`, not a static snapshot — the
-grade column is a point-in-time reading (last checked 2026-08-07) and
-will drift as the site or the tool's rubric changes; `—` means the tool
-doesn't produce a single comparable grade (categorical/diagnostic report,
-or genuinely ad-hoc):
+below is a live report for `danielmala.co`, not a static snapshot:
 
-| Scanner | What it checks | Grade | Report |
-| --- | --- | --- | --- |
-| ImmuniWeb | Full website security test — HTTP security headers (including CSP directive-by-directive), GDPR/PCI DSS compliance signals, cookie privacy, external content and CMS/component fingerprinting, AI-crawler/bot-scraping protection (`robots.txt` + Cloudflare AI Crawl Control), and DNSSEC chain validation | A | [immuniweb.com](https://www.immuniweb.com/websec/danielmala.co/) |
-| Qualys SSL Labs | TLS/cipher/certificate grade — an independent scorecard alongside `tls-check.yml`'s testssl.sh sweep above | A+ | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
-| Security Headers | HTTP security header grade (A+–F) — an independent scorecard alongside `headers.yml`'s exact-match check above | A+ | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
-| Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half | A+ | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
-| Hardenize | DNS/TLS/email configuration — same ground as `dns-check.yml` and `tls-check.yml` above, but as a continuously-monitored dashboard rather than a per-run check | — | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
-| DNSViz | DNSSEC chain validation and visualization, computed independently of `dns-check.yml`'s trust-chain check above | — | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
-| Cloudflare Agent Readiness | AI-agent/LLM discoverability — canonical/hreflang signals exposed via HTTP `Link` headers, for agents that skip HTML parsing | 36/100 (Level 2 — Bot-Aware) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
-| MXToolbox | Ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | — | [mxtoolbox.com](https://mxtoolbox.com/) |
+| Scanner | What it checks | Report |
+| --- | --- | --- |
+| ImmuniWeb | Full website security test — headers, CSP, cookies, GDPR/PCI DSS signals, CMS fingerprinting, AI-crawler blocking, DNSSEC | [immuniweb.com](https://www.immuniweb.com/websec/danielmala.co/) |
+| Qualys SSL Labs | TLS/cipher/certificate grade | [ssllabs.com/ssltest](https://www.ssllabs.com/ssltest/analyze.html?d=danielmala.co) |
+| Security Headers | HTTP security header grade (A+–F) | [securityheaders.com](https://securityheaders.com/?q=danielmala.co&followRedirects=on) |
+| Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
+| Hardenize | DNS/TLS/email configuration monitoring | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
+| DNSViz | DNSSEC chain validation and visualization | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
+| Cloudflare Agent Readiness | AI-agent/LLM discoverability — canonical/hreflang signals via HTTP `Link` headers | [isitagentready.com](https://isitagentready.com/danielmala.co) |
+| MXToolbox | Ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | [mxtoolbox.com](https://mxtoolbox.com/) |
