@@ -90,5 +90,5 @@ or genuinely ad-hoc):
 | Mozilla HTTP Observatory | Headers, cookies, redirects, cross-origin isolation — see `observatory-check.yml` above for the automated half | A+ | [developer.mozilla.org/observatory](https://developer.mozilla.org/en-US/observatory/analyze?host=danielmala.co) |
 | Hardenize | DNS/TLS/email configuration monitoring | — | [hardenize.com](https://www.hardenize.com/report/danielmala.co/1785606965) |
 | DNSViz | Independent DNSSEC chain validation and visualization | — | [dnsviz.net](https://dnsviz.net/d/danielmala.co/dnssec/) |
-| Cloudflare Agent Readiness | AI-agent/LLM discoverability — canonical/hreflang signals exposed via HTTP `Link` headers, for agents that skip HTML parsing | — | [isitagentready.com](https://isitagentready.com/danielmala.co) |
+| Cloudflare Agent Readiness | AI-agent/LLM discoverability — canonical/hreflang signals exposed via HTTP `Link` headers, for agents that skip HTML parsing | 36/100 (Level 2 — Bot-Aware) | [isitagentready.com](https://isitagentready.com/danielmala.co) |
 | MXToolbox | Ad-hoc DNS/email lookups (blacklists, SPF/DMARC syntax) | — | [mxtoolbox.com](https://mxtoolbox.com/) |
