@@ -527,28 +527,38 @@ export const ui = {
       identity: 'identidade',
       statsLabel: 'stats do site',
       location: 'Porto, Portugal',
-      bio: 'Planeio e opero segurança de redes em infraestrutura crítica — e construo as ferramentas que uso para o fazer. Foco em threat intelligence, forense digital e resposta a incidentes. Este site faz parte do trabalho: as ferramentas, o honeypot e o que a Cloudflare vê estão públicos.',
+      bio: 'Desenho e opero a arquitetura de segurança de infraestrutura crítica rodoviária. Em infraestrutura de transporte, uma falha de rede não é um incómodo: é um sistema parado e milhares de pessoas em terra. A maior parte do trabalho é privada — o que está aqui demonstra as práticas por trás dele.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '9+ anos em redes & segurança'],
-      // Credenciais: linha discreta ligada a /certificacoes/, com os nºs
-      // calculados em build a partir de content/certs.json (comprimento total
-      // e critério verified!==false — mesmo critério da página Certificações).
-      credentials: '{certsTotal} certificações · {certsVerified} verificáveis no Credly',
+      // Credenciais: linha discreta ligada a /certificacoes/, só a contagem
+      // verificável — o total sozinho ("30 certificações") só levanta a
+      // pergunta "e as outras?"; calculado em build a partir de
+      // content/certs.json (critério verified!==false, mesmo da página
+      // Certificações).
+      credentials: '{certsVerified} certificações verificáveis no Credly',
+      // Nomeia em vez de contar (ver comparação com o README do perfil
+      // GitHub) — a credencial mais forte (CCDL2, com badge) vem primeiro;
+      // NIS2 substitui SEC504/ATT&CK como diferenciador de setor, já que
+      // ambas continuam acessíveis via {awards} e o rodapé "Percurso".
       // {awards} = comprimento de content/awards.json — mesma lógica da
       // galeria de prémios na página Sobre.
-      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', '{awards} CTFs vencidos', 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', '{awards} CTFs vencidos', 'NIS2', 'ISO 27001'],
+      // Nomes de vendors/plataformas — o payload de palavras-chave que um
+      // recrutador pesquisa (Splunk, Entra ID, …), ausente dos chips acima.
+      stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
       // Stats do site: sinais estruturais (o que o site é/tem), não métricas
-      // pessoais — essas migraram para `credentials` e `chips` acima. {pages}
-      // é manual (ver comentário em HomePage.astro); {tools}/{toolsClient} vêm
+      // pessoais — essas migraram para `credentials` e `chips` acima.
+      // {ciLayers} = dict.evidence.pipeline.length (HomePage.astro), para
+      // nunca divergir da tabela de CI em Provas; {tools}/{toolsClient} vêm
       // de lib/tools.ts; {headers} é manual (lista em
       // dynamic/worker/src/lib/scan.js, fora do build estático); {decoys} e
       // {sigma} vêm de content/honeypot-attack.json e content/detections.json.
       statsStatic: [
-        { key: 'pages', n: '{pages}', d: 'páginas · cada uma em PT e EN', tone: 'green' },
+        { key: 'ciLayers', n: '{ciLayers}', d: 'camadas de CI · o build falha em qualquer uma', tone: 'green' },
         { key: 'tools', n: '{tools}', d: 'ferramentas · {toolsClient} no browser', tone: 'green' },
-        { key: 'headers', n: '{headers}', d: 'cabeçalhos de segurança verificados', tone: 'blue' },
+        { key: 'headers', n: '{headers}', d: 'cabeçalhos verificados em CI', tone: 'blue' },
         { key: 'decoys', n: '{decoys}', d: 'paths-isco → {sigma} regras Sigma', tone: 'amber' },
       ],
-      statsNoteBody: 'Números do build, não escritos à mão. Estado ao vivo em',
+      statsNoteBody: 'Números lidos do build — nenhum escolhido para ficar bem. Estado ao vivo em',
       statsNoteCta: 'Este site →',
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
@@ -1505,29 +1515,39 @@ export const ui = {
       identity: 'identity',
       statsLabel: 'site stats',
       location: 'Porto, Portugal',
-      bio: 'I plan and operate network security for critical infrastructure — and I build the tools I use to do it. Focused on threat intelligence, digital forensics, and incident response. This site is part of the work: the tools, the honeypot, and what Cloudflare sees are public.',
+      bio: 'Designing and operating the security architecture for critical road infrastructure. In transport infrastructure, a network failure isn’t an inconvenience — it’s a stopped system and thousands of people stranded. Most of the work is private; what’s here demonstrates the practices behind it.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '9+ years in networking & security'],
-      // Credentials: a discreet line linked to /certifications/, with the
-      // numbers computed at build from content/certs.json (total length and
-      // the verified!==false criterion — same as the Certifications page).
-      credentials: '{certsTotal} certifications · {certsVerified} verifiable on Credly',
+      // Credentials: a discreet line linked to /certifications/, only the
+      // verifiable count — the total alone ("30 certifications") just
+      // invites "what about the rest?"; computed at build from
+      // content/certs.json (verified!==false criterion, same as the
+      // Certifications page).
+      credentials: '{certsVerified} certifications verifiable on Credly',
+      // Names instead of counts (see comparison with the GitHub profile
+      // README) — the strongest credential (CCDL2, badge-verified) leads;
+      // NIS2 replaces SEC504/ATT&CK as the sector differentiator, since both
+      // stay reachable via {awards} and the "Path" footer group.
       // {awards} = length of content/awards.json — same logic as the awards
       // gallery on the About page.
-      chips: ['Fortinet NSE 4/5/6/7', 'SANS SEC504', '{awards} CTFs won', 'ISO 27001', 'MITRE ATT&CK'],
+      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', '{awards} CTFs won', 'NIS2', 'ISO 27001'],
+      // Vendor/platform names — the keyword payload a recruiter searches
+      // for (Splunk, Entra ID, …), missing from the chips above.
+      stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
       // Site stats: structural signals (what the site is/has), not personal
-      // metrics — those moved to `credentials` and `chips` above. {pages} is
-      // manual (see comment in HomePage.astro); {tools}/{toolsClient} come
-      // from lib/tools.ts; {headers} is manual (list lives in
+      // metrics — those moved to `credentials` and `chips` above.
+      // {ciLayers} = dict.evidence.pipeline.length (HomePage.astro), so it
+      // never drifts from the CI table on Evidence; {tools}/{toolsClient}
+      // come from lib/tools.ts; {headers} is manual (list lives in
       // dynamic/worker/src/lib/scan.js, outside the static build); {decoys}
       // and {sigma} come from content/honeypot-attack.json and
       // content/detections.json.
       statsStatic: [
-        { key: 'pages', n: '{pages}', d: 'pages · each in PT and EN', tone: 'green' },
+        { key: 'ciLayers', n: '{ciLayers}', d: 'CI layers · build fails on any one', tone: 'green' },
         { key: 'tools', n: '{tools}', d: 'tools · {toolsClient} in-browser', tone: 'green' },
-        { key: 'headers', n: '{headers}', d: 'security headers verified', tone: 'blue' },
+        { key: 'headers', n: '{headers}', d: 'headers verified in CI', tone: 'blue' },
         { key: 'decoys', n: '{decoys}', d: 'decoy paths → {sigma} Sigma rules', tone: 'amber' },
       ],
-      statsNoteBody: 'Numbers from the build, not hand-typed. Live status on',
+      statsNoteBody: 'Numbers read from the build — none picked to look good. Live status on',
       statsNoteCta: 'This site →',
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).

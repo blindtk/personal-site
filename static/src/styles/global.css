@@ -739,6 +739,17 @@ a.card:hover {
   white-space: nowrap;
 }
 
+/* Linha de vendors/plataformas, sob os chips de credenciais — payload de
+   palavras-chave discreto, não outro elemento de destaque. --muted (não
+   --faint): fica em texto real, não em decoração, e --faint falha AA. */
+.stack-line {
+  margin-top: 0.7rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
