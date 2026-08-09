@@ -40,11 +40,10 @@ const tools = [
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 
-// Certificações: nº de certs e de badges verificáveis vêm de certs.json
-// para nunca divergir da página Certificações — usados na linha de
-// credenciais do bloco de identidade, não no widget de stats do site.
+// Certificações: nº de badges verificáveis vem de certs.json para nunca
+// divergir da página Certificações — usado na linha de credenciais do
+// bloco de identidade, não no widget de stats do site.
 const certItems = certs.items as { verified?: boolean }[];
-const totalCerts = certItems.length;
 const verifiedBadges = certItems.filter((item) => item.verified !== false).length;
 
 // Stats do site: sinais estruturais (o que o site é/tem), não de consumo
@@ -57,23 +56,23 @@ const verifiedBadges = certItems.filter((item) => item.verified !== false).lengt
 const toolsClientCount = TOOLS.filter((tool) => tool.kind === 'client').length;
 const decoyCount = Object.keys(honeypotAttack.paths).length;
 const sigmaRuleCount = detections.rules.length;
-// Manual: contagem de rotas em routes.ts + rotas dinâmicas (ferramentas,
-// projetos, posts), por par PT/EN. Rever ao acrescentar rotas.
-const pageCount = 29;
 // Manual: lista de cabeçalhos pontuados em dynamic/worker/src/lib/scan.js
 // (fora do build estático — static/ não importa dynamic/). Rever os dois
 // lados juntos se a lista de scan.js mudar. Tem de bater certo com
 // .github/expected-headers.json (contrato da página Provas) e com a lista
 // em ui.ts (Segurança) — mesma fonte de verdade nas 3 páginas.
 const headerCount = 9;
+// dict.evidence.pipeline é a mesma tabela renderizada em Provas — usar o
+// comprimento em vez de um número manual evita que a stat divirja da tabela
+// que a prova.
+const ciLayersCount = dict.evidence.pipeline.length;
 const statValues: Record<string, string> = {
-  pages: String(pageCount),
+  ciLayers: String(ciLayersCount),
   tools: String(TOOLS.length),
   toolsClient: String(toolsClientCount),
   headers: String(headerCount),
   decoys: String(decoyCount),
   sigma: String(sigmaRuleCount),
-  certsTotal: String(totalCerts),
   certsVerified: String(verifiedBadges),
   // CTFs vencidos: mesmo comprimento de content/awards.json usado no chip
   // "{awards} CTFs vencidos" — para nunca divergir da galeria de prémios
@@ -85,8 +84,10 @@ const stats = dict.home.statsStatic.map((stat) => ({ ...stat, n: fill(stat.n), d
 const credentialsText = fill(dict.home.credentials);
 
 // Cada tile liga à página que prova o número — "não acredites, verifica".
+// ciLayers e headers apontam os dois para Provas: é lá que vivem a tabela
+// de CI e o contrato de cabeçalhos que provam cada um.
 const statLinks: Record<string, string> = {
-  pages: routes.siteOverview[lang],
+  ciLayers: routes.evidence[lang],
   tools: routes.tools[lang],
   headers: routes.evidence[lang],
   decoys: routes.honeypot[lang],
@@ -105,7 +106,6 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
     <section class="panel identity" aria-label={dict.home.identity}>
       <NetworkTopology />
       <div class="phead">
-        <span>&#47;&#47; {dict.home.identity}</span>
         <span>{dict.home.location}</span>
       </div>
       <h1>{SITE.name}</h1>
@@ -118,6 +118,7 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
       <div class="chip-row">
         {dict.home.chips.map((chip) => <span class="chip">{fill(chip)}</span>)}
       </div>
+      <p class="stack-line">{dict.home.stack}</p>
     </section>
 
     <section class="panel" aria-label={dict.home.statsLabel}>
