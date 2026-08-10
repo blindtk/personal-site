@@ -39,10 +39,20 @@ jobs:
         uses: github/codeql-action/init@5595ccaf912efad79be6eef63a5619ff05969be3 # v4.37.6
         with:
           languages: javascript-typescript
-          # security-extended só no cron semanal (mais queries, mais lento);
-          # no gate de PR/push fica-se pelo pack por omissão, para não
-          # atrasar o feedback do PR.
-          queries: ${{ github.event_name == 'schedule' && 'security-extended' || '' }}
+          # security-extended no push/schedule (onde os alertas ficam
+          # rastreados em Security → Code scanning); só no gate de PR é que
+          # fica-se pelo pack por omissão, para não atrasar o feedback do
+          # PR. Antes disto, um achado de precisão média (só no pack
+          # extended) alternava "fixed" no push e "reappeared" no cron
+          # semanal para o mesmo commit — flapping que corroía a confiança
+          # na lista de alertas.
+          #
+          # A condição tem de ser "!= pull_request && 'security-extended'",
+          # não o inverso: com "== pull_request && '' || 'security-extended'"
+          # o valor do meio ('') é falsy, o || cai sempre para a direita e
+          # TODOS os eventos (incluindo pull_request) ficavam com
+          # security-extended — o oposto do que era suposto.
+          queries: ${{ github.event_name != 'pull_request' && 'security-extended' || '' }}
 
       # JS/TypeScript não precisa de passo de build: o CodeQL extrai
       # diretamente do código-fonte.

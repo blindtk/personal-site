@@ -62,8 +62,36 @@ async function fetchSameOrigin(url, opts, maxRedirects = 5) {
   return fetch(current, { ...opts, redirect: 'manual' });
 }
 
+// Mesma allowlist de host do check-headers.mjs, aplicada aqui por
+// consistência: TARGET_URL só vem de workflow_dispatch manual (sem
+// DEPLOY_URL neste script — ver comentário no topo), mas os segredos só
+// devem sair para HTTPS e a origem de produção versionada, ou para um
+// preview do projeto Cloudflare Pages deste site (nunca qualquer
+// *.pages.dev — ver comentário completo em check-headers.mjs).
+const PAGES_PROJECT_HOST = 'personal-site-4fm.pages.dev';
+
+function isTrustedDeployUrl(url) {
+  if (url.protocol !== 'https:') return false;
+  if (cfg.url && !cfg.url.startsWith('SET-ME')) {
+    try {
+      if (url.origin === new URL(cfg.url).origin) return true;
+    } catch {
+      // cfg.url inválido — ignora, cai para o teste de preview abaixo
+    }
+  }
+  return url.hostname === PAGES_PROJECT_HOST || url.hostname.endsWith(`.${PAGES_PROJECT_HOST}`);
+}
+
+const targetUrl = new URL(target);
+const trustedHost = isTrustedDeployUrl(targetUrl);
+const sendAccessHeaders = trustedHost ? accessHeaders : {};
+const sendWafHeaders = trustedHost ? wafHeaders : {};
+if (!trustedHost && (accessHeaders['CF-Access-Client-Id'] || wafHeaders['x-ci-waf-token'])) {
+  console.log(`::warning::check-invariants: alvo (${targetUrl.origin}) fora da allowlist de produção/preview — segredos de Access/WAF NÃO enviados.`);
+}
+
 const UPSTREAM_TIMEOUT_MS = 8000;
-const headers = { 'user-agent': 'check-invariants (GitHub Actions; personal-site)', ...accessHeaders, ...wafHeaders };
+const headers = { 'user-agent': 'check-invariants (GitHub Actions; personal-site)', ...sendAccessHeaders, ...sendWafHeaders };
 
 async function checkJson(path) {
   const url = new URL(path, target);
