@@ -3,14 +3,22 @@
 // Alvo, por ordem de prioridade:
 //   1. TARGET_URL  — input manual do workflow_dispatch
 //   2. DEPLOY_URL  — environment_url do evento deployment_status (Pages)
-//   3. url         — valor versionado no expected-headers.json
+//   3. PROD_URL    — constante em scripts/lib/target.mjs (já não o `url` do
+//      expected-headers.json: o alvo dos pedidos, e a allowlist que autoriza
+//      enviar-lhes segredos, não devem sair ambos do mesmo ficheiro de dados
+//      — ver o comentário no topo desse módulo)
 import { readFileSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  configUrlMismatch,
+  isProductionConfigured,
+  isTrustedTarget,
+  resolveTarget,
+} from './lib/target.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
-const target = process.env.TARGET_URL || process.env.DEPLOY_URL || cfg.url;
 
 // Credenciais opcionais de um Cloudflare Access Service Token (ver
 // docs/cloudflare-deploy.md). Enquanto a Access continuar ativa à frente
@@ -94,7 +102,17 @@ async function readBodyPrefix(res, maxBytes = 4096) {
   return Buffer.concat(chunks.map((c) => Buffer.from(c)), received).subarray(0, maxBytes).toString('utf8');
 }
 
-if (!target || target.startsWith('SET-ME')) {
+// O `url` do JSON já não escolhe o alvo, mas tem de continuar de acordo com
+// a constante — divergirem em silêncio significaria verificar um domínio e
+// documentar outro.
+const mismatch = configUrlMismatch(cfg.url);
+if (mismatch) {
+  console.error(`::error::check-headers: ${mismatch}`);
+  process.exit(1);
+}
+
+const explicitTarget = process.env.TARGET_URL || process.env.DEPLOY_URL || '';
+if (!explicitTarget && !isProductionConfigured(cfg.url)) {
   // ::warning:: (não ::notice::) de propósito — achado da revisão de
   // segurança 2026-07 (ronda 4, N3): este caminho corria em produção há 13
   // dias seguidos, sempre verde, sem verificar nada (a Access bloqueia
@@ -117,34 +135,21 @@ if (!target || target.startsWith('SET-ME')) {
   process.exit(0);
 }
 
-// Aceita como alvo, para efeitos de enviar os segredos, só HTTPS e a
-// origem de produção (expected-headers.json) ou um preview do projeto
-// Cloudflare Pages deste site (docs/cloudflare-deploy.md §2:
-// personal-site-4fm.pages.dev) — nunca qualquer *.pages.dev, que é um
-// domínio partilhado onde qualquer conta gratuita pode registar um
-// projeto. DEPLOY_URL vem de deployment_status.environment_url — um
-// evento que normalmente só a integração GitHub do Cloudflare Pages cria,
-// mas que a API de Deployments permite a qualquer app/token com permissão
-// `deployments: write` no repo disparar com o environment_url que
-// entender. O fetchSameOrigin já impede que um *redirect* leve as
-// credenciais para fora da origem inicial (ver comentário acima); isto
-// cobre o alvo inicial, que não passava por validação nenhuma.
-const PAGES_PROJECT_HOST = 'personal-site-4fm.pages.dev';
-
-function isTrustedDeployUrl(url) {
-  if (url.protocol !== 'https:') return false;
-  if (cfg.url && !cfg.url.startsWith('SET-ME')) {
-    try {
-      if (url.origin === new URL(cfg.url).origin) return true;
-    } catch {
-      // cfg.url inválido — ignora, cai para o teste de preview abaixo
-    }
-  }
-  return url.hostname === PAGES_PROJECT_HOST || url.hostname.endsWith(`.${PAGES_PROJECT_HOST}`);
+// Os segredos só saem para HTTPS e para a origem de produção ou um preview
+// do projeto Cloudflare Pages deste site — allowlist em
+// scripts/lib/target.mjs (isTrustedTarget). Importa sobretudo para o
+// DEPLOY_URL, que vem de deployment_status.environment_url: um evento que
+// normalmente só a integração GitHub do Cloudflare Pages cria, mas que a API
+// de Deployments permite a qualquer app/token com `deployments: write` no
+// repo disparar com o environment_url que entender. O fetchSameOrigin acima
+// cobre os saltos de redirect; isto cobre o alvo inicial.
+const targetUrl = resolveTarget(process.env.TARGET_URL, process.env.DEPLOY_URL);
+if (targetUrl === null) {
+  console.error('::error::check-headers: alvo não é um URL válido (TARGET_URL/DEPLOY_URL).');
+  process.exit(1);
 }
-
-const targetUrl = new URL(target);
-const trustedHost = isTrustedDeployUrl(targetUrl);
+const target = targetUrl.href;
+const trustedHost = isTrustedTarget(targetUrl);
 const sendAccessHeaders = trustedHost ? accessHeaders : {};
 const sendWafHeaders = trustedHost ? wafHeaders : {};
 if (!trustedHost && (accessHeaders['CF-Access-Client-Id'] || wafHeaders['x-ci-waf-token'])) {

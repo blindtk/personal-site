@@ -8,18 +8,30 @@
 //
 // Alvo, mesmo padrão do check-headers.mjs:
 //   1. TARGET_URL — input manual do workflow_dispatch
-//   2. url        — valor versionado no expected-headers.json
+//   2. PROD_URL   — constante em scripts/lib/target.mjs (porquê em código e
+//      não no `url` do expected-headers.json: ver o topo desse módulo)
 // (sem DEPLOY_URL: este script não corre em deployment_status, só agendado
 // e à mão — o alvo é sempre a produção, nunca uma preview.)
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  configUrlMismatch,
+  isProductionConfigured,
+  isTrustedTarget,
+  resolveTarget,
+} from './lib/target.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
-const target = process.env.TARGET_URL || cfg.url;
 
-if (!target || target.startsWith('SET-ME')) {
+const mismatch = configUrlMismatch(cfg.url);
+if (mismatch) {
+  console.error(`::error::check-invariants: ${mismatch}`);
+  process.exit(1);
+}
+
+if (!process.env.TARGET_URL && !isProductionConfigured(cfg.url)) {
   // Mesma decisão do check-headers.mjs: enquanto a Access bloquear pedidos
   // não autenticados, não há nada real para verificar — um erro aqui
   // mascararia a Access com "produção está partida". ::warning:: (não
@@ -27,6 +39,13 @@ if (!target || target.startsWith('SET-ME')) {
   console.log('::warning::check-invariants: URL de produção por definir em .github/expected-headers.json — verificação IGNORADA (nada foi verificado nesta execução).');
   process.exit(0);
 }
+
+const targetUrl = resolveTarget(process.env.TARGET_URL);
+if (targetUrl === null) {
+  console.error('::error::check-invariants: alvo não é um URL válido (TARGET_URL).');
+  process.exit(1);
+}
+const target = targetUrl.href;
 
 const ACCESS_CLIENT_ID = process.env.ACCESS_CLIENT_ID || '';
 const ACCESS_CLIENT_SECRET = process.env.ACCESS_CLIENT_SECRET || '';
@@ -62,28 +81,12 @@ async function fetchSameOrigin(url, opts, maxRedirects = 5) {
   return fetch(current, { ...opts, redirect: 'manual' });
 }
 
-// Mesma allowlist de host do check-headers.mjs, aplicada aqui por
-// consistência: TARGET_URL só vem de workflow_dispatch manual (sem
+// Mesma allowlist do check-headers.mjs (scripts/lib/target.mjs), aplicada
+// aqui por consistência: TARGET_URL só vem de workflow_dispatch manual (sem
 // DEPLOY_URL neste script — ver comentário no topo), mas os segredos só
-// devem sair para HTTPS e a origem de produção versionada, ou para um
-// preview do projeto Cloudflare Pages deste site (nunca qualquer
-// *.pages.dev — ver comentário completo em check-headers.mjs).
-const PAGES_PROJECT_HOST = 'personal-site-4fm.pages.dev';
-
-function isTrustedDeployUrl(url) {
-  if (url.protocol !== 'https:') return false;
-  if (cfg.url && !cfg.url.startsWith('SET-ME')) {
-    try {
-      if (url.origin === new URL(cfg.url).origin) return true;
-    } catch {
-      // cfg.url inválido — ignora, cai para o teste de preview abaixo
-    }
-  }
-  return url.hostname === PAGES_PROJECT_HOST || url.hostname.endsWith(`.${PAGES_PROJECT_HOST}`);
-}
-
-const targetUrl = new URL(target);
-const trustedHost = isTrustedDeployUrl(targetUrl);
+// devem sair para HTTPS e a origem de produção, ou para um preview do
+// projeto Cloudflare Pages deste site (nunca qualquer *.pages.dev).
+const trustedHost = isTrustedTarget(targetUrl);
 const sendAccessHeaders = trustedHost ? accessHeaders : {};
 const sendWafHeaders = trustedHost ? wafHeaders : {};
 if (!trustedHost && (accessHeaders['CF-Access-Client-Id'] || wafHeaders['x-ci-waf-token'])) {

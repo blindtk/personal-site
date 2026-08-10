@@ -10,21 +10,33 @@
 //
 // Alvo, mesmo padrão do check-headers.mjs:
 //   1. TARGET_URL — input manual do workflow_dispatch
-//   2. url        — valor versionado em .github/expected-headers.json
+//   2. PROD_URL   — constante em scripts/lib/target.mjs (porquê em código e
+//      não no `url` do expected-headers.json: ver o topo desse módulo)
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { configUrlMismatch, isProductionConfigured, resolveTarget } from './lib/target.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
-const target = process.env.TARGET_URL || cfg.url;
 
-if (!target || target.startsWith('SET-ME')) {
+const mismatch = configUrlMismatch(cfg.url);
+if (mismatch) {
+  console.error(`::error::check-observatory: ${mismatch}`);
+  process.exit(1);
+}
+
+if (!process.env.TARGET_URL && !isProductionConfigured(cfg.url)) {
   console.log('::warning::check-observatory: URL de produção por definir em .github/expected-headers.json — verificação IGNORADA (nada foi verificado nesta execução).');
   process.exit(0);
 }
 
-const host = new URL(target).host;
+const targetUrl = resolveTarget(process.env.TARGET_URL);
+if (targetUrl === null) {
+  console.error('::error::check-observatory: alvo não é um URL válido (TARGET_URL).');
+  process.exit(1);
+}
+const host = targetUrl.host;
 const API_URL = `https://observatory-api.mdn.mozilla.net/api/v2/scan?host=${encodeURIComponent(host)}`;
 
 // Timeout evita bloquear o job durante horas se a API ficar pendurada — sem
