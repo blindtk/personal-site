@@ -36,6 +36,18 @@ postinstall in CI). The CSP is one static line in
 `static/public/_headers` — no hashes, because there's no inline
 `<script>`/`<style>` on the site.
 
+The checks that hit production (`check-headers.mjs`,
+`check-invariants.mjs`, `check-observatory.mjs`) take their target from a
+constant in code — `.github/scripts/lib/target.mjs` — not from the `url`
+field of `.github/expected-headers.json`. Those scripts attach secrets to
+that target (Cloudflare Access service token, WAF bypass header), so the
+allowlist deciding where secrets may go must not come from the same data
+file that picks the destination; the JSON's `url` is now only the "is
+production checkable yet" switch (`SET-ME` = skip) and is cross-checked
+against the constant, failing the job if the two disagree. This is also
+what CodeQL's `js/file-access-to-http` flagged: the fetch URL derived from
+a `readFileSync`.
+
 ## Cadence
 
 **SBOM/signature verification — weekly, not per-PR.** This cadence

@@ -1,90 +1,98 @@
-// Verifica que a produção serve os headers de segurança esperados
-// (.github/expected-headers.json) e falha se algum faltar ou regredir.
-// Alvo, por ordem de prioridade:
-//   1. TARGET_URL  — input manual do workflow_dispatch
-//   2. DEPLOY_URL  — environment_url do evento deployment_status (Pages)
-//   3. url         — valor versionado no expected-headers.json
+// Checks that production serves the expected security headers
+// (.github/expected-headers.json) and fails if any is missing or regressed.
+// Target, in order of priority:
+//   1. TARGET_URL  — manual workflow_dispatch input
+//   2. DEPLOY_URL  — environment_url of the deployment_status event (Pages)
+//   3. PROD_URL    — constant in scripts/lib/target.mjs (no longer the `url`
+//      from expected-headers.json: the request target, and the allowlist that
+//      authorises sending secrets to it, must not both come out of the same
+//      data file — see the comment at the top of that module)
 import { readFileSync, appendFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  configUrlMismatch,
+  isProductionConfigured,
+  isTrustedTarget,
+  resolveTarget,
+} from './lib/target.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
-const target = process.env.TARGET_URL || process.env.DEPLOY_URL || cfg.url;
 
-// Credenciais opcionais de um Cloudflare Access Service Token (ver
-// docs/cloudflare-deploy.md). Enquanto a Access continuar ativa à frente
-// do site, um pedido sem estas credenciais recebe a página de login em vez
-// da resposta real — daí `url` continuar SET-ME até uma das duas coisas
-// acontecer: a Access ser desligada no lançamento, OU estes dois secrets
-// serem configurados no repo (Settings → Secrets → Actions:
-// ACCESS_CLIENT_ID, ACCESS_CLIENT_SECRET — Service Token criado em
-// dash.cloudflare.com → Zero Trust → Access → Service Auth). Sem os
-// secrets, ambas ficam '' e o comportamento é idêntico ao anterior.
+// Optional credentials for a Cloudflare Access Service Token (see
+// docs/cloudflare-deploy.md). While Access stays enabled in front of the
+// site, a request without these credentials gets the login page instead of
+// the real response — hence `url` staying SET-ME until one of two things
+// happens: Access being disabled at launch, OR these two secrets being
+// configured in the repo (Settings → Secrets → Actions: ACCESS_CLIENT_ID,
+// ACCESS_CLIENT_SECRET — Service Token created at dash.cloudflare.com →
+// Zero Trust → Access → Service Auth). Without the secrets both are '' and
+// the behaviour is identical to before.
 const ACCESS_CLIENT_ID = process.env.ACCESS_CLIENT_ID || '';
 const ACCESS_CLIENT_SECRET = process.env.ACCESS_CLIENT_SECRET || '';
 const accessHeaders = ACCESS_CLIENT_ID && ACCESS_CLIENT_SECRET
   ? { 'CF-Access-Client-Id': ACCESS_CLIENT_ID, 'CF-Access-Client-Secret': ACCESS_CLIENT_SECRET }
   : {};
 
-// Segredo do bypass da regra WAF "CI headers check" (docs/cloudflare-
-// deploy.md §5, regra 2) — substitui o match por User-Agent
-// ("headers-check"), que era uma string pública documentada no próprio
-// repo: qualquer pedido de fora podia copiá-la e saltar a política de país
-// (regras 4/5), a única proteção real depois do lançamento. Um segredo
-// rodável fecha isso. Sem ele, o header não é enviado e o comportamento é
-// idêntico ao anterior (a regra WAF, uma vez migrada para verificar este
-// header, deixa de dar Skip — o pedido volta a cair na política de país,
-// exatamente como qualquer outro visitante).
+// Secret for the "CI headers check" WAF rule bypass (docs/cloudflare-
+// deploy.md §5, rule 2) — replaces the User-Agent match ("headers-check"),
+// which was a public string documented in the repo itself: any outside
+// request could copy it and skip the country policy (rules 4/5), the only
+// real protection after launch. A rotatable secret closes that. Without it
+// the header is not sent and the behaviour is identical to before (the WAF
+// rule, once migrated to check this header, stops issuing Skip — the
+// request falls back to the country policy, exactly like any other
+// visitor).
 const CI_WAF_TOKEN = process.env.CI_WAF_TOKEN || '';
 const wafHeaders = CI_WAF_TOKEN ? { 'x-ci-waf-token': CI_WAF_TOKEN } : {};
 
 /**
- * fetch() que segue redirects à mão, só enquanto ficam na MESMA origem do
- * pedido inicial — mesma lógica do fetchSameOrigin em check-invariants.mjs:
- * ao contrário de Authorization, o Fetch spec não despe
- * CF-Access-Client-Id/Secret em redirects cross-origin. Sem isto, um 3xx
- * para outra origem reenviaria as credenciais da Access para esse destino.
- * Sem Access Service Token configurado, `opts.headers` nunca as contém, por
- * isso o risco só existe a partir do dia em que estes dois secrets forem
- * definidos.
+ * fetch() that follows redirects by hand, only while they stay on the SAME
+ * origin as the initial request — same logic as fetchSameOrigin in
+ * check-invariants.mjs: unlike Authorization, the Fetch spec does not strip
+ * CF-Access-Client-Id/Secret on cross-origin redirects. Without this, a 3xx
+ * to another origin would resend the Access credentials to that
+ * destination. With no Access Service Token configured `opts.headers` never
+ * carries them, so the risk only exists from the day those two secrets are
+ * set.
  */
 async function fetchSameOrigin(url, opts, maxRedirects = 5) {
   let current = new URL(url);
   const originalOrigin = current.origin;
   for (let hop = 0; hop <= maxRedirects; hop++) {
-    // eslint-disable-next-line no-await-in-loop -- saltos são sequenciais (cada um depende do Location do anterior)
+    // eslint-disable-next-line no-await-in-loop -- hops are sequential (each depends on the previous Location)
     const res = await fetch(current, { ...opts, redirect: 'manual' });
     const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
     if (!location) return res;
     const next = new URL(location, current);
-    if (next.origin !== originalOrigin) return res; // não segue para fora da origem — credenciais da Access não vazam
+    if (next.origin !== originalOrigin) return res; // does not follow off-origin — Access credentials do not leak
     current = next;
   }
   return fetch(current, { ...opts, redirect: 'manual' });
 }
 
-// Neutraliza newlines/ANSI/control chars antes de imprimir dados vindos da
-// resposta HTTP (título, headers): sem isto, um valor forjado podia injetar
-// uma nova linha começada por `::` e o runner interpretava-a como comando de
-// workflow (::set-output::, ::add-mask::, …) em vez de texto de log.
+// Neutralises newlines/ANSI/control chars before printing data coming from
+// the HTTP response (title, headers): without this, a forged value could
+// inject a new line starting with `::` and the runner would read it as a
+// workflow command (::set-output::, ::add-mask::, …) instead of log text.
 function sanitizeForLog(value, maxLen = 200) {
   const str = String(value ?? 'null').slice(0, maxLen);
-  // eslint-disable-next-line no-control-regex -- remoção intencional de control chars/ANSI
+  // eslint-disable-next-line no-control-regex -- intentional removal of control chars/ANSI
   return str.replace(/[\x00-\x1f\x7f]/g, '?').replace(/::/g, ': :');
 }
 
-// Só os primeiros bytes bastam para extrair <title> — res.text() carregava a
-// resposta inteira para memória, e o alvo (produção, atrás de WAF/Access) é
-// controlado por terceiros na prática de uma página de bloqueio: um corpo
-// deliberadamente enorme atrasava o job ou esgotava memória do runner.
+// Only the first bytes are needed to extract <title> — res.text() loaded the
+// whole response into memory, and the target (production, behind WAF/Access)
+// is in practice third-party controlled for a block page: a deliberately
+// huge body would slow the job down or exhaust the runner's memory.
 async function readBodyPrefix(res, maxBytes = 4096) {
   const reader = res.body?.getReader();
   if (!reader) return '';
   const chunks = [];
   let received = 0;
   while (received < maxBytes) {
-    // eslint-disable-next-line no-await-in-loop -- leitura sequencial do mesmo stream
+    // eslint-disable-next-line no-await-in-loop -- sequential reads from the same stream
     const { done, value } = await reader.read();
     if (done) break;
     chunks.push(value);
@@ -94,70 +102,67 @@ async function readBodyPrefix(res, maxBytes = 4096) {
   return Buffer.concat(chunks.map((c) => Buffer.from(c)), received).subarray(0, maxBytes).toString('utf8');
 }
 
-if (!target || target.startsWith('SET-ME')) {
-  // ::warning:: (não ::notice::) de propósito — achado da revisão de
-  // segurança 2026-07 (ronda 4, N3): este caminho corria em produção há 13
-  // dias seguidos, sempre verde, sem verificar nada (a Access bloqueia
-  // qualquer pedido não autenticado — ver docs/cloudflare-deploy.md). Um
-  // ::notice:: não aparece na lista de anotações do run nem no resumo por
-  // omissão; um ::warning:: sim (triângulo amarelo, visível na lista de
-  // execuções). Não resolve a causa raiz (precisa de um Access Service
-  // Token para o CI, ou desligar a Access — decisão do dono do repo, ver
-  // docs/cloudflare-deploy.md), mas impede que o job continue a passar por
-  // "tudo bem" quando não verificou nada.
-  console.log('::warning::check-headers: URL de produção por definir em .github/expected-headers.json — verificação IGNORADA (nada foi verificado nesta execução).');
+// The JSON's `url` no longer picks the target, but it still has to agree
+// with the constant — silently diverging would mean checking one domain and
+// documenting another.
+const mismatch = configUrlMismatch(cfg.url);
+if (mismatch) {
+  console.error(`::error::check-headers: ${mismatch}`);
+  process.exit(1);
+}
+
+const explicitTarget = process.env.TARGET_URL || process.env.DEPLOY_URL || '';
+if (!explicitTarget && !isProductionConfigured(cfg.url)) {
+  // ::warning:: (not ::notice::) on purpose — finding from the 2026-07
+  // security review (round 4, N3): this path ran in production for 13 days
+  // straight, always green, checking nothing (Access blocks any
+  // unauthenticated request — see docs/cloudflare-deploy.md). A ::notice::
+  // shows up neither in the run's annotation list nor in the summary by
+  // default; a ::warning:: does (yellow triangle, visible in the run list).
+  // It does not fix the root cause (that needs an Access Service Token for
+  // CI, or disabling Access — repo owner's call, see
+  // docs/cloudflare-deploy.md), but it stops the job from continuing to
+  // pass as "all good" when it checked nothing.
+  console.log('::warning::check-headers: production URL not set in .github/expected-headers.json — check SKIPPED (nothing was verified in this run).');
   if (process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(
       process.env.GITHUB_STEP_SUMMARY,
-      '## ⚠️ check-headers: nada foi verificado\n\n' +
-        `\`url\` em \`.github/expected-headers.json\` continua \`SET-ME\` — este job saiu sem tocar em produção. ` +
-        'Ver docs/cloudflare-deploy.md (Access Service Token, ou desligar a Access no lançamento).\n',
+      '## ⚠️ check-headers: nothing was verified\n\n' +
+        `\`url\` in \`.github/expected-headers.json\` is still \`SET-ME\` — this job exited without touching production. ` +
+        'See docs/cloudflare-deploy.md (Access Service Token, or disabling Access at launch).\n',
     );
   }
   process.exit(0);
 }
 
-// Aceita como alvo, para efeitos de enviar os segredos, só HTTPS e a
-// origem de produção (expected-headers.json) ou um preview do projeto
-// Cloudflare Pages deste site (docs/cloudflare-deploy.md §2:
-// personal-site-4fm.pages.dev) — nunca qualquer *.pages.dev, que é um
-// domínio partilhado onde qualquer conta gratuita pode registar um
-// projeto. DEPLOY_URL vem de deployment_status.environment_url — um
-// evento que normalmente só a integração GitHub do Cloudflare Pages cria,
-// mas que a API de Deployments permite a qualquer app/token com permissão
-// `deployments: write` no repo disparar com o environment_url que
-// entender. O fetchSameOrigin já impede que um *redirect* leve as
-// credenciais para fora da origem inicial (ver comentário acima); isto
-// cobre o alvo inicial, que não passava por validação nenhuma.
-const PAGES_PROJECT_HOST = 'personal-site-4fm.pages.dev';
-
-function isTrustedDeployUrl(url) {
-  if (url.protocol !== 'https:') return false;
-  if (cfg.url && !cfg.url.startsWith('SET-ME')) {
-    try {
-      if (url.origin === new URL(cfg.url).origin) return true;
-    } catch {
-      // cfg.url inválido — ignora, cai para o teste de preview abaixo
-    }
-  }
-  return url.hostname === PAGES_PROJECT_HOST || url.hostname.endsWith(`.${PAGES_PROJECT_HOST}`);
+// Secrets only go out over HTTPS and to the production origin or a preview
+// of this site's Cloudflare Pages project — allowlist in
+// scripts/lib/target.mjs (isTrustedTarget). This matters mostly for
+// DEPLOY_URL, which comes from deployment_status.environment_url: an event
+// normally created only by Cloudflare Pages' GitHub integration, but which
+// the Deployments API lets any app/token with `deployments: write` on the
+// repo fire with whatever environment_url it likes. fetchSameOrigin above
+// covers the redirect hops; this covers the initial target.
+const targetUrl = resolveTarget(process.env.TARGET_URL, process.env.DEPLOY_URL);
+if (targetUrl === null) {
+  console.error('::error::check-headers: target is not a valid URL (TARGET_URL/DEPLOY_URL).');
+  process.exit(1);
 }
-
-const targetUrl = new URL(target);
-const trustedHost = isTrustedDeployUrl(targetUrl);
+const target = targetUrl.href;
+const trustedHost = isTrustedTarget(targetUrl);
 const sendAccessHeaders = trustedHost ? accessHeaders : {};
 const sendWafHeaders = trustedHost ? wafHeaders : {};
 if (!trustedHost && (accessHeaders['CF-Access-Client-Id'] || wafHeaders['x-ci-waf-token'])) {
-  console.log(`::warning::check-headers: alvo (${targetUrl.origin}) fora da allowlist de produção/preview — segredos de Access/WAF NÃO enviados.`);
+  console.log(`::warning::check-headers: target (${targetUrl.origin}) outside the production/preview allowlist — Access/WAF secrets NOT sent.`);
 }
 
-console.log(`A verificar ${target}${sendAccessHeaders['CF-Access-Client-Id'] ? ' (com Access Service Token)' : ''}${sendWafHeaders['x-ci-waf-token'] ? ' (com CI_WAF_TOKEN)' : ''}`);
+console.log(`Checking ${target}${sendAccessHeaders['CF-Access-Client-Id'] ? ' (with Access Service Token)' : ''}${sendWafHeaders['x-ci-waf-token'] ? ' (with CI_WAF_TOKEN)' : ''}`);
 const res = await fetchSameOrigin(target, {
   headers: { 'user-agent': 'headers-check (GitHub Actions; personal-site)', ...sendAccessHeaders, ...sendWafHeaders },
 });
 console.log(`HTTP ${res.status}`);
 if (!res.ok) {
-  console.error(`::error::check-headers: resposta ${res.status} de ${target}`);
+  console.error(`::error::check-headers: response ${res.status} from ${target}`);
   console.error(
     `cf-ray: ${sanitizeForLog(res.headers.get('cf-ray'))}, ` +
       `cf-mitigated: ${sanitizeForLog(res.headers.get('cf-mitigated'))}, ` +
@@ -165,7 +170,7 @@ if (!res.ok) {
   );
   const bodyPrefix = await readBodyPrefix(res);
   const title = /<title>([^<]*)<\/title>/i.exec(bodyPrefix)?.[1];
-  if (title) console.error(`título da resposta: ${sanitizeForLog(title)}`);
+  if (title) console.error(`response title: ${sanitizeForLog(title)}`);
   process.exit(1);
 }
 
@@ -173,13 +178,13 @@ let failures = 0;
 for (const [name, required] of Object.entries(cfg.headers)) {
   const value = res.headers.get(name);
   if (value === null) {
-    console.error(`::error::Header em falta: ${name}`);
+    console.error(`::error::Missing header: ${name}`);
     failures += 1;
     continue;
   }
   const missing = required.filter((part) => !value.toLowerCase().includes(part.toLowerCase()));
   if (missing.length > 0) {
-    console.error(`::error::Header ${name} regrediu — falta ${missing.map((m) => JSON.stringify(m)).join(', ')} (valor atual: ${value})`);
+    console.error(`::error::Header ${name} regressed — missing ${missing.map((m) => JSON.stringify(m)).join(', ')} (current value: ${value})`);
     failures += 1;
   } else {
     console.log(`ok  ${name}: ${value}`);
@@ -187,7 +192,7 @@ for (const [name, required] of Object.entries(cfg.headers)) {
 }
 
 if (failures > 0) {
-  console.error(`::error::${failures} header(s) em falta ou regredidos.`);
+  console.error(`::error::${failures} header(s) missing or regressed.`);
   process.exit(1);
 }
-console.log('Todos os headers esperados presentes.');
+console.log('All expected headers present.');
