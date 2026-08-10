@@ -46,7 +46,13 @@ jobs:
           # extended) alternava "fixed" no push e "reappeared" no cron
           # semanal para o mesmo commit — flapping que corroía a confiança
           # na lista de alertas.
-          queries: ${{ github.event_name == 'pull_request' && '' || 'security-extended' }}
+          #
+          # A condição tem de ser "!= pull_request && 'security-extended'",
+          # não o inverso: com "== pull_request && '' || 'security-extended'"
+          # o valor do meio ('') é falsy, o || cai sempre para a direita e
+          # TODOS os eventos (incluindo pull_request) ficavam com
+          # security-extended — o oposto do que era suposto.
+          queries: ${{ github.event_name != 'pull_request' && 'security-extended' || '' }}
 
       # JS/TypeScript não precisa de passo de build: o CodeQL extrai
       # diretamente do código-fonte.

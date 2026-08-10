@@ -117,32 +117,38 @@ if (!target || target.startsWith('SET-ME')) {
   process.exit(0);
 }
 
-// Aceita como alvo, para efeitos de enviar os segredos, só a origem de
-// produção (expected-headers.json) ou um preview do Cloudflare Pages
-// (*.pages.dev). DEPLOY_URL vem de deployment_status.environment_url — um
+// Aceita como alvo, para efeitos de enviar os segredos, só HTTPS e a
+// origem de produção (expected-headers.json) ou um preview do projeto
+// Cloudflare Pages deste site (docs/cloudflare-deploy.md §2:
+// personal-site-4fm.pages.dev) — nunca qualquer *.pages.dev, que é um
+// domínio partilhado onde qualquer conta gratuita pode registar um
+// projeto. DEPLOY_URL vem de deployment_status.environment_url — um
 // evento que normalmente só a integração GitHub do Cloudflare Pages cria,
 // mas que a API de Deployments permite a qualquer app/token com permissão
 // `deployments: write` no repo disparar com o environment_url que
 // entender. O fetchSameOrigin já impede que um *redirect* leve as
 // credenciais para fora da origem inicial (ver comentário acima); isto
 // cobre o alvo inicial, que não passava por validação nenhuma.
-function isTrustedDeployHost(hostname) {
+const PAGES_PROJECT_HOST = 'personal-site-4fm.pages.dev';
+
+function isTrustedDeployUrl(url) {
+  if (url.protocol !== 'https:') return false;
   if (cfg.url && !cfg.url.startsWith('SET-ME')) {
     try {
-      if (hostname === new URL(cfg.url).hostname) return true;
+      if (url.origin === new URL(cfg.url).origin) return true;
     } catch {
       // cfg.url inválido — ignora, cai para o teste de preview abaixo
     }
   }
-  return /\.pages\.dev$/i.test(hostname);
+  return url.hostname === PAGES_PROJECT_HOST || url.hostname.endsWith(`.${PAGES_PROJECT_HOST}`);
 }
 
-const targetHost = new URL(target).hostname;
-const trustedHost = isTrustedDeployHost(targetHost);
+const targetUrl = new URL(target);
+const trustedHost = isTrustedDeployUrl(targetUrl);
 const sendAccessHeaders = trustedHost ? accessHeaders : {};
 const sendWafHeaders = trustedHost ? wafHeaders : {};
 if (!trustedHost && (accessHeaders['CF-Access-Client-Id'] || wafHeaders['x-ci-waf-token'])) {
-  console.log(`::warning::check-headers: alvo (${targetHost}) fora da allowlist de produção/preview — segredos de Access/WAF NÃO enviados.`);
+  console.log(`::warning::check-headers: alvo (${targetUrl.origin}) fora da allowlist de produção/preview — segredos de Access/WAF NÃO enviados.`);
 }
 
 console.log(`A verificar ${target}${sendAccessHeaders['CF-Access-Client-Id'] ? ' (com Access Service Token)' : ''}${sendWafHeaders['x-ci-waf-token'] ? ' (com CI_WAF_TOKEN)' : ''}`);
