@@ -462,8 +462,24 @@ test('isPublicIp: rejeita gamas IPv6 privadas/reservadas/documentação', () => 
   assert.equal(isPublicIp('fc00::1'), false); // ULA
   assert.equal(isPublicIp('fd12:3456:789a::1'), false); // ULA (dentro de fc00::/7)
   assert.equal(isPublicIp('ff02::1'), false); // multicast
-  assert.equal(isPublicIp('2001:db8::1'), false); // documentação
+  assert.equal(isPublicIp('2001:db8::1'), false); // documentação (RFC 3849)
+  assert.equal(isPublicIp('3fff::1'), false); // documentação (RFC 9637, 2024)
+  assert.equal(isPublicIp('fec0::1'), false); // site-local descontinuado (RFC 3879)
   assert.equal(isPublicIp('::ffff:192.168.1.1'), false); // IPv4 mapeado, privado
+});
+
+test('isPublicIp: rejeita IPv6 fora do unicast global (2000::/3) mesmo sem exclusão explícita', () => {
+  // Achado de revisão: uma lista de exclusões deixava passar qualquer
+  // gama nunca alocada pela IANA (não está em nenhuma exclusão, mas
+  // também não está atribuída a tráfego público). A regra correta é um
+  // allow-list de 2000::/3, não uma lista de bloqueio.
+  assert.equal(isPublicIp('4000::1'), false);
+  assert.equal(isPublicIp('8000::1'), false);
+  // NAT64 (RFC 6052): tráfego real de tradução, mas o prefixo em si não
+  // está em 2000::/3 — decisão deliberada de o tratar como não-público
+  // (ver comentário em ipguard.js), documentada aqui para não regredir
+  // silenciosamente para "aceitar" numa refactor futura.
+  assert.equal(isPublicIp('64:ff9b::c000:0201'), false); // 192.0.2.1 via NAT64
 });
 
 test('isPublicIp: aceita IPv6 público real', () => {
@@ -502,6 +518,37 @@ test('pruneExpiredIps: remove só quem passou a janela; devolve lista nova', () 
   assert.ok('expirado' in list, 'pruneExpiredIps não deve mutar a lista recebida');
 });
 
+test('pruneExpiredIps: fronteira exata da janela — mantém no limite, remove um ms acima', () => {
+  const now = 100 * 86400_000;
+  const maxAgeMs = 30 * 86400_000;
+  const list = {
+    'no-limite': { lastSeen: now - maxAgeMs, count: 1, country: 'PT', asn: 1, techniques: [] },
+    'passou-1ms': { lastSeen: now - maxAgeMs - 1, count: 1, country: 'PT', asn: 1, techniques: [] },
+  };
+  const { list: pruned, prunedCount } = pruneExpiredIps(list, { now, maxAgeMs });
+  assert.equal(prunedCount, 1);
+  assert.ok('no-limite' in pruned, 'exatamente na janela ainda não expirou (> estrito, não >=)');
+  assert.ok(!('passou-1ms' in pruned));
+});
+
+test('pruneExpiredIps: entrada malformada (sem lastSeen) trata-se como já expirada; lista vazia/undefined não rebenta', () => {
+  const now = 100 * 86400_000;
+  const maxAgeMs = 30 * 86400_000;
+  const { list: pruned, prunedCount } = pruneExpiredIps({ semData: { count: 1 } }, { now, maxAgeMs });
+  assert.equal(prunedCount, 1); // lastSeen ausente → 0 → "now - 0" sempre > maxAgeMs aqui
+  assert.equal(Object.keys(pruned).length, 0);
+
+  assert.deepEqual(pruneExpiredIps(undefined, { now, maxAgeMs }), { list: {}, prunedCount: 0 });
+  assert.deepEqual(pruneExpiredIps({}, { now, maxAgeMs }), { list: {}, prunedCount: 0 });
+});
+
+test('emptyIpList: devolve objeto vazio novo a cada chamada', () => {
+  const a = emptyIpList();
+  const b = emptyIpList();
+  assert.deepEqual(a, {});
+  assert.notEqual(a, b, 'não deve devolver a mesma referência partilhada');
+});
+
 test('ipThreatList: forma pública ordenada por lastSeen (mais recente primeiro), com limite', () => {
   const list = {
     a: { firstSeen: 1, lastSeen: 100, count: 2, country: 'US', asn: 1, techniques: ['T1595'] },
@@ -527,6 +574,7 @@ function fakeKV() {
       return type === 'json' ? JSON.parse(v) : v;
     },
     async put(key, value) { store.set(key, value); },
+    async delete(key) { store.delete(key); },
   };
 }
 
@@ -550,6 +598,48 @@ async function runFetch(request, env) {
   await Promise.allSettled(tasks); // deixa o recordHoneypot em background terminar
   return res;
 }
+
+async function runScheduled(env) {
+  const tasks = [];
+  const ctx = { waitUntil: (p) => tasks.push(p) };
+  await worker.scheduled({}, env, ctx);
+  await Promise.allSettled(tasks);
+}
+
+test('scheduled: poda de iplist invalida cache:threatintel antes de a reaquecer (achado de revisão)', async () => {
+  const env = { KV: fakeKV() };
+  const now = Date.now();
+  env.KV.store.set('iplist', JSON.stringify({
+    fresco: { firstSeen: now, lastSeen: now, count: 1, country: 'PT', asn: 1, techniques: [] },
+    expirado: {
+      firstSeen: now - 40 * 86400_000,
+      lastSeen: now - 31 * 86400_000, // > IP_RETENTION_MS (30 dias)
+      count: 1,
+      country: 'RU',
+      asn: 2,
+      techniques: [],
+    },
+  }));
+  // Cache de threat-intel ainda "fresca" (dentro das 6h), com o IP
+  // expirado lá dentro — é exatamente o que uma poda concorrente sem
+  // invalidação deixava escapar até 6h a mais do que a retenção promete.
+  env.KV.store.set('cache:threatintel', JSON.stringify({
+    data: { ips: [{ ip: 'expirado-fake' }] },
+    exp: now + 3 * 3600_000,
+  }));
+
+  await runScheduled(env);
+
+  const ipList = JSON.parse(env.KV.store.get('iplist'));
+  assert.ok('fresco' in ipList);
+  assert.ok(!('expirado' in ipList));
+
+  // A cache foi invalidada e reconstruída (não continua a servir o valor
+  // antigo com o IP expirado) — o novo `ips` reflete a lista já podada.
+  const rebuilt = JSON.parse(env.KV.store.get('cache:threatintel'));
+  const ipsInCache = (rebuilt.data.ips ?? []).map((r) => r.ip);
+  assert.ok(!ipsInCache.includes('expirado-fake'));
+});
 
 // ATUALIZADO (ADR 0020, docs/adr/0020-honeypot-public-ip.md): o honeypot
 // passou a publicar o IP de origem — decisão explícita do dono do repo,

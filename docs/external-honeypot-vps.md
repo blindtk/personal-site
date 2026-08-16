@@ -84,10 +84,14 @@ session.
 
 ## 3. Public threat-intel feed
 
-Publishing IPs here is a deliberate, scoped decision (ADR 0019) —
-different from the main honeypot, where it would contradict an already
-tested and published guarantee. It's established practice for honeypot
-operators (Shodan honeypot feeds, independent researcher-run blocklists).
+Publishing IPs here is a deliberate, scoped decision (ADR 0019). It's
+established practice for honeypot operators (Shodan honeypot feeds,
+independent researcher-run blocklists). **Note:** the main honeypot's
+decoy-path events now publish IPs too, by a later, separate decision
+(ADR 0020) — the two aren't in tension, but this project's design
+predates that decision and was written when publishing IPs was still
+something only this project did; see ADR 0020 and §3's "Cross-honeypot
+correlation" below for the current state of both.
 
 **Published per IP:**
 - IP address (the point of the list — without it, it's not usable)
@@ -209,9 +213,10 @@ reads `danielmala.co`'s public IP-indexed honeypot data (same one-way
 read the rest of this document already assumes: this project consumes
 from the Worker's public API, never writes to it) and flags matches on
 its own dashboard/feed. Retention differs between the two — this
-project's entries expire after 60–90 days, the main honeypot's after
-30–45 (ADR 0020's more conservative window, given HTTP-scanning botnets'
-higher odds of running on compromised residential/IoT devices) — so a
+project's entries expire after 60–90 days, the main honeypot's after a
+fixed 30 (ADR 0020's more conservative window, given HTTP-scanning
+botnets' higher odds of running on compromised residential/IoT devices) —
+so a
 match found today may no longer be confirmable in three months; that's
 an accepted limitation of keeping two independently-tuned retention
 policies rather than a shared one.
@@ -253,11 +258,15 @@ doesn't change register for that.
 
 Minimum content:
 - what it is and why it exists (research, not protecting the main site);
-- the data boundary, stated without ambiguity: **this project publishes
-  IPs by design; the honeypot on `danielmala.co` (Perimeter/Honeypot
-  pages) stays zero-IP, and that doesn't change** — the single most
-  important sentence on the page, so a reader doesn't generalize one
-  project's policy onto the other;
+- the data boundary, stated accurately — **as of ADR 0020, both this
+  project and `danielmala.co`'s own honeypot publish IPs, on different
+  retention windows (60–90 days here, 30 there) and for different
+  reasons (a dedicated research asset here; cross-honeypot correlation
+  there).** The main site's Cloudflare Status/firewall panel is the one
+  that stays zero-IP (ADR 0004, whole-zone traffic including every
+  legitimate visitor) — that's the actual boundary worth stating clearly
+  on the page, not "the other honeypot never publishes IPs," which would
+  now be false;
 - a link to the feed at `intel.danielmala.co`, whose report includes
   the ATT&CK mapping described in §3 — not just the IP list;
 - a note on the VPS's disposable nature (Oracle Free) and why.

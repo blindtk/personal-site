@@ -177,15 +177,22 @@ async function recordHoneypot(env, request, path, now) {
  * Poda entradas de `iplist` sem nova deteção há mais de IP_RETENTION_MS
  * (ADR 0020). Só escreve no KV quando algo foi mesmo removido — mesmo
  * princípio de `snapshotFirewall`/`cached()`: não reescrever o que não
- * mudou.
+ * mudou. Quando remove alguma coisa, invalida também `cache:threatintel`
+ * (guarda `ips` por 6h) — sem isto, um IP podado continuava a ser servido
+ * pela cache até 6h a mais do que a retenção promete (achado de revisão).
+ * `env.KV.delete` é idempotente sobre uma chave já ausente, por isso não
+ * precisa de verificar se a cache existe primeiro.
  */
 async function pruneIpList(env, now) {
   const ipList = await getJSON(env, 'iplist', emptyIpList());
   const { list, prunedCount } = pruneExpiredIps(ipList, { now, maxAgeMs: IP_RETENTION_MS });
   if (prunedCount === 0) return;
-  await env.KV.put('iplist', JSON.stringify(list), {
-    expirationTtl: Math.ceil((IP_RETENTION_MS * 2) / 1000),
-  });
+  await Promise.all([
+    env.KV.put('iplist', JSON.stringify(list), {
+      expirationTtl: Math.ceil((IP_RETENTION_MS * 2) / 1000),
+    }),
+    env.KV.delete('cache:threatintel'),
+  ]);
 }
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
@@ -697,40 +704,50 @@ export default {
   // honeypot é on-read, por isso não precisa de cron.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
-      Promise.all([
-        cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
-        cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
-        // Estado da Cloudflare + snapshot diário da firewall (acumula 7d). O
-        // snapshot vive dentro do producer do `cached()` — corre só quando o
-        // cfstats É DE FACTO REFRESCADO (~4×/dia, TTL 6h), não em cada um dos
-        // 48 ticks do cron: como `cached()` devolve o mesmo valor em cache
-        // nos ticks intermédios, fotografar nesses ticks só reescrevia a
-        // mesma coisa em KV sem qualquer ganho de frescura (o dado só muda
-        // quando o próprio fetchCfStats corre).
-        cached(env, ctx, 'cache:cfstats', 6 * 3600, async () => {
-          const stats = await fetchCfStats(env);
-          await snapshotFirewall(env, stats, Date.now()).catch(() => {});
-          return stats;
-        }).catch(() => {}),
-        // Threat Intel é caro de ler (168 buckets horários) — aquece-se aqui
-        // para as visitas caírem sempre em cache. TTL 6h (ver comentário na
-        // rota /api/threat-intel) para não repetir o fan-out em todos os
-        // ticks do cron.
-        cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
-          const now = Date.now();
-          const [buckets, firewall7d, ipList] = await Promise.all([
-            readThreatBuckets(env, now),
-            readFirewall7d(env, now),
-            getJSON(env, 'iplist', {}),
-          ]);
-          return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
-        }).catch(() => {}),
+      (async () => {
         // Poda da lista de IPs do honeypot (ADR 0020) — retenção de
         // IP_RETENTION_MS, aplicada aqui e não no caminho de escrita
         // (recordHoneypot) para não pagar essa leitura/escrita extra em
         // cada evento; o cron já corre a cada 30 min de qualquer forma.
-        pruneIpList(env, Date.now()).catch(() => {}),
-      ]),
+        // AGUARDADA antes do resto (não dentro do Promise.all abaixo): a
+        // cache de threat-intel guarda `ips` por 6h, e se corresse em
+        // paralelo com o aquecimento dessa cache, uma poda que remove
+        // entradas podia perder a corrida contra um refresh que ainda lê
+        // o `iplist` de antes da poda — um IP expirado ficava a ser
+        // servido pela cache até 6h a mais do que a retenção promete.
+        // Sequenciar as duas fecha essa janela.
+        await pruneIpList(env, Date.now()).catch(() => {});
+
+        await Promise.all([
+          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
+          cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
+          // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
+          // O snapshot vive dentro do producer do `cached()` — corre só
+          // quando o cfstats É DE FACTO REFRESCADO (~4×/dia, TTL 6h), não em
+          // cada um dos 48 ticks do cron: como `cached()` devolve o mesmo
+          // valor em cache nos ticks intermédios, fotografar nesses ticks só
+          // reescrevia a mesma coisa em KV sem qualquer ganho de frescura (o
+          // dado só muda quando o próprio fetchCfStats corre).
+          cached(env, ctx, 'cache:cfstats', 6 * 3600, async () => {
+            const stats = await fetchCfStats(env);
+            await snapshotFirewall(env, stats, Date.now()).catch(() => {});
+            return stats;
+          }).catch(() => {}),
+          // Threat Intel é caro de ler (168 buckets horários) — aquece-se
+          // aqui para as visitas caírem sempre em cache. TTL 6h (ver
+          // comentário na rota /api/threat-intel) para não repetir o
+          // fan-out em todos os ticks do cron.
+          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
+            const now = Date.now();
+            const [buckets, firewall7d, ipList] = await Promise.all([
+              readThreatBuckets(env, now),
+              readFirewall7d(env, now),
+              getJSON(env, 'iplist', {}),
+            ]);
+            return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
+          }).catch(() => {}),
+        ]);
+      })(),
     );
   },
 };

@@ -4,18 +4,29 @@
 
 ## Context
 
-The site's own honeypot (`dynamic/worker/`, ADR 0004, ADR 0007) is
-deliberately zero-PII and, since ADR 0007, sits behind a Managed
-Challenge on all five decoy paths — a trade of dataset breadth for a
-security guarantee, accepted on purpose. The consequence, also accepted:
-it observes mostly whoever solves an interactive challenge from Portugal,
-not the indiscriminate mass scanning that dominates the Internet
-(`docs/backlog.md`, item 3, has the fuller critique).
+The site's own honeypot (`dynamic/worker/`, ADR 0004, ADR 0007) was, at
+the time this decision was made, deliberately zero-PII, and, since
+ADR 0007, sits behind a Managed Challenge on all five decoy paths — a
+trade of dataset breadth for a security guarantee, accepted on purpose.
+The consequence, also accepted: it observes mostly whoever solves an
+interactive challenge from Portugal, not the indiscriminate mass
+scanning that dominates the Internet (`docs/backlog.md`, item 3, has the
+fuller critique).
 
 The repo owner wants a second, different asset: a real interaction
 honeypot (Cowrie, SSH/Telnet) plus an HTTP tarpit, run on hardware outside
 Cloudflare, with attacker IPs published as a threat-intel feed —
-something the main site's zero-PII guarantee structurally cannot do.
+something the main honeypot's *then*-zero-PII guarantee structurally
+couldn't do. **That premise changed mid-discussion:** the repo owner
+went on to decide the main honeypot's own decoy-path events should also
+record and publish the source IP, for cross-honeypot correlation — see
+[ADR 0020](0020-honeypot-public-ip.md), decided and implemented after
+this one. The reasoning above is left as it stood when this ADR was
+written; it's still what motivated a *separate* asset (a materially
+different environment, SSH/Telnet rather than HTTP, its own retention
+policy) — it just no longer describes the main honeypot as zero-IP in the
+present tense. The Cloudflare Status/firewall panel (whole-zone traffic,
+not just the honeypot) remains zero-IP, unaffected by ADR 0020.
 
 Reference implementation: [ajcyberdefense/cowrie-honeypot](https://github.com/ajcyberdefense/cowrie-honeypot)
 (Cowrie 3.x, Ubuntu, Oracle Cloud Always Free, static dashboard published

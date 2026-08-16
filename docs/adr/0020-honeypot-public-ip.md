@@ -1,6 +1,7 @@
 # ADR 0020 — Honeypot events record and publish the source IP, for cross-honeypot correlation
 
-**Status:** accepted, not yet implemented.
+**Status:** accepted and implemented (`dynamic/worker/src/lib/ipguard.js`,
+`dynamic/worker/src/lib/ipthreat.js`, `recordHoneypot` in `src/index.js`).
 
 ## Context
 
@@ -33,8 +34,9 @@ with first/last-seen and a sighting count, the same shape as the VPS's
 threat list (ADR 0019 / `docs/external-honeypot-vps.md` §3), so the two
 can be compared directly. Same three controls, applied here too:
 
-1. **Expiry.** Entries age out after a period without a repeat sighting.
-   **Shorter than the VPS's 60–90 days: 30–45 days here.** Deliberately
+1. **Expiry.** Entries age out after a period without a repeat sighting —
+   **30 days** (`IP_RETENTION_MS`, `src/index.js`), swept by the existing
+   `scheduled()` cron. Shorter than the VPS's 60–90 days, and deliberately
    more conservative — HTTP-scanning botnets (the traffic hitting
    `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config`)
    are more likely than SSH brute-forcers to run on compromised

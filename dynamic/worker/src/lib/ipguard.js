@@ -43,19 +43,6 @@ function isPublicIpv4(ip) {
   });
 }
 
-// [rede, tamanho do prefixo] — gamas IPv6 privadas/reservadas/bogon.
-// 64:ff9b::/96 (NAT64) fica de fora de propósito: é tráfego real de
-// tradução na Internet pública, não uma gama privada.
-const IPV6_RESERVED = [
-  ['::', 128], // não especificado
-  ['::1', 128], // loopback
-  ['100::', 64], // discard-only (RFC 6666)
-  ['2001:db8::', 32], // documentação
-  ['fc00::', 7], // unique local address (ULA)
-  ['fe80::', 10], // link-local
-  ['ff00::', 8], // multicast
-];
-
 /** Expande um endereço IPv6 (com ou sem "::") para um BigInt de 128 bits, ou null se inválido. */
 function parseIpv6(ip) {
   if (typeof ip !== 'string' || !/^[0-9a-fA-F:]+$/.test(ip)) return null;
@@ -80,19 +67,42 @@ function parseIpv6(ip) {
   return value;
 }
 
+function matchesIpv6Range(value, net, prefix) {
+  const netValue = parseIpv6(net);
+  if (netValue === null) return false;
+  const shift = 128n - BigInt(prefix);
+  const mask = prefix === 0 ? 0n : ((1n << 128n) - 1n) ^ ((1n << shift) - 1n);
+  return (value & mask) === (netValue & mask);
+}
+
+// IPv6 não se valida por exclusão como o IPv4: a maior parte do espaço de
+// endereços nem sequer está alocada — é reservada pela IANA para o
+// futuro (nem "privada" no sentido do RFC 1918, nem routável hoje). Uma
+// lista de exclusões deixava passar qualquer coisa fora dela, incluindo
+// gamas nunca alocadas (ex.: 4000::1) — achado real de revisão. A regra
+// certa é a oposta: só 2000::/3 (unicast global, a única gama alocada
+// para tráfego público) conta como público; dentro dela excluem-se as
+// duas gamas de documentação. ULA (fc00::/7), link-local (fe80::/10),
+// multicast (ff00::/8), loopback/unspecified e o antigo site-local
+// (fec0::/10, descontinuado) ficam de fora automaticamente, por não
+// caírem em 2000::/3 — não precisam de exclusão explícita.
+const IPV6_DOC_RANGES = [
+  ['2001:db8::', 32], // RFC 3849
+  ['3fff::', 20], // RFC 9637 (2024) — expande a gama de documentação
+];
+
 function isPublicIpv6(ip) {
   // IPv4 mapeado em IPv6 (::ffff:a.b.c.d) — a decisão segue o IPv4 embutido.
+  // NAT64 (64:ff9b::/96) fica de fora desta exceção, de propósito: embora
+  // carregue tráfego real de tradução, o prefixo em si não está em
+  // 2000::/3 — mais simples e mais correto tratá-lo como qualquer outro
+  // endereço fora do unicast global do que abrir uma segunda exceção.
   const mapped = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i.exec(ip);
   if (mapped) return isPublicIpv4(mapped[1]);
   const value = parseIpv6(ip);
   if (value === null) return false;
-  return !IPV6_RESERVED.some(([net, prefix]) => {
-    const netValue = parseIpv6(net);
-    if (netValue === null) return false;
-    const shift = 128n - BigInt(prefix);
-    const mask = prefix === 0 ? 0n : ((1n << 128n) - 1n) ^ ((1n << shift) - 1n);
-    return (value & mask) === (netValue & mask);
-  });
+  if (!matchesIpv6Range(value, '2000::', 3)) return false;
+  return !IPV6_DOC_RANGES.some(([net, prefix]) => matchesIpv6Range(value, net, prefix));
 }
 
 /** true se `ip` é uma string de IP válida (v4 ou v6) e pública — nunca privada, reservada, loopback, link-local, multicast, ou de documentação. */
