@@ -31,23 +31,6 @@ export function techOf(ev, tech) {
   return id ? (tech.byId[id] ?? byDecoyPath(tech.byPath, ev?.path) ?? null) : null;
 }
 
-/**
- * Toques (7d) de uma regra Sigma, a partir de `paths7d` (/api/honeypot). O
- * `path` de uma regra pode ser um isco-prefixo ('/phpmyadmin/'), enquanto
- * `paths7d` traz os paths concretos que os scanners pediram
- * ('/phpmyadmin/index.php', '/phpmyadmin/setup.php') — somar por prefixo:
- * com igualdade exata, essa regra mostrava sempre 0 toques mesmo com o
- * honeypot a registá-los (mesma convenção de decoys.js).
- */
-export function hitsForRulePath(rulePath, detCounts) {
-  if (!rulePath.endsWith('/')) return detCounts.get(rulePath) ?? 0;
-  let total = 0;
-  for (const [path, count] of detCounts) {
-    if (path === rulePath || path.startsWith(rulePath)) total += count;
-  }
-  return total;
-}
-
 /** Classe visual (cor) de um ponto no gráfico de risco por país. */
 export function riskDotClass(row) {
   if (row.lowSample) return 'sample';

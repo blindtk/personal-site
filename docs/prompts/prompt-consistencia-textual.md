@@ -22,7 +22,7 @@ Copia o bloco abaixo como pedido a um agente.
 > - `content/projects/pt/*.md` e `content/projects/en/*.md` — mesmo nome de
 >   ficheiro nos dois lados liga as versões.
 > - `content/blog/pt/*.md` e `content/blog/en/*.md`.
-> - `content/*.json` — `awards`, `attack`, `certs`, `detections`, `catalog`,
+> - `content/*.json` — `awards`, `attack`, `certs`, `catalog`,
 >   `honeypot-attack`, `links`. Conteúdo estruturado, mas com texto visível.
 > - `static/src/i18n/ui.ts` — **todas** as strings de interface, PT e EN na
 >   mesma estrutura (títulos, intros, labels, blocos de cross-links como
@@ -50,19 +50,22 @@ Copia o bloco abaixo como pedido a um agente.
 >    contradiga outra (ex.: um cargo na Home diferente do "Sobre", uma
 >    certificação mencionada num sítio e ausente na página de Certificações).
 > 3. **Terminologia consistente.** O mesmo conceito deve usar sempre o mesmo
->    termo (ex.: "Provas" ↔ "Evidence", "Perímetro" ↔ "Perimeter", "honeypot",
->    "vigia CT", nomes das ferramentas, "camadas"). Presta atenção especial ao
->    bloco `layers` ("Este site, por camadas") em `ui.ts`: as descrições de
->    Segurança, Provas, Perímetro, Deteções e ATT&CK têm de descrever
->    fielmente o que cada uma dessas páginas realmente diz.
+>    termo (ex.: "Provas" ↔ "Evidence", "honeypot", "vigia CT", nomes das
+>    ferramentas, "camadas"). Presta atenção especial ao bloco `layers`
+>    ("Este site, por camadas") em `ui.ts`: as descrições de Segurança,
+>    Honeypot, Cloudflare, Provas e Performance têm de descrever fielmente
+>    o que cada uma dessas páginas realmente diz — ATT&CK fica de fora de
+>    propósito (SiteLayers.astro exclui-a explicitamente: é sobre percurso
+>    pessoal, não sobre o site).
 > 4. **Ligações cruzadas corretas.** Onde uma página remete para outra
 >    (bloco de camadas, "Sobre" → Projetos, projeto "este-site" → Provas/
->    Perímetro), confirma que o destino existe em `routes.ts` e que a
->    descrição corresponde ao conteúdo do destino.
+>    Honeypot/Cloudflare), confirma que o destino existe em `routes.ts` e
+>    que a descrição corresponde ao conteúdo do destino.
 > 5. **Coerência narrativa.** Lê Home → Sobre → Projetos → páginas do
->    "sistema" (Segurança, Provas, Perímetro, Deteções, ATT&CK) como um todo.
->    Sinaliza repetição desnecessária, promessas feitas numa página e não
->    cumpridas noutra, e saltos de contexto que confundem o leitor.
+>    "sistema" (Segurança, Honeypot, Cloudflare, Provas, Performance) como
+>    um todo. Sinaliza repetição desnecessária, promessas feitas numa
+>    página e não cumpridas noutra, e saltos de contexto que confundem o
+>    leitor.
 > 6. **Tom, voz e idioma.** Estética escura, técnica, sóbria; acento
 >    verde-terminal e âmbar para o Lab/avisos. **Português europeu**, nunca
 >    brasileiro. Sinaliza deslizes PT-BR, mudanças de registo (tratamento por

@@ -20,6 +20,7 @@ existed.
 | [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget |
 | [0006](0006-caps-escrita-diarios.md) | Worker write caps: daily, sized to the budget, not to abuse resistance |
 | [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability |
+| [0020](0020-honeypot-public-ip.md) | Honeypot events record and publish the source IP, for cross-honeypot correlation (supersedes ADR 0004 for the honeypot; the firewall panel's zero-IP stance is unchanged) |
 
 ## Repository & tooling
 
@@ -42,3 +43,14 @@ existed.
 | [0016](0016-check-npm-audit-wrapper.md) | A custom `check-npm-audit.mjs` wrapper instead of raw `npm audit` |
 | [0017](0017-gh-cli-em-vez-de-actions-terceiras.md) | Prefer the `gh` CLI over third-party Actions for simple GitHub operations |
 | [0018](0018-selecao-de-ferramentas-scan-producao.md) | Production-scan tool selection: automate by elimination, don't collect scanners |
+
+## External / research infrastructure
+
+Assets outside this repository's deploy surface (not Cloudflare, not
+`dynamic/worker/`) — recorded here because they're still architecture
+decisions with real trade-offs, just on infrastructure this repo doesn't
+own or provision.
+
+| ADR | Decision |
+| --- | --- |
+| [0019](0019-external-cowrie-honeypot-vps.md) | External Cowrie honeypot + spider trap: separate machine, separate privacy boundary |

@@ -1,6 +1,13 @@
 # ADR 0004 — Zero-PII in the honeypot and analytics, by choice, not plan limitation
 
-**Status:** accepted and in production.
+**Status:** accepted and in production for the Cloudflare Status/firewall
+panel (`cf-analytics.js`) — that half is unchanged. **Superseded for the
+honeypot half by [ADR 0020](0020-honeypot-public-ip.md):** the repo owner
+decided the honeypot itself should record and publish the source IP, to
+correlate hits with the external Cowrie honeypot (ADR 0019). The
+reasoning below stayed valid for over a year and is kept as the record of
+why zero-IP was the right default to start from — it just no longer
+describes what `recordHoneypot` does.
 
 ## Context
 

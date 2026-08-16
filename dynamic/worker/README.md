@@ -12,12 +12,12 @@ Worker + one KV namespace.
 
 | Route | What it does | Cache | Rate limit |
 | --- | --- | --- | --- |
-| *(decoys)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Records only metadata (country, ASN, path, timestamp) and returns 404 | — | — |
-| `GET /api/honeypot` | Aggregated stats + last 30 attempts | 60 s | — |
+| *(decoys)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Records metadata (country, ASN, path, timestamp) and returns 404; the source IP is recorded separately, and published (ADR 0020 — see Privacy section below) | — | — |
+| `GET /api/honeypot` | Aggregated stats + last 30 attempts (no IP — see Privacy section) | 60 s | — |
 | `GET /api/map` | Origins by country (24 h / 7 d) | 60 s | — |
 | `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | — | — |
 | `GET /api/ticker` | CISA KEV + critical NVD entries, sanitized | 1 h | — |
-| `GET /api/threat-intel` | Heatmap, time-of-day, tops (country/ASN/technique), and recent events (Perimeter panel) | 6 h | — |
+| `GET /api/threat-intel` | Heatmap, time-of-day, tops (country/ASN/technique), recent events, and the honeypot's published IP list (`ips` — ADR 0020) | 6 h | — |
 | `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (fails closed with 429 past this limit) + 150/day global write cap (silently dropped past the cap, still 204) |
 | `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s | — |
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
@@ -27,19 +27,38 @@ Worker + one KV namespace.
 
 ## Privacy (honeypot)
 
-**No IP is ever stored.** Events only save country (`cf-ipcountry`,
-validated to 2 letters — anything else becomes `XX`), ASN
-(`request.cf.asn`, validated within the 32-bit space), path (only known
-decoys), and a **timestamp rounded to 5 minutes**. The rounding is
-anonymization: it removes the precise instant, reducing (not eliminating)
-the risk of correlating ASN+path+timestamp with third-party logs. The
-only thing derived from the IP is the rate-limit key: a truncated
-SHA-256 hash combining `RATE_SALT` with the UTC date — this derived key
-changes daily even though the underlying `RATE_SALT` secret itself is
-rotated manually on a weekly cadence (see the secrets table below) — kept
-only during the limit's window and never associated with the events. `recordHoneypot` doesn't even read the
-IP. Covered by a test (`test/logic.test.mjs`): the IP never appears in
-any KV value nor in any Worker log line.
+**Two different postures, by design — not an inconsistency.**
+
+The **Cloudflare Status/firewall panel** (`src/lib/cf-analytics.js`,
+zone-wide traffic including every legitimate visitor) stays governed by
+[ADR 0004](../../docs/adr/0004-zero-pii-honeypot.md), unchanged: no IP is
+ever stored. The only thing derived from the IP anywhere in that path is
+the rate-limit key — a truncated SHA-256 hash combining `RATE_SALT` with
+the UTC date (this derived key changes daily even though the underlying
+`RATE_SALT` secret itself is rotated manually on a weekly cadence, see
+the secrets table below), kept only during the limit's window and never
+associated with any event.
+
+The **honeypot's own decoy-path events** are different, by an explicit,
+later decision: [ADR 0020](../../docs/adr/0020-honeypot-public-ip.md)
+records the source IP (`recordHoneypot`, `src/index.js`) into a
+**separate** KV key (`iplist`) — never mixed into the anonymous
+`recent`/hourly/daily buckets that feed `/api/honeypot`, `/api/map`, and
+the "Registo" (log) table, which keep the same country/ASN/path/technique
+shape and the same 5-minute-rounded timestamp they always had. Only a
+public, validated IP (`src/lib/ipguard.js` — excludes RFC 1918, loopback,
+link-local, CGNAT, multicast, and documentation/TEST-NET ranges) gets
+recorded; entries age out after 30 days without a repeat sighting
+(`IP_RETENTION_MS`, pruned by the cron in `scheduled()`) — shorter than
+the sibling external-VPS project's 60–90 days
+(`docs/external-honeypot-vps.md`), because HTTP-scanning botnets are more
+likely than SSH brute-forcers to run on compromised residential/IoT
+devices. The list is published via `/api/threat-intel`'s `ips` field, for
+cross-honeypot correlation.
+
+Covered by tests (`test/logic.test.mjs`): the anonymous buckets/`recent`
+never gain an `ip` field; a private/reserved IP never reaches `iplist`;
+sightings of the same IP accumulate count/techniques without duplicating.
 
 ## CT watcher (`/api/ct`)
 

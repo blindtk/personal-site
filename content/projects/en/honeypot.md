@@ -1,6 +1,6 @@
 ---
 title: 'Honeypot'
-description: 'Decoy endpoints that log automated Internet scanning — metadata only, no IPs, correlated with MITRE ATT&CK and CISA KEV.'
+description: 'Decoy endpoints that log automated Internet scanning — the source IP is published by explicit design decision, correlated with MITRE ATT&CK and CISA KEV.'
 tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
 order: 2
 ---
@@ -23,15 +23,29 @@ the first real code in that area — published separately. If the Worker is
 down, the static site doesn't notice: the panel degrades gracefully instead
 of breaking.
 
-## Privacy by construction
+## Privacy — two postures, by design
 
-**No IP is ever stored.** Each event keeps only country (`cf-ipcountry`), ASN
-and the decoy path, with the timestamp rounded to 5 minutes — and the rounding
-is anonymisation: without the precise moment you can't cross-match ASN+path+time
-against third-party logs. The only thing derived from the IP is the rate-limit
-key, a salted truncated SHA-256 that rotates, kept only for the limit window
-and never tied to the events. This isn't a promise: it's covered by a test
-(`test/logic.test.mjs` asserts the IP never appears in KV or in the logs).
+The Cloudflare panel (whole-zone traffic, which includes every legitimate
+visitor) still never stores an IP: only country (`cf-ipcountry`), ASN and
+the decoy path, with the timestamp rounded to 5 minutes — the rounding is
+anonymisation, not tidiness, and the only thing derived from the IP on
+that path is the rate-limit key, a salted truncated SHA-256 that rotates
+daily, kept only for the limit window. This is covered by a test
+(`test/logic.test.mjs`).
+
+The honeypot's own events are different, by a later and explicit
+decision: the source IP is now recorded in a separate list (never mixed
+into the anonymous buckets above) and published, to correlate hits with
+a second honeypot (Cowrie, on an external VPS) that exists specifically
+to publish this. Only valid, public IPs get in — private, reserved, and
+documentation ranges are excluded before anything is written. Entries
+expire after 30 days without a repeat sighting — more conservative than
+the VPS's sibling list (60–90 days): the HTTP scanners this honeypot
+catches are more likely to run on compromised home routers or cameras
+than SSH brute-forcers are, so an IP seen here has a higher chance of
+belonging to an actual household. Anyone who recognises themselves in an
+entry can request removal — the contact is on the
+[Contact](/en/contact/) page.
 
 ## Correlation: honeypot ↔ ATT&CK ↔ threat intel
 

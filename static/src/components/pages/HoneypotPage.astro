@@ -11,17 +11,12 @@ import { routes, projectUrl } from '../../i18n/routes';
 // os nomes/táticas ATT&CK vêm daqui, os mesmos IDs que alimentam /attack.
 import attack from '../../../../content/attack.json';
 import hpAttack from '../../../../content/honeypot-attack.json';
-// Regras Sigma por path-isco (secção Deteções, fundida aqui a partir da
-// antiga página /detecoes/, depois da antiga tab Perímetro/Deteções) — um
-// teste no worker garante que paths/técnicas não divergem dos DECOYS reais.
-import detections from '../../../../content/detections.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const dict = t(lang);
 const h = dict.honeypot;
 const s = dict.site;
-const d = dict.detections;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 // Índice id → nome da técnica (1.ª ocorrência), a partir do heatmap ATT&CK.
@@ -43,17 +38,6 @@ for (const [path, id] of Object.entries(hpAttack.paths)) {
   byId[id] = entry;
 }
 
-// Regras Sigma (secção Deteções) — mesmo techName map do heatmap acima.
-const rules = detections.rules.map((r) => ({
-  path: r.path,
-  slug: r.slug,
-  technique: r.technique,
-  techniqueName: techName.get(r.technique) ?? r.technique,
-  title: r.title[lang],
-  summary: r.summary[lang],
-  sigma: r.sigma.join('\n'),
-}));
-
 const jsStrings = {
   corrTitle: h.corrTitle,
   techNone: h.techNone,
@@ -68,10 +52,6 @@ const jsStrings = {
   // scripts/observability.js).
   statCountries: h.statCountries,
   statCountriesOne: h.statCountriesOne,
-  detCopy: d.copy,
-  detCopied: d.copied,
-  detHits: d.hits7d,
-  detHitsOne: d.hits7dOne,
   tiEmpty: s.tiEmpty,
   tiNoneYet: s.tiNoneYet,
   tiHeatmapSparse: s.tiHeatmapSparse,
@@ -79,6 +59,7 @@ const jsStrings = {
   logsEmpty: s.logsEmpty,
   logsPageOf: s.logsPageOf,
   logsWindowNote: s.logsWindowNote,
+  ipListEmpty: h.ipListEmpty,
 };
 ---
 
@@ -111,54 +92,6 @@ const jsStrings = {
 
     <p class="note">📐 {h.projectNote} <a href={projectUrl(lang, 'honeypot')}>{h.projectLink}</a></p>
     <p class="note warn">🔒 {h.privacyNote}</p>
-
-    <!-- ---------- Deteções (pipeline honeypot → Sigma) ---------- -->
-    <section aria-labelledby="h-det-pipeline">
-      <div class="section-title"><h2 id="h-det-pipeline">{d.pipelineTitle}</h2></div>
-      <p class="intro">{d.intro}</p>
-      <ol class="det-pipeline">
-        {d.pipelineSteps.map((step, i) => (
-          <li class="det-step">
-            <span class="det-step-n mono" aria-hidden="true">{i + 1}</span>
-            <div>
-              <h3>{step.t}</h3>
-              <p>{step.d}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <p class="note">{d.liveNote}</p>
-    </section>
-
-    <section id="det-rules" aria-label={d.title}>
-      {rules.map((r) => (
-        <article class="det-card" id={r.slug}>
-          <header class="det-head">
-            <h2 class="det-title">{r.title}</h2>
-            <div class="det-meta mono">
-              <span class="det-path">{r.path}</span>
-              <a class="det-tech" href={`${attackBase}#${r.technique}`} title={`${r.technique} · ${r.techniqueName}`}>
-                {r.technique}
-              </a>
-              <span class="det-hits" data-path={r.path}>
-                <span class="det-hits-n">—</span> <span class="det-hits-w">{d.hits7d}</span>
-              </span>
-            </div>
-          </header>
-          <p class="det-summary">{r.summary}</p>
-          <div class="det-rule">
-            <pre class="det-sigma"><code>{r.sigma}</code></pre>
-            <button class="det-copy mono" type="button" data-slug={r.slug} aria-live="polite" aria-atomic="true">{d.copy}</button>
-          </div>
-        </article>
-      ))}
-    </section>
-
-    <section aria-label={d.cliLabel}>
-      <p class="intro">{d.convertLead}</p>
-      <pre class="det-cmd mono"><code>{d.convertCmd}</code></pre>
-      <p class="note">→ <a href={attackBase}>{d.seeAttack}</a></p>
-    </section>
 
     <!-- ---------- Ao longo da semana (7d, honeypot) ---------- -->
     <section aria-labelledby="h-patterns">
@@ -217,6 +150,29 @@ const jsStrings = {
         <button type="button" id="logs-next" class="pager-btn">{s.logsNext}</button>
       </div>
     </section>
+
+    <!-- ---------- IPs conhecidos (ADR 0020 — único sítio com o IP) ---------- -->
+    <section aria-labelledby="h-iplist">
+      <div class="section-title"><h2 id="h-iplist">{h.ipListTitle}</h2></div>
+      <p class="note">{h.ipListIntro}</p>
+      <p class="hp-fallback" id="iplist-fallback">{h.ipListEmpty}</p>
+      <div class="table-scroll" id="iplist-tablewrap" hidden tabindex="0" role="region" aria-label={h.ipListTitle}>
+        <table class="result-table wrap-normal hp-table">
+          <thead>
+            <tr>
+              <th>{h.ipColIp}</th>
+              <th>{s.logColCountry}</th>
+              <th>{s.logColAsn}</th>
+              <th>{h.ipColFirst}</th>
+              <th>{h.ipColLast}</th>
+              <th>{h.ipColHits}</th>
+            </tr>
+          </thead>
+          <tbody id="iplist-rows"></tbody>
+        </table>
+      </div>
+      <p class="note">{h.ipListNote} <a href={routes.contact[lang]}>{h.ipListNoteLink}</a></p>
+    </section>
   </div>
 
   <SiteLayers lang={lang} current="honeypot" />
@@ -224,7 +180,7 @@ const jsStrings = {
 
 <script>
   import { plural, formatNumber, relativeTime } from '../../scripts/observability.js';
-  import { techOf, hitsForRulePath, timelinePoints } from '../../scripts/perimeter-charts.js';
+  import { techOf, timelinePoints } from '../../scripts/perimeter-charts.js';
 
   const root = document.getElementById('hp-root')!;
   const base = root.dataset.api ?? '';
@@ -303,7 +259,7 @@ const jsStrings = {
     return { td };
   }
 
-  // ---------- Stat cards + Deteções (24h/7d, /api/honeypot) ----------
+  // ---------- Stat cards (24h/7d, /api/honeypot) ----------
   async function loadHoneypot() {
     const fallbackEl = document.getElementById('hp-fallback')!;
     const corrEl = document.getElementById('hp-corr')!;
@@ -338,39 +294,8 @@ const jsStrings = {
       });
       fallbackEl.hidden = true;
       document.getElementById('hp-stats')!.hidden = false;
-
-      // Contadores da secção Deteções — mesma resposta /api/honeypot, campo
-      // paths7d (evita um 2.º pedido só para as regras Sigma).
-      const detCounts = new Map<string, number>(
-        (Array.isArray(data.paths7d) ? data.paths7d : []).map((row: any) => [String(row.path), Number(row.count) || 0]),
-      );
-      for (const el of document.querySelectorAll<HTMLElement>('.det-hits')) {
-        const hits = hitsForRulePath(el.dataset.path ?? '', detCounts);
-        const n = el.querySelector('.det-hits-n');
-        if (n) n.textContent = String(hits);
-        const w = el.querySelector('.det-hits-w');
-        if (w) w.textContent = plural(hits, { one: S.detHitsOne, other: S.detHits }, locale);
-      }
     } catch {
       // Sem Worker publicado: fica o fallback já pintado (evita CLS).
-    }
-  }
-
-  // ---------- Deteções: copiar regra Sigma ----------
-  function wireDetCopy() {
-    for (const btn of document.querySelectorAll<HTMLButtonElement>('.det-copy')) {
-      btn.addEventListener('click', async () => {
-        const code = btn.closest('.det-rule')?.querySelector('code');
-        if (!code) return;
-        try {
-          await navigator.clipboard.writeText(code.textContent ?? '');
-          btn.textContent = S.detCopied;
-          setTimeout(() => { btn.textContent = S.detCopy; }, 1600);
-        } catch {
-          // clipboard indisponível (permissões/contexto): o texto continua
-          // selecionável à mão no <pre>.
-        }
-      });
     }
   }
 
@@ -573,6 +498,44 @@ const jsStrings = {
     document.getElementById('logs-next')?.addEventListener('click', () => { logPage++; renderLogsPage(); });
   }
 
+  // ---------- IPs conhecidos (ADR 0020) — d.ips do /api/threat-intel ----------
+  // Único sítio da página onde o IP aparece; sem paginação de propósito — a
+  // lista já vem limitada a 200 entradas no Worker (ipThreatList) e some
+  // sozinha ao fim de 30 dias sem nova deteção (retenção, não UI).
+  function renderIpList(rows: any[]) {
+    const fallback = document.getElementById('iplist-fallback');
+    const wrap = document.getElementById('iplist-tablewrap');
+    const tbody = document.getElementById('iplist-rows');
+    if (!fallback || !wrap || !tbody) return;
+    if (rows.length === 0) {
+      fallback.hidden = false;
+      wrap.hidden = true;
+      return;
+    }
+    fallback.hidden = true;
+    wrap.hidden = false;
+    tbody.replaceChildren();
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      const cells = [
+        String(r.ip ?? ''),
+        r.country ?? 'XX',
+        r.asn ? `AS${r.asn}` : '—',
+        r.firstSeen ? timeFmt.format(new Date(r.firstSeen)) : '—',
+        r.lastSeen ? timeFmt.format(new Date(r.lastSeen)) : '—',
+        formatNumber(Number(r.count) || 0, locale),
+      ];
+      cells.forEach((value, i) => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        if (i === 0) td.className = 'mono hp-path';
+        if (i === 1) td.className = 'mono hp-cc';
+        tr.append(td);
+      });
+      tbody.append(tr);
+    }
+  }
+
   // ---------- Padrões (7d) + Registo, /api/threat-intel ----------
   async function loadPatterns() {
     try {
@@ -603,6 +566,9 @@ const jsStrings = {
       );
       renderBars('hp-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
 
+      // IPs conhecidos (ADR 0020)
+      renderIpList(Array.isArray(d.ips) ? d.ips : []);
+
       // Registo
       logEvents = Array.isArray(d.events) ? d.events : [];
       logCorr = corr;
@@ -627,7 +593,6 @@ const jsStrings = {
   }
 
   wireLogs();
-  wireDetCopy();
   loadHoneypot();
   loadPatterns();
 </script>
@@ -672,153 +637,4 @@ const jsStrings = {
   }
   .pager-btn:hover:not(:disabled) { border-color: var(--accent); }
   .pager-btn:disabled { opacity: 0.4; cursor: default; }
-
-  /* ---------- Deteções (fundida de /detecoes/, depois da tab Perímetro) ---------- */
-  .det-pipeline {
-    list-style: none;
-    margin: 0.8rem 0 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.8rem;
-  }
-  @media (min-width: 720px) {
-    .det-pipeline { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  }
-  .det-step {
-    display: flex;
-    gap: 0.8rem;
-    background: var(--bg-raise);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.1rem;
-  }
-  .det-step-n {
-    color: var(--accent);
-    font-size: 1.4rem;
-    line-height: 1;
-  }
-  .det-step h3 {
-    margin: 0 0 0.3rem;
-    font-size: 0.95rem;
-  }
-  .det-step p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.85rem;
-  }
-
-  .det-card {
-    background: var(--bg-raise);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.1rem 1.2rem;
-    margin: 1.2rem 0 0;
-  }
-  .det-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.5rem 1rem;
-  }
-  .det-title {
-    margin: 0;
-    font-size: 1.05rem;
-    flex: 1 1 16rem;
-  }
-  .det-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.6rem;
-    font-size: 0.8rem;
-  }
-  .det-path {
-    color: var(--accent-2);
-    overflow-wrap: anywhere;
-  }
-  .det-tech {
-    color: var(--accent-3);
-    text-decoration: none;
-  }
-  .det-tech:hover { text-decoration: underline; }
-  .det-hits {
-    color: var(--muted);
-    white-space: nowrap;
-  }
-  .det-hits-n { color: var(--accent); }
-  .det-summary {
-    color: var(--muted);
-    margin: 0.7rem 0 0.9rem;
-    font-size: 0.9rem;
-  }
-  .det-rule { position: relative; }
-  .det-sigma {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.9rem 1rem;
-    overflow-x: auto;
-    margin: 0;
-  }
-  .det-sigma code {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 0.78rem;
-    line-height: 1.55;
-    color: var(--text);
-    white-space: pre;
-  }
-  .det-copy {
-    /* inline-flex + min-height: alvo de toque de 44px, mesma técnica do
-       .btn.small global — esta classe é local e não herdava dessa correção. */
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    position: absolute;
-    top: 0.55rem;
-    right: 0.55rem;
-    background: var(--bg-raise-2);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    color: var(--accent);
-    font-size: 0.72rem;
-    padding: 0.3rem 0.6rem;
-    cursor: pointer;
-  }
-  .det-copy:hover { border-color: var(--accent); }
-
-  /* Em mobile o .det-copy a 44px (alvo de toque) passava a tapar as
-     primeiras linhas do Sigma (title/id) em regras mais longas — o botão
-     sai do fluxo absoluto e desce para debaixo do código, sem alterar
-     nada no desktop. */
-  @media (max-width: 640px) {
-    .det-rule {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-    .det-copy {
-      position: static;
-      align-self: flex-end;
-    }
-  }
-
-  .det-cmd {
-    background: var(--bg-raise);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.7rem 0.9rem;
-    overflow-x: auto;
-    margin: 0.6rem 0 0.8rem;
-  }
-  .det-cmd code {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 0.85rem;
-    color: var(--accent);
-    white-space: pre;
-  }
 </style>

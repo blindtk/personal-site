@@ -85,11 +85,6 @@ export function honeypotStats({ hourly = [], days = [], recent = [], meta = {} }
     countryCount: Object.keys(week.byCountry).length,
     timeToFirstScanSec,
     recent: recent.slice(0, 30),
-    // Contagens por path-isco na janela de 7 dias — alimenta a página
-    // Deteções (contador ao vivo ao lado de cada regra Sigma).
-    paths7d: Object.entries(week.byPath)
-      .map(([path, count]) => ({ path, count }))
-      .sort((a, b) => b.count - a.count),
   };
 }
 
