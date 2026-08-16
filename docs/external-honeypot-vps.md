@@ -174,59 +174,30 @@ This needs its own small mapping table in the feed generator script
 (path-based, different runtime); a parallel, command-based version for
 this project.
 
-### Sigma rules — where they belong, and where they don't (revised 2026-08-16)
+### No Sigma content, for any surface (settled 2026-08-16)
 
-Worth stating plainly, since the honeypot-wide approach to Sigma was
-never actually reconsidered once this project entered the picture:
-**the answer isn't "keep it as is" or "drop it everywhere" — it's
-different per surface.**
+Considered and dropped, for this project and for `danielmala.co`'s own
+honeypot alike — worth recording why, since it was a real back-and-forth,
+not an obvious call from the start.
 
-`danielmala.co`'s existing Sigma rules (`content/detections.json`, one
-per decoy path) stay as they are — a rule like "any request for
-`/wp-login.php` on infrastructure that doesn't run WordPress is
-hostile" is true regardless of how much traffic that site's own
-honeypot happens to see under the Managed Challenge (ADR 0007). What's
-worth revisiting **there**, separately from this project, is how much
-weight the live hit-counter carries in the page's narrative when it's
-often low or zero for reasons that have nothing to do with the rule's
-validity — a copy fix on that page, not a reason to remove the rules.
-Not done as part of this document; flagged for a decision on its own.
+The case that seemed to hold up at first: Cowrie captures actual command
+strings, which map onto genuine Sigma logsource categories (SSH
+authentication logs for brute-force patterns, `process_creation` for the
+command patterns behind the ATT&CK mapping above) — real content, not
+guesswork. But it doesn't earn a second artifact type once the ATT&CK
+mapping and Navigator layer above already exist: both would describe the
+same handful of techniques, just in a different notation. Two
+representations of the same 13-or-so techniques is redundancy, not
+depth — and the reference project itself proves the point: it maps to
+ATT&CK, ships a Navigator layer, and stops there. No Sigma.
 
-Cowrie is a stronger source for Sigma than the main honeypot ever was,
-because it captures actual command strings instead of just which path
-got hit — that maps onto real Sigma logsource categories used in
-production SIEMs, not an invented one:
-- **SSH brute-force / anomalous login** — `logsource: category:
-  authentication` (or `product: linux, service: sshd`): failed-then-
-  succeeded bursts, a pattern SigmaHQ's own public ruleset already
-  covers for real SSH logs.
-- **Command-pattern rules** — `logsource: category: process_creation,
-  product: linux`: the same command strings behind the ATT&CK mapping
-  above, translated into what a rule watching a real fleet's process
-  telemetry (auditd, Sysmon for Linux) would need to catch the same
-  technique. This is the richer half — the rules aren't guessing what an
-  attacker might do, they're built from commands one actually typed.
-
-These rules are **this project's own content** — they don't belong in
-`content/detections.json`, which is `danielmala.co`'s honeypot's own
-artifact. Same boundary already drawn for the IP data: the VPS publishes
-its own detection content, on its own report, and `danielmala.co` only
-links to it (§5). Concretely: folded into the static report (§7)
-alongside the ATT&CK mapping — the reference project maps to ATT&CK but
-doesn't generate Sigma; adding it is this project's own signature,
-consistent with what `danielmala.co` already does for its own honeypot.
-
-**No Sigma rule for the spider trap/maze — a deliberate omission, not a
-gap to fill later.** A request landing in the maze is a bot-compliance
-signal (a crawler that ignored `robots.txt`), not a TTP in the sense
-Sigma rules usually describe. Forcing one into existence would
-manufacture analytical weight that isn't really there — the same
-reasoning that keeps the main honeypot's `/admin` rule at `level: low`
-instead of treating every hit as high-fidelity. If a rule ever makes
-sense here, it's a `category: webserver` match on requests to a
-disallowed path from a UA not claiming to be a compliant crawler — worth
-revisiting only if the maze turns out to catch more than isolated,
-one-off compliance violations.
+Reopening this made clear the main honeypot's own Sigma section
+(`content/detections.json`, one rule per decoy path) didn't hold up
+either, on a harder version of the same argument — it was never more
+than the path→technique mapping already published in
+`content/honeypot-attack.json`, reformatted with SigmaHQ field names.
+Removed entirely, along with the "pipeline" explanation that used to
+frame it.
 
 ### Cross-honeypot correlation
 
@@ -288,8 +259,7 @@ Minimum content:
   important sentence on the page, so a reader doesn't generalize one
   project's policy onto the other;
 - a link to the feed at `intel.danielmala.co`, whose report includes
-  the ATT&CK mapping and the Sigma rules described in §3 — not just the
-  IP list;
+  the ATT&CK mapping described in §3 — not just the IP list;
 - a note on the VPS's disposable nature (Oracle Free) and why.
 
 **Does not enter:** any data, IP, or event embedded in the main site's
@@ -327,13 +297,8 @@ what guarantees a bug here can never become a bug there.
    proposed) against the real instance.
 3. Once 1–2 are confirmed: systemd units, Cowrie config, `endlessh`
    config, and the feed generator script — reads Cowrie's logs, produces
-   the JSON/text IP feed and the malware-IOC list per §3's rules, runs
-   the command→ATT&CK mapping, and emits the Sigma rules described in
-   §3 alongside the static report — plus the project page skeleton (§5,
-   PT+EN). Not written speculatively now — designing scripts against a
-   topology that might still change wastes the exercise.
-4. **Separate, smaller decision, not blocked on 1–3:** whether to soften
-   the live hit-counter's role in `danielmala.co`'s own Deteções section
-   now that ADR 0007 keeps its volume low — a copy change to
-   `content/detections.json`/`static/src/i18n/ui.ts`, not a rules
-   removal. Flagged in §3 above; not decided or scheduled yet.
+   the JSON/text IP feed and the malware-IOC list per §3's rules, and
+   runs the command→ATT&CK mapping for the static report — plus the
+   project page skeleton (§5, PT+EN). Not written speculatively now —
+   designing scripts against a topology that might still change wastes
+   the exercise.

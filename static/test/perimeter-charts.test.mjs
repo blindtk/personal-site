@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import {
   byDecoyPath,
   techOf,
-  hitsForRulePath,
   riskDotClass,
   labelsWithoutCollision,
   timelinePoints,
@@ -25,17 +24,6 @@ test('techOf: prefere a técnica do evento, senão faz lookup por path', () => {
   assert.deepEqual(techOf({ technique: 'T1190', path: '/x' }, tech), tech.byId.T1190);
   assert.deepEqual(techOf({ path: '/phpmyadmin/setup.php' }, tech), tech.byPath['/phpmyadmin/']);
   assert.equal(techOf({ path: '/unknown' }, tech), null);
-});
-
-test('hitsForRulePath: soma por prefixo só quando a regra termina em /', () => {
-  const detCounts = new Map([
-    ['/phpmyadmin/index.php', 3],
-    ['/phpmyadmin/setup.php', 2],
-    ['/admin', 5],
-  ]);
-  assert.equal(hitsForRulePath('/phpmyadmin/', detCounts), 5);
-  assert.equal(hitsForRulePath('/admin', detCounts), 5);
-  assert.equal(hitsForRulePath('/missing', detCounts), 0);
 });
 
 test('riskDotClass: amostra pequena vence a taxa, senão os limiares 50%/20%', () => {

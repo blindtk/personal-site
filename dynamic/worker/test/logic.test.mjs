@@ -104,24 +104,6 @@ test('attack-map sincroniza com content/honeypot-attack.json', () => {
   assert.deepEqual(PATH_TECHNIQUE, content.paths);
 });
 
-test('detections.json sincroniza com os paths-isco e as técnicas', () => {
-  // A página Deteções publica uma regra Sigma por path-isco — se um isco
-  // novo entrar no Worker sem regra (ou vice-versa), isto rebenta.
-  const url = new URL('../../../content/detections.json', import.meta.url);
-  const { rules } = JSON.parse(readFileSync(fileURLToPath(url), 'utf8'));
-  const byPath = Object.fromEntries(rules.map((r) => [r.path, r.technique]));
-  assert.deepEqual(byPath, PATH_TECHNIQUE);
-  for (const r of rules) {
-    const yamlText = r.sigma.join('\n');
-    // a tag ATT&CK da regra tem de bater com a técnica declarada
-    assert.ok(yamlText.includes(`attack.${r.technique.toLowerCase()}`), `${r.slug}: tag ATT&CK divergente`);
-    // campos essenciais de uma regra Sigma
-    for (const field of ['title:', 'id:', 'logsource:', 'detection:', 'condition:', 'level:']) {
-      assert.ok(yamlText.includes(field), `${r.slug}: falta ${field}`);
-    }
-  }
-});
-
 test('isDecoy: match exato para a maioria, prefixo para os iscos com glob no wrangler.toml', () => {
   assert.equal(isDecoy('/admin'), true);
   assert.equal(isDecoy('/admin/x'), false); // /admin é rota exata, não glob

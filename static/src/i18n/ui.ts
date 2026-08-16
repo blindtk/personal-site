@@ -498,28 +498,6 @@ export const ui = {
       ipColLast: 'Última deteção',
       ipColHits: 'Toques',
     },
-    detections: {
-      title: 'Deteções',
-      intro:
-        'O passo a seguir ao honeypot: cada classe de ataque que este site apanha vem acompanhada da regra Sigma que a detetaria num SIEM. O contador ao lado de cada regra mostra os toques reais dos últimos 7 dias nos endpoints-isco deste site.',
-      pipelineTitle: 'O pipeline',
-      pipelineSteps: [
-        { t: 'O isco regista', d: 'Um scanner toca num endpoint-isco (/wp-login.php, /.env, …) e recebe um 404 seco. O Worker guarda país, ASN e path aqui — o IP de origem é tratado à parte (ver o projeto).' },
-        { t: 'Classificação ATT&CK', d: 'Cada path é mapeado à técnica MITRE ATT&CK que melhor o descreve — os mesmos IDs do heatmap /attack, verificados por um teste.' },
-        { t: 'Regra Sigma', d: 'Para cada classe, a regra vendor-neutral que a apanharia — pronta a converter para Splunk, Elastic ou Sentinel com o sigma-cli.' },
-      ],
-      hits7d: 'toques · 7 dias',
-      hits7dOne: 'toque · 7 dias',
-      techLabel: 'técnica',
-      copy: 'copiar regra',
-      copied: 'copiada ✓',
-      liveNote:
-        'O contador carrega do mesmo /api/honeypot do painel. Se o Worker ainda não estiver publicado fica em “—” — as regras continuam válidas na mesma.',
-      convertLead: 'As regras seguem as convenções webserver do SigmaHQ (campos c-uri, cs-method, sc-status). Converte para a tua plataforma com o sigma-cli:',
-      convertCmd: 'sigma convert -t splunk detecao.yml',
-      cliLabel: 'conversão de regras com sigma-cli',
-      seeAttack: 'Ver o heatmap ATT&CK →',
-    },
     hostmap: {
       title: 'Mapa de tráfego hostil',
       intro: 'As mesmas tentativas, agregadas por país — arcos das origens até a este site.',
@@ -565,13 +543,13 @@ export const ui = {
       // {ciLayers} = dict.evidence.pipeline.length (HomePage.astro), para
       // nunca divergir da tabela de CI em Provas; {tools}/{toolsClient} vêm
       // de lib/tools.ts; {headers} é manual (lista em
-      // dynamic/worker/src/lib/scan.js, fora do build estático); {decoys} e
-      // {sigma} vêm de content/honeypot-attack.json e content/detections.json.
+      // dynamic/worker/src/lib/scan.js, fora do build estático); {decoys}
+      // vem de content/honeypot-attack.json.
       statsStatic: [
         { key: 'ciLayers', n: '{ciLayers}', d: 'camadas de CI · o build falha em qualquer uma', tone: 'green' },
         { key: 'tools', n: '{tools}', d: 'ferramentas · {toolsClient} no browser', tone: 'green' },
         { key: 'headers', n: '{headers}', d: 'cabeçalhos verificados em CI', tone: 'blue' },
-        { key: 'decoys', n: '{decoys}', d: 'paths-isco → {sigma} regras Sigma', tone: 'amber' },
+        { key: 'decoys', n: '{decoys}', d: 'paths-isco → correlação MITRE ATT&CK', tone: 'amber' },
       ],
       statsNoteBody: 'Números lidos do build — nenhum escolhido para ficar bem. Estado ao vivo em',
       statsNoteCta: 'Este site →',
@@ -1501,28 +1479,6 @@ export const ui = {
       ipColLast: 'Last seen',
       ipColHits: 'Hits',
     },
-    detections: {
-      title: 'Detections',
-      intro:
-        'The step after the honeypot: every attack class this site catches comes with the Sigma rule that would detect it in a SIEM. The counter next to each rule shows the real hits on this site\'s decoy endpoints over the last 7 days.',
-      pipelineTitle: 'The pipeline',
-      pipelineSteps: [
-        { t: 'The decoy logs', d: 'A scanner touches a decoy endpoint (/wp-login.php, /.env, …) and gets a dry 404. The Worker stores country, ASN and path here — the source IP is handled separately (see the project).' },
-        { t: 'ATT&CK classification', d: 'Each path is mapped to the MITRE ATT&CK technique that best describes it — the same IDs as the /attack heatmap, kept in sync by a test.' },
-        { t: 'Sigma rule', d: 'For each class, the vendor-neutral rule that would catch it — ready to convert to Splunk, Elastic or Sentinel with sigma-cli.' },
-      ],
-      hits7d: 'hits · 7 days',
-      hits7dOne: 'hit · 7 days',
-      techLabel: 'technique',
-      copy: 'copy rule',
-      copied: 'copied ✓',
-      liveNote:
-        'The counter loads from the same /api/honeypot as the panel. If the Worker is not published yet it stays at “—” — the rules remain just as valid.',
-      convertLead: 'The rules follow SigmaHQ webserver conventions (c-uri, cs-method, sc-status fields). Convert to your platform with sigma-cli:',
-      convertCmd: 'sigma convert -t splunk detection.yml',
-      cliLabel: 'rule conversion with sigma-cli',
-      seeAttack: 'See the ATT&CK heatmap →',
-    },
     hostmap: {
       title: 'Hostile-traffic map',
       intro: 'The same attempts, aggregated by country — arcs from the origins to this site.',
@@ -1569,13 +1525,12 @@ export const ui = {
       // never drifts from the CI table on Evidence; {tools}/{toolsClient}
       // come from lib/tools.ts; {headers} is manual (list lives in
       // dynamic/worker/src/lib/scan.js, outside the static build); {decoys}
-      // and {sigma} come from content/honeypot-attack.json and
-      // content/detections.json.
+      // comes from content/honeypot-attack.json.
       statsStatic: [
         { key: 'ciLayers', n: '{ciLayers}', d: 'CI layers · build fails on any one', tone: 'green' },
         { key: 'tools', n: '{tools}', d: 'tools · {toolsClient} in-browser', tone: 'green' },
         { key: 'headers', n: '{headers}', d: 'headers verified in CI', tone: 'blue' },
-        { key: 'decoys', n: '{decoys}', d: 'decoy paths → {sigma} Sigma rules', tone: 'amber' },
+        { key: 'decoys', n: '{decoys}', d: 'decoy paths → MITRE ATT&CK correlation', tone: 'amber' },
       ],
       statsNoteBody: 'Numbers read from the build — none picked to look good. Live status on',
       statsNoteCta: 'This site →',
