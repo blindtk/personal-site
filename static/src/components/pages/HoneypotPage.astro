@@ -79,6 +79,7 @@ const jsStrings = {
   logsEmpty: s.logsEmpty,
   logsPageOf: s.logsPageOf,
   logsWindowNote: s.logsWindowNote,
+  ipListEmpty: h.ipListEmpty,
 };
 ---
 
@@ -216,6 +217,29 @@ const jsStrings = {
         <span id="logs-count" class="mono"></span>
         <button type="button" id="logs-next" class="pager-btn">{s.logsNext}</button>
       </div>
+    </section>
+
+    <!-- ---------- IPs conhecidos (ADR 0020 — único sítio com o IP) ---------- -->
+    <section aria-labelledby="h-iplist">
+      <div class="section-title"><h2 id="h-iplist">{h.ipListTitle}</h2></div>
+      <p class="note">{h.ipListIntro}</p>
+      <p class="hp-fallback" id="iplist-fallback">{h.ipListEmpty}</p>
+      <div class="table-scroll" id="iplist-tablewrap" hidden tabindex="0" role="region" aria-label={h.ipListTitle}>
+        <table class="result-table wrap-normal hp-table">
+          <thead>
+            <tr>
+              <th>{h.ipColIp}</th>
+              <th>{s.logColCountry}</th>
+              <th>{s.logColAsn}</th>
+              <th>{h.ipColFirst}</th>
+              <th>{h.ipColLast}</th>
+              <th>{h.ipColHits}</th>
+            </tr>
+          </thead>
+          <tbody id="iplist-rows"></tbody>
+        </table>
+      </div>
+      <p class="note">{h.ipListNote} <a href={routes.contact[lang]}>{h.ipListNoteLink}</a></p>
     </section>
   </div>
 
@@ -573,6 +597,44 @@ const jsStrings = {
     document.getElementById('logs-next')?.addEventListener('click', () => { logPage++; renderLogsPage(); });
   }
 
+  // ---------- IPs conhecidos (ADR 0020) — d.ips do /api/threat-intel ----------
+  // Único sítio da página onde o IP aparece; sem paginação de propósito — a
+  // lista já vem limitada a 200 entradas no Worker (ipThreatList) e some
+  // sozinha ao fim de 30 dias sem nova deteção (retenção, não UI).
+  function renderIpList(rows: any[]) {
+    const fallback = document.getElementById('iplist-fallback');
+    const wrap = document.getElementById('iplist-tablewrap');
+    const tbody = document.getElementById('iplist-rows');
+    if (!fallback || !wrap || !tbody) return;
+    if (rows.length === 0) {
+      fallback.hidden = false;
+      wrap.hidden = true;
+      return;
+    }
+    fallback.hidden = true;
+    wrap.hidden = false;
+    tbody.replaceChildren();
+    for (const r of rows) {
+      const tr = document.createElement('tr');
+      const cells = [
+        String(r.ip ?? ''),
+        r.country ?? 'XX',
+        r.asn ? `AS${r.asn}` : '—',
+        r.firstSeen ? timeFmt.format(new Date(r.firstSeen)) : '—',
+        r.lastSeen ? timeFmt.format(new Date(r.lastSeen)) : '—',
+        formatNumber(Number(r.count) || 0, locale),
+      ];
+      cells.forEach((value, i) => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        if (i === 0) td.className = 'mono hp-path';
+        if (i === 1) td.className = 'mono hp-cc';
+        tr.append(td);
+      });
+      tbody.append(tr);
+    }
+  }
+
   // ---------- Padrões (7d) + Registo, /api/threat-intel ----------
   async function loadPatterns() {
     try {
@@ -602,6 +664,9 @@ const jsStrings = {
         S.tiEmpty,
       );
       renderBars('hp-toppaths', bars(d.topPaths ?? [], 'key', 'count'), S.tiEmpty);
+
+      // IPs conhecidos (ADR 0020)
+      renderIpList(Array.isArray(d.ips) ? d.ips : []);
 
       // Registo
       logEvents = Array.isArray(d.events) ? d.events : [];

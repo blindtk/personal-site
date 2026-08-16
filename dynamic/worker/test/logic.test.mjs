@@ -27,6 +27,10 @@ import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/
 import { serverView } from '../src/lib/mirror.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from '../src/lib/notfound.js';
 import { DECOYS, isDecoy } from '../src/lib/decoys.js';
+import { isPublicIp } from '../src/lib/ipguard.js';
+import {
+  emptyIpList, recordIpSighting, pruneExpiredIps, ipThreatList,
+} from '../src/lib/ipthreat.js';
 import worker from '../src/index.js';
 
 test('clampInt', () => {
@@ -445,6 +449,96 @@ test('clientHash: isola por IP e por salt, hex de 16 chars', async () => {
   assert.match(a, /^[0-9a-f]{16}$/);
 });
 
+// ---------- ipguard: validação de IP público (ADR 0020) ----------
+
+test('isPublicIp: rejeita gamas IPv4 privadas/reservadas/documentação', () => {
+  assert.equal(isPublicIp('10.0.0.1'), false);
+  assert.equal(isPublicIp('172.16.5.5'), false);
+  assert.equal(isPublicIp('192.168.1.1'), false);
+  assert.equal(isPublicIp('127.0.0.1'), false); // loopback
+  assert.equal(isPublicIp('169.254.1.1'), false); // link-local
+  assert.equal(isPublicIp('100.64.0.1'), false); // CGNAT
+  assert.equal(isPublicIp('192.0.2.1'), false); // TEST-NET-1
+  assert.equal(isPublicIp('198.51.100.1'), false); // TEST-NET-2
+  assert.equal(isPublicIp('203.0.113.1'), false); // TEST-NET-3
+  assert.equal(isPublicIp('224.0.0.1'), false); // multicast
+  assert.equal(isPublicIp('255.255.255.255'), false); // broadcast
+});
+
+test('isPublicIp: aceita IPv4 público real', () => {
+  assert.equal(isPublicIp('8.8.8.8'), true);
+  assert.equal(isPublicIp('1.1.1.1'), true);
+  assert.equal(isPublicIp('203.0.114.1'), true); // fora do /24 de TEST-NET-3
+});
+
+test('isPublicIp: rejeita formatos IPv4 inválidos', () => {
+  assert.equal(isPublicIp('999.1.1.1'), false);
+  assert.equal(isPublicIp('1.2.3'), false);
+  assert.equal(isPublicIp(''), false);
+  assert.equal(isPublicIp(null), false);
+  assert.equal(isPublicIp(undefined), false);
+});
+
+test('isPublicIp: rejeita gamas IPv6 privadas/reservadas/documentação', () => {
+  assert.equal(isPublicIp('::1'), false); // loopback
+  assert.equal(isPublicIp('::'), false); // não especificado
+  assert.equal(isPublicIp('fe80::1'), false); // link-local
+  assert.equal(isPublicIp('fc00::1'), false); // ULA
+  assert.equal(isPublicIp('fd12:3456:789a::1'), false); // ULA (dentro de fc00::/7)
+  assert.equal(isPublicIp('ff02::1'), false); // multicast
+  assert.equal(isPublicIp('2001:db8::1'), false); // documentação
+  assert.equal(isPublicIp('::ffff:192.168.1.1'), false); // IPv4 mapeado, privado
+});
+
+test('isPublicIp: aceita IPv6 público real', () => {
+  assert.equal(isPublicIp('2001:4860:4860::8888'), true); // Google DNS
+  assert.equal(isPublicIp('2606:4700:4700::1111'), true); // Cloudflare DNS
+  assert.equal(isPublicIp('::ffff:8.8.8.8'), true); // IPv4 mapeado, público
+});
+
+// ---------- ipthreat: lista de ameaças por IP (ADR 0020) ----------
+
+test('recordIpSighting: 1.ª deteção define firstSeen=lastSeen; acumula técnicas sem repetir', () => {
+  const list = emptyIpList();
+  recordIpSighting(list, { ip: '203.0.113.1', now: 1000, country: 'US', asn: 15169, technique: 'T1595' });
+  assert.deepEqual(list['203.0.113.1'], {
+    firstSeen: 1000, lastSeen: 1000, count: 1, country: 'US', asn: 15169, techniques: ['T1595'],
+  });
+  recordIpSighting(list, { ip: '203.0.113.1', now: 2000, country: 'US', asn: 15169, technique: 'T1595' });
+  recordIpSighting(list, { ip: '203.0.113.1', now: 3000, country: 'US', asn: 15169, technique: 'T1110' });
+  assert.equal(list['203.0.113.1'].count, 3);
+  assert.equal(list['203.0.113.1'].firstSeen, 1000); // nunca muda
+  assert.equal(list['203.0.113.1'].lastSeen, 3000); // atualiza sempre
+  assert.deepEqual(list['203.0.113.1'].techniques, ['T1595', 'T1110']); // sem repetir
+});
+
+test('pruneExpiredIps: remove só quem passou a janela; devolve lista nova', () => {
+  const now = 100 * 86400_000;
+  const maxAgeMs = 30 * 86400_000;
+  const list = {
+    fresco: { firstSeen: now, lastSeen: now - 1000, count: 1, country: 'PT', asn: 1, techniques: [] },
+    expirado: { firstSeen: now, lastSeen: now - 31 * 86400_000, count: 1, country: 'PT', asn: 1, techniques: [] },
+  };
+  const { list: pruned, prunedCount } = pruneExpiredIps(list, { now, maxAgeMs });
+  assert.equal(prunedCount, 1);
+  assert.ok('fresco' in pruned);
+  assert.ok(!('expirado' in pruned));
+  assert.ok('expirado' in list, 'pruneExpiredIps não deve mutar a lista recebida');
+});
+
+test('ipThreatList: forma pública ordenada por lastSeen (mais recente primeiro), com limite', () => {
+  const list = {
+    a: { firstSeen: 1, lastSeen: 100, count: 2, country: 'US', asn: 1, techniques: ['T1595'] },
+    b: { firstSeen: 1, lastSeen: 300, count: 5, country: 'DE', asn: 2, techniques: ['T1110'] },
+    c: { firstSeen: 1, lastSeen: 200, count: 1, country: 'RU', asn: 3, techniques: [] },
+  };
+  const out = ipThreatList(list);
+  assert.deepEqual(out.map((r) => r.ip), ['b', 'c', 'a']);
+  assert.equal(out[0].country, 'DE');
+  assert.equal(out.length, 3);
+  assert.equal(ipThreatList(list, { limit: 1 }).length, 1);
+});
+
 // ---------- integração do honeypot: fetch() do Worker sem rede ----------
 
 function fakeKV() {
@@ -481,34 +575,67 @@ async function runFetch(request, env) {
   return res;
 }
 
-test('honeypot: nunca guarda nem loga o IP completo; ts arredondado; país/ASN validados', async () => {
-  const IP = '203.0.113.77';
-  const logs = [];
-  const orig = { error: console.error, log: console.log, warn: console.warn, info: console.info };
-  for (const k of Object.keys(orig)) console[k] = (...a) => logs.push(a.map(String).join(' '));
-  try {
-    const env = { KV: fakeKV() };
-    const req = fakeRequest('/.env', { ip: IP, country: 'T1', asn: 64512 });
-    const res = await runFetch(req, env);
-    assert.equal(res.status, 404); // isco devolve 404 seco
+// ATUALIZADO (ADR 0020, docs/adr/0020-honeypot-public-ip.md): o honeypot
+// passou a publicar o IP de origem — decisão explícita do dono do repo,
+// separada da postura zero-IP original (ADR 0004, que continua válida
+// para o painel Cloudflare Status/firewall). O teste antigo afirmava que
+// o IP nunca aparecia em NENHUM valor do KV; agora divide-se em dois:
+// os buckets/`recent` anónimos continuam INTOCADOS (mesma garantia de
+// sempre), e o IP passa a aparecer, mas só na chave separada `iplist`.
+test('honeypot: IP público entra em iplist, mas nunca nos buckets/recent anónimos; ts arredondado; país/ASN validados', async () => {
+  // Nota: não usar 192.0.2.0/24, 198.51.100.0/24 nem 203.0.113.0/24 aqui —
+  // são as gamas de documentação/TEST-NET que isPublicIp() rejeita de
+  // propósito (ver o teste dedicado acima); precisamos de um IP mesmo
+  // público para testar o caminho de escrita em iplist.
+  const IP = '8.8.4.4';
+  const env = { KV: fakeKV() };
+  const req = fakeRequest('/.env', { ip: IP, country: 'T1', asn: 64512 });
+  const res = await runFetch(req, env);
+  assert.equal(res.status, 404); // isco devolve 404 seco
 
-    const values = [...env.KV.store.values()];
-    assert.ok(values.length > 0, 'deve ter escrito buckets');
-    // o IP não pode aparecer em NENHUM valor guardado no KV
-    for (const v of values) assert.equal(v.includes(IP), false, `IP fugiu para o KV: ${v}`);
-    // nem em NENHUMA linha de log do Worker
-    for (const line of logs) assert.equal(line.includes(IP), false, `IP fugiu para os logs: ${line}`);
+  // buckets/recent anónimos: garantia inalterada desde o ADR 0004 — nunca o IP
+  const values = [...env.KV.store.entries()].filter(([k]) => k !== 'iplist').map(([, v]) => v);
+  assert.ok(values.length > 0, 'deve ter escrito buckets');
+  for (const v of values) assert.equal(v.includes(IP), false, `IP fugiu para fora de iplist: ${v}`);
 
-    const recent = JSON.parse(env.KV.store.get('recent'));
-    assert.equal(recent[0].ts % (5 * 60_000), 0); // timestamp arredondado a 5 min
-    assert.equal(recent[0].country, 'XX'); // 'T1' inválido → XX
-    assert.equal(recent[0].asn, 64512);
-    assert.equal(recent[0].path, '/.env');
-    assert.equal(recent[0].technique, 'T1592'); // correlação com /attack anexada no registo
-    assert.equal('ip' in recent[0], false); // o evento nem tem campo de IP
-  } finally {
-    Object.assign(console, orig);
-  }
+  const recent = JSON.parse(env.KV.store.get('recent'));
+  assert.equal(recent[0].ts % (5 * 60_000), 0); // timestamp arredondado a 5 min
+  assert.equal(recent[0].country, 'XX'); // 'T1' inválido → XX
+  assert.equal(recent[0].asn, 64512);
+  assert.equal(recent[0].path, '/.env');
+  assert.equal(recent[0].technique, 'T1592'); // correlação com /attack anexada no registo
+  assert.equal('ip' in recent[0], false); // o evento nem tem campo de IP
+
+  // iplist (ADR 0020): o mesmo IP, com os mesmos metadados, guardado à parte
+  const ipList = JSON.parse(env.KV.store.get('iplist'));
+  assert.ok(ipList[IP], 'IP público devia entrar em iplist');
+  assert.equal(ipList[IP].count, 1);
+  assert.equal(ipList[IP].firstSeen, ipList[IP].lastSeen);
+  assert.equal(ipList[IP].country, 'XX');
+  assert.equal(ipList[IP].asn, 64512);
+  assert.deepEqual(ipList[IP].techniques, ['T1592']);
+});
+
+test('honeypot: IP privado/reservado nunca entra em iplist (defesa em profundidade)', async () => {
+  const env = { KV: fakeKV() };
+  const req = fakeRequest('/wp-login.php', { ip: '192.168.1.5', country: 'PT', asn: 1234 });
+  const res = await runFetch(req, env);
+  assert.equal(res.status, 404);
+  assert.equal(env.KV.store.has('iplist'), false, 'IP privado não devia gerar escrita em iplist');
+  // o resto do registo continua normal
+  const recent = JSON.parse(env.KV.store.get('recent'));
+  assert.equal(recent[0].country, 'PT');
+});
+
+test('honeypot: segundo toque do mesmo IP acumula count e técnicas sem duplicar', async () => {
+  const env = { KV: fakeKV() };
+  const IP = '9.9.9.9'; // público real — ver nota no teste anterior sobre TEST-NET
+  await runFetch(fakeRequest('/wp-login.php', { ip: IP, country: 'DE', asn: 555 }), env);
+  await runFetch(fakeRequest('/admin', { ip: IP, country: 'DE', asn: 555 }), env);
+  const ipList = JSON.parse(env.KV.store.get('iplist'));
+  assert.equal(ipList[IP].count, 2);
+  assert.deepEqual(ipList[IP].techniques.sort(), ['T1110', 'T1595']);
+  assert.ok(ipList[IP].lastSeen >= ipList[IP].firstSeen);
 });
 
 test('honeypot: cap de escritas descarta eventos acima do teto', async () => {

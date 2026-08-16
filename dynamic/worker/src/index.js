@@ -1,6 +1,9 @@
 // Cloudflare Worker — backend das features de segurança do site (Bloco 3).
 // Um só Worker, um só namespace KV (chaves com prefixo). Serve:
-//   · endpoints-isco do honeypot (404 + só metadados, nunca IP)
+//   · endpoints-isco do honeypot (404 + metadados; o IP de origem entra
+//     numa lista separada e é publicado — ADR 0020, ver comentário em
+//     recordHoneypot mais abaixo. Os buckets/eventos "normais" continuam
+//     sem IP, exatamente como sempre.)
 //   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
 //   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
 //   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
@@ -29,6 +32,10 @@ import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/s
 import { techniqueForPath } from './lib/attack-map.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from './lib/notfound.js';
 import { isDecoy } from './lib/decoys.js';
+import { isPublicIp } from './lib/ipguard.js';
+import {
+  emptyIpList, recordIpSighting, pruneExpiredIps, ipThreatList,
+} from './lib/ipthreat.js';
 
 const HOUR_MS = 3600_000;
 const DAY_MS = 86400_000;
@@ -44,11 +51,20 @@ const ANON_WINDOW_MS = 5 * 60_000;
 // 500/h) deixava um único burst de scanners consumir sozinho vários dias de
 // quota (500 eventos × 4-5 escritas = até 2.500 escritas numa hora, mais do
 // que o teto diário inteiro). Por isso o cap passou a ser diário e mais
-// apertado: 60 eventos/dia × 4 escritas ≈ 240/dia, uma fatia do orçamento
-// que deixa espaço para o resto. Trade-off consciente: sob scanning pesado
+// apertado: 60 eventos/dia × 5 escritas (4 dos buckets anónimos + 1 da
+// lista de IPs, ADR 0020) ≈ 300/dia, uma fatia do orçamento que deixa
+// espaço para o resto. Trade-off consciente: sob scanning pesado
 // sustentado, eventos a mais no mesmo dia são descartados (o 404 continua a
 // sair) — perde-se granularidade no Threat Intel, não a proteção do core.
 const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 };
+
+// ADR 0020 (docs/adr/0020-honeypot-public-ip.md): retenção da lista de
+// IPs, mais curta que a do projeto irmão (VPS externa, 60-90 dias — ver
+// docs/external-honeypot-vps.md §3). Scanners HTTP (o que este honeypot
+// apanha) têm mais chance de correr em IoT/routers domésticos
+// comprometidos do que os de força bruta SSH da VPS — janela mais curta
+// é a postura mais conservadora das duas, de propósito.
+const IP_RETENTION_MS = 30 * DAY_MS;
 
 // Timeout para fetches a montante (relay do HIBP em /api/pwned-range) — não
 // deixar um alvo lento pendurar o pedido.
@@ -88,10 +104,12 @@ async function readBuckets(env, now) {
 // ---------- honeypot: escrita ----------
 
 async function recordHoneypot(env, request, path, now) {
-  // Só metadados grosseiros, cada campo validado antes de persistir. NUNCA
-  // o IP: o cf-connecting-ip não é lido aqui de todo (só a lib de rate
-  // limit o vê, e apenas como hash salteado). O timestamp é arredondado a
-  // ANON_WINDOW_MS para não permitir correlação por instante preciso.
+  // Os buckets anónimos (aggregate.js) continuam exatamente como sempre:
+  // NUNCA o IP, timestamp arredondado a ANON_WINDOW_MS. O IP de origem só
+  // entra na lista separada `iplist` (lib/ipthreat.js) — decisão explícita
+  // do dono do repo (ADR 0020, docs/adr/0020-honeypot-public-ip.md), não
+  // um relaxamento silencioso desta função. As duas fontes nunca se
+  // misturam: `event` (abaixo) nunca ganha um campo `ip`.
   const country = normalizeCountry(request.headers.get('cf-ipcountry') || request.cf?.country);
   const asn = normalizeAsn(request.cf?.asn);
   const ts = floorToWindow(now, ANON_WINDOW_MS);
@@ -100,13 +118,20 @@ async function recordHoneypot(env, request, path, now) {
   const technique = techniqueForPath(path);
   const event = { ts, country, asn, path, technique };
 
+  // IP: só entra na lista se for público e válido (lib/ipguard.js) —
+  // gamas privadas/reservadas nunca deviam chegar aqui vindas da
+  // Cloudflare, mas valida-se na mesma (defesa em profundidade).
+  const ip = request.headers.get('cf-connecting-ip');
+  const ipValid = isPublicIp(ip);
+
   const capKey = `wcap:${dayKey(now)}`;
-  const [recent, hBucket, dBucket, meta, capPrev] = await Promise.all([
+  const [recent, hBucket, dBucket, meta, capPrev, ipList] = await Promise.all([
     getJSON(env, 'recent', []),
     getJSON(env, hourKey(now), emptyBucket()),
     getJSON(env, dayKey(now), emptyBucket()),
     getJSON(env, 'meta', {}),
     getJSON(env, capKey),
+    ipValid ? getJSON(env, 'iplist', emptyIpList()) : null,
   ]);
 
   // Cap de escritas por janela: passado o teto, descarta o evento (o
@@ -114,8 +139,9 @@ async function recordHoneypot(env, request, path, now) {
   const { allowed, state: capState } = underCap(capPrev, { now, ...HONEYPOT_WRITE_CAP });
   if (!allowed) return;
 
-  // 200 (não 30): a tabela de Logs da Threat Intelligence pagina/pesquisa
-  // sobre esta lista. Continua a ser só metadados por evento — nunca o IP.
+  // 200 (não 30): a tabela de Registo da Threat Intelligence pagina/pesquisa
+  // sobre esta lista. Continua a ser só metadados por evento — nunca o IP,
+  // mesmo depois do ADR 0020 (que só toca `iplist`, abaixo).
   const nextRecent = [event, ...recent].slice(0, 200);
   addEvent(hBucket, event);
   addEvent(dBucket, event);
@@ -134,7 +160,32 @@ async function recordHoneypot(env, request, path, now) {
     env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(HONEYPOT_WRITE_CAP.windowMs / 1000) + 60 }),
   ];
   if (metaChanged) writes.push(env.KV.put('meta', JSON.stringify(nextMeta)));
+  if (ipValid) {
+    recordIpSighting(ipList, { ip, now, country, asn, technique });
+    // TTL generoso como rede de segurança (a poda real é por entrada, no
+    // cron — ver pruneIpList/scheduled() abaixo): se o Worker ficar sem
+    // tráfego de todo por mais tempo que isto, a chave inteira cai sozinha
+    // em vez de crescer para sempre num site esquecido.
+    writes.push(
+      env.KV.put('iplist', JSON.stringify(ipList), { expirationTtl: Math.ceil((IP_RETENTION_MS * 2) / 1000) }),
+    );
+  }
   await Promise.all(writes);
+}
+
+/**
+ * Poda entradas de `iplist` sem nova deteção há mais de IP_RETENTION_MS
+ * (ADR 0020). Só escreve no KV quando algo foi mesmo removido — mesmo
+ * princípio de `snapshotFirewall`/`cached()`: não reescrever o que não
+ * mudou.
+ */
+async function pruneIpList(env, now) {
+  const ipList = await getJSON(env, 'iplist', emptyIpList());
+  const { list, prunedCount } = pruneExpiredIps(ipList, { now, maxAgeMs: IP_RETENTION_MS });
+  if (prunedCount === 0) return;
+  await env.KV.put('iplist', JSON.stringify(list), {
+    expirationTtl: Math.ceil((IP_RETENTION_MS * 2) / 1000),
+  });
 }
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
@@ -531,9 +582,10 @@ export default {
 
       // Threat Intelligence: dashboards próprios a partir dos buckets
       // acumulados do honeypot (heatmap, hora-do-dia, top país/ASN/técnica/
-      // path, eventos p/ os Logs) + a repartição de firewall acumulada a 7d.
-      // Tudo agregado, zero-PII. Cache 6h (aquecida no cron) — TTL a 5 min
-      // dava sempre "stale" quando o cron (30 min) batia, obrigando a
+      // path, eventos p/ os Logs) + a repartição de firewall acumulada a 7d
+      // + a lista de IPs vistos (ADR 0020 — só aqui o IP aparece; o resto
+      // desta rota continua zero-IP). Cache 6h (aquecida no cron) — TTL a
+      // 5 min dava sempre "stale" quando o cron (30 min) batia, obrigando a
       // reconstruir o fan-out de THREAT_INTEL_HOURS+7+1 leituras a cada
       // tick (~183 GETs × 48/dia). Alinhado com scan/ct/cf-stats (mesmo
       // padrão de cache já usado nesta rota) para não estourar o teto
@@ -541,11 +593,12 @@ export default {
       if (path === '/api/threat-intel') {
         const data = await cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
           const now = Date.now();
-          const [buckets, firewall7d] = await Promise.all([
+          const [buckets, firewall7d, ipList] = await Promise.all([
             readThreatBuckets(env, now),
             readFirewall7d(env, now),
+            getJSON(env, 'iplist', {}),
           ]);
-          return { ...threatIntel(buckets), firewall7d };
+          return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
         });
         return json(data, request, env, { maxAge: 300 });
       }
@@ -665,12 +718,18 @@ export default {
         // ticks do cron.
         cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
           const now = Date.now();
-          const [buckets, firewall7d] = await Promise.all([
+          const [buckets, firewall7d, ipList] = await Promise.all([
             readThreatBuckets(env, now),
             readFirewall7d(env, now),
+            getJSON(env, 'iplist', {}),
           ]);
-          return { ...threatIntel(buckets), firewall7d };
+          return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
         }).catch(() => {}),
+        // Poda da lista de IPs do honeypot (ADR 0020) — retenção de
+        // IP_RETENTION_MS, aplicada aqui e não no caminho de escrita
+        // (recordHoneypot) para não pagar essa leitura/escrita extra em
+        // cada evento; o cron já corre a cada 30 min de qualquer forma.
+        pruneIpList(env, Date.now()).catch(() => {}),
       ]),
     );
   },

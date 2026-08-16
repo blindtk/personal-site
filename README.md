@@ -57,11 +57,15 @@ these four say the most about how this repository actually thinks:
    provenance between the commit CI tested and what's actually running — is
    tracked as an open item in [`docs/threat-model.md`](docs/threat-model.md),
    not hidden.
-2. **[ADR 0004 — zero PII in the honeypot](docs/adr/0004-zero-pii-honeypot.md).**
-   The honeypot and analytics never store the visitor's IP — not because the
-   plan doesn't allow it, but because the data wasn't needed for the
-   aggregates the dashboards show. A privacy decision made against the
-   author's own convenience, on a project with no external pressure to make it.
+2. **[ADR 0004](docs/adr/0004-zero-pii-honeypot.md) / [ADR 0020](docs/adr/0020-honeypot-public-ip.md) — a privacy decision revisited on purpose, not forgotten.**
+   The Cloudflare Status/firewall panel still never stores a visitor's
+   IP (ADR 0004, unchanged) — that data wasn't needed for the aggregates
+   the dashboards show. The honeypot's own decoy-path events are
+   different: they now record and publish the source IP (ADR 0020), so a
+   separate external Cowrie honeypot project can correlate hits between
+   the two sensors. Same rigor either way — a retention window shorter
+   than that sibling project's, because HTTP-scanning botnets are more
+   likely to run on compromised home devices than SSH ones are.
 3. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
    Rather than hash every inline `<script>`/`<style>` Astro emits, the site
    eliminates inline output entirely, so the CSP is one static line with no
@@ -175,7 +179,10 @@ The site also runs several live cybersecurity showcases:
 
 The Worker-backed features degrade gracefully when it isn't reachable (they
 show a fallback note instead of breaking). The backend, its endpoints, its
-privacy stance (no IP ever stored), and its deploy are documented in
+privacy stance — no IP ever stored for the Cloudflare Status/firewall
+panel (ADR 0004); the honeypot's own decoy-path events are the deliberate
+exception, publishing the source IP for cross-honeypot correlation
+(ADR 0020) — and its deploy are documented in
 [`dynamic/worker/README.md`](dynamic/worker/README.md). The ATT&CK heatmap
 always works, since it's fully static.
 

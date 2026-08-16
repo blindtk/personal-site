@@ -474,14 +474,29 @@ export const ui = {
       // já prova o ponto com o link ao CVE, não precisa de o dizer também.
       corrLead: 'Correlação ao vivo — pelo menos uma técnica tentada neste honeypot está a ser explorada agora, em produção real, segundo o catálogo CISA KEV.',
       corrTitle: 'explorada agora (CISA KEV)',
-      privacyNote: 'Nenhum IP é armazenado — só país, ASN e path. A anonimização é verificável no código do Worker (dynamic/worker/).',
+      // ADR 0020: duas posturas, não uma. O painel Cloudflare (tráfego da
+      // zona, visitantes incluídos) continua zero-IP; os eventos deste
+      // honeypot passam a guardar e publicar o IP, à parte — ver "IPs
+      // conhecidos" abaixo e o projeto para o porquê e os limites.
+      privacyNote: 'O painel Cloudflare nunca guarda IP. Os eventos deste honeypot guardam e publicam o IP de origem, numa lista à parte — o porquê e os limites estão no projeto.',
       unavailable: 'Painel ao vivo indisponível — o Worker do honeypot não respondeu. O resto da página é estático e continua a funcionar.',
-      projectNote: 'O porquê de isto viver num Worker e não no site estático — e a garantia de privacidade por construção — está nas decisões do projeto.',
+      projectNote: 'O porquê de isto viver num Worker e não no site estático — e a política de privacidade, incluindo a lista de IPs — está nas decisões do projeto.',
       projectLink: 'Ver o projeto Honeypot →',
       patternsTitle: 'Ao longo da semana',
       logsTitle: 'Registo',
       // Registo (era a tab "Logs") continua a usar dict.site.logs* — essas
       // chaves já eram partilhadas, não específicas de "perimeter".
+      // IPs conhecidos (ADR 0020) — única secção da página onde o IP
+      // aparece; o Registo acima continua sem ele, de propósito.
+      ipListTitle: 'IPs conhecidos',
+      ipListIntro: 'Cada IP público que tocou num isco, com a 1.ª e a última deteção. Entradas sem nova deteção há 30 dias saem da lista sozinhas.',
+      ipListEmpty: 'Sem IPs registados ainda.',
+      ipListNote: 'Reconheces-te nesta lista? Podes pedir a remoção.',
+      ipListNoteLink: 'Contacto →',
+      ipColIp: 'IP',
+      ipColFirst: '1.ª deteção',
+      ipColLast: 'Última deteção',
+      ipColHits: 'Toques',
     },
     detections: {
       title: 'Deteções',
@@ -489,7 +504,7 @@ export const ui = {
         'O passo a seguir ao honeypot: cada classe de ataque que este site apanha vem acompanhada da regra Sigma que a detetaria num SIEM. O contador ao lado de cada regra mostra os toques reais dos últimos 7 dias nos endpoints-isco deste site.',
       pipelineTitle: 'O pipeline',
       pipelineSteps: [
-        { t: 'O isco regista', d: 'Um scanner toca num endpoint-isco (/wp-login.php, /.env, …) e recebe um 404 seco. O Worker guarda só país, ASN e path — nunca o IP.' },
+        { t: 'O isco regista', d: 'Um scanner toca num endpoint-isco (/wp-login.php, /.env, …) e recebe um 404 seco. O Worker guarda país, ASN e path aqui — o IP de origem é tratado à parte (ver o projeto).' },
         { t: 'Classificação ATT&CK', d: 'Cada path é mapeado à técnica MITRE ATT&CK que melhor o descreve — os mesmos IDs do heatmap /attack, verificados por um teste.' },
         { t: 'Regra Sigma', d: 'Para cada classe, a regra vendor-neutral que a apanharia — pronta a converter para Splunk, Elastic ou Sentinel com o sigma-cli.' },
       ],
@@ -1462,14 +1477,29 @@ export const ui = {
       // already proves the point with the CVE link, doesn't need to say it too.
       corrLead: 'Live correlation — at least one technique tried against this honeypot is being exploited right now, in the real world, per the CISA KEV catalog.',
       corrTitle: 'exploited now (CISA KEV)',
-      privacyNote: 'No IP is ever stored — only country, ASN and path. The anonymisation is verifiable in the Worker code (dynamic/worker/).',
+      // ADR 0020: two postures, not one. The Cloudflare panel (zone
+      // traffic, visitors included) stays zero-IP; this honeypot's own
+      // events now store and publish the IP, separately — see "Known
+      // IPs" below and the project for the why and the limits.
+      privacyNote: 'The Cloudflare panel never stores an IP. This honeypot\'s own events store and publish the source IP, in a separate list — the why and the limits are in the project.',
       unavailable: 'Live panel unavailable — the honeypot Worker did not respond. The rest of the page is static and still works.',
-      projectNote: 'Why this lives in a Worker and not the static site — and the privacy-by-construction guarantee — is written up in the project decisions.',
+      projectNote: 'Why this lives in a Worker and not the static site — and the privacy policy, including the IP list — is written up in the project decisions.',
       projectLink: 'See the Honeypot project →',
       patternsTitle: 'Over the week',
       logsTitle: 'Log',
       // Logs (now a section, not a tab) still uses dict.site.logs* — those
       // keys were already shared, not "perimeter"-specific.
+      // Known IPs (ADR 0020) — the only section of this page where the IP
+      // shows up; the Log above stays IP-free, on purpose.
+      ipListTitle: 'Known IPs',
+      ipListIntro: 'Every public IP that touched a decoy, with the first and last detection. Entries with no new detection in 30 days fall off the list on their own.',
+      ipListEmpty: 'No IPs recorded yet.',
+      ipListNote: 'Recognise yourself on this list? You can request removal.',
+      ipListNoteLink: 'Contact →',
+      ipColIp: 'IP',
+      ipColFirst: 'First seen',
+      ipColLast: 'Last seen',
+      ipColHits: 'Hits',
     },
     detections: {
       title: 'Detections',
@@ -1477,7 +1507,7 @@ export const ui = {
         'The step after the honeypot: every attack class this site catches comes with the Sigma rule that would detect it in a SIEM. The counter next to each rule shows the real hits on this site\'s decoy endpoints over the last 7 days.',
       pipelineTitle: 'The pipeline',
       pipelineSteps: [
-        { t: 'The decoy logs', d: 'A scanner touches a decoy endpoint (/wp-login.php, /.env, …) and gets a dry 404. The Worker stores only country, ASN and path — never the IP.' },
+        { t: 'The decoy logs', d: 'A scanner touches a decoy endpoint (/wp-login.php, /.env, …) and gets a dry 404. The Worker stores country, ASN and path here — the source IP is handled separately (see the project).' },
         { t: 'ATT&CK classification', d: 'Each path is mapped to the MITRE ATT&CK technique that best describes it — the same IDs as the /attack heatmap, kept in sync by a test.' },
         { t: 'Sigma rule', d: 'For each class, the vendor-neutral rule that would catch it — ready to convert to Splunk, Elastic or Sentinel with sigma-cli.' },
       ],
