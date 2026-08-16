@@ -182,12 +182,6 @@ test('honeypotStats: 24h, top path, países 7d, tempo até 1.º scan', () => {
     honeypotStats({ hourly: [h], days: [h], meta: { deployTs: 1000, firstScanTs: 1000 } }).timeToFirstScanSec,
     null,
   );
-  // paths7d: contagens da semana ordenadas por contagem decrescente
-  assert.deepEqual(stats.paths7d, [
-    { path: '/wp-login.php', count: 2 },
-    { path: '/.env', count: 1 },
-    { path: '/admin', count: 1 },
-  ]);
 });
 
 test('mapData ordena países por contagem', () => {

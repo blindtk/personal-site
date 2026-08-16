@@ -43,8 +43,8 @@ function excerpt(text: string, max = 90): string {
             {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
             {/* Sinal visual de que este-site e Honeypot fazem parte da teia
                de cross-links "por camadas" (SiteLayers) com Segurança/Provas/
-               Deteções/ATT&CK — distingue-os, sem precisar de clicar, dos
-               projetos independentes (Homelab, star-organizer). */}
+               Cloudflare/Performance — distingue-os, sem precisar de clicar,
+               dos projetos independentes (Homelab, star-organizer). */}
             {(slug === 'este-site' || slug === 'honeypot') && (
               <span class="badge amber">{dict.projects.systemBadge}</span>
             )}
@@ -52,15 +52,16 @@ function excerpt(text: string, max = 90): string {
           {(entry.data.repo || slug === 'honeypot') && (
             <div class="card-links mono">
               {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
-              {/* O painel /honeypot/ (telemetria ao vivo, decoys + deteções)
-                 é um destino distinto desta página (o "porquê"/arquitetura) —
-                 evita confundir os dois sítios. */}
+              {/* O painel /honeypot/ (telemetria ao vivo, decoys + correlação
+                 ATT&CK) é um destino distinto desta página (o
+                 "porquê"/arquitetura) — evita confundir os dois sítios. */}
               {slug === 'honeypot' && <a href={routes.honeypot[lang]}>[{dict.projects.live}]</a>}
             </div>
           )}
           {/* Único gancho, no índice, para a teia de cross-links "por camadas"
-             que já liga Segurança/Provas/Deteções/ATT&CK a este projeto — sem
-             isto, só se descobre a partir de dentro de uma dessas páginas. */}
+             que já liga Segurança/Provas/Cloudflare/Performance a este
+             projeto — sem isto, só se descobre a partir de dentro de uma
+             dessas páginas. */}
           {slug === 'este-site' && (
             <p class="card-hint"><a href={routes.security[lang]}>{dict.projects.systemCta}</a></p>
           )}

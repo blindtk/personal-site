@@ -623,14 +623,14 @@ decision:
   network, no abuse risk; small-to-medium effort (heuristics + an
   embedded Public Suffix List subset).
 
-- **Sigma Playground** — client-side in `static/`: the visitor pastes an
-  nginx/apache log line and a mini Sigma engine (declared subset:
-  `selection`, `contains/startswith/endswith`, `condition` AND/OR/NOT)
-  runs the same rules published on /detections, showing field by field
-  what fired, with a link to the ATT&CK technique. Closes the "honeypot →
-  rules → try it yourself" loop; rules shared with /detections via
-  `content/` (single source of truth). Logs never leave the browser;
-  medium effort.
+**Dropped, not just shelved (2026-08-16):** "Sigma Playground" — client-side
+tool that would have run pasted log lines against the honeypot's Sigma
+rules. Its premise no longer exists: `content/detections.json` and the
+Sigma section it fed on the Honeypot page were removed outright (not
+just left unbuilt) — the rules were never more than the existing
+path→technique mapping in a different notation, and adding a playground
+on top would have been building on a foundation the repo owner decided
+wasn't worth keeping in the first place.
 
 ## What it's going to be
 

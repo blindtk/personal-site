@@ -32,7 +32,7 @@ export const ui = {
       intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
       overview: 'Visão Geral — stack e estado ao vivo',
       security: 'Segurança — postura, cabeçalhos e porquê',
-      honeypot: 'Honeypot — endpoints-isco, deteções Sigma e o registo de quem lhes toca',
+      honeypot: 'Honeypot — endpoints-isco, correlação ATT&CK e o registo de quem lhes toca',
       cloudflare: 'Cloudflare — o que a Internet tenta contra a zona inteira, e o que é travado',
       evidence: 'Provas — tudo verificável, gerado no build',
       performance: 'Performance — tráfego, cache, latência e Core Web Vitals',
@@ -455,8 +455,10 @@ export const ui = {
         'Isto é sobretudo uma demonstração do protocolo. Na prática, um bom gestor de passwords já faz esta verificação por ti — e gera passwords longas e únicas que nunca aparecem em fugas.',
     },
     // Honeypot (era "perimeter" — a página de 5 tabs dividiu-se em duas:
-    // Honeypot [este bloco, absorve Deteções e Logs como secções] e
-    // Cloudflare [dict.site.cloudflare*]. A cadeia de 4 números e as
+    // Honeypot [este bloco, absorve Logs como secção "Registo" — a antiga
+    // secção Deteções (regras Sigma) foi removida por completo, não só
+    // absorvida, ver docs/external-honeypot-vps.md] e Cloudflare
+    // [dict.site.cloudflare*]. A cadeia de 4 números e as
     // tabelas cruzadas honeypot+firewall mudaram-se para o hub
     // (dict.site.chain*) — ver docs/this-site-section-audit-2026-08-06.md.
     honeypot: {
@@ -1049,7 +1051,7 @@ export const ui = {
       intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
       overview: 'Overview — stack and live status',
       security: 'Security — posture, headers and why',
-      honeypot: 'Honeypot — decoy endpoints, Sigma detections and the log of whoever touches them',
+      honeypot: 'Honeypot — decoy endpoints, ATT&CK correlation and the log of whoever touches them',
       cloudflare: 'Cloudflare — what the Internet tries against the whole zone, and what gets stopped',
       evidence: 'Evidence — everything verifiable, generated at build',
       performance: 'Performance — traffic, cache, latency and Core Web Vitals',
@@ -1436,9 +1438,11 @@ export const ui = {
         'This is mostly a demonstration of the protocol. In practice a good password manager already does this check for you — and generates long, unique passwords that never show up in breaches.',
     },
     // Honeypot (was "perimeter" — the five-tab page split into Honeypot
-    // [this block, absorbs Detections and Logs as sections] and Cloudflare
-    // [dict.site.cloudflare*]. The 4-number chain and the merged
-    // honeypot+firewall tables moved to the hub (dict.site.chain*) — see
+    // [this block, absorbs Logs as the "Log" section — the old Detections
+    // section (Sigma rules) was removed outright, not just absorbed, see
+    // docs/external-honeypot-vps.md] and Cloudflare [dict.site.cloudflare*].
+    // The 4-number chain and the merged honeypot+firewall tables moved to
+    // the hub (dict.site.chain*) — see
     // docs/this-site-section-audit-2026-08-06.md).
     honeypot: {
       metaTitle: 'Honeypot — decoy endpoints and what touches them, live',
