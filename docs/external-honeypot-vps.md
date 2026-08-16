@@ -132,6 +132,23 @@ day one, not "added later":
 what makes this an actual usable "threat list" rather than a display
 piece.
 
+### Cross-honeypot correlation
+
+The main site's own honeypot now publishes IPs too, by a separate
+decision ([ADR 0020](adr/0020-honeypot-public-ip.md)) — so correlation
+between the two sensors is a direct set intersection, not the
+salted-hash workaround considered before that decision existed. This VPS
+reads `danielmala.co`'s public IP-indexed honeypot data (same one-way
+read the rest of this document already assumes: this project consumes
+from the Worker's public API, never writes to it) and flags matches on
+its own dashboard/feed. Retention differs between the two — this
+project's entries expire after 60–90 days, the main honeypot's after
+30–45 (ADR 0020's more conservative window, given HTTP-scanning botnets'
+higher odds of running on compromised residential/IoT devices) — so a
+match found today may no longer be confirmable in three months; that's
+an accepted limitation of keeping two independently-tuned retention
+policies rather than a shared one.
+
 ---
 
 ## 4. DNS

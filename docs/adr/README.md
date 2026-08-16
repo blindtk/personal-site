@@ -20,6 +20,7 @@ existed.
 | [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget |
 | [0006](0006-caps-escrita-diarios.md) | Worker write caps: daily, sized to the budget, not to abuse resistance |
 | [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability |
+| [0020](0020-honeypot-public-ip.md) | Honeypot events record and publish the source IP, for cross-honeypot correlation (supersedes ADR 0004 for the honeypot; the firewall panel's zero-IP stance is unchanged) |
 
 ## Repository & tooling
 
