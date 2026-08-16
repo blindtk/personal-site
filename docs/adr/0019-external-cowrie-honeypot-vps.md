@@ -57,8 +57,11 @@ Run this as a **second, independent trust boundary**, never touching
   blocklist (Spamhaus, AbuseIPDB) already runs on. Captured credentials
   are filtered before publication: only pairs seen from N distinct
   sources go public, which keeps botnet dictionaries and drops anything
-  that looks like a real, unique password. Malware samples Cowrie may
-  fetch are never published or committed, full stop.
+  that looks like a real, unique password. The malware samples Cowrie
+  may fetch are never published or committed, full stop — the URL
+  requested and the SHA-256 of what came back are a separate, later
+  refinement (standard IOC metadata, not the sample itself), detailed in
+  the reference doc below.
 - **No coupling to the main site beyond a link.** The only thing that
   reaches `danielmala.co` is a new project page in `content/projects/`
   describing the project and stating, explicitly, that its data policy is
