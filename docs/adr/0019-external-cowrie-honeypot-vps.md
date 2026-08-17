@@ -1,6 +1,13 @@
 # ADR 0019 — External Cowrie honeypot + spider trap: separate machine, separate privacy boundary
 
-**Status:** accepted, not yet built.
+**Status:** accepted and implemented — see
+[`blindtk/honeypot-vps-infra`](https://github.com/blindtk/honeypot-vps-infra).
+The reasoning below is the decision as originally made; where it
+describes a port/subdomain topology, that detail is superseded by what's
+actually in the linked repo (three subdomains — `access.`, `web.`,
+`intel.` — not the single `intel.` subdomain assumed below when this ADR
+was written). `docs/external-honeypot-vps.md` carries the current
+operational detail; this ADR is left as the historical decision record.
 
 ## Context
 
@@ -47,11 +54,20 @@ Run this as a **second, independent trust boundary**, never touching
   You Go to dodge the idle-reclaim policy — the repo owner asked for this
   to cost nothing, and PAYG billing (even at $0 actual spend) is out of
   scope for now.
-- **DNS:** a subdomain of the existing zone (`intel.danielmala.co`),
-  DNS-only — **not** proxied through Cloudflare, and never added to the
-  main site's WAF/Access posture. A new standalone domain was rejected:
+- **DNS:** three subdomains of the existing zone, configured differently
+  per what they serve — `access.danielmala.co` (Cowrie + endlessh) and
+  `web.danielmala.co` (the HTTP maze) are DNS-only, **not** proxied
+  through Cloudflare and never added to the main site's WAF/Access
+  posture; `intel.danielmala.co` (the feed + report) is a Cloudflare
+  Pages custom domain instead, since it's the one piece meant to be
+  served *through* Cloudflare rather than as a raw sensor. This is a
+  refinement made during implementation — a single `intel.` subdomain was
+  the working assumption when this ADR was first written, but Cowrie/SSH,
+  the HTTP maze, and the Pages-hosted feed each need different Cloudflare
+  treatment, so one subdomain per differently-configured surface turned
+  out to be the honest shape. A new standalone domain was still rejected:
   it costs money and adds renewal/certificate overhead for no real
-  benefit over a subdomain of a zone already owned.
+  benefit over subdomains of a zone already owned.
 - **What runs:** Cowrie (full shell emulation, never a real shell) as the
   primary data source; `endlessh` as a cheap SSH tarpit on secondary
   ports; a bounded, rate-capped HTTP maze (Nepenthes/Iocaine-style
@@ -62,8 +78,10 @@ Run this as a **second, independent trust boundary**, never touching
 - **Publishing attacker IPs is the point, not an oversight.** Unlike the
   main honeypot (ADR 0004), this is accepted as a deliberate,
   differently-scoped project: legitimate interest (GDPR Art. 6(1)(f)) for
-  a self-run security research asset, mitigated by entry expiry (60–90
-  days without a repeat sighting), a takedown/dispute contact, and
+  a self-run security research asset, mitigated by entry expiry (75 days
+  without a repeat sighting, `FEED_EXPIRE_AFTER_DAYS` in the linked repo —
+  settled at implementation time from the 60–90 day range considered
+  here), a takedown/dispute contact, and
   exclusion of private/reserved ranges — the same discipline any IP
   blocklist (Spamhaus, AbuseIPDB) already runs on. Captured credentials
   are filtered before publication: only pairs seen from N distinct
@@ -91,8 +109,15 @@ Run this as a **second, independent trust boundary**, never touching
   [`docs/external-honeypot-vps.md`](../external-honeypot-vps.md), kept
   separate from this ADR because it's implementation reference, not a
   one-time decision record.
-- **Not implemented yet.** Provisioning the Oracle instance is outside
-  this repository's reach; the concrete artifacts (systemd units, Cowrie
-  config, the feed generator script, the project page) are written once
-  the port topology and subdomain name are confirmed against a real
-  instance, not designed speculatively against one that doesn't exist.
+- **Implemented as a separate repository**, not inside `personal-site`:
+  [`blindtk/honeypot-vps-infra`](https://github.com/blindtk/honeypot-vps-infra)
+  holds the Cowrie config, endlessh config, the HTTP maze (Markov-chain
+  generated Portuguese public-domain prose, per §2 above), the feed
+  generator (privacy filter, command→ATT&CK mapping, Cloudflare Pages
+  publish), systemd units, and the idempotent `provision.sh`. Keeping it
+  a separate repo — not a subdirectory here — matches the separate-trust-
+  boundary framing of this ADR literally: this repository's tooling,
+  CI, and history never need to touch the VPS's config, and vice versa.
+  The remaining piece that *does* belong in `personal-site` — the project
+  page in `content/projects/{pt,en}/` (§5 of the operational doc) — is
+  not yet written.

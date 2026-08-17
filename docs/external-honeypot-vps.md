@@ -5,6 +5,13 @@ document is the implementation reference — service topology, data format,
 and the risks accepted along the way. Update it as the design changes;
 the ADR stays a snapshot of the decision.
 
+**Implemented in [`blindtk/honeypot-vps-infra`](https://github.com/blindtk/honeypot-vps-infra)**,
+a separate repository (ADR 0019's "separate trust boundary" applied
+literally — this repo's own tooling and history never touch the VPS's
+config). This document describes the architecture as built there; where
+anything below is more detailed or has drifted from that repo's README,
+the repo's README and code are the source of truth.
+
 This is a **separate project from `danielmala.co`'s honeypot**
 (`dynamic/worker/`, ADR 0004, ADR 0007). Different machine, different
 domain, different data policy. The single rule that keeps the two from
@@ -49,34 +56,49 @@ attack history, not the project.
 
 ## 2. What runs on the machine
 
-| Service | Role | Port |
-|---|---|---|
-| **Cowrie** | Full SSH/Telnet shell emulation — session capture, commands, credentials, download attempts | 22 (real), 23 |
-| **`endlessh`** | SSH tarpit — drips a banner one byte at a time, holding low-effort scanners' connections open at near-zero cost | secondary ports |
-| **HTTP maze** (Nepenthes/Iocaine-style, Markov-generated infinite pages) | The "offensive posture" on the web side: wastes the resources of aggressive crawlers/scrapers that ignore `robots.txt`, generated in streaming so the cost sits on the client, not the server | 80/443 on the dedicated subdomain |
+Three subdomains, each configured differently (implemented topology —
+see `blindtk/honeypot-vps-infra`'s README for the full rebuild sequence):
 
-Real admin SSH lives on a non-standard port, restricted to the owner's
-IP — same principle as the main site's WAF rule for the owner
-(`docs/cloudflare-deploy.md` §5).
+| Subdomain | Cloudflare | Service | Role | Port(s) |
+|---|---|---|---|---|
+| `access.danielmala.co` | DNS-only | **Cowrie** | Full SSH shell emulation — session capture, commands, credentials, download attempts | 22 externally, DNAT'd locally to 2222 (Cowrie itself never binds a privileged port or runs as root) |
+| `access.danielmala.co` | DNS-only | **`endlessh`** | SSH tarpit — drips a banner one byte at a time, holding low-effort scanners' connections open at near-zero cost | 23 + a small set of secondary commonly-scanned ports, one systemd instance per port |
+| `web.danielmala.co` | DNS-only | **HTTP maze** (Nepenthes/Iocaine-style, Markov-generated infinite pages over an aggregated Portuguese public-domain prose corpus) | The "offensive posture" on the web side: wastes the resources of aggressive crawlers/scrapers that ignore `robots.txt`, generated in streaming so the cost sits on the client, not the server | 80/443 |
+| `intel.danielmala.co` | Cloudflare Pages (Direct Upload, no Git link) | feed + static report | Published threat intel — see §3 | HTTPS via Cloudflare |
 
-**Port topology decision:** `endlessh` and Cowrie can't both own port 22.
-Cowrie sits on the real port 22 (matches the reference implementation,
-maximizes the primary data source — full sessions); `endlessh` covers
-port 23 and any other commonly-scanned secondary port, where there's
-nothing lost by holding a scanner indefinitely instead of capturing a
-session.
+Real admin SSH lives on a non-standard port (moved there by
+`provision.sh`'s first phase, with an explicit safety gate — the wrong
+order here can lock the operator out with no reliable Always-Free serial
+console to recover through), restricted the same way any other exposed
+admin surface would be.
 
-**Resource caps are mandatory:**
-- Cowrie's file-download emulation (it fetches whatever the attacker
-  tries to pull) is either disabled, or accepted as "malware lives on
-  this disk and never leaves it" — **the sample itself** is never
-  committed, never served from the VPS, never redistributed in any
-  form. Metadata about the retrieval (the URL requested, the SHA-256 of
-  what came back) is a separate decision — see §3.
+**Port topology, as built:** `endlessh` and Cowrie can't both own port
+22. Cowrie sits on the real port 22 (matches the reference
+implementation, maximizes the primary data source — full sessions);
+`endlessh` covers port 23 and a small configurable set of other
+commonly-scanned secondary ports, where there's nothing lost by holding a
+scanner indefinitely instead of capturing a session. The maze is on its
+own subdomain/ports entirely (80/443 on `web.`), never sharing a listener
+with the SSH-side services.
+
+**Resource caps are mandatory, implemented at two layers:**
+- Cowrie's file-download emulation stays on, with hard caps: per-file
+  size (Cowrie's own `download_limit_size`), and — since Cowrie has no
+  native per-session/per-IP throttle — a companion script
+  (`cowrie/dl-guard.py`, run by a systemd timer) that rate-limits
+  downloads per session and per source IP by reading Cowrie's own event
+  log and reacting with a temporary firewall drop, plus a total-size cap
+  on the download directory with automatic oldest-first cleanup.
+  **The sample itself** is never committed, never served from the VPS,
+  never redistributed in any form, in any of this. Metadata about the
+  retrieval (the URL requested, the SHA-256 of what came back) is a
+  separate decision — see §3.
 - The HTTP maze caps concurrent connections, bytes served per
-  session/IP, and connection timeout. Without this, an aggressive
-  crawler exhausts the instance's own resources before it wastes any of
-  its own.
+  session/IP/day, connection timeout, and requests per second per IP —
+  application-level (`maze/ratelimit.py`) *and* systemd-level
+  (`CPUQuota`/`MemoryMax` on every unit, not just the maze's). Without
+  both layers, an aggressive crawler exhausts the instance's own
+  resources before it wastes any of its own.
 - Aggressive log rotation — Cowrie under sustained brute-force fills disk
   fast on a small instance.
 
@@ -125,10 +147,19 @@ publishing the sample.
   in IPs and patterns, not a verbatim replay of every simulated
   intrusion.
 - Captured credentials without filtering: only a username/password pair
-  seen from **N distinct sources** gets published. That keeps the
-  botnet-dictionary noise (`admin`/`123456`/`root`, repeated by hundreds
-  of IPs) and drops anything that looks like a single, real person's
-  password.
+  seen from **≥5 distinct sources** gets published, where a source is a
+  distinct **/24 or ASN — never a distinct IP** (a single botnet clears a
+  distinct-IP threshold trivially; a distinct-network one is a real bar).
+  That keeps the botnet-dictionary noise (`admin`/`123456`/`root`,
+  repeated by hundreds of IPs in one /24 or one hosting ASN) and drops
+  anything that looks like a single, real person's password — via a
+  documented heuristic (`feed/lib/privacy_filter.py`
+  `looks_like_a_real_password`: not a common default, ≥10 characters, and
+  mixing ≥3 character classes). Publishing full credential pairs at all
+  is off by default (`PUBLISH_CREDENTIAL_PAIRS=false`) — usernames and
+  aggregate stats alone already carry ~90% of the analytic value for a
+  fraction of the risk; see the repo README's "Credential publication"
+  section for the full trade-off.
 
 **Legal basis (GDPR):** an IP is personal data even when it's almost
 always cloud/botnet infrastructure rather than an identifiable
@@ -138,10 +169,14 @@ purposes, with proportionate safeguards. This isn't novel ground:
 Spamhaus, AbuseIPDB, and independent honeypot feeds have run on the same
 basis for years. Three things make it defensible and need to exist from
 day one, not "added later":
-1. **Expiry.** Entries age out after a period without a repeat sighting
-   (proposed: 60–90 days). A feed that never forgets stops being threat
-   intel and becomes a permanent personal record — that distinction is
-   what legitimate interest rests on.
+1. **Expiry.** Entries age out after a period without a repeat sighting —
+   **75 days** (`FEED_EXPIRE_AFTER_DAYS`, settled at implementation time
+   from the 60–90 day range originally proposed here), enforced both on
+   what each publication run includes and on the underlying state
+   database itself, so the state doesn't quietly become the permanent
+   record the expiry is meant to prevent. A feed that never forgets stops
+   being threat intel and becomes a permanent personal record — that
+   distinction is what legitimate interest rests on.
 2. **Dispute/removal process.** A simple contact (the site's existing
    email) for anyone who identifies with a listed IP and requests
    removal — shared hosting, carrier NAT, IP reassignment. Cheap to run,
@@ -173,8 +208,8 @@ confident pattern match → no technique, never a guessed one — the
 reference's own report shows plenty of commands left unmapped (a bare
 `—`) for exactly this reason.
 
-This needs its own small mapping table in the feed generator script
-(§7) — not shared code with `dynamic/worker/src/lib/attack-map.js`
+Implemented as `feed/lib/attack_map.py` in `blindtk/honeypot-vps-infra`
+— not shared code with `dynamic/worker/src/lib/attack-map.js`
 (path-based, different runtime); a parallel, command-based version for
 this project.
 
@@ -207,36 +242,47 @@ frame it.
 
 The main site's own honeypot now publishes IPs too, by a separate
 decision ([ADR 0020](adr/0020-honeypot-public-ip.md)) — so correlation
-between the two sensors is a direct set intersection, not the
-salted-hash workaround considered before that decision existed. This VPS
-reads `danielmala.co`'s public IP-indexed honeypot data (same one-way
-read the rest of this document already assumes: this project consumes
-from the Worker's public API, never writes to it) and flags matches on
-its own dashboard/feed. Retention differs between the two — this
-project's entries expire after 60–90 days, the main honeypot's after a
-fixed 30 (ADR 0020's more conservative window, given HTTP-scanning
-botnets' higher odds of running on compromised residential/IoT devices) —
-so a
-match found today may no longer be confirmable in three months; that's
-an accepted limitation of keeping two independently-tuned retention
-policies rather than a shared one.
+between the two sensors is possible as a direct set intersection, not the
+salted-hash workaround considered before that decision existed. **Not yet
+implemented**, though: `blindtk/honeypot-vps-infra`'s feed generator
+currently only reads Cowrie's own logs, never `danielmala.co`'s public
+honeypot data — the one-way-read design this paragraph describes (this
+VPS consuming from the Worker's public API, never writing to it) is the
+intended shape for it, should it get built, but as of this writing the
+two feeds are independent and nothing cross-references them. Retention
+already differs between the two either way — this project's entries
+expire after 75 days, the main honeypot's after a fixed 30 (ADR 0020's
+more conservative window, given HTTP-scanning botnets' higher odds of
+running on compromised residential/IoT devices) — so a match found today
+may no longer be confirmable in three months, whenever correlation is
+actually added; that's an accepted limitation of keeping two
+independently-tuned retention policies rather than a shared one.
 
 ---
 
 ## 4. DNS
 
-**`intel.danielmala.co`**, DNS-only record (grey-clouded — no Cloudflare
-proxy), pointing directly at the VPS IP.
+Three subdomains, configured differently by what they need to be (§2's
+table has the full picture):
 
-Not proxied because SSH doesn't go through an HTTP proxy anyway, and the
-HTTP side (feed + eventual dashboard) is meant to be exposed as-is — this
-VPS doesn't inherit, or pretend to inherit, the main site's protection
-(WAF, Managed Challenge). That absence is exactly what makes it a real
-sensor, unlike the main HTTP honeypot (ADR 0007).
+- **`access.danielmala.co`** and **`web.danielmala.co`** — DNS-only
+  records (grey-clouded, no Cloudflare proxy), pointing directly at the
+  VPS IP. Not proxied because SSH doesn't go through an HTTP proxy
+  anyway, and the HTTP maze is meant to be exposed as-is — this VPS
+  doesn't inherit, or pretend to inherit, the main site's protection
+  (WAF, Managed Challenge). That absence is exactly what makes it a real
+  sensor, unlike the main HTTP honeypot (ADR 0007).
+- **`intel.danielmala.co`** — a Cloudflare Pages custom domain (Direct
+  Upload project, no Git connection), not a plain DNS record. This is
+  the one surface actually meant to sit behind Cloudflare: it's a static
+  publish target (the feed + report), not a raw sensor, so there's no
+  tension with the "expose it as-is" reasoning above — that reasoning
+  applies to `access.`/`web.` specifically, not to every subdomain this
+  project uses.
 
 A new standalone domain was considered and rejected: it costs money
 (annual registration) and adds certificate/renewal overhead for no real
-gain over a subdomain of a zone already owned and paid for. Avoid
+gain over subdomains of a zone already owned and paid for. Avoid
 "free domain" services (e.g. the old Freenom) — poor reputation, poor
 abuse handling, and unnecessary here.
 
@@ -250,17 +296,20 @@ plain text.
 ## 5. What shows up on `danielmala.co`
 
 **Only a project page**, in `content/projects/{pt,en}/` — not yet
-written; depends on the port topology and subdomain being confirmed
-against a real instance first. Same documentary, sober tone as the rest
-of the site (`CLAUDE.md`) — the infrastructure behind it can be
-technically aggressive (the maze, the tarpit); the prose describing it
-doesn't change register for that.
+written; the architecture it would describe is now built
+(`blindtk/honeypot-vps-infra`), but the page itself should describe a
+*running* instance (real DNS, a real feed with real entries), so it
+waits on the VPS actually being provisioned (§7) rather than on any
+remaining design question. Same documentary, sober tone as the rest of
+the site (`CLAUDE.md`) — the infrastructure behind it can be technically
+aggressive (the maze, the tarpit); the prose describing it doesn't change
+register for that.
 
 Minimum content:
 - what it is and why it exists (research, not protecting the main site);
 - the data boundary, stated accurately — **as of ADR 0020, both this
   project and `danielmala.co`'s own honeypot publish IPs, on different
-  retention windows (60–90 days here, 30 there) and for different
+  retention windows (75 days here, 30 there) and for different
   reasons (a dedicated research asset here; cross-honeypot correlation
   there).** The main site's Cloudflare Status/firewall panel is the one
   that stays zero-IP (ADR 0004, whole-zone traffic including every
@@ -300,14 +349,21 @@ what guarantees a bug here can never become a bug there.
 
 ## 7. Next steps
 
-1. **Outside this repository's reach:** create/confirm the Oracle
-   tenancy, provision the instance, generate the SSH key.
-2. Confirm the port topology (§2) and the subdomain name (`intel.`
-   proposed) against the real instance.
-3. Once 1–2 are confirmed: systemd units, Cowrie config, `endlessh`
-   config, and the feed generator script — reads Cowrie's logs, produces
-   the JSON/text IP feed and the malware-IOC list per §3's rules, and
-   runs the command→ATT&CK mapping for the static report — plus the
-   project page skeleton (§5, PT+EN). Not written speculatively now —
-   designing scripts against a topology that might still change wastes
-   the exercise.
+Systemd units, Cowrie config, `endlessh` config, the maze, and the feed
+generator (log ingestion, privacy filter, command→ATT&CK mapping, JSON/
+text IP feed, malware-IOC metadata, static report, Cloudflare Pages
+publish + deployment pruning) are **implemented** — see
+[`blindtk/honeypot-vps-infra`](https://github.com/blindtk/honeypot-vps-infra)
+and its README for the exact rebuild sequence. What's left, in order:
+
+1. **Outside any repository's reach:** create the Oracle tenancy,
+   provision a real instance (arm64 or amd64 — `provision.sh` supports
+   both), and run through the linked repo's README rebuild steps —
+   including its safety-gated admin-SSH port move, which has to happen
+   before anything else touches the instance's SSH access.
+2. Point DNS (§4) at the real instance once it exists, and create the
+   Cloudflare Pages project for `intel.danielmala.co`.
+3. Write the project page in `content/projects/{pt,en}/` (§5, PT+EN) —
+   this is the one piece of this project that belongs in
+   `personal-site` itself, and the only reason it isn't written yet is
+   that it should describe a running system, not a planned one.
