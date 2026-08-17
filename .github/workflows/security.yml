@@ -40,7 +40,7 @@ jobs:
         with:
           persist-credentials: false
       - name: OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+        uses: google/osv-scanner-action/osv-scanner-action@8deb546fdb875b9996d27d4950be7312dac076a1 # v2.5.0
         with:
           # --config: exceções em osv-scanner.toml (na raiz). Cada IgnoredVuln
           # traz justificação e data de expiração — usar só para falsos
@@ -84,7 +84,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Instalar Semgrep
-        run: pipx install semgrep==1.172.0
+        run: pipx install semgrep==1.173.0
       - name: SAST
         # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07,
         # ver docs/security-review-2026-07-29.md). O volume real medido contra
