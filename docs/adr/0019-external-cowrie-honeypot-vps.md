@@ -47,16 +47,21 @@ Run this as a **second, independent trust boundary**, never touching
   You Go to dodge the idle-reclaim policy — the repo owner asked for this
   to cost nothing, and PAYG billing (even at $0 actual spend) is out of
   scope for now.
-- **DNS:** three subdomains of the existing zone, split by function —
-  `access.danielmala.co` (Cowrie + `endlessh`, SSH/Telnet),
-  `web.danielmala.co` (the HTTP maze/spider trap), and
-  `intel.danielmala.co` (the threat-intel feed/dashboard) — each
-  DNS-only, **not** proxied through Cloudflare, and never added to the
-  main site's WAF/Access posture. One name per surface, so each can be
-  referenced, disabled, or re-pointed independently of the other two. A
-  new standalone domain was rejected: it costs money and adds
-  renewal/certificate overhead for no real benefit over subdomains of a
-  zone already owned.
+- **DNS:** three subdomains of the existing zone, split by function and
+  *not* identically configured. `access.danielmala.co` (Cowrie +
+  `endlessh`, SSH/Telnet) and `web.danielmala.co` (the HTTP maze/spider
+  trap) are DNS-only, **not** proxied through Cloudflare, and never added
+  to the main site's WAF/Access posture — both are attacker-facing
+  sensors that need to look unprotected. `intel.danielmala.co` (the
+  threat-intel feed + static report) is different in kind: it publishes
+  an already-curated artifact, not raw attacker traffic, so it's proxied
+  through Cloudflare (orange-clouded) for CDN caching and DDoS/bot
+  protection on a page meant to be publicly linked and pulled by
+  third-party blocklist consumers. One name per surface, so each can be
+  referenced, disabled, re-pointed, or — as with `intel.` — given its own
+  Cloudflare posture, independently of the other two. A new standalone
+  domain was rejected: it costs money and adds renewal/certificate
+  overhead for no real benefit over subdomains of a zone already owned.
 - **What runs:** Cowrie (full shell emulation, never a real shell) as the
   primary data source; `endlessh` as a cheap SSH tarpit on secondary
   ports; a bounded, rate-capped HTTP maze (Nepenthes/Iocaine-style

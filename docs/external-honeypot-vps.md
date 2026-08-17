@@ -225,25 +225,41 @@ policies rather than a shared one.
 
 ## 4. DNS
 
-Three DNS-only records (grey-clouded — no Cloudflare proxy), each
-pointing directly at the VPS IP, one per function rather than a single
-name carrying all three:
+Three subdomains, split by function — but **not** identically configured:
+two point directly at the VPS, unprotected on purpose; the third is
+proxied through Cloudflare, because it isn't a sensor.
 
-| Subdomain | Serves |
-|---|---|
-| **`access.danielmala.co`** | Cowrie (real SSH/Telnet) + `endlessh` (tarpit ports) |
-| **`web.danielmala.co`** | the HTTP maze / spider trap |
-| **`intel.danielmala.co`** | the threat-intel feed + eventual dashboard |
+| Subdomain | Serves | Cloudflare proxy |
+|---|---|---|
+| **`access.danielmala.co`** | Cowrie (real SSH/Telnet) + `endlessh` (tarpit ports) | Off — DNS-only, grey-clouded, points straight at the VPS IP |
+| **`web.danielmala.co`** | the HTTP maze / spider trap | Off — DNS-only, grey-clouded, points straight at the VPS IP |
+| **`intel.danielmala.co`** | the threat-intel feed + static report | **On** — orange-clouded, proxied |
 
-None proxied, for the same reason regardless of which one: SSH doesn't go
-through an HTTP proxy anyway, and the HTTP-facing two (maze, feed/
-dashboard) are meant to be exposed as-is — this VPS doesn't inherit, or
-pretend to inherit, the main site's protection (WAF, Managed Challenge).
-That absence is exactly what makes it a real sensor, unlike the main HTTP
-honeypot (ADR 0007). Splitting the three surfaces across separate names,
-instead of one name doing all three jobs, means SSH, the maze, and the
-feed can each be referenced, taken down, or re-pointed without touching
-the other two.
+`access.` and `web.` stay DNS-only for the same reason: SSH doesn't go
+through an HTTP proxy anyway, and the maze is meant to be exposed as-is —
+this VPS doesn't inherit, or pretend to inherit, the main site's
+protection (WAF, Managed Challenge). That absence is exactly what makes
+either one a real sensor, unlike the main HTTP honeypot (ADR 0007).
+
+`intel.` is different in kind, not just configuration: it isn't
+attacker-facing. It publishes an already-curated, already-generated
+artifact (the JSON/text feed + the static ATT&CK report, §3), regenerated
+periodically from Cowrie's logs on the VPS — nothing about it needs to
+look like an unprotected origin, and everything about it benefits from
+sitting behind Cloudflare: CDN caching for a page that gets crawled by
+blocklist consumers, and DDoS/bot protection for a page whose whole point
+is being publicly linked and pulled by third parties. Proxying it costs
+nothing architecturally, since `danielmala.co`'s own zone already has
+Universal SSL and the standard edge protections configured
+(`docs/cloudflare-deploy.md`, `docs/dns-tls.md`). The origin still needs a
+valid certificate — **Full (strict)**, never "Flexible"
+(`docs/dns-tls.md` §2) — since the content is generated on, and served
+from, the VPS.
+
+Splitting the three surfaces across separate names — instead of one name
+doing all three jobs — means SSH, the maze, and the feed can each be
+referenced, taken down, re-pointed, or (as here) given a different
+Cloudflare posture, without touching the other two.
 
 A new standalone domain was considered and rejected: it costs money
 (annual registration) and adds certificate/renewal overhead for no real
@@ -251,27 +267,31 @@ gain over subdomains of a zone already owned and paid for. Avoid
 "free domain" services (e.g. the old Freenom) — poor reputation, poor
 abuse handling, and unnecessary here.
 
-Never referenced from `danielmala.co`'s `robots.txt`, sitemap, or any
-link that could read as part of the same protected perimeter — only the
-explicit reference on the project page (§5), with the boundary stated in
-plain text.
+`access.` and `web.` are never referenced from `danielmala.co`'s
+`robots.txt`, sitemap, or any link that could read as part of the same
+protected perimeter — only the explicit reference on the project page
+(§5) to `intel.`, with the boundary stated in plain text: `intel.` being
+proxied doesn't mean the honeypot itself sits behind Cloudflare, only
+that its published output does.
 
 **HSTS caveat, noted for later:** the main site's HSTS header isn't
 submitted with `preload` yet, specifically because `includeSubDomains`
-would force every subdomain of `danielmala.co` — these three included —
-onto valid HTTPS permanently, and the removal process is slow
-(`docs/dns-tls.md` §3). `access.` is TCP, not HTTP, so it's unaffected;
-`web.` and `intel.` do serve HTTP, so their TLS posture needs to be
-settled before that preload submission happens, not after.
+would force every subdomain of `danielmala.co` onto valid HTTPS
+permanently, and the removal process is slow (`docs/dns-tls.md` §3).
+`access.` is TCP, not HTTP, so it's unaffected. `intel.` is already
+covered once proxied (Cloudflare's Universal SSL terminates it). `web.`
+is the one that still matters here: it stays unproxied by design, so its
+own TLS posture needs to be settled — and kept working — before that
+preload submission happens, not after.
 
 ---
 
 ## 5. What shows up on `danielmala.co`
 
 **Only a project page**, in `content/projects/{pt,en}/` — not yet
-written; depends on the port topology and subdomain being confirmed
-against a real instance first. Same documentary, sober tone as the rest
-of the site (`CLAUDE.md`) — the infrastructure behind it can be
+written; depends on the port topology and the three subdomains being
+confirmed against a real instance first. Same documentary, sober tone as
+the rest of the site (`CLAUDE.md`) — the infrastructure behind it can be
 technically aggressive (the maze, the tarpit); the prose describing it
 doesn't change register for that.
 
