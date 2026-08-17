@@ -60,6 +60,17 @@
       matchUpdateTypes: ['major'],
       addLabels: ['major'],
     },
+    // TypeScript 7 é o novo compilador nativo (Go) e ainda não expõe a API
+    // programática de que o @astrojs/check/@astrojs/language-server dependem
+    // (erro "does not expose the programmatic API that `astro check` relies
+    // on"). Major bump prematuro por dependência upstream — ver PR #159 e
+    // https://github.com/withastro/roadmap/discussions/1321. Reativar quando
+    // o @astrojs/check seguir o TS7.
+    {
+      matchPackageNames: ['typescript'],
+      matchUpdateTypes: ['major'],
+      enabled: false,
+    },
   ],
   // O manager pre-commit vem desligado por omissão — ligá-lo para seguir o
   // `rev:` dos hooks (ex.: gitleaks em .pre-commit-config.yaml), que de outra
