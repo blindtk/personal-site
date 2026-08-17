@@ -29,6 +29,21 @@
 # por esta action — mesmo resultado com ou sem). Cron desligado até a
 # Google corrigir a imagem publicada; corre manualmente (workflow_dispatch)
 # de vez em quando para verificar se já passou a funcionar.
+#
+# ACTUALIZAÇÃO (run #7, workflow_dispatch de 2026-08-17, já sem o harness
+# csp_report_fuzz removido entretanto — ver dynamic/PLAN.md): o sanitize_fuzz,
+# agora o único harness, passou a falhar por um SEGUNDO motivo, independente
+# do honggfuzz/AFL acima — "Error: .../libc.so.6: version 'GLIBC_2.32' not
+# found (required by .../@jazzer.js/fuzzer/prebuilds/fuzzer-linux-x64.node)"
+# logo ao arrancar. É o mesmo erro que antes só se via no csp_report_fuzz
+# (por isso passava despercebido como "problema daquele harness"): o binário
+# nativo do Jazzer.js é instalado (npm ci) dentro da imagem do
+# build_fuzzers, mas corre depois dentro da imagem do run_fuzzers
+# (gcr.io/oss-fuzz-base/clusterfuzzlite-run-fuzzers:v1), que tem uma glibc
+# mais antiga sem GLIBC_2.32 — mismatch entre as duas imagens da Google, não
+# algo controlável a partir deste repo. Ou seja: mesmo que o bug do
+# honggfuzz/AFL fosse corrigido amanhã, o harness real continuaria a falhar
+# por este segundo motivo.
 name: Fuzzing
 
 on:
