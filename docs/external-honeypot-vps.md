@@ -51,9 +51,9 @@ attack history, not the project.
 
 | Service | Role | Port |
 |---|---|---|
-| **Cowrie** | Full SSH/Telnet shell emulation — session capture, commands, credentials, download attempts | 22 (real), 23 |
-| **`endlessh`** | SSH tarpit — drips a banner one byte at a time, holding low-effort scanners' connections open at near-zero cost | secondary ports |
-| **HTTP maze** (Nepenthes/Iocaine-style, Markov-generated infinite pages) | The "offensive posture" on the web side: wastes the resources of aggressive crawlers/scrapers that ignore `robots.txt`, generated in streaming so the cost sits on the client, not the server | 80/443 on the dedicated subdomain |
+| **Cowrie** | Full SSH/Telnet shell emulation — session capture, commands, credentials, download attempts | 22 (real) on `access.danielmala.co`, 23 |
+| **`endlessh`** | SSH tarpit — drips a banner one byte at a time, holding low-effort scanners' connections open at near-zero cost | secondary ports on `access.danielmala.co` |
+| **HTTP maze** (Nepenthes/Iocaine-style, Markov-generated infinite pages) | The "offensive posture" on the web side: wastes the resources of aggressive crawlers/scrapers that ignore `robots.txt`, generated in streaming so the cost sits on the client, not the server | 80/443 on `web.danielmala.co` |
 
 Real admin SSH lives on a non-standard port, restricted to the owner's
 IP — same principle as the main site's WAF rule for the owner
@@ -225,18 +225,29 @@ policies rather than a shared one.
 
 ## 4. DNS
 
-**`intel.danielmala.co`**, DNS-only record (grey-clouded — no Cloudflare
-proxy), pointing directly at the VPS IP.
+Three DNS-only records (grey-clouded — no Cloudflare proxy), each
+pointing directly at the VPS IP, one per function rather than a single
+name carrying all three:
 
-Not proxied because SSH doesn't go through an HTTP proxy anyway, and the
-HTTP side (feed + eventual dashboard) is meant to be exposed as-is — this
-VPS doesn't inherit, or pretend to inherit, the main site's protection
-(WAF, Managed Challenge). That absence is exactly what makes it a real
-sensor, unlike the main HTTP honeypot (ADR 0007).
+| Subdomain | Serves |
+|---|---|
+| **`access.danielmala.co`** | Cowrie (real SSH/Telnet) + `endlessh` (tarpit ports) |
+| **`web.danielmala.co`** | the HTTP maze / spider trap |
+| **`intel.danielmala.co`** | the threat-intel feed + eventual dashboard |
+
+None proxied, for the same reason regardless of which one: SSH doesn't go
+through an HTTP proxy anyway, and the HTTP-facing two (maze, feed/
+dashboard) are meant to be exposed as-is — this VPS doesn't inherit, or
+pretend to inherit, the main site's protection (WAF, Managed Challenge).
+That absence is exactly what makes it a real sensor, unlike the main HTTP
+honeypot (ADR 0007). Splitting the three surfaces across separate names,
+instead of one name doing all three jobs, means SSH, the maze, and the
+feed can each be referenced, taken down, or re-pointed without touching
+the other two.
 
 A new standalone domain was considered and rejected: it costs money
 (annual registration) and adds certificate/renewal overhead for no real
-gain over a subdomain of a zone already owned and paid for. Avoid
+gain over subdomains of a zone already owned and paid for. Avoid
 "free domain" services (e.g. the old Freenom) — poor reputation, poor
 abuse handling, and unnecessary here.
 
@@ -244,6 +255,14 @@ Never referenced from `danielmala.co`'s `robots.txt`, sitemap, or any
 link that could read as part of the same protected perimeter — only the
 explicit reference on the project page (§5), with the boundary stated in
 plain text.
+
+**HSTS caveat, noted for later:** the main site's HSTS header isn't
+submitted with `preload` yet, specifically because `includeSubDomains`
+would force every subdomain of `danielmala.co` — these three included —
+onto valid HTTPS permanently, and the removal process is slow
+(`docs/dns-tls.md` §3). `access.` is TCP, not HTTP, so it's unaffected;
+`web.` and `intel.` do serve HTTP, so their TLS posture needs to be
+settled before that preload submission happens, not after.
 
 ---
 
@@ -302,8 +321,8 @@ what guarantees a bug here can never become a bug there.
 
 1. **Outside this repository's reach:** create/confirm the Oracle
    tenancy, provision the instance, generate the SSH key.
-2. Confirm the port topology (§2) and the subdomain name (`intel.`
-   proposed) against the real instance.
+2. Confirm the port topology (§2) and the three subdomain names (§4:
+   `access.`, `web.`, `intel.`) against the real instance.
 3. Once 1–2 are confirmed: systemd units, Cowrie config, `endlessh`
    config, and the feed generator script — reads Cowrie's logs, produces
    the JSON/text IP feed and the malware-IOC list per §3's rules, and

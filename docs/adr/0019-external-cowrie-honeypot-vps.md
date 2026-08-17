@@ -47,11 +47,16 @@ Run this as a **second, independent trust boundary**, never touching
   You Go to dodge the idle-reclaim policy — the repo owner asked for this
   to cost nothing, and PAYG billing (even at $0 actual spend) is out of
   scope for now.
-- **DNS:** a subdomain of the existing zone (`intel.danielmala.co`),
-  DNS-only — **not** proxied through Cloudflare, and never added to the
-  main site's WAF/Access posture. A new standalone domain was rejected:
-  it costs money and adds renewal/certificate overhead for no real
-  benefit over a subdomain of a zone already owned.
+- **DNS:** three subdomains of the existing zone, split by function —
+  `access.danielmala.co` (Cowrie + `endlessh`, SSH/Telnet),
+  `web.danielmala.co` (the HTTP maze/spider trap), and
+  `intel.danielmala.co` (the threat-intel feed/dashboard) — each
+  DNS-only, **not** proxied through Cloudflare, and never added to the
+  main site's WAF/Access posture. One name per surface, so each can be
+  referenced, disabled, or re-pointed independently of the other two. A
+  new standalone domain was rejected: it costs money and adds
+  renewal/certificate overhead for no real benefit over subdomains of a
+  zone already owned.
 - **What runs:** Cowrie (full shell emulation, never a real shell) as the
   primary data source; `endlessh` as a cheap SSH tarpit on secondary
   ports; a bounded, rate-capped HTTP maze (Nepenthes/Iocaine-style
@@ -94,5 +99,5 @@ Run this as a **second, independent trust boundary**, never touching
 - **Not implemented yet.** Provisioning the Oracle instance is outside
   this repository's reach; the concrete artifacts (systemd units, Cowrie
   config, the feed generator script, the project page) are written once
-  the port topology and subdomain name are confirmed against a real
-  instance, not designed speculatively against one that doesn't exist.
+  the port topology and the three subdomain names are confirmed against a
+  real instance, not designed speculatively against one that doesn't exist.
