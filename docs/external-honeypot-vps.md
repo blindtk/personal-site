@@ -1,9 +1,16 @@
 # External Cowrie honeypot + spider trap — operational reference
 
 Decision record: [ADR 0019](adr/0019-external-cowrie-honeypot-vps.md). This
-document is the implementation reference — service topology, data format,
-and the risks accepted along the way. Update it as the design changes;
-the ADR stays a snapshot of the decision.
+document explains the reasoning behind the design — privacy posture, GDPR
+basis, the DNS/hosting decisions. It is **not** the source of truth for
+exact operational detail any more: the concrete implementation lives in
+[`honeypot-vps-infra`](https://github.com/blindtk/honeypot-vps-infra) (a
+separate, git-tracked repository — config-as-code for the VPS, Terraform,
+the feed generator), and **that repo's own README wins wherever the two
+disagree**. This happened once already — this document previously
+described the wrong correlation mechanism (see §3) — precisely because
+implementation detail duplicated here can drift out of sync with what
+actually got built. Keep this document at the level of *why*, not *how*.
 
 This is a **separate project from `danielmala.co`'s honeypot**
 (`dynamic/worker/`, ADR 0004, ADR 0007). Different machine, different
@@ -139,7 +146,7 @@ Spamhaus, AbuseIPDB, and independent honeypot feeds have run on the same
 basis for years. Three things make it defensible and need to exist from
 day one, not "added later":
 1. **Expiry.** Entries age out after a period without a repeat sighting
-   (proposed: 60–90 days). A feed that never forgets stops being threat
+   (75 days, `FEED_EXPIRE_AFTER_DAYS`). A feed that never forgets stops being threat
    intel and becomes a permanent personal record — that distinction is
    what legitimate interest rests on.
 2. **Dispute/removal process.** A simple contact (the site's existing
@@ -203,23 +210,38 @@ than the path→technique mapping already published in
 Removed entirely, along with the "pipeline" explanation that used to
 frame it.
 
-### Cross-honeypot correlation
+### Cross-honeypot correlation (corrected — see repo note above)
 
-The main site's own honeypot now publishes IPs too, by a separate
-decision ([ADR 0020](adr/0020-honeypot-public-ip.md)) — so correlation
-between the two sensors is a direct set intersection, not the
-salted-hash workaround considered before that decision existed. This VPS
-reads `danielmala.co`'s public IP-indexed honeypot data (same one-way
-read the rest of this document already assumes: this project consumes
-from the Worker's public API, never writes to it) and flags matches on
-its own dashboard/feed. Retention differs between the two — this
-project's entries expire after 60–90 days, the main honeypot's after a
-fixed 30 (ADR 0020's more conservative window, given HTTP-scanning
-botnets' higher odds of running on compromised residential/IoT devices) —
-so a
-match found today may no longer be confirmable in three months; that's
-an accepted limitation of keeping two independently-tuned retention
-policies rather than a shared one.
+**Superseded description:** this section previously said the VPS reads
+`danielmala.co`'s public API and computes the correlation itself. That is
+not what got built, and not what should be built — it would make the
+disposable, external VPS depend on the Worker's uptime and API shape to
+generate its own feed, exactly the coupling this project exists to avoid
+(`honeypot-vps-infra`'s README: *"no shared data path... the only
+connection is a link... and a fetch() of this project's public
+feed.json"*).
+
+**What actually happens:** the correlation runs **in the visitor's
+browser**, on both sides independently, never on either server:
+- On `danielmala.co`'s own honeypot page, a client-side `fetch()` to
+  `intel.danielmala.co/feed.json` (CORS-enabled) cross-references its
+  `ips[]` against the Worker's own `/api/threat-intel` results and
+  surfaces a banner/badge on a match.
+- On `intel.danielmala.co`'s own static report, the mirror: a client-side
+  `fetch()` to a new Worker route, `/api/threat-intel.txt` (CORS-open,
+  mirroring the shape of this project's own `feed.txt`), cross-referenced
+  against the IPs already embedded in that page.
+
+Either check degrades silently if the other side is unreachable — no
+data is ever exchanged except two independent public reads, at the
+moment a human happens to be looking at either page.
+
+Retention differs between the two, and stays an accepted limitation, not
+a bug: this project's entries expire after **75 days**
+(`FEED_EXPIRE_AFTER_DAYS`), the main honeypot's after a fixed 30 (ADR
+0020's more conservative window, given HTTP-scanning botnets' higher odds
+of running on compromised residential/IoT devices) — so a match found
+today may no longer be confirmable in three months.
 
 ---
 
@@ -233,7 +255,7 @@ proxied through Cloudflare, because it isn't a sensor.
 |---|---|---|
 | **`access.danielmala.co`** | Cowrie (real SSH/Telnet) + `endlessh` (tarpit ports) | Off — DNS-only, grey-clouded, points straight at the VPS IP |
 | **`web.danielmala.co`** | the HTTP maze / spider trap | Off — DNS-only, grey-clouded, points straight at the VPS IP |
-| **`intel.danielmala.co`** | the threat-intel feed + static report | **On** — orange-clouded, proxied |
+| **`intel.danielmala.co`** | the threat-intel feed + static report | **On** — custom domain of a dedicated Cloudflare Pages project (Direct Upload, no Git connection) |
 
 `access.` and `web.` stay DNS-only for the same reason: SSH doesn't go
 through an HTTP proxy anyway, and the maze is meant to be exposed as-is —
@@ -244,17 +266,18 @@ either one a real sensor, unlike the main HTTP honeypot (ADR 0007).
 `intel.` is different in kind, not just configuration: it isn't
 attacker-facing. It publishes an already-curated, already-generated
 artifact (the JSON/text feed + the static ATT&CK report, §3), regenerated
-periodically from Cowrie's logs on the VPS — nothing about it needs to
-look like an unprotected origin, and everything about it benefits from
-sitting behind Cloudflare: CDN caching for a page that gets crawled by
-blocklist consumers, and DDoS/bot protection for a page whose whole point
-is being publicly linked and pulled by third parties. Proxying it costs
-nothing architecturally, since `danielmala.co`'s own zone already has
-Universal SSL and the standard edge protections configured
-(`docs/cloudflare-deploy.md`, `docs/dns-tls.md`). The origin still needs a
-valid certificate — **Full (strict)**, never "Flexible"
-(`docs/dns-tls.md` §2) — since the content is generated on, and served
-from, the VPS.
+periodically from Cowrie's logs on the VPS. Rather than sitting on the VPS
+origin behind Cloudflare's reverse proxy, it's pushed to a **dedicated
+Cloudflare Pages project** — `honeypot-vps-infra`'s cron runs `wrangler
+pages deploy` on every regeneration, and separately prunes old
+deployments older than the retention window via the Cloudflare API, so an
+expired IP can't stay reachable forever through a leftover preview URL
+(Pages keeps every past deployment individually addressable by default).
+This gets the same CDN caching and DDoS/bot protection a reverse-proxied
+origin would, plus one thing a reverse-proxied VPS origin wouldn't:
+`intel.` stays up even if the VPS itself is offline or reclaimed —
+visitors keep seeing the last published snapshot. No TLS to manage on the
+VPS side for this subdomain; Cloudflare Pages handles it.
 
 Splitting the three surfaces across separate names — instead of one name
 doing all three jobs — means SSH, the maze, and the feed can each be
@@ -288,18 +311,19 @@ preload submission happens, not after.
 
 ## 5. What shows up on `danielmala.co`
 
-**Only a project page**, in `content/projects/{pt,en}/` — not yet
-written; depends on the port topology and the three subdomains being
-confirmed against a real instance first. Same documentary, sober tone as
-the rest of the site (`CLAUDE.md`) — the infrastructure behind it can be
-technically aggressive (the maze, the tarpit); the prose describing it
-doesn't change register for that.
+**A project page**, in `content/projects/{pt,en}/` — intentionally still
+unwritten; only gets written once the VPS is confirmed live, so it never
+describes infrastructure that doesn't exist yet (see `honeypot-vps-infra`
+`SETUP_CHECKLIST.md`, "Not yet done, no rush"). Same documentary, sober
+tone as the rest of the site (`CLAUDE.md`) — the infrastructure behind it
+can be technically aggressive (the maze, the tarpit); the prose describing
+it doesn't change register for that.
 
 Minimum content:
 - what it is and why it exists (research, not protecting the main site);
 - the data boundary, stated accurately — **as of ADR 0020, both this
   project and `danielmala.co`'s own honeypot publish IPs, on different
-  retention windows (60–90 days here, 30 there) and for different
+  retention windows (75 days here, 30 there) and for different
   reasons (a dedicated research asset here; cross-honeypot correlation
   there).** The main site's Cloudflare Status/firewall panel is the one
   that stays zero-IP (ADR 0004, whole-zone traffic including every
@@ -309,6 +333,21 @@ Minimum content:
 - a link to the feed at `intel.danielmala.co`, whose report includes
   the ATT&CK mapping described in §3 — not just the IP list;
 - a note on the VPS's disposable nature (Oracle Free) and why.
+
+**Also planned (§3, "Cross-honeypot correlation"), on the existing
+honeypot page** (`/este-site/honeypot/`, `HoneypotPage.astro`) rather than
+the new project page: a client-side correlation banner against
+`intel.danielmala.co/feed.json`, and a light summary card for the
+external sensor (aggregate numbers only — sessions, unique IPs — never
+its session/command detail, which stays on `intel.` where it's generated;
+see the "is this the best approach" discussion this design went through,
+kept informally rather than re-litigated here). This needs a new,
+CORS-open `/api/threat-intel.txt` route on the Worker (mirroring this
+project's own `feed.txt` shape) and a `connect-src` exception in
+`static/public/_headers` for `intel.danielmala.co` — not yet built; wait
+until `intel.danielmala.co` is actually live before merging it, so the
+fetch has something real to hit rather than shipping dead code against a
+domain that doesn't resolve yet.
 
 **Does not enter:** any data, IP, or event embedded in the main site's
 pages. `dynamic/worker/` is untouched by this project — zero coupling is
@@ -339,14 +378,20 @@ what guarantees a bug here can never become a bug there.
 
 ## 7. Next steps
 
-1. **Outside this repository's reach:** create/confirm the Oracle
-   tenancy, provision the instance, generate the SSH key.
-2. Confirm the port topology (§2) and the three subdomain names (§4:
-   `access.`, `web.`, `intel.`) against the real instance.
-3. Once 1–2 are confirmed: systemd units, Cowrie config, `endlessh`
-   config, and the feed generator script — reads Cowrie's logs, produces
-   the JSON/text IP feed and the malware-IOC list per §3's rules, and
-   runs the command→ATT&CK mapping for the static report — plus the
-   project page skeleton (§5, PT+EN). Not written speculatively now —
-   designing scripts against a topology that might still change wastes
-   the exercise.
+Everything speculative in this section originally — systemd units,
+Cowrie/`endlessh`/maze config, the feed generator, Terraform, the
+two-phase provisioning workflow — is **written**, in
+`honeypot-vps-infra`. What's left, per that repo's own
+`SETUP_CHECKLIST.md`:
+
+1. **Outside this repository's reach:** run the two-phase provisioning
+   workflow (Actions tab → "Provision VPS (phase 1)", verify externally,
+   then "phase 2 — confirm & finish") — the actual Oracle instance
+   doesn't exist yet.
+2. Point DNS (`access.`, `web.` — DNS-only) and create the Cloudflare
+   Pages project for `intel.` (§4), once the instance's public IP is
+   confirmed.
+3. Only then, on the `personal-site` side: the project page (§5) and the
+   correlation banner/`api/threat-intel.txt` route — not before, so
+   nothing here describes or fetches against infrastructure that isn't
+   live yet.

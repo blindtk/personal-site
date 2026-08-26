@@ -1,6 +1,12 @@
 # ADR 0019 — External Cowrie honeypot + spider trap: separate machine, separate privacy boundary
 
-**Status:** accepted, not yet built.
+**Status:** accepted, infra written, not yet deployed. The concrete
+implementation lives in a separate repository,
+[`honeypot-vps-infra`](https://github.com/blindtk/honeypot-vps-infra) —
+config-as-code for the VPS, Terraform provisioning, and the feed
+generator. That repo's own README takes precedence over this ADR and
+`docs/external-honeypot-vps.md` wherever they disagree; this ADR stays a
+snapshot of the decision, not a live spec.
 
 ## Context
 
@@ -54,13 +60,18 @@ Run this as a **second, independent trust boundary**, never touching
   to the main site's WAF/Access posture — both are attacker-facing
   sensors that need to look unprotected. `intel.danielmala.co` (the
   threat-intel feed + static report) is different in kind: it publishes
-  an already-curated artifact, not raw attacker traffic, so it's proxied
-  through Cloudflare (orange-clouded) for CDN caching and DDoS/bot
-  protection on a page meant to be publicly linked and pulled by
-  third-party blocklist consumers. One name per surface, so each can be
-  referenced, disabled, re-pointed, or — as with `intel.` — given its own
-  Cloudflare posture, independently of the other two. A new standalone
-  domain was rejected: it costs money and adds renewal/certificate
+  an already-curated artifact, not raw attacker traffic, so it's served
+  from a **dedicated Cloudflare Pages project (Direct Upload, no Git
+  connection)** — the VPS's cron pushes a fresh snapshot with `wrangler
+  pages deploy` on each run, and old deployments are pruned via the
+  Cloudflare API so an "expired" IP can't stay reachable forever through a
+  leftover preview URL. This gets CDN caching and DDoS/bot protection for
+  a page meant to be publicly linked and pulled by third-party blocklist
+  consumers, without needing a live origin server behind it. One name per
+  surface, so each can be referenced, disabled, re-pointed, or — as with
+  `intel.` — given a completely different hosting mechanism, independently
+  of the other two. A new standalone domain was rejected: it costs money
+  and adds renewal/certificate
   overhead for no real benefit over subdomains of a zone already owned.
 - **What runs:** Cowrie (full shell emulation, never a real shell) as the
   primary data source; `endlessh` as a cheap SSH tarpit on secondary
@@ -72,8 +83,9 @@ Run this as a **second, independent trust boundary**, never touching
 - **Publishing attacker IPs is the point, not an oversight.** Unlike the
   main honeypot (ADR 0004), this is accepted as a deliberate,
   differently-scoped project: legitimate interest (GDPR Art. 6(1)(f)) for
-  a self-run security research asset, mitigated by entry expiry (60–90
-  days without a repeat sighting), a takedown/dispute contact, and
+  a self-run security research asset, mitigated by entry expiry (75
+  days without a repeat sighting — `FEED_EXPIRE_AFTER_DAYS` in
+  `honeypot-vps-infra`), a takedown/dispute contact, and
   exclusion of private/reserved ranges — the same discipline any IP
   blocklist (Spamhaus, AbuseIPDB) already runs on. Captured credentials
   are filtered before publication: only pairs seen from N distinct
@@ -101,8 +113,11 @@ Run this as a **second, independent trust boundary**, never touching
   [`docs/external-honeypot-vps.md`](../external-honeypot-vps.md), kept
   separate from this ADR because it's implementation reference, not a
   one-time decision record.
-- **Not implemented yet.** Provisioning the Oracle instance is outside
-  this repository's reach; the concrete artifacts (systemd units, Cowrie
-  config, the feed generator script, the project page) are written once
-  the port topology and the three subdomain names are confirmed against a
-  real instance, not designed speculatively against one that doesn't exist.
+- **Written, not yet deployed.** The concrete artifacts (systemd units,
+  Cowrie/`endlessh`/maze config, Terraform, the two-phase provisioning
+  workflow, the feed generator + Cloudflare Pages publisher) all exist in
+  `honeypot-vps-infra`, ready to run — provisioning the actual Oracle
+  instance is outside this repository's reach, and is the one step left.
+  This site's project page (`content/projects/{pt,en}/`) is still
+  intentionally unwritten until the VPS is confirmed live, so it never
+  describes infrastructure that doesn't exist yet.
