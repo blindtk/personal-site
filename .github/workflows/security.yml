@@ -84,7 +84,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Instalar Semgrep
-        run: pipx install semgrep==1.174.0
+        run: pipx install semgrep==1.176.0
       - name: SAST
         # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07,
         # ver docs/security-review-2026-07-29.md). O volume real medido contra
@@ -151,7 +151,7 @@ jobs:
         # de segurança (GHSA-f42p-wjw5-97qh) — apanhado numa revisão de
         # segurança ao tentar reproduzir este job localmente; já corrigido
         # noutro PR antes deste chegar a mergear.
-        run: pipx install zizmor==1.29.0
+        run: pipx install zizmor==1.30.0
       - name: Auditar workflows
         env:
           # permite as auditorias online (ex.: deteção de commits impostores)
