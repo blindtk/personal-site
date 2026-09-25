@@ -88,7 +88,8 @@ the translation.
   thing and a check can't verify a translation.
 - **Rejected: prefixing by tool (`zizmor.yml`, `gitleaks.yml`).** The
   tool is an implementation detail that changes (semgrep was
-  rejected in `honeypot-vps-infra`, osv-scanner replaced a wrapper here); what the workflow
+  tested and rejected in `honeypot-vps-infra`; the second fuzzing harness
+  here was removed along with its pipeline); what the workflow
   *does* doesn't.
 - **Rejected: renaming job IDs to match.** It would break the required
   status checks in the rulesets for no reader-visible gain.
