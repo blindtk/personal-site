@@ -1,0 +1,405 @@
+[
+  {
+    "verdict": "confirmed",
+    "fingerprint": "dynamic/worker/src/index.js:cached:uncapped-kv-write-on-public-get",
+    "title": "Unauthenticated GETs to /api/honeypot, /api/map and /api/vitals trigger KV writes with no cap, which can exhaust the account's daily KV write budget",
+    "description": "The read-cache helper cached() writes the refreshed value to KV each time the logical TTL lapses, and no global daily write cap covers that put. /api/honeypot and /api/map use a 60s TTL and GET /api/vitals uses 120s. None of these three routes is rate limited, and the Worker runs on the zone route danielmala.co/api/*, so the response's cache-control header does not stop the Worker from being invoked. An anonymous client sending about 3 requests per minute (one per route every 61s) forces about 3,500 KV writes per day. The repository sizes every other write cap around a Free-plan account ceiling of about 1,000 writes/day, and this is well above it. The stale-while-revalidate branch has no single-flight lock, so a concurrent burst against a stale entry causes one write per request. Once the account budget is exhausted, KV puts fail for the rest of the UTC day. The routes that await puts (the rate limiter, honeypot and vitals recording) stop persisting and throw into the 502 handler. Each dashboard keeps serving its stale copy until the KV copy expires (TTL+600s), and after that refresh() throws in the foreground and the route returns 502 upstream_error.",
+    "root_cause": "cached() (dynamic/worker/src/index.js:303-319) calls env.KV.put on every refresh without consulting any global daily write cap. The public, non-rate-limited GET routes /api/honeypot and /api/map (TTL 60s) and /api/vitals (TTL 120s) therefore let the request rate of anonymous visitors set the KV write rate. Each stale hit schedules its own background refresh with no single-flight guard.",
+    "intended_behavior": "KV writes reachable from anonymous requests should be bounded by a global daily budget, or kept out of KV entirely (for example with the Cache API or cron-only refresh). Public reads should not be able to use up the shared write quota that the honeypot, vitals, rate limiter and cron depend on.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "dynamic/worker/src/index.js",
+        "line": 551,
+        "scope": "fetch: GET /api/honeypot (also /api/map :558, GET /api/vitals :616)",
+        "description": "An unauthenticated GET with no rate limit calls cached() with a 60s TTL (120s for /api/vitals)."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 306,
+        "scope": "cached",
+        "description": "The cached value is returned only while hit.exp > now. Once the TTL has passed, every request falls through to refresh."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 315,
+        "scope": "cached",
+        "description": "Each stale hit schedules its own refresh() through ctx.waitUntil. There is no lock or single-flight, so concurrent stale requests each produce a write."
+      },
+      {
+        "kind": "sink",
+        "file": "dynamic/worker/src/index.js",
+        "line": 309,
+        "scope": "cached.refresh",
+        "description": "env.KV.put(key, ...) runs with no underCap or global daily write-cap check."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 303,
+        "description": "cached() has no write cap. By contrast, recordHoneypot (:139), recordVitals (:214), rateLimit (:398) and underRefreshCap (:366) all check underCap before writing."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 49,
+        "description": "A comment documents a Free-plan ceiling of about 1,000 writes/day for the whole account, shared by rate-limit, vitals and cron."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 344,
+        "description": "A comment assumes that public reads without a rate limit (honeypot/map/...) 'continuam servidas da cache' (are still served from cache), but each refresh of that cache is itself an uncapped KV write."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 696,
+        "description": "The router catch block returns 502 upstream_error when a foreground refresh() or an awaited put throws."
+      },
+      {
+        "file": "dynamic/worker/wrangler.toml",
+        "line": 28,
+        "description": "The Worker is bound to the zone route danielmala.co/api/*, so every /api request invokes the Worker regardless of the response's cache-control."
+      },
+      {
+        "file": "agents/v-cached-uncapped/artifacts/uncapped-cache-writes.txt",
+        "line": 1,
+        "description": "Output of the independent sandboxed reproduction: 4,251 sequential GETs over one simulated day produced 3,543 uncapped cache:* puts, and 20 concurrent stale GETs produced 20 puts."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "authentication_level",
+        "description": "None: an anonymous internet client."
+      },
+      {
+        "kind": "system_configuration",
+        "description": "The account is on the Workers KV Free plan with its ~1,000 writes/day account ceiling, as the repository states at index.js:49. On a paid plan the impact becomes billed write cost rather than an outage."
+      },
+      {
+        "kind": "timing_dependency",
+        "description": "Requests spaced just beyond the 60s/120s TTL, or a concurrent burst while an entry is stale."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "An anonymous visitor who repeatedly requests the public dashboard JSON endpoints.",
+      "payloads": [
+        "GET /api/honeypot, GET /api/map and GET /api/vitals, each once every 61 simulated seconds for 24 simulated hours",
+        "20 concurrent GET /api/honeypot while cache:honeypot holds {exp: now-1}"
+      ],
+      "instructions": [
+        "Inside the no-network sandbox, import dynamic/worker/src/index.js (the real router) from Node 22. Use an in-memory fake KV whose put() counts writes per key prefix, a stubbed Date.now clock, and a ctx.waitUntil collector that is drained after each round.",
+        "Call worker.fetch for the three routes every 61 simulated seconds for 24 simulated hours. Record response statuses, total puts, puts per prefix and any '*cap:*' keys.",
+        "Seed cache:honeypot with {exp: now-1}, send 20 concurrent fetches of /api/honeypot, drain waitUntil and count the new cache puts."
+      ],
+      "observed_result": "sequential-1-day: 4,251 requests, all 200, 3,543 KV puts (all 'cache:*'), and no cap keys created. concurrent-stale-burst: 20 requests, all 200, 20 cache:honeypot puts. Real KV exhaustion and the resulting 502s were not exercised; they follow from source (catch at :696) once puts fail."
+    },
+    "remediation": {
+      "strategy": "Keep public read caches out of the KV write budget. The preferred option is to serve the short-TTL honeypot/map/vitals aggregates from the Cache API (caches.default), which consumes no KV writes. Alternatively, raise their TTLs to at least the 30-minute cron interval and refresh them only from scheduled(). If KV caching stays, route cached() puts through a global daily underCap and, once the cap is exhausted, serve stale data or compute on read without persisting. Size that cap together with the existing caps (honeypot ~300, rate limiter 300, refresh 20, vitals) so the sum stays under the account ceiling; each allowed refresh costs two writes (value plus cap counter). Add a single-flight guard so concurrent stale hits do not each write. Regression test: N sequential requests spaced beyond the TTL plus a concurrent stale burst must produce at most the configured cap of KV puts.",
+      "code_changes": [
+        {
+          "file_name": "dynamic/worker/src/index.js",
+          "fixed_code": "const CACHE_WRITE_CAP = { windowMs: DAY_MS, max: 100 }; // each allowed refresh = 2 writes; size with the other caps\nasync function cached(env, ctx, key, ttlSec, producer) {\n  const now = Date.now();\n  const hit = await getJSON(env, key);\n  if (hit && hit.exp > now) return hit.data;\n  const refresh = async () => {\n    const data = await producer();\n    const capKey = `cachecap:${dayKey(Date.now())}`;\n    const { allowed, state } = underCap(await getJSON(env, capKey), { now: Date.now(), ...CACHE_WRITE_CAP });\n    if (allowed) {\n      await Promise.all([\n        env.KV.put(key, JSON.stringify({ data, exp: Date.now() + ttlSec * 1000 }), { expirationTtl: ttlSec + 600 }),\n        env.KV.put(capKey, JSON.stringify(state), { expirationTtl: 86460 }),\n      ]);\n    }\n    return data;\n  };\n  if (hit && ctx) { ctx.waitUntil(refresh().catch(() => {})); return hit.data; }\n  return refresh();\n}\n// and raise /api/honeypot, /api/map and /api/vitals TTLs to >= 1800s (warmed in scheduled()), or move them to caches.default."
+        }
+      ]
+    },
+    "severity": {
+      "likelihood": {
+        "score": "high",
+        "reason": "The routes are unauthenticated and not rate limited. About 3 trivial requests per minute from one client is enough, and ordinary organic dashboard traffic produces a similar write rate."
+      },
+      "impact": {
+        "score": "medium",
+        "reason": "The shared account KV write budget is exhausted for the rest of the UTC day. Honeypot and vitals recording stop, rate-limited routes error, and the dashboards return 502 after their stale window. The effect is availability only, recovers automatically at the daily reset, and discloses no data."
+      },
+      "overall_severity": "medium"
+    },
+    "confidence": {
+      "score": "medium",
+      "reason": "The missing bound and the write counts were reproduced independently with the real router code in a sandbox. How large the outage is depends on the Free-plan KV write ceiling, which the repository documents but which cannot be observed from source. Real KV per-key write throttling could reduce the concurrent-burst multiplier, but not the sequential write rate."
+    }
+  },
+  {
+    "verdict": "confirmed",
+    "fingerprint": "dynamic/worker/src/index.js:rateLimit:global-write-cap-accounting-and-race",
+    "title": "Global daily KV write caps count events instead of writes and leave pwned cache writes uncounted, so one anonymous client can go past the account's daily KV write budget using only capped paths",
+    "description": "The global daily caps (rlcap 300, wcap 60, vitcap 150, refreshcap 20) are meant to keep total Worker KV writes under the Free plan's ~1,000 writes/day, which the whole account shares (ADR 0006, wrangler.toml, PLAN.md). The accounting does not bound real writes. (1) rateLimit counts one rlcap unit per allowed request but writes two keys per unit (rl:<route>:<hash> and rlcap:<day>), so the rate-limiter ceiling is 600 writes, not 300. (2) Each allowed GET /api/pwned-range with a new 5-hex prefix also writes cache:pwned:<prefix> through cached(). No cap counts this write; it is bounded only indirectly by rlcap, which allows up to 300 more writes. (3) underCap is a non-atomic read-then-put on eventually consistent KV, so concurrent requests that read the same counter all pass (the code comment admits this). Independent local reproduction with a fake KV, a simulated clock and a stubbed HIBP fetch: one client IP made 1,141 KV puts in about 16 simulated minutes, staying within the 20/min per-IP pwned limit plus 70 decoy hits. The puts were rl 300, rlcap 300, cache:pwned 300, and honeypot 241 (recent/h/d/wcap 60 each plus meta 1). With a fake KV that has 1 tick of latency, 50 concurrent decoy hits with wcap at 59/60 caused 200 puts, and 50 concurrent /api/mirror requests with rlcap at 299/300 all returned 200 and caused 100 puts.",
+    "root_cause": "underCap (dynamic/worker/src/lib/kvcap.js:21-29) counts once per logical event, not per KV write, and is not atomic. rateLimit (dynamic/worker/src/index.js:395-413) spends one cap unit on two puts. The pwned route's cached() refresh (index.js:584, put at index.js:309) writes one uncapped key per new prefix. Because of this, the per-path cap sizing in ADR 0006, which assumes the caps plus cron fit in ~1,000 writes/day, does not hold: rate limiter 600 plus pwned cache 300 plus honeypot about 241 already exceeds it before vitals, refresh or cron.",
+    "intended_behavior": "The sum of all globally capped write paths plus cron should stay under the account's daily KV write budget no matter what anonymous clients send. Caps should count every KV write they gate, including cache fills driven by attacker-chosen keys, and concurrent requests should not be able to overshoot a cap by a large multiple.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "dynamic/worker/src/index.js",
+        "line": 569,
+        "scope": "fetch: GET /api/pwned-range",
+        "description": "Anonymous GET; the only input check is normalizePrefix (exactly 5 hex), so the client picks a new cache key on every request."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 574,
+        "scope": "fetch: GET /api/pwned-range",
+        "description": "Calls rateLimit(route 'pwned', 20/min per hashed cf-connecting-ip)."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 398,
+        "scope": "rateLimit",
+        "description": "underCap on rlcap:<day> uses one unit of the 300/day global cap per allowed request."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 408,
+        "scope": "rateLimit",
+        "description": "Each counted request writes two KV keys: per-client rl:<route>:<hash> and rlcap:<day>."
+      },
+      {
+        "kind": "sink",
+        "file": "dynamic/worker/src/index.js",
+        "line": 584,
+        "scope": "fetch: GET /api/pwned-range cached()",
+        "description": "cached() misses for a new prefix and writes cache:pwned:<prefix> (KV.put at index.js:309). No cap counts this write."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "dynamic/worker/src/lib/kvcap.js",
+        "line": 21,
+        "description": "underCap is a pure read-then-increment returning the next state. The caller puts it later with no compare-and-set. The header comment (lines 9-11) admits concurrent requests can go past the cap."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 345,
+        "description": "RATE_LIMIT_WRITE_CAP max 300/day. The comment at 323-330 presents it as the rate limiter's write ceiling, but each unit costs two puts (408-413)."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 303,
+        "description": "cached() writes on every miss (put at 309). For pwned-range the key includes the attacker-chosen prefix, so every new prefix is a new write."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 139,
+        "description": "The honeypot wcap check reads the counter concurrently with the other keys (128-135). Each concurrent event that passes then writes 4 keys, plus meta or iplist when applicable (156-172)."
+      },
+      {
+        "file": "docs/adr/0006-caps-escrita-diarios.md",
+        "line": 10,
+        "description": "The caps are explicitly sized to the Free plan's ~1,000 writes/day for the whole account, which honeypot, CSP, vitals, rate limiting and cron share."
+      },
+      {
+        "file": "dynamic/worker/wrangler.toml",
+        "line": 138,
+        "description": "The deployment notes confirm the account is on the Workers Free plan (limits.cpu_ms is rejected on Free). The daily KV write ceiling therefore applies."
+      },
+      {
+        "file": "dynamic/worker/src/lib/pwned.js",
+        "line": 16,
+        "description": "normalizePrefix accepts any 5-hex value (about 1M distinct keys), so cache hits do not limit the new-prefix writes."
+      }
+    ],
+    "conditions": [
+      {
+        "kind": "authentication_level",
+        "description": "No authentication. Any internet client that can reach the danielmala.co/api/* zone route."
+      },
+      {
+        "kind": "system_configuration",
+        "description": "The account is on the Workers KV Free plan with a daily write ceiling of ~1,000 that all Worker writers share. The repo documents this in ADR 0006, wrangler.toml and PLAN.md."
+      },
+      {
+        "kind": "network_routing",
+        "description": "No WAF or rate-limiting rule in front of /api/* stops the requests. Nothing in source shows one; PLAN.md lists a WAF rate-limit rule only as a future idea."
+      },
+      {
+        "kind": "timing_dependency",
+        "description": "The sequential path needs no race. The concurrency overshoot only adds to it and depends on KV propagation delay."
+      }
+    ],
+    "execution": {
+      "attacker_perspective": "A single anonymous client with one IP address stays within every per-IP rate limit and every global cap.",
+      "payloads": [
+        "GET /api/pwned-range?prefix=<new 5-hex value> (20 per minute, 16 minutes, 320 requests)",
+        "GET /.env (decoy path, 70 requests)",
+        "50 concurrent GET /.env with wcap:d:<day> at count 59",
+        "50 concurrent GET /api/mirror with rlcap:<day> at count 299"
+      ],
+      "instructions": [
+        "Import dynamic/worker/src/index.js default export inside the sandbox. Use a fake in-memory KV that counts put() calls by key prefix, a simulated Date.now, and a stubbed globalThis.fetch that returns one HIBP-format line (no network).",
+        "Scenario A: send 20 GET /api/pwned-range requests per simulated minute with distinct 5-hex prefixes from 203.0.113.7, advancing the clock 61 s per minute for 16 minutes, then 70 GET /.env from the same IP. Await waitUntil promises. Record total puts.",
+        "Scenario B: set wcap:d:<day> to {count:59}, then send 50 concurrent decoy requests (fake KV with 1 tick of latency per op). Record puts during the burst.",
+        "Scenario C: set rlcap:<day> to {count:299}, then send 50 concurrent GET /api/mirror from distinct IPs. Record statuses and puts.",
+        "The script and output are in agents/v-cap-accounting/artifacts/verify.mjs and agents/v-cap-accounting/artifacts/verify-output.txt."
+      ],
+      "observed_result": "A: 300x200 then 20x429 (rlcap fail-closed), 1,141 KV puts in about 16 simulated minutes: rl 300, rlcap 300, cache:pwned 300, recent 60, h 60, d 60, wcap 60, meta 1. That exceeds the documented ~1,000/day account budget before any vitals, refresh or cron writes. B: 200 puts during the burst (about 4x the single remaining cap unit); wcap ends at 60. C: all 50 returned 200 with 100 puts, although only 1 unit was left; rlcap ends at 300."
+    },
+    "remediation": {
+      "strategy": "Budget real writes, not events, and take attacker-keyed cache fills out of KV. (1) Stop persisting HIBP ranges in KV: use the Workers Cache API (caches.default) for cache:pwned:<prefix>, which costs no KV writes, or gate the put behind a counted cap. (2) Move per-client rate limiting out of KV (Workers Rate Limiting binding or a WAF rate-limit rule, as PLAN.md already suggests), or at least charge rlcap 2 units per allowed request and resize it. (3) Add one shared daily write circuit breaker that every KV put goes through, weighted by the number of puts, and size the caps so their sum plus cron stays under ~1,000 with margin for concurrency overshoot. Use a Durable Object if an atomic counter is required. (4) Add a regression test that drives the capped routes from one client and asserts total fake-KV puts stay within the budget, including a concurrent burst at cap-1."
+    },
+    "severity": {
+      "likelihood": {
+        "score": "medium",
+        "reason": "Unauthenticated. One IP, about 390 simple requests in about 16 minutes, all within the per-IP limits; no race needed. The deployed WAF or plan state could change reachability, but source shows no front-door limit."
+      },
+      "impact": {
+        "score": "low",
+        "reason": "Uses up the shared daily KV write budget, so for the rest of the UTC day honeypot/vitals/firewall-snapshot recording and cache refreshes fail, and rate-limited routes return 429. No data disclosure or integrity loss; recovery is automatic at the daily reset. The demonstrated result is the write count against the documented ceiling, not an observed production outage."
+      },
+      "overall_severity": "low"
+    },
+    "confidence": {
+      "score": "high",
+      "reason": "I re-read every cited line at cb439ed and reproduced it independently in the sandbox with a fake KV: 1,141 puts from one client. The per-write accounting gap and the uncapped pwned cache writes are deterministic from source. Only the exact platform behaviour once the ceiling is reached is deployment-side."
+    }
+  },
+  {
+    "verdict": "needs_validation",
+    "fingerprint": "dynamic/worker/src/index.js:recordHoneypot:unbounded-decoy-path-accumulation",
+    "title": "Attacker-chosen decoy path length accumulates without bound in the persistent `recent` value and the bucket byPath maps, which may durably break honeypot recording and the threat-intel dashboard",
+    "description": "The '/phpmyadmin/' decoy matches by prefix (decoys.js:23), and the router passes the raw url.pathname to recordHoneypot (index.js:466,482). recordHoneypot stores that path with no length cap or normalization in the event appended to `recent` (up to 200 entries, written with no expirationTtl) and as a byPath key in the hourly and daily buckets. A local run of the real Worker fetch handler against an in-memory fake KV sent 240 decoy requests with ~16 KB paths, spread over 4 simulated days under the global 60/day cap. `recent` grew to 3,218,341 bytes and each hourly/daily bucket to ~961 KB. Every later decoy hit reads and parses `recent` plus two buckets before the cap check. Each accepted hit also re-stringifies them, and the threat-intel refresh parses them and returns ~3.3 MB. In local Node, one parse+stringify of `recent` averaged ~10.3 ms, one further decoy hit took ~12.7 ms and one threat-intel refresh took ~44 ms. That is not Workers CPU accounting. Whether this exceeds the Free-plan per-invocation CPU limit, and whether 16 KB paths reach the Worker through the zone edge, are deployment facts. If the recordHoneypot waitUntil work is killed, `recent` is never rewritten, so the oversized state persists until an operator deletes the key. The buckets expire after 8-9 days. Honest scanner traffic that fits under the cap would slowly push the large entries out of `recent`, but an attacker who spends the shared cap early each UTC day can prevent that.",
+    "claimed_root_cause": "recordHoneypot builds the event with `path` taken directly from url.pathname (index.js:113-119) and does not cap its length or normalize it to the matched decoy prefix. aggregate.addEvent uses the path as a byPath key (aggregate.js:17). `recent` is rewritten in full on every accepted event with no TTL (index.js:145,157), and it is read and parsed on every decoy hit and on dashboard refreshes (index.js:98,129,243).",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": "dynamic/worker/src/lib/decoys.js",
+        "line": 23,
+        "scope": "isDecoy",
+        "description": "Any path starting with '/phpmyadmin/' counts as a decoy (prefix match), so the path suffix is attacker-controlled and unbounded. The Worker's fetch router calls it with the raw url.pathname (index.js:466,478)."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 119,
+        "scope": "recordHoneypot",
+        "description": "event = { ts, country, asn, path, technique } holds the raw, unbounded path. Only country and asn are normalized."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/lib/aggregate.js",
+        "line": 17,
+        "scope": "addEvent",
+        "description": "The path becomes a byPath key in the hourly and daily buckets (called at index.js:146-147)."
+      },
+      {
+        "kind": "propagation",
+        "file": "dynamic/worker/src/index.js",
+        "line": 145,
+        "scope": "recordHoneypot",
+        "description": "nextRecent keeps the latest 200 events, each of arbitrary size."
+      },
+      {
+        "kind": "sink",
+        "file": "dynamic/worker/src/index.js",
+        "line": 157,
+        "scope": "recordHoneypot",
+        "description": "env.KV.put('recent', JSON.stringify(nextRecent)) runs with no expirationTtl, so the oversized value persists. It is then read and parsed on every later decoy hit (index.js:129) and on dashboard reads (index.js:98,243)."
+      }
+    ],
+    "evidence": [
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 128,
+        "description": "Every decoy hit reads `recent` plus the hourly and daily buckets in full, JSON-parsing them before the cap check at index.js:139-140. Over-cap hits therefore also pay the parse cost."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 59,
+        "description": "HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 } is one global cap. It limits the accumulation rate (200 entries take ~4 days) but not the size of each entry."
+      },
+      {
+        "file": "dynamic/worker/src/lib/aggregate.js",
+        "line": 203,
+        "description": "threatIntel returns up to 200 recent events, so the /api/threat-intel producer (index.js:600-608) serializes the full multi-MB `recent` into its cache value and response. The local run observed a ~3.3 MB body."
+      },
+      {
+        "file": "dynamic/worker/wrangler.toml",
+        "line": 138,
+        "description": "The comment records that the Free plan rejects any limits.cpu_ms setting, so the platform's default Free-plan CPU ceiling applies but is not visible in source. The 10 ms figure comes from docs/security-review-2026-07-29.md:179,619."
+      },
+      {
+        "file": "dynamic/worker/src/index.js",
+        "line": 482,
+        "description": "recordHoneypot runs inside ctx.waitUntil. A failure is only logged as 'honeypot_write_failed' and there is no self-healing reset of `recent`."
+      }
+    ],
+    "blockers": [
+      "The deployed maximum URL/path length that the Cloudflare edge accepts for this zone (whether ~16 KB pathnames under /phpmyadmin/* reach the Worker) cannot be observed from source.",
+      "The Workers Free-plan CPU-time enforcement for fetch plus waitUntil work cannot be measured locally, including whether parsing and re-stringifying ~3.2 MB `recent` plus ~1 MB buckets in recordHoneypot, or ~5+ MB in the threat-intel refresh, exceeds it and aborts the write. Local Node (~10 ms per parse+stringify of `recent`, ~12.7 ms per further decoy hit, ~44 ms per threat-intel refresh) is not Workers CPU accounting."
+    ],
+    "validation_plan": {
+      "local": "Run agents/v-honeypot-path/artifacts/harness.mjs through the sandbox. It imports dynamic/worker/src/index.js, uses an in-memory fake KV, dummy RATE_SALT, a mocked Date.now and the documentation IP 203.0.113.7. It sends 240 GET https://danielmala.co/phpmyadmin/<n>AAAA...(16000 chars) requests over 4 simulated days of 60 each, then records `recent` size, entry count and put TTL, the bucket sizes, the time for one more decoy hit and the time for one /api/threat-intel refresh. Expected output (agents/v-honeypot-path/artifacts/honeypot-path-repro.txt): recent 3,218,341 bytes / 200 entries / TTL null; buckets ~961 KB; threat-intel body ~3.3 MB. To settle the CPU question locally, run the same fixture under `wrangler dev --local` (workerd) with only dummy data and measure the CPU time reported per invocation.",
+      "deployment": "Owner-only observation, with no audit traffic to production. In Workers Observability logs, look for exceededCpu outcomes or 'honeypot_write_failed' / 'cache_refresh_failed' events. Check the current byte size of the KV key `recent` and the largest d:/h: bucket keys in the dashboard (Storage & Databases → KV → namespace → key). Confirm the zone's effective maximum request-URL length at the Cloudflare edge and whether any WAF rule blocks long /phpmyadmin/* URIs. Do not send oversized decoy requests to production."
+    }
+  },
+  {
+    "verdict": "needs_validation",
+    "fingerprint": "github-workflows-headers.yml:deployment_status-secrets-run-deployment-commit-code",
+    "title": "Headers workflow on deployment_status runs code from the deployment commit with repository secrets",
+    "description": ".github/workflows/headers.yml is triggered by deployment_status. Its only gate is that the deployment state is 'success' (line 24). The job checks out the event's commit (actions/checkout with no ref, line 29), puts secrets ACCESS_CLIENT_ID, ACCESS_CLIENT_SECRET and CI_WAF_TOKEN into the step env (lines 41-46), and runs node .github/scripts/check-headers.mjs from that checkout (line 47). For deployment_status events, GitHub resolves both the workflow file and GITHUB_SHA from the deployment's commit, not from the default branch. The only thing stopping the secrets from going elsewhere is the host allowlist (check-headers.mjs:152 via target.mjs:74). That allowlist is part of the same checked-out code, so it does not protect against a commit that edits the workflow or the script. The workflow never checks deployment.environment, deployment.ref, the creator, or whether the SHA is on main. Suppose the Cloudflare Pages GitHub integration (or any token with deployments:write) creates a successful GitHub deployment for a fork pull-request commit, and GitHub delivers repository secrets to that run. Then a fork author on this public repo could change headers.yml or check-headers.mjs and get the WAF-bypass token and the Access service token. A second path works with the script unchanged: the allowlist trusts every subdomain of personal-site-4fm.pages.dev (target.mjs:31,77). If a fork-PR preview were built with Pages Functions from PR code, that preview would receive x-ci-waf-token and the Access headers. Contributors with write access who push same-repo branches are already trusted, so only fork-originated deployments cross a trust boundary. Whether such deployments exist is hosted configuration and cannot be seen in source.",
+    "claimed_root_cause": "A secret-bearing job runs on deployment_status, and for that event the code of record (workflow file and checked-out tree) is the deployment commit, not the default branch. Nothing in the workflow checks the deployment environment, ref or SHA. The only secret-destination guard is the in-script allowlist, and the deployment commit supplies that too. The allowlist also trusts all *.personal-site-4fm.pages.dev preview aliases, which may serve PR-built code.",
+    "trace": [
+      {
+        "kind": "entrypoint",
+        "file": ".github/workflows/headers.yml",
+        "line": 9,
+        "scope": "on.deployment_status",
+        "description": "The workflow is triggered by deployment_status events. The file header says the Cloudflare Pages GitHub integration creates these events for Pages deployments. The workflow file and GITHUB_SHA come from the deployment's commit."
+      },
+      {
+        "kind": "propagation",
+        "file": ".github/workflows/headers.yml",
+        "line": 29,
+        "scope": "jobs.check.steps[0] actions/checkout",
+        "description": "actions/checkout has no ref, so it checks out GITHUB_SHA, which is the deployment commit (possibly PR-head code if a deployment is created for it). persist-credentials is false, which limits exposure of GITHUB_TOKEN but not of the step secrets."
+      },
+      {
+        "kind": "propagation",
+        "file": ".github/workflows/headers.yml",
+        "line": 41,
+        "scope": "jobs.check.steps[1].env",
+        "description": "ACCESS_CLIENT_ID, ACCESS_CLIENT_SECRET (lines 41-42) and CI_WAF_TOKEN (line 46) are placed in the step environment. DEPLOY_URL comes from deployment_status.environment_url (line 37)."
+      },
+      {
+        "kind": "sink",
+        "file": ".github/workflows/headers.yml",
+        "line": 47,
+        "scope": "jobs.check.steps[1].run",
+        "description": "Runs node .github/scripts/check-headers.mjs from the checked-out deployment commit with the secrets in env. The allowlist decision at check-headers.mjs:152 (isTrustedTarget, target.mjs:74) is enforced only by that same checked-out code."
+      }
+    ],
+    "evidence": [
+      {
+        "file": ".github/workflows/headers.yml",
+        "line": 24,
+        "description": "The only job condition on deployment_status is deployment_status.state == 'success'. There is no check of github.event.deployment.environment, deployment.ref or sha, the creator, or head repository."
+      },
+      {
+        "file": ".github/scripts/check-headers.mjs",
+        "line": 138,
+        "description": "The comment (lines 138-145) acknowledges that DEPLOY_URL/environment_url can be set by any app or token with deployments:write, and relies on the in-script allowlist. That allowlist does not help when the script itself comes from untrusted code."
+      },
+      {
+        "file": ".github/scripts/lib/target.mjs",
+        "line": 31,
+        "description": "PAGES_PROJECT_HOST is personal-site-4fm.pages.dev. isTrustedTarget (line 77) accepts the host itself and any subdomain, so secrets are sent to every branch/PR preview alias of the project."
+      },
+      {
+        "file": "docs/cloudflare-deploy.md",
+        "line": 249,
+        "description": "Section 6 says the repo became public on 2026-07-31 and that the Actions fork-PR permissions checklist was not re-verified. Section 2 (lines 36-40) documents the Pages build config (root static, npm run build) but says nothing about preview or fork build settings for the Pages project."
+      }
+    ],
+    "blockers": [
+      "Not visible in source: whether Cloudflare Pages project personal-site-4fm builds pull requests from forks and creates GitHub deployments/deployment_status events for those fork commits (preview deployments setting for non-production branches, fork PR handling).",
+      "Not visible in source: whether GitHub runs headers.yml with repository secrets for a deployment_status event whose deployment SHA is a fork-PR head commit (refs/pull/N/head), and whether fork-workflow approval settings or environment protection rules on the Preview environment gate those runs.",
+      "Not visible in source: whether any GitHub App or token other than the Cloudflare integration holds deployments:write on the repo and could create a successful deployment pointing at an attacker-supplied commit.",
+      "Not visible in source: whether the Pages build honours a functions/ directory (static/functions) added by PR code for preview builds, which would let the unmodified allowlist deliver x-ci-waf-token and Access headers to attacker code behind *.personal-site-4fm.pages.dev."
+    ],
+    "validation_plan": {
+      "deployment": "Owner-observed only, with no audit traffic to any deployment. (1) Cloudflare dashboard > Workers & Pages > personal-site-4fm > Settings > Builds: record whether preview deployments are enabled (all non-production branches / custom / none) and whether PRs from forks are built. (2) GitHub > Actions > Headers workflow: list past runs with event=deployment_status and record each run's head SHA, the deployment environment (Production/Preview) and ref. Check whether any SHA is not on main, and whether any came from a fork PR (refs/pull/*/head). (3) GitHub > Settings > Actions > General: record the 'Fork pull request workflows' approval setting. Under Settings > Environments, record whether Preview/Production environments have protection rules or environment-scoped secrets. (4) Settings > Integrations / GitHub Apps: list apps with Deployments write. If any fork-commit deployment reaches this workflow, fix it by gating the job with `if: github.event_name != 'deployment_status' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production' && github.event.deployment.ref == 'main')`, or by not exposing CI_WAF_TOKEN/Access secrets to deployment_status runs (scope them to a protected Production environment). Also narrow the target.mjs preview trust so that PR previews do not receive the secrets."
+    }
+  }
+]

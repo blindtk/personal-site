@@ -1,0 +1,10 @@
+sequential-1-day {"requests":4251,"statuses":{"200":4251},"putTotal":3543,"putsByPrefix":{"cache":3543},"capKeys":[]}
+concurrent-stale-burst {"requests":20,"statuses":"20x200","cachePuts":20}
+node:internal/deps/undici/undici:5971
+      return await WebAssembly.instantiate(mod, {
+                               ^
+
+RangeError: WebAssembly.instantiate(): Out of memory: Cannot allocate Wasm memory for new instance
+    at lazyllhttp (node:internal/deps/undici/undici:5971:32)
+
+Node.js v22.22.2

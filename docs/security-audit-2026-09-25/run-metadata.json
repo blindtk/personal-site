@@ -1,0 +1,53 @@
+{
+  "run_id": "personal-site-run-1",
+  "repo": "blindtk/personal-site",
+  "target": "/home/user/personal-site",
+  "source_ref": {
+    "commit": "cb439ed1f8915a0cb7f7b09325f7fb62d515579c",
+    "branch": "claude/security-audit-personal-site-hixdg8",
+    "worktree_dirty": false
+  },
+  "profile": "quick",
+  "scope_paths": [
+    "dynamic/worker",
+    "static/src",
+    "static/public",
+    ".github",
+    "static/astro.config.mjs",
+    ".mcp.json",
+    ".clusterfuzzlite"
+  ],
+  "budget": 12,
+  "execution_policy": "sandboxed-source-and-local-only",
+  "sandbox": "bin/sandbox.sh: unshare -rmn (user+mount+net ns, no external network), / remounted read-only except agents/<id>/scratch, env -i allowlist (PATH, HOME, TMPDIR), prlimit as=8GB nproc=128 fsize=10MB cpu=60s, timeout 90s",
+  "promotion": "bin/promote.py: O_NOFOLLOW dir_fd traversal, regular-file + nlink==1 + size bound (256 KiB/file) checks, O_EXCL destination",
+  "companion_files": [
+    "ATTACK-CLASSES.md",
+    "WEB-PROTOCOL-AND-AUTH.md",
+    "CLIENT-SIDE.md",
+    "SUPPLY-CHAIN-AND-RELEASE.md",
+    "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md"
+  ],
+  "prior_runs": [],
+  "prior_non_skill_reviews": [
+    "docs/security-review-2026-07-29.md (prose review, no compatible ledger)"
+  ],
+  "shared_file_owners": {
+    "run-metadata.json": "parent",
+    "architecture.md": "parent",
+    "coverage-ledger.json": "parent",
+    "findings.json": "parent",
+    "REPORT.md": "parent",
+    "FINDINGS-DETAIL.md": "parent",
+    "NEEDS-VALIDATION.md": "parent"
+  },
+  "reconnaissance_note": "Phase 1 mapping was performed by the parent directly (small target, ~8k LOC of code) instead of four delegated research agents; no reconnaissance agents were spent.",
+  "run_status": "complete",
+  "agents_spent": {
+    "reconnaissance": 0,
+    "hunters": 5,
+    "final_critic": 1,
+    "candidate_verifiers": 4,
+    "total": 10
+  }
+}

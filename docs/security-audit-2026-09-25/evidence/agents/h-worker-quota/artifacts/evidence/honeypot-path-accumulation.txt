@@ -1,0 +1,37 @@
+== script: honeypot-path-accumulation.mjs ==
+// Sandbox AS limit (8GB) prevents undici lazily instantiating its unused wasm HTTP parser; ignore only that unrelated async error.
+process.on("uncaughtException", (e) => { if (String(e?.stack).includes("lazyllhttp")) return; throw e; });
+// Bounded local check: attacker-chosen path length under the /phpmyadmin/ prefix decoy is stored unbounded
+// in `recent` (200 entries) and byPath of hourly/daily buckets. Fake KV + fake clock; no network.
+const worker = (await import('/home/user/personal-site/dynamic/worker/src/index.js')).default;
+function fakeKV() { const store = new Map(); return { store,
+  async get(k, t) { const v = store.get(k); if (v == null) return null; return t === 'json' ? JSON.parse(v) : v; },
+  async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); } }; }
+const PATH_LEN = 16000; // order of an edge URL-length limit; value is a local fixture only
+function req(path) { const h = new Map([['cf-connecting-ip', '198.51.100.9']]);
+  return { url: 'https://example.test' + path, method: 'GET', headers: { get: (n) => h.get(n.toLowerCase()) ?? null }, cf: { asn: 64500, country: 'PT' } }; }
+async function run(env, r) { const pend = []; const res = await worker.fetch(r, env, { waitUntil: (p) => pend.push(p) }); await Promise.all(pend); return res; }
+let clock = Date.UTC(2026, 8, 21, 0, 0, 0); Date.now = () => clock;
+const env = { KV: fakeKV(), RATE_SALT: 'dummy' };
+let i = 0;
+for (let day = 0; day < 4; day++) {           // 4 simulated UTC days, 60 capped events each
+  for (let e = 0; e < 60; e++) {
+    const path = '/phpmyadmin/' + String(i++).padStart(6, '0') + 'a'.repeat(PATH_LEN - 18);
+    await run(env, req(path));
+    clock += 60_000;
+  }
+  clock = Date.UTC(2026, 8, 22 + day, 0, 0, 0);
+}
+const size = (k) => (env.KV.store.get(k) || '').length;
+const dayKeys = [...env.KV.store.keys()].filter((k) => k.startsWith('d:'));
+const recent = JSON.parse(env.KV.store.get('recent'));
+// time one more (capped-out would skip) recordHoneypot-like parse+stringify of recent in local Node (indicative only)
+const t0 = process.hrtime.bigint(); for (let k = 0; k < 10; k++) JSON.stringify(JSON.parse(env.KV.store.get('recent'))); const t1 = process.hrtime.bigint();
+const hp = await run(env, req('/api/honeypot')); const hpBody = await hp.text();
+console.log(JSON.stringify({ eventsStored: i, recentEntries: recent.length, recentBytes: size('recent'), maxPathLenStored: Math.max(...recent.map((e) => e.path.length)),
+  dailyBucketBytes: Object.fromEntries(dayKeys.map((k) => [k, size(k)])), apiHoneypotResponseBytes: hpBody.length,
+  localParseStringifyRecentMsAvg: Number(t1 - t0) / 1e6 / 10 }));
+process.exit(0);
+== command: sandbox.sh h-worker-quota "node .../scratch/honeypot-path-accumulation.mjs" ==
+== output ==
+{"eventsStored":240,"recentEntries":200,"recentBytes":3215601,"maxPathLenStored":16000,"dailyBucketBytes":{"d:2026-09-21":960390,"d:2026-09-22":960390,"d:2026-09-23":960390,"d:2026-09-24":960390},"apiHoneypotResponseBytes":498424,"localParseStringifyRecentMsAvg":16.0213681}

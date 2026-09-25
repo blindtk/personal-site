@@ -1,0 +1,58 @@
+== script: uncapped-cache-writes.mjs ==
+// Sandbox AS limit (8GB) prevents undici lazily instantiating its unused wasm HTTP parser; ignore only that unrelated async error.
+process.on("uncaughtException", (e) => { if (String(e?.stack).includes("lazyllhttp")) return; throw e; });
+// Bounded local check: uncapped KV writes from unauthenticated GET /api/honeypot|/api/map|/api/vitals
+// via cached() refresh. Fake KV + fake clock; no network.
+const worker = (await import('/home/user/personal-site/dynamic/worker/src/index.js')).default;
+
+function fakeKV() {
+  const store = new Map();
+  const stats = { puts: 0, putsByPrefix: {} };
+  return {
+    store, stats,
+    async get(k, type) { const v = store.get(k); if (v == null) return null; return type === 'json' ? JSON.parse(v) : v; },
+    async put(k, v) { stats.puts++; const p = k.split(':')[0]; stats.putsByPrefix[p] = (stats.putsByPrefix[p] || 0) + 1; store.set(k, v); },
+    async delete(k) { store.delete(k); },
+  };
+}
+function req(path, method = 'GET') {
+  const h = new Map([['cf-connecting-ip', '198.51.100.9']]);
+  return { url: 'https://example.test' + path, method, headers: { get: (n) => h.get(n.toLowerCase()) ?? null }, cf: {} };
+}
+async function run(env, r) {
+  const pending = [];
+  const ctx = { waitUntil: (p) => pending.push(p) };
+  const res = await worker.fetch(r, env, ctx);
+  await Promise.all(pending);
+  return res;
+}
+
+// Part 1: simulated clock — one GET per route every 61s for 1 simulated day (sequential, no concurrency).
+const realNow = Date.now;
+let clock = Date.UTC(2026, 8, 25, 0, 0, 0);
+Date.now = () => clock;
+const env = { KV: fakeKV(), RATE_SALT: 'dummy' };
+const routes = ['/api/honeypot', '/api/map', '/api/vitals'];
+let requests = 0, statuses = new Set();
+const end = clock + 86400_000;
+while (clock < end) {
+  for (const p of routes) { const r = await run(env, req(p)); requests++; statuses.add(r.status); }
+  clock += 61_000;
+}
+console.log(JSON.stringify({ part: 'sequential-1-day', requests, statuses: [...statuses], kvPuts: env.KV.stats.puts, putsByPrefix: env.KV.stats.putsByPrefix, capKeysPresent: [...env.KV.store.keys()].filter(k => /cap:/.test(k)) }));
+
+// Part 2: concurrent burst against an expired (stale) cache entry: every request schedules its own refresh.
+const env2 = { KV: fakeKV(), RATE_SALT: 'dummy' };
+env2.KV.store.set('cache:honeypot', JSON.stringify({ data: { attempts24h: 1 }, exp: clock - 1 }));
+const N = 20;
+const pending = [];
+const ctx = { waitUntil: (p) => pending.push(p) };
+await Promise.all(Array.from({ length: N }, () => worker.fetch(req('/api/honeypot'), env2, ctx)));
+await Promise.all(pending);
+console.log(JSON.stringify({ part: 'concurrent-stale-burst', concurrentRequests: N, kvPuts: env2.KV.stats.puts, putsByPrefix: env2.KV.stats.putsByPrefix }));
+Date.now = realNow;
+process.exit(0);
+== command: sandbox.sh h-worker-quota "node .../scratch/uncapped-cache-writes.mjs" (no net, env -i, prlimit AS 8GB/CPU 60s, 90s wall) ==
+== output ==
+{"part":"sequential-1-day","requests":4251,"statuses":[200],"kvPuts":3543,"putsByPrefix":{"cache":3543},"capKeysPresent":[]}
+{"part":"concurrent-stale-burst","concurrentRequests":20,"kvPuts":20,"putsByPrefix":{"cache":20}}

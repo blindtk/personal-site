@@ -1,0 +1,85 @@
+== script: capped-paths-budget.mjs ==
+// Sandbox AS limit (8GB) prevents undici lazily instantiating its unused wasm HTTP parser; ignore only that unrelated async error.
+process.on("uncaughtException", (e) => { if (String(e?.stack).includes("lazyllhttp")) return; throw e; });
+// Bounded local check: sum of KV writes reachable ONLY through the capped paths from ONE client IP in < 1 simulated hour.
+// Fake KV, fake clock, fetch stubbed for HIBP (no network).
+const worker = (await import('/home/user/personal-site/dynamic/worker/src/index.js')).default;
+function fakeKV() {
+  const store = new Map(); const stats = { puts: 0, putsByPrefix: {} };
+  return { store, stats,
+    async get(k, t) { const v = store.get(k); if (v == null) return null; return t === 'json' ? JSON.parse(v) : v; },
+    async put(k, v) { stats.puts++; const p = k.split(':')[0]; stats.putsByPrefix[p] = (stats.putsByPrefix[p] || 0) + 1; store.set(k, v); },
+    async delete(k) { store.delete(k); } };
+}
+function req(path, method = 'GET', ip = '198.51.100.9') {
+  const h = new Map([['cf-connecting-ip', ip]]);
+  return { url: 'https://example.test' + path, method, headers: { get: (n) => h.get(n.toLowerCase()) ?? null }, cf: { asn: 64500, country: 'PT' } };
+}
+async function run(env, r) { const pend = []; const res = await worker.fetch(r, env, { waitUntil: (p) => pend.push(p) }); await Promise.all(pend); return res; }
+globalThis.fetch = async () => ({ ok: true, status: 200, text: async () => '0000000000000000000000000000000000A:1\r\n' });
+let clock = Date.UTC(2026, 8, 25, 1, 0, 0); Date.now = () => clock;
+const env = { KV: fakeKV(), RATE_SALT: 'dummy' };
+const status = {};
+// one client, respecting 20/min on pwned: 20 unique prefixes per minute for 16 minutes
+let n = 0;
+for (let m = 0; m < 16; m++) {
+  for (let i = 0; i < 20; i++) { const prefix = (n++).toString(16).toUpperCase().padStart(5, '0'); const r = await run(env, req('/api/pwned-range?prefix=' + prefix)); status[r.status] = (status[r.status] || 0) + 1; }
+  clock += 61_000;
+}
+// same client: 70 decoy hits
+for (let i = 0; i < 70; i++) { await run(env, req('/.env')); }
+const rlcap = [...env.KV.store.entries()].find(([k]) => k.startsWith('rlcap:'));
+console.log(JSON.stringify({ singleClient: true, pwnedStatuses: status, kvPuts: env.KV.stats.puts, putsByPrefix: env.KV.stats.putsByPrefix, rlcapState: rlcap && JSON.parse(rlcap[1]), simulatedMinutes: Math.round((clock - Date.UTC(2026, 8, 25, 1)) / 60000) }));
+process.exit(0);
+== command: sandbox.sh h-worker-quota "node .../scratch/capped-paths-budget.mjs" ==
+== output ==
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+ratelimit_write_cap_exhausted pwned
+{"singleClient":true,"pwnedStatuses":{"200":300,"429":20},"kvPuts":1141,"putsByPrefix":{"rl":300,"rlcap":300,"cache":300,"recent":60,"h":60,"d":60,"wcap":60,"meta":1},"rlcapState":{"count":300,"windowStart":1790298000000},"simulatedMinutes":16}
+== script: cap-race.mjs ==
+// Sandbox AS limit (8GB) prevents undici lazily instantiating its unused wasm HTTP parser; ignore only that unrelated async error.
+process.on("uncaughtException", (e) => { if (String(e?.stack).includes("lazyllhttp")) return; throw e; });
+// Bounded local check: global daily caps (wcap/rlcap) are read-modify-write without atomicity; concurrent requests
+// that read before any put all pass. Fake KV with 1 tick of async latency per op; no network.
+const worker = (await import('/home/user/personal-site/dynamic/worker/src/index.js')).default;
+function fakeKV() { const store = new Map(); const stats = { puts: {} }; const tick = () => new Promise((r) => setTimeout(r, 1));
+  return { store, stats,
+    async get(k, t) { await tick(); const v = store.get(k); if (v == null) return null; return t === 'json' ? JSON.parse(v) : v; },
+    async put(k, v) { await tick(); const p = k.split(':')[0]; stats.puts[p] = (stats.puts[p] || 0) + 1; store.set(k, v); }, async delete(k) { store.delete(k); } }; }
+function req(path, ip) { const h = new Map([['cf-connecting-ip', ip]]);
+  return { url: 'https://example.test' + path, method: 'GET', headers: { get: (n) => h.get(n.toLowerCase()) ?? null }, cf: { asn: 64500, country: 'PT' } }; }
+const clock = Date.UTC(2026, 8, 25, 12, 0, 0); Date.now = () => clock;
+const N = 50;
+// A) honeypot cap already at 59/60 → concurrent decoy burst
+const envA = { KV: fakeKV(), RATE_SALT: 'dummy' };
+envA.KV.store.set('wcap:d:2026-09-25', JSON.stringify({ count: 59, windowStart: clock }));
+let pend = []; await Promise.all(Array.from({ length: N }, () => worker.fetch(req('/.env', '198.51.100.9'), envA, { waitUntil: (p) => pend.push(p) }))); await Promise.all(pend);
+const recentLen = JSON.parse(envA.KV.store.get('recent')).length;
+// B) rate-limit global cap already at 299/300 → concurrent mirror burst from N distinct client IPs
+const envB = { KV: fakeKV(), RATE_SALT: 'dummy' };
+envB.KV.store.set('rlcap:d:2026-09-25', JSON.stringify({ count: 299, windowStart: clock }));
+pend = []; const res = await Promise.all(Array.from({ length: N }, (_, i) => worker.fetch(req('/api/mirror', '198.51.100.' + (i + 1)), envB, { waitUntil: (p) => pend.push(p) }))); await Promise.all(pend);
+console.log(JSON.stringify({ concurrent: N, honeypot: { capBefore: 59, capMax: 60, eventsRecorded: recentLen, putsByPrefix: envA.KV.stats.puts },
+  ratelimit: { capBefore: 299, capMax: 300, mirror200: res.filter((r) => r.status === 200).length, putsByPrefix: envB.KV.stats.puts } }));
+process.exit(0);
+== command: sandbox.sh h-worker-quota "node .../scratch/cap-race.mjs" ==
+== output ==
+{"concurrent":50,"honeypot":{"capBefore":59,"capMax":60,"eventsRecorded":1,"putsByPrefix":{"recent":50,"h":50,"d":50,"wcap":50,"meta":50}},"ratelimit":{"capBefore":299,"capMax":300,"mirror200":50,"putsByPrefix":{"rl":50,"rlcap":50}}}

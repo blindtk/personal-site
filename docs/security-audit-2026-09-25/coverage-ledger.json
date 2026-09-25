@@ -1,0 +1,912 @@
+[
+  {
+    "coverage_id": ".github%2Fworkflows%2F%2A.yml%23all%20triggers::.github%2Fworkflows%23permissions%2C%20triggers%2C%20expression%20interpolation%2C%20secrets::profile%2Fquick%2Fall-in-scope-subsystems::SUPPLY-CHAIN-AND-RELEASE.md%23CI%20and%20automation%20attack%20classes",
+    "canonical_refs": {
+      "surface": ".github/workflows/*.yml#all triggers",
+      "boundary": ".github/workflows#permissions, triggers, expression interpolation, secrets",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "SUPPLY-CHAIN-AND-RELEASE.md#CI and automation attack classes"
+    },
+    "surface": "GitHub Actions workflows",
+    "boundary": "CI token/secret scope vs external PR/deployment inputs",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "CI and automation attack classes",
+    "starting_paths": [
+      ".github/workflows",
+      ".github/scripts",
+      ".clusterfuzzlite",
+      "renovate.json5",
+      ".pre-commit-config.yaml",
+      ".mcp.json",
+      "dynamic/worker/wrangler.toml"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Cryptography and secrets",
+    "selected_companion_blocks": [
+      "SUPPLY-CHAIN-AND-RELEASE.md#Core discipline",
+      "SUPPLY-CHAIN-AND-RELEASE.md#CI and automation attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Release and update attack classes",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Universal moves",
+      "SUPPLY-CHAIN-AND-RELEASE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "h-ci",
+    "reviewed_paths": [
+      ".github/workflows/ci.yml",
+      ".github/workflows/codeql.yml",
+      ".github/workflows/dependency-review.yml",
+      ".github/workflows/security.yml",
+      ".github/workflows/labeler.yml",
+      ".github/workflows/release.yml",
+      ".github/workflows/headers.yml",
+      ".github/workflows/invariants.yml",
+      ".github/workflows/tls-check.yml",
+      ".github/workflows/observatory-check.yml",
+      ".github/workflows/dns-check.yml",
+      ".github/scripts/check-headers.mjs",
+      ".github/scripts/check-invariants.mjs",
+      ".github/scripts/check-observatory.mjs",
+      ".github/scripts/lib/target.mjs",
+      ".github/expected-headers.json",
+      "docs/cloudflare-deploy.md",
+      "renovate.json5",
+      ".pre-commit-config.yaml",
+      ".mcp.json",
+      ".clusterfuzzlite/Dockerfile",
+      ".clusterfuzzlite/build.sh",
+      ".github/workflows/fuzzing.yml",
+      "dynamic/worker/wrangler.toml",
+      ".github/CODEOWNERS"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-ci",
+        "reviewed_paths": [
+          ".github/workflows/ci.yml",
+          ".github/workflows/codeql.yml",
+          ".github/workflows/dependency-review.yml",
+          ".github/workflows/security.yml",
+          ".github/workflows/labeler.yml"
+        ],
+        "invariant": "pull_request-triggered workflows (reachable by fork PR authors) hold no repository secrets and no write-scoped token that contributor code can reach; no pull_request_target/workflow_run; untrusted PR fields do not reach run: via ${{ }} interpolation",
+        "method": "source",
+        "result": "All workflows set permissions: {} with per-job least privilege; every checkout uses persist-credentials: false; actions pinned by SHA. PR workflows only get contents:read (codeql security-events:write and gitleaks pull-requests:read are downgraded for forks; gitleaks gets only GITHUB_TOKEN). labeler (pull-requests:write) is gated to head.repo == repository and non-renovate, runs no checkout/PR code, and passes head_ref/PR number via env with quoted expansion; labels come from a fixed set. npm ci --ignore-scripts everywhere. No pull_request_target or workflow_run present. PR-scoped setup-node caches cannot poison main-scoped caches; release.yml disables package-manager cache.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-ci",
+        "reviewed_paths": [
+          ".github/workflows/release.yml"
+        ],
+        "invariant": "Release artifacts that are attested/published are produced from the same tag commit by the same run, and a lower-trust job cannot substitute them",
+        "method": "source",
+        "result": "Triggers are tag push (v*) and workflow_dispatch (write access only). build job (contents:read) checks out refs/tags/<input> and fails if HEAD != github.sha; artifacts pass to the release job via upload/download-artifact within the same run (retention 1 day); release job alone holds contents/id-token/attestations write. inputs.tag is passed through env in run:, and into action inputs (tag_name) not shell. No cross-run or cross-trust artifact handoff found.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-ci",
+        "reviewed_paths": [
+          ".github/workflows/headers.yml",
+          ".github/workflows/invariants.yml",
+          ".github/workflows/tls-check.yml",
+          ".github/workflows/observatory-check.yml",
+          ".github/workflows/dns-check.yml",
+          ".github/scripts/check-headers.mjs",
+          ".github/scripts/check-invariants.mjs",
+          ".github/scripts/check-observatory.mjs",
+          ".github/scripts/lib/target.mjs",
+          ".github/expected-headers.json"
+        ],
+        "invariant": "Secrets CI_WAF_TOKEN / ACCESS_CLIENT_ID / ACCESS_CLIENT_SECRET are only sent over HTTPS to production or this project's Pages preview host, including when the target comes from deployment_status.environment_url, and are not re-sent across cross-origin redirects",
+        "method": "local",
+        "result": "Sandboxed harness over target.mjs: https://danielmala.co/ and *.personal-site-4fm.pages.dev trusted; http, non-default port, danielmala.co.evil.com, userinfo tricks, suffix-confusion hosts, trailing-dot hosts and attacker.pages.dev all rejected. fetchSameOrigin stops at off-origin redirects. The in-repo allowlist holds; the residual risk is which code version runs on deployment_status (see candidate).",
+        "artifact": "agents/h-ci/artifacts/target-allowlist.out"
+      },
+      {
+        "agent_id": "h-ci",
+        "reviewed_paths": [
+          ".github/workflows/headers.yml",
+          ".github/scripts/check-headers.mjs",
+          "docs/cloudflare-deploy.md"
+        ],
+        "invariant": "A deployment_status-triggered workflow that receives repository secrets must not execute workflow/script code chosen by a lower-trust (fork) contributor",
+        "method": "source",
+        "result": "headers.yml runs on deployment_status with secrets in env and executes check-headers.mjs from the checked-out deployment commit. Whether Pages creates deployments for fork PR commits and whether they then receive secrets is hosted configuration not visible in source.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-ci",
+        "reviewed_paths": [
+          "renovate.json5",
+          ".pre-commit-config.yaml",
+          ".mcp.json",
+          ".clusterfuzzlite/Dockerfile",
+          ".clusterfuzzlite/build.sh",
+          ".github/workflows/fuzzing.yml",
+          "dynamic/worker/wrangler.toml",
+          ".github/CODEOWNERS"
+        ],
+        "invariant": "Automation config and wrangler.toml contain no hardcoded secrets, and fuzz/renovate/pre-commit automation does not grant untrusted inputs privileged execution",
+        "method": "source",
+        "result": "wrangler.toml holds only non-secret identifiers; secrets are wrangler secrets. .mcp.json has no credentials. Fuzz image pinned by digest, npm ci --ignore-scripts, workflow_dispatch only with contents:read. Renovate minimumReleaseAge 3 days; CODEOWNERS requires owner review. No finding.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "github-workflows-headers.yml:deployment_status-secrets-run-deployment-commit-code"
+    ],
+    "unresolved": [],
+    "unit_label": "U7",
+    "hardening_notes": [
+      "tls-check.yml passes CI_WAF_TOKEN via --reqheader to whatever host is given in the workflow_dispatch input (lines 41-81) without the isTrustedTarget allowlist that check-headers/check-invariants apply. Only write-access dispatchers can set the input, so this crosses no privilege boundary, but it is inconsistent. Apply isTrustedTarget before sending the token.",
+      "target.mjs isTrustedTarget trusts every *.personal-site-4fm.pages.dev alias, including branch previews whose content comes from non-main branches. Consider restricting secrets to PROD_ORIGIN, or to preview hosts only when environment == Production.",
+      "Semgrep registry rulesets p/typescript and p/javascript are unpinned remote configs (documented in security.yml and ADR 0015). They run with contents:read only, so this is a detection-integrity risk, not an execution one."
+    ]
+  },
+  {
+    "coverage_id": "dynamic%2Fworker%2Fsrc%2Findex.js%23decoy%20paths%20%28isDecoy%29%20and%20unauthenticated%20GET%20routes::dynamic%2Fworker%2Fsrc%2Findex.js%23recordHoneypot%20and%20KV%20write%20caps::profile%2Fquick%2Fall-in-scope-subsystems::RESOURCE-EXHAUSTION-AND-AVAILABILITY.md%23Resource%20accumulation%20attack%20classes",
+    "canonical_refs": {
+      "surface": "dynamic/worker/src/index.js#decoy paths (isDecoy) and unauthenticated GET routes",
+      "boundary": "dynamic/worker/src/index.js#recordHoneypot and KV write caps",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Resource accumulation attack classes"
+    },
+    "surface": "Worker decoy paths and public GET routes",
+    "boundary": "Honeypot write cap, cached() SWR, cron",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "Resource accumulation attack classes",
+    "starting_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/decoys.js",
+      "dynamic/worker/src/lib/aggregate.js",
+      "dynamic/worker/src/lib/ipthreat.js",
+      "dynamic/worker/src/lib/kvcap.js"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Resource accumulation attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "h-worker-quota",
+    "reviewed_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/aggregate.js",
+      "docs/adr/0006-caps-escrita-diarios.md",
+      "dynamic/PLAN.md",
+      "dynamic/worker/src/lib/decoys.js",
+      "dynamic/worker/src/lib/attack-map.js",
+      "dynamic/worker/src/lib/ipthreat.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-worker-quota",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/aggregate.js",
+          "docs/adr/0006-caps-escrita-diarios.md",
+          "dynamic/PLAN.md"
+        ],
+        "invariant": "Every KV write that an anonymous visitor can trigger is counted against a global daily write cap.",
+        "method": "local",
+        "result": "cached() writes KV on every logical expiry with no cap; one GET per route every 61s for one simulated day caused 3,543 uncapped puts; 20 concurrent stale requests caused 20 puts.",
+        "artifact": "agents/h-worker-quota/artifacts/evidence/uncapped-cache-writes.txt"
+      },
+      {
+        "agent_id": "h-worker-quota",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/decoys.js",
+          "dynamic/worker/src/lib/aggregate.js",
+          "dynamic/worker/src/lib/attack-map.js"
+        ],
+        "invariant": "Each honeypot event persisted in recent and byPath maps has a bounded size.",
+        "method": "local",
+        "result": "/phpmyadmin/ prefix decoy stores raw pathname unbounded; after 4 simulated days of 60 events with 16,000-char paths, recent was 3,215,601 bytes and each daily bucket 960,390 bytes.",
+        "artifact": "agents/h-worker-quota/artifacts/evidence/honeypot-path-accumulation.txt"
+      },
+      {
+        "agent_id": "h-worker-quota",
+        "reviewed_paths": [
+          "dynamic/worker/src/lib/ipthreat.js",
+          "dynamic/worker/src/index.js"
+        ],
+        "invariant": "iplist cardinality and cron prune are bounded and prune writes only on change.",
+        "method": "source",
+        "result": "iplist growth bounded by 60/day cap and 30-day retention; prune writes only when prunedCount>0.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "dynamic/worker/src/index.js:cached:uncapped-kv-write-on-public-get",
+      "dynamic/worker/src/index.js:recordHoneypot:unbounded-decoy-path-accumulation"
+    ],
+    "unresolved": [],
+    "unit_label": "U2",
+    "hardening_notes": [
+      "The rate limiter fails closed: once 300 allowed requests are counted globally (reachable by one IP in ~10 minutes at 30/min on /api/mirror), every visitor gets 429 on /api/mirror, /api/pwned-range, POST /api/vitals and cf-stats?refresh=1 until 00:00 UTC. This is a documented trade-off (security review A1), but moving to a Cloudflare WAF rate-limiting rule or per-client-first accounting would remove the cross-visitor denial.",
+      "POST /api/vitals calls rateLimit() outside the router try/catch (index.js:506). If the KV put throws (e.g. daily write limit exceeded), the request throws uncaught instead of returning the uniform 204/429. Wrap it like the GET routes.",
+      "recordHoneypot reads recent, the buckets, meta and iplist before the cap check (index.js:128-140), so capped-out decoy hits still cost 5-6 KV reads each against the 100k/day read budget. Checking wcap first would cut reads for dropped events.",
+      "cf-connecting-ip falls back to 'unknown' (index.js:384). This is safe only while the Worker is reachable solely via zone routes (workers_dev=false, preview_urls=false). Keep it that way, or treat a missing header as a reject."
+    ]
+  },
+  {
+    "coverage_id": "dynamic%2Fworker%2Fsrc%2Findex.js%23json%2FcorsHeaders%2FOPTIONS%20and%20GET%20%2Fapi%2Fmirror::dynamic%2Fworker%2Fsrc%2Findex.js%23corsHeaders::profile%2Fquick%2Fall-in-scope-subsystems::WEB-PROTOCOL-AND-AUTH.md%23HTTP%20framing%20and%20cache%20attack%20classes",
+    "canonical_refs": {
+      "surface": "dynamic/worker/src/index.js#json/corsHeaders/OPTIONS and GET /api/mirror",
+      "boundary": "dynamic/worker/src/index.js#corsHeaders",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "WEB-PROTOCOL-AND-AUTH.md#HTTP framing and cache attack classes"
+    },
+    "surface": "Worker response headers, CORS, per-request mirror",
+    "boundary": "CORS allowlist + cache-control on per-request data",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "HTTP framing and cache attack classes",
+    "starting_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/mirror.js",
+      "static/src/components/tools/Mirror.astro",
+      "dynamic/worker/wrangler.toml",
+      "static/public/_headers"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Feature abuse and data leakage",
+    "selected_companion_blocks": [
+      "WEB-PROTOCOL-AND-AUTH.md#Core discipline",
+      "WEB-PROTOCOL-AND-AUTH.md#HTTP framing and cache attack classes",
+      "WEB-PROTOCOL-AND-AUTH.md#Universal moves",
+      "WEB-PROTOCOL-AND-AUTH.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "h-worker-http",
+    "reviewed_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/wrangler.toml",
+      "dynamic/worker/src/lib/mirror.js",
+      "dynamic/worker/src/lib/sanitize.js",
+      "static/src/components/tools/Mirror.astro",
+      "static/public/_headers"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-worker-http",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/wrangler.toml"
+        ],
+        "invariant": "CORS must not grant cross-origin read of Worker JSON to arbitrary origins, and CORS-dependent responses must vary on Origin.",
+        "method": "source",
+        "result": "corsHeaders (index.js:437) only emits Access-Control-Allow-Origin for an exact-match entry of env.ALLOWED_ORIGINS, which is empty in wrangler.toml; no wildcard, no credentials header, no reflection of arbitrary/null Origin. Vary: Origin is set on every json() and OPTIONS response. OPTIONS preflight returns 204 with same gated headers and allows only GET/OPTIONS.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-worker-http",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/mirror.js"
+        ],
+        "invariant": "Per-request (visitor-specific) /api/mirror data must never be stored in a shared cache nor keyed so another visitor can receive it.",
+        "method": "source",
+        "result": "GET /api/mirror calls json() with default maxAge=0, producing 'cache-control: no-store' (index.js json helper); the 429 branch also uses no-store. The route matches path === '/api/mirror' exactly, so suffix variants (/api/mirror.css, /api/mirror/x) fall to a no-store 404 JSON, ruling out cache deception by static-extension suffix. Worker responses are not written to the Cache API. serverView returns no IP (ipWithheld flag only) and only the requester's own headers/cf metadata.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-worker-http",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js"
+        ],
+        "invariant": "Publicly cacheable Worker responses (public, max-age) must depend only on inputs in the cache key (URL).",
+        "method": "source",
+        "result": "Only /api/honeypot, /api/map, /api/threat-intel, /api/vitals (GET), /api/ct, /api/cf-stats (non-refresh), /api/ticker and /api/pwned-range set public max-age; all are global aggregates or keyed on the URL query (pwned prefix normalized to 5 hex, same content for any casing of the same URL). No response body or header depends on Host, X-Forwarded-*, cookies, Accept-Language or other unkeyed headers. Errors (400/405/429/502/404) are no-store. cf-stats?refresh=1 fresh response is no-store.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-worker-http",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/mirror.js",
+          "dynamic/worker/src/lib/sanitize.js"
+        ],
+        "invariant": "No untrusted request data reaches response headers (header injection) and reflected mirror values cannot inject markup when rendered.",
+        "method": "source",
+        "result": "The only dynamic header values are retry-after (integer from Math.ceil) and CORS origin (exact allowlist member). Mirror header values pass sanitizeText (strips C0/DEL including CR/LF, removes < >, length caps) and are serialized as JSON with content-type application/json, nosniff and CSP default-src 'none'.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-worker-http",
+        "reviewed_paths": [
+          "static/src/components/tools/Mirror.astro",
+          "static/public/_headers"
+        ],
+        "invariant": "Client rendering of /api/mirror must use non-HTML sinks.",
+        "method": "source",
+        "result": "Mirror.astro fetches same-origin /api/mirror, requires application/json content-type, and renders every field via createElement + textContent (row helper) and replaceChildren; no innerHTML/insertAdjacentHTML. Reflection is self-only (visitor sees own headers) and _headers enforces Trusted Types 'none'.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "unit_label": "U3",
+    "hardening_notes": [
+      "Decoy 404 responses (index.js isDecoy branch) and the /api/vitals POST 204 responses omit cache-control and HSTS (RESPONSE_SECURITY_HEADERS is not spread on the decoy 404); adding 'cache-control: no-store' there keeps edge behaviour explicit, though no per-visitor data is present.",
+      "OPTIONS is handled before isDecoy, so preflight-shaped requests to decoy paths return 204 instead of the lookalike 404, a minor honeypot fingerprinting tell (no security boundary crossed).",
+      "If ALLOWED_ORIGINS is ever populated, keep exact-match semantics and avoid adding Access-Control-Allow-Credentials; current Vary: Origin already prevents cross-origin cache mixing."
+    ]
+  },
+  {
+    "coverage_id": "dynamic%2Fworker%2Fsrc%2Findex.js%23rate-limited%20routes%20%28POST%20%2Fapi%2Fvitals%2C%20GET%20%2Fapi%2Fmirror%2C%20%2Fapi%2Fpwned-range%2C%20%2Fapi%2Fcf-stats%3Frefresh%3D1%29::dynamic%2Fworker%2Fsrc%2Findex.js%23rateLimit::profile%2Fquick%2Fall-in-scope-subsystems::RESOURCE-EXHAUSTION-AND-AVAILABILITY.md%23Quota%20and%20scheduling%20attack%20classes",
+    "canonical_refs": {
+      "surface": "dynamic/worker/src/index.js#rate-limited routes (POST /api/vitals, GET /api/mirror, /api/pwned-range, /api/cf-stats?refresh=1)",
+      "boundary": "dynamic/worker/src/index.js#rateLimit",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes"
+    },
+    "surface": "Worker rate-limited public routes",
+    "boundary": "Per-client KV rate limit + global daily KV write caps",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "Quota and scheduling attack classes",
+    "starting_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/ratelimit.js",
+      "dynamic/worker/src/lib/kvcap.js",
+      "dynamic/worker/src/lib/vitals.js",
+      "dynamic/worker/src/lib/pwned.js"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Business logic",
+    "selected_companion_blocks": [
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Core discipline",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Quota and scheduling attack classes",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Universal moves",
+      "RESOURCE-EXHAUSTION-AND-AVAILABILITY.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "candidate",
+    "agent_id": "h-worker-quota",
+    "reviewed_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/ratelimit.js",
+      "dynamic/worker/src/lib/kvcap.js",
+      "dynamic/worker/src/lib/pwned.js",
+      "dynamic/worker/src/lib/vitals.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-worker-quota",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/ratelimit.js",
+          "dynamic/worker/src/lib/kvcap.js",
+          "dynamic/worker/src/lib/pwned.js"
+        ],
+        "invariant": "Global daily write caps bound real KV writes, count every write on capped paths, and resist concurrency.",
+        "method": "local",
+        "result": "One IP, 16 simulated minutes: 1,141 puts via capped paths (rl 300 + rlcap 300 + cache:pwned 300 + honeypot 241); 50 concurrent decoy hits at wcap 59/60 produced 250 puts; 50 concurrent mirror requests at rlcap 299/300 all 200.",
+        "artifact": "agents/h-worker-quota/artifacts/evidence/cap-accounting.txt"
+      },
+      {
+        "agent_id": "h-worker-quota",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/vitals.js"
+        ],
+        "invariant": "POST /api/vitals gates content-type, rate limit, 2 KiB body, normalization before any write.",
+        "method": "source",
+        "result": "Order holds; only normalized aggregates written under VITALS_WRITE_CAP.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [
+      "dynamic/worker/src/index.js:rateLimit:global-write-cap-accounting-and-race"
+    ],
+    "unresolved": [],
+    "unit_label": "U1",
+    "hardening_notes": [
+      "The rate limiter fails closed: once 300 allowed requests are counted globally (reachable by one IP in ~10 minutes at 30/min on /api/mirror), every visitor gets 429 on /api/mirror, /api/pwned-range, POST /api/vitals and cf-stats?refresh=1 until 00:00 UTC. This is a documented trade-off (security review A1), but moving to a Cloudflare WAF rate-limiting rule or per-client-first accounting would remove the cross-visitor denial.",
+      "POST /api/vitals calls rateLimit() outside the router try/catch (index.js:506). If the KV put throws (e.g. daily write limit exceeded), the request throws uncaught instead of returning the uniform 204/429. Wrap it like the GET routes.",
+      "recordHoneypot reads recent, the buckets, meta and iplist before the cap check (index.js:128-140), so capped-out decoy hits still cost 5-6 KV reads each against the 100k/day read budget. Checking wcap first would cut reads for dropped events.",
+      "cf-connecting-ip falls back to 'unknown' (index.js:384). This is safe only while the Worker is reachable solely via zone routes (workers_dev=false, preview_urls=false). Keep it that way, or treat a missing header as a reject."
+    ]
+  },
+  {
+    "coverage_id": "dynamic%2Fworker%2Fsrc%2Findex.js%23recordHoneypot%20%28request%20path%2C%20cf-ipcountry%2C%20cf.asn%2C%20cf-connecting-ip%29::dynamic%2Fworker%2Fsrc%2Flib%2Fsanitize.js%23normalizeCountry%2FnormalizeAsn%20%2B%20client%20rendering::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Chained%20vulnerabilities%20and%20trust%20boundaries",
+    "canonical_refs": {
+      "surface": "dynamic/worker/src/index.js#recordHoneypot (request path, cf-ipcountry, cf.asn, cf-connecting-ip)",
+      "boundary": "dynamic/worker/src/lib/sanitize.js#normalizeCountry/normalizeAsn + client rendering",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries"
+    },
+    "surface": "Honeypot stored request metadata",
+    "boundary": "Stored-data normalization and DOM rendering of dashboards",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "Chained vulnerabilities and trust boundaries",
+    "starting_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/sanitize.js",
+      "dynamic/worker/src/lib/aggregate.js",
+      "dynamic/worker/src/lib/ipthreat.js",
+      "dynamic/worker/src/lib/ipguard.js",
+      "static/src/components/pages/HoneypotPage.astro",
+      "static/src/components/pages/SiteOverviewPage.astro",
+      "static/src/components/HostMap.astro",
+      "static/src/scripts/observability.js"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Chained vulnerabilities and trust boundaries",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#DOM and object-state attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "h-stored-dom",
+    "reviewed_paths": [
+      "dynamic/worker/src/index.js",
+      "dynamic/worker/src/lib/sanitize.js",
+      "dynamic/worker/src/lib/attack-map.js",
+      "dynamic/worker/src/lib/decoys.js",
+      "dynamic/worker/src/lib/aggregate.js",
+      "dynamic/worker/src/lib/ipthreat.js",
+      "dynamic/worker/src/lib/ipguard.js",
+      "static/src/components/pages/HoneypotPage.astro",
+      "static/src/components/pages/SiteOverviewPage.astro",
+      "static/src/components/HostMap.astro",
+      "static/src/scripts/observability.js",
+      "static/src/scripts/perimeter-charts.js",
+      "static/public/_headers"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-stored-dom",
+        "reviewed_paths": [
+          "dynamic/worker/src/index.js",
+          "dynamic/worker/src/lib/sanitize.js",
+          "dynamic/worker/src/lib/attack-map.js",
+          "dynamic/worker/src/lib/decoys.js"
+        ],
+        "invariant": "Decoy-request fields stored in KV (country, asn, path, technique) are constrained before persistence",
+        "method": "source",
+        "result": "recordHoneypot (index.js:106-119) stores country via normalizeCountry (/^[A-Za-z]{2}$/ else 'XX'), asn via normalizeAsn (integer 1..2^32-2 or null), technique from the static PATH_TECHNIQUE map (T1110/T1592/T1595/T1190 or null). path is url.pathname stored raw but can only be a decoy path or a '/phpmyadmin/'-prefixed suffix (isDecoy); it always starts with '/', so it cannot be a '__proto__'/'constructor' key in addEvent's byPath map.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-stored-dom",
+        "reviewed_paths": [
+          "dynamic/worker/src/lib/aggregate.js",
+          "dynamic/worker/src/lib/ipthreat.js",
+          "dynamic/worker/src/lib/ipguard.js"
+        ],
+        "invariant": "No attacker-chosen object key reaches a recursive/prototype write in aggregation or iplist",
+        "method": "source",
+        "result": "addEvent/mergeBuckets/mergeCounts key only on validated country, 'AS<int>', static technique IDs, and '/'-prefixed paths. recordIpSighting keys ipList[ip] only after isPublicIp (strict IPv4/IPv6 regex parsers plus reserved-range checks), so '__proto__' cannot pass. mergeFirewall7d keys on normalizeCountry output, and upstream action strings assigned to '__proto__' would only set a primitive, which is ignored. No prototype-pollution write or gadget.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-stored-dom",
+        "reviewed_paths": [
+          "static/src/components/pages/HoneypotPage.astro",
+          "static/src/components/pages/SiteOverviewPage.astro",
+          "static/src/components/HostMap.astro",
+          "static/src/scripts/observability.js",
+          "static/src/scripts/perimeter-charts.js",
+          "static/public/_headers"
+        ],
+        "invariant": "Stored honeypot data reaches other visitors' DOM only through non-executing sinks",
+        "method": "source",
+        "result": "The only sinks for /api/honeypot, /api/map and /api/threat-intel fields (path, country, asn, ip, technique, keys) are textContent, SVG <title> textContent, td.title, and numeric style/attribute values. HoneypotPage techCell link.href comes from the build-time TECH map (techOf/byDecoyPath uses Object.hasOwn); a hostile technique like 'constructor' resolves to a non-string href (a relative URL, not script). The CVE badge href is https://nvd.nist.gov/... plus encodeURIComponent. HostMap setAttribute values are numeric coordinates and constant classes, and country is used only in textContent. A repo-wide grep finds no innerHTML/outerHTML/insertAdjacentHTML/document.write/eval/set:html sink for runtime data. _headers enforces script-src 'self', require-trusted-types-for 'script', trusted-types 'none' as a second layer.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "unit_label": "U4",
+    "hardening_notes": [
+      "recordHoneypot (dynamic/worker/src/index.js:119) stores the raw url.pathname for '/phpmyadmin/*' decoys in 'recent' and in the byPath bucket keys, with no sanitizeText or length cap. This contradicts sanitize.js's stated rule that nothing external reaches the client unsanitized. It is safe today only because every client sink is textContent (backed by Trusted Types 'none'). Suggested fix: apply sanitizeText(path, 128) or collapse unknown suffixes to the decoy key before persisting.",
+      "techOf (static/src/scripts/perimeter-charts.js) indexes tech.byId[id] without Object.hasOwn, so a stored technique such as 'constructor' would return a prototype member. It has no impact because the worker only stores static technique IDs, but Object.hasOwn would make the lookup consistent with byDecoyPath."
+    ]
+  },
+  {
+    "coverage_id": "dynamic%2Fworker%2Fsrc%2Flib%2Ffeeds.js%23fetchTicker%2C%20ct.js%23fetchCtWatch%2C%20cf-analytics.js%23fetchCfStats%2C%20pwned.js%23fetchRange::dynamic%2Fworker%2Fsrc%2Flib%2Fsanitize.js%23upstream%20sanitization%20%2B%20client%20rendering::profile%2Fquick%2Fall-in-scope-subsystems::ATTACK-CLASSES.md%23Injection",
+    "canonical_refs": {
+      "surface": "dynamic/worker/src/lib/feeds.js#fetchTicker, ct.js#fetchCtWatch, cf-analytics.js#fetchCfStats, pwned.js#fetchRange",
+      "boundary": "dynamic/worker/src/lib/sanitize.js#upstream sanitization + client rendering",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "ATTACK-CLASSES.md#Injection"
+    },
+    "surface": "Third-party upstream feed ingestion",
+    "boundary": "Upstream data sanitization and DOM rendering",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "Injection",
+    "starting_paths": [
+      "dynamic/worker/src/lib/feeds.js",
+      "dynamic/worker/src/lib/ct.js",
+      "dynamic/worker/src/lib/cf-analytics.js",
+      "dynamic/worker/src/lib/pwned.js",
+      "dynamic/worker/src/lib/sanitize.js",
+      "static/src/components/Ticker.astro",
+      "static/src/components/CtWatch.astro",
+      "static/src/components/pages/CloudflarePage.astro",
+      "static/src/components/tools/PwnedCheck.astro",
+      "static/src/scripts/pwned.js"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#DOM and object-state attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "h-stored-dom",
+    "reviewed_paths": [
+      "dynamic/worker/src/lib/sanitize.js",
+      "static/src/components/Ticker.astro",
+      "dynamic/worker/src/lib/cf-analytics.js",
+      "static/src/components/pages/CloudflarePage.astro",
+      "static/src/scripts/observability.js",
+      "static/src/components/CtWatch.astro",
+      "static/src/components/tools/PwnedCheck.astro",
+      "static/src/scripts/pwned.js"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-stored-dom",
+        "reviewed_paths": [
+          "dynamic/worker/src/lib/sanitize.js",
+          "static/src/components/Ticker.astro"
+        ],
+        "invariant": "CISA KEV/NVD ticker fields cannot inject markup or executable URLs",
+        "method": "source",
+        "result": "normalizeTickerItem requires a CVE-ID matching /^CVE-\\d{4}-\\d{4,7}$/, sanitizeText strips control characters and '<>' and truncates, and techniques must match /^T\\d{4}$/. Ticker.astro renders with textContent and builds the href as the fixed NVD origin plus encodeURIComponent(id).",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-stored-dom",
+        "reviewed_paths": [
+          "dynamic/worker/src/lib/cf-analytics.js",
+          "static/src/components/pages/CloudflarePage.astro",
+          "static/src/scripts/observability.js"
+        ],
+        "invariant": "Cloudflare GraphQL firewall fields (clientRequestPath, userAgent, country, action, ASN), which attackers can influence, reach the DOM only as text",
+        "method": "source",
+        "result": "cf-analytics applies normalizeCountry, normalizeAsn and sanitizeText (path and user-agent length caps). CloudflarePage renderBars uses label textContent. tone comes only from firewallActionTone ('down'/'warn'/undefined), and pct/width values are numeric. SVG setAttribute values are numeric or constant. No HTML or URL sink carries upstream strings.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-stored-dom",
+        "reviewed_paths": [
+          "static/src/components/CtWatch.astro",
+          "static/src/components/tools/PwnedCheck.astro",
+          "static/src/scripts/pwned.js"
+        ],
+        "invariant": "CT log (crt.sh) and HIBP range data render without executing sinks",
+        "method": "source",
+        "result": "CtWatch renders issuer, names and date with textContent. style.width/left use a computed percentage, and the badge class is a constant choice. PwnedCheck builds output rows with textContent. matchCount only compares strings or integers, and the prefix sent to /api/pwned-range comes from the local SHA-1. No injection sink exists.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "unit_label": "U5",
+    "hardening_notes": [
+      "recordHoneypot (dynamic/worker/src/index.js:119) stores the raw url.pathname for '/phpmyadmin/*' decoys in 'recent' and in the byPath bucket keys, with no sanitizeText or length cap. This contradicts sanitize.js's stated rule that nothing external reaches the client unsanitized. It is safe today only because every client sink is textContent (backed by Trusted Types 'none'). Suggested fix: apply sanitizeText(path, 128) or collapse unknown suffixes to the decoy key before persisting.",
+      "techOf (static/src/scripts/perimeter-charts.js) indexes tech.byId[id] without Object.hasOwn, so a stored technique such as 'constructor' would return a prototype member. It has no impact because the worker only stores static technique IDs, but Object.hasOwn would make the lookup consistent with byDecoyPath."
+    ]
+  },
+  {
+    "coverage_id": "static%2Fsrc%2Fcomponents%2Ftools%2F%2A.astro%20%2B%20static%2Fsrc%2Fscripts%2F%2A.js%23visitor-supplied%20files%2Ftext%2FURL%20params::static%2Fpublic%2F_headers%23CSP%20%2B%20Trusted%20Types%3B%20DOM%20sinks%20in%20tool%20components::profile%2Fquick%2Fall-in-scope-subsystems::CLIENT-SIDE.md%23DOM%20and%20object-state%20attack%20classes",
+    "canonical_refs": {
+      "surface": "static/src/components/tools/*.astro + static/src/scripts/*.js#visitor-supplied files/text/URL params",
+      "boundary": "static/public/_headers#CSP + Trusted Types; DOM sinks in tool components",
+      "subsystem": "profile/quick/all-in-scope-subsystems",
+      "attack_class": "CLIENT-SIDE.md#DOM and object-state attack classes"
+    },
+    "surface": "Client-side tools and lab terminal",
+    "boundary": "Browser DOM sinks, CSP/Trusted Types",
+    "subsystem": "All in-scope subsystems (quick profile)",
+    "attack_class": "DOM and object-state attack classes",
+    "starting_paths": [
+      "static/src/components/tools",
+      "static/src/scripts",
+      "static/src/components/lab/LabDesktop.astro",
+      "static/public/js",
+      "static/src/layouts/BaseLayout.astro",
+      "static/public/_headers",
+      "static/astro.config.mjs"
+    ],
+    "ordinary_attack_class_block": "ATTACK-CLASSES.md#Injection",
+    "selected_companion_blocks": [
+      "CLIENT-SIDE.md#Core discipline",
+      "CLIENT-SIDE.md#DOM and object-state attack classes",
+      "CLIENT-SIDE.md#Cross-origin messaging and network attack classes",
+      "CLIENT-SIDE.md#Universal moves",
+      "CLIENT-SIDE.md#Validation rules"
+    ],
+    "excluded_blocks": [
+      {
+        "block": "AI-AND-LLM.md#Core discipline",
+        "reason": "No model/tool invocation in runtime source (only .mcp.json dev config)."
+      },
+      {
+        "block": "MEMORY-SAFETY-AND-BINARY.md#Core discipline",
+        "reason": "JavaScript-only target, no native code."
+      },
+      {
+        "block": "DATA-ISOLATION-AND-LIFECYCLE.md#Core discipline",
+        "reason": "Single-tenant site with no user accounts or per-user data."
+      },
+      {
+        "block": "DESKTOP-MOBILE-AND-LOCAL-IPC.md#Core discipline",
+        "reason": "No desktop/mobile/IPC surface."
+      },
+      {
+        "block": "PROTOCOLS-RPC-AND-MESSAGING.md#Core discipline",
+        "reason": "HTTP-only; no RPC/broker."
+      },
+      {
+        "block": "CLOUD-AND-DEPLOYMENT.md#Core discipline",
+        "reason": "Cloud IAM/WAF/Access state is not in source; decisive deployment facts go to needs_validation from the Worker units."
+      }
+    ],
+    "prior_status": "none",
+    "attempts": [],
+    "wave": 1,
+    "status": "covered",
+    "agent_id": "h-client-tools",
+    "reviewed_paths": [
+      "static/src/components/tools/ExifTool.astro",
+      "static/src/components/tools/EmailHeaderTool.astro",
+      "static/src/components/tools/CspLint.astro",
+      "static/src/components/tools/EncoderTool.astro",
+      "static/src/components/tools/HashTool.astro",
+      "static/src/components/tools/PasskeyLab.astro",
+      "static/src/components/tools/PasswordGen.astro",
+      "static/src/components/tools/SubnetCalc.astro",
+      "static/src/components/tools/Mirror.astro",
+      "static/src/components/tools/PwnedCheck.astro",
+      "static/src/components/lab/LabDesktop.astro",
+      "static/public/js/nav.js",
+      "static/public/js/vitals.js",
+      "static/src/scripts/exif.js",
+      "static/src/scripts/email-headers.js",
+      "static/src/scripts/lab-terminal.js",
+      "static/public/_headers",
+      "static/src/layouts/BaseLayout.astro"
+    ],
+    "local_checks": [
+      {
+        "agent_id": "h-client-tools",
+        "reviewed_paths": [
+          "static/src/components/tools/ExifTool.astro",
+          "static/src/components/tools/EmailHeaderTool.astro",
+          "static/src/components/tools/CspLint.astro",
+          "static/src/components/tools/EncoderTool.astro",
+          "static/src/components/tools/HashTool.astro",
+          "static/src/components/tools/PasskeyLab.astro",
+          "static/src/components/tools/PasswordGen.astro",
+          "static/src/components/tools/SubnetCalc.astro",
+          "static/src/components/tools/Mirror.astro",
+          "static/src/components/tools/PwnedCheck.astro",
+          "static/src/components/lab/LabDesktop.astro",
+          "static/public/js/nav.js",
+          "static/public/js/vitals.js"
+        ],
+        "invariant": "No attacker-controllable source (location.hash/search, URLSearchParams, document.referrer, window.name, postMessage, web storage) feeds tool/lab DOM wiring, and no HTML/script sinks (innerHTML, outerHTML, insertAdjacentHTML, document.write, eval/new Function, srcdoc, set:html on tool data) exist in tool components",
+        "method": "source",
+        "result": "Grep and reading found no location/URLSearchParams/referrer/window.name/message/storage sources in tool components, lab desktop, or public/js. All rendering uses textContent/createElement; dataset JSON comes from build-time ui.ts strings. Tool inputs are only the visitor's own file/text (self-impact). Only set:html is the build-time JSON-LD in BaseLayout with '<' escaped to \\u003c from config.ts constants.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-client-tools",
+        "reviewed_paths": [
+          "static/src/components/tools/ExifTool.astro",
+          "static/src/scripts/exif.js"
+        ],
+        "invariant": "Attacker-crafted EXIF data cannot produce an executable URL or pollute prototypes",
+        "method": "source",
+        "result": "Map link href is built from a build-time template with String(dec.lat)/String(dec.lon), which are numbers from dms() arithmetic, so a javascript: URL is not possible. readIfd writes entries[name] only for names found in fixed TAG maps (unknown tags skipped), so no __proto__ key. Thumbnail/clean-download use blob: object URLs (img-src permits blob:).",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-client-tools",
+        "reviewed_paths": [
+          "static/src/scripts/email-headers.js",
+          "static/src/scripts/lab-terminal.js"
+        ],
+        "invariant": "Parsed header/terminal input keys cannot reach a recursive write or prototype gadget",
+        "method": "source",
+        "result": "email-headers.js:160 writes props[`${a}.${b}`] into a flat object with a key that always contains '.', never exactly __proto__, with no deep merge. lab-terminal splits input into fixed command dispatch and returns lines rendered via textContent (LabDesktop.astro:642-645). Input is self-supplied only.",
+        "artifact": null
+      },
+      {
+        "agent_id": "h-client-tools",
+        "reviewed_paths": [
+          "static/public/_headers",
+          "static/src/layouts/BaseLayout.astro"
+        ],
+        "invariant": "CSP/Trusted Types backstop blocks HTML sinks and inline script",
+        "method": "source",
+        "result": "_headers /* sets script-src 'self' plus one JSON-LD hash, object-src 'none', base-uri 'none', frame-ancestors 'none', require-trusted-types-for 'script'; trusted-types 'none', plus COOP/COEP/CORP same-origin. Scripts are external (/js/nav.js, /js/vitals.js). Whether this is served in production is a deployment fact, but it is not decisive because no source-to-sink path exists.",
+        "artifact": null
+      }
+    ],
+    "result_fingerprints": [],
+    "unresolved": [],
+    "unit_label": "U6",
+    "hardening_notes": [
+      "ExifTool.astro:170 builds mapLink.href by string replacement into a template. It is safe today because lat/lon are numbers. Asserting Number.isFinite(dec.lat/lon) before assigning keeps it safe if exif.js ever returns a string."
+    ]
+  }
+]

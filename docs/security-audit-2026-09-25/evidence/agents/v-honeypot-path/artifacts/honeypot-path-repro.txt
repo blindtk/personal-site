@@ -1,0 +1,22 @@
+requests 240 recent bytes 3218341 entries 200 path len 16015
+recent put TTL values [ null ]
+key recent bytes 3218341
+key h:2026-09-20T01 bytes 961208
+key d:2026-09-20 bytes 961208
+key h:2026-09-21T01 bytes 961238
+key d:2026-09-21 bytes 961238
+key h:2026-09-22T01 bytes 961278
+key d:2026-09-22 bytes 961278
+key h:2026-09-23T01 bytes 961278
+key d:2026-09-23 bytes 961278
+avg recent parse+stringify ms 10.3161218
+next decoy hit (under cap, full write) ms 12.652721 recent bytes now 3202340
+threat-intel status 200 body bytes 3347974 ms 44.244544
+node:internal/deps/undici/undici:5971
+      return await WebAssembly.instantiate(mod, {
+                               ^
+
+RangeError: WebAssembly.instantiate(): Out of memory: Cannot allocate Wasm memory for new instance
+    at lazyllhttp (node:internal/deps/undici/undici:5971:32)
+
+Node.js v22.22.2
