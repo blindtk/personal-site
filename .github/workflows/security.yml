@@ -157,6 +157,27 @@ jobs:
           # permite as auditorias online (ex.: deteção de commits impostores)
           GH_TOKEN: ${{ github.token }}
         run: zizmor --min-severity medium .github/workflows/
+      - name: Instalar actionlint (versão fixa + checksum)
+        # O zizmor audita propriedades de segurança; o actionlint valida o
+        # YAML contra o schema do GitHub e corre o shellcheck em cada bloco
+        # `run:` — outra classe de erro (achou dois a 2026-09-25). Mesma
+        # versão do honeypot-vps-infra e do github-stars; aqui linux_amd64
+        # (runner hospedado). Checksum conferido contra o
+        # actionlint_1.7.12_checksums.txt oficial.
+        run: |
+          set -euo pipefail
+          curl -fsSL -o "$RUNNER_TEMP/actionlint.tar.gz" \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+      - name: actionlint
+        # -shellcheck explícito e falha se não existir: sem shellcheck no
+        # PATH o actionlint salta os blocos `run:` sem avisar — foi o que
+        # aconteceu no homelab até 2026-09-16.
+        run: |
+          set -euo pipefail
+          sc="$(command -v shellcheck)" || { echo "::error::shellcheck não está no PATH — o actionlint saltaria os blocos run:"; exit 1; }
+          "$RUNNER_TEMP/actionlint" -color -shellcheck="$sc"
       - name: Verificar nomes dos workflows
         # Convenção comum a todos os repos da conta (ADR 0021): ficheiro
         # <família>[-<objeto>].yml e `name:` igual ao nome do ficheiro. O

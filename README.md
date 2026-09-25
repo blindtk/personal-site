@@ -139,8 +139,8 @@ way — is documented in
 
 The repository treats its own build chain as attack surface. Every push/PR
 goes through build + tests + `npm audit`, Dependency Review, OSV-Scanner,
-gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), zizmor
-auditing the workflows themselves, and CodeRabbit for AI-assisted review
+gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), zizmor and
+actionlint auditing the workflows themselves, and CodeRabbit for AI-assisted review
 (calibrated per-folder, not generic — `.coderabbit.yaml`). Production gets
 its own scheduled checks:
 security headers against a versioned allowlist, a TLS/cipher scan, DNS

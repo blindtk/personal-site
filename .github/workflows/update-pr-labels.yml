@@ -56,4 +56,9 @@ jobs:
             exit 0
           fi
           echo "A aplicar: ${labels[*]}"
-          gh pr edit "$PR" --repo "$REPO" $(printf ' --add-label %s' "${labels[@]}")
+          # Um argumento por label, sem word splitting (SC2046, apanhado pelo
+          # actionlint a 2026-09-25): as labels de hoje não têm espaços, mas
+          # a forma anterior partia-se na primeira que tivesse.
+          args=()
+          for label in "${labels[@]}"; do args+=(--add-label "$label"); done
+          gh pr edit "$PR" --repo "$REPO" "${args[@]}"

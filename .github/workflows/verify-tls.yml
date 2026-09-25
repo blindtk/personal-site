@@ -54,9 +54,11 @@ jobs:
           # passado no input do workflow_dispatch (auditoria de segurança
           # 2026-09-25).
           waf="$(node --input-type=module -e "import { isProductionTarget } from './.github/scripts/lib/target.mjs'; console.log(isProductionTarget(new URL(process.argv[1])))" "$url")"
-          echo "host=$host" >> "$GITHUB_OUTPUT"
-          echo "waf=$waf" >> "$GITHUB_OUTPUT"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
+          {
+            echo "host=$host"
+            echo "waf=$waf"
+            echo "skip=false"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Correr testssl.sh
         if: steps.target.outputs.skip == 'false'
