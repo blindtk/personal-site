@@ -428,11 +428,17 @@ async function rateLimit(env, request, route, { windowMs, max }) {
 
   const cache = edgeCache();
   if (cache) {
-    const url = edgeKey(request.url, key);
-    const { allowed, state, retryAfterSec } = nextState(await edgeGetJSON(cache, url), { now, windowMs, max });
-    // Bloqueado ⇒ o estado não mudou — nada a guardar.
-    if (allowed) await edgePutJSON(cache, url, state, (state.windowStart + windowMs - now) / 1000 + 1);
-    return { allowed, retryAfterSec };
+    try {
+      const url = edgeKey(request.url, key);
+      const { allowed, state, retryAfterSec } = nextState(await edgeGetJSON(cache, url), { now, windowMs, max });
+      // Bloqueado ⇒ o estado não mudou — nada a guardar.
+      if (allowed) await edgePutJSON(cache, url, state, (state.windowStart + windowMs - now) / 1000 + 1);
+      return { allowed, retryAfterSec };
+    } catch (err) {
+      // Cache API em falha: segue para o caminho KV abaixo (com o seu teto
+      // global e a falha fechada), em vez de rebentar a rota com um 502.
+      console.error('ratelimit_edge_cache_failed', route, err?.message ?? String(err));
+    }
   }
 
   const prev = await getJSON(env, key);
@@ -476,10 +482,21 @@ async function edgeCached(request, key, ttlSec, compute) {
   const cache = edgeCache();
   if (!cache) return compute();
   const url = edgeKey(request.url, key);
-  const hit = await edgeGetJSON(cache, url);
+  // A Cache API é best-effort: uma falha na leitura é um miss, e uma falha
+  // na escrita não pode transformar uma resposta já calculada num 502.
+  let hit = null;
+  try {
+    hit = await edgeGetJSON(cache, url);
+  } catch (err) {
+    console.error('edge_cache_read_failed', key, err?.message ?? String(err));
+  }
   if (hit !== null) return hit;
   const data = await compute();
-  await edgePutJSON(cache, url, data, ttlSec);
+  try {
+    await edgePutJSON(cache, url, data, ttlSec);
+  } catch (err) {
+    console.error('edge_cache_write_failed', key, err?.message ?? String(err));
+  }
   return data;
 }
 
@@ -687,15 +704,20 @@ export default {
       // padrão de cache já usado nesta rota) para não estourar o teto
       // diário do KV no plano Free — ver dynamic/PLAN.md.
       if (path === '/api/threat-intel') {
-        const data = await cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
-          const now = Date.now();
-          const [buckets, firewall7d, ipList] = await Promise.all([
-            readThreatBuckets(env, now),
-            readFirewall7d(env, now),
-            getJSON(env, 'iplist', {}),
-          ]);
-          return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
-        });
+        // Cache do data center com o mesmo TTL da resposta (5 min), não as 6h
+        // do KV: a poda de `iplist` apaga cache:threatintel para um IP
+        // expirado sair logo (ADR 0020), e uma cópia de 6h aqui adiava isso.
+        const data = await edgeCached(request, 'threatintel', 300, () =>
+          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
+            const now = Date.now();
+            const [buckets, firewall7d, ipList] = await Promise.all([
+              readThreatBuckets(env, now),
+              readFirewall7d(env, now),
+              getJSON(env, 'iplist', {}),
+            ]);
+            return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
+          }),
+        );
         return json(data, request, env, { maxAge: 300 });
       }
 
@@ -716,7 +738,9 @@ export default {
       // isso sem rate limit próprio: a cache de 6h com SWR já garante que
       // o crt.sh só é consultado de longe em longe.
       if (path === '/api/ct') {
-        const data = await cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env));
+        const data = await edgeCached(request, 'ct', 1800, () =>
+          cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)),
+        );
         return json(data, request, env, { maxAge: 1800 });
       }
 
@@ -741,21 +765,35 @@ export default {
           }
           // Cap global de refresh manuais (ver REFRESH_WRITE_CAP).
           if (!(await consumeWriteBudget(env, 'refreshcap', REFRESH_WRITE_CAP, 2))) {
-            const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
+            const data = await edgeCached(request, 'cfstats', 1800, () =>
+              cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env)),
+            );
             return json(data, request, env, { maxAge: 1800 });
           }
           const data = await fetchCfStats(env);
           await env.KV.put('cache:cfstats', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
             expirationTtl: 6 * 3600 + 60,
           });
+          // A cópia do data center também passa a ser a fresca — senão os GET
+          // normais seguintes neste colo continuavam a ver a antiga até 30 min.
+          const cache = edgeCache();
+          if (cache) {
+            await edgePutJSON(cache, edgeKey(request.url, 'cfstats'), data, 1800).catch((err) =>
+              console.error('edge_cache_write_failed', 'cfstats', err?.message ?? String(err)),
+            );
+          }
           return json(data, request, env);
         }
-        const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
+        const data = await edgeCached(request, 'cfstats', 1800, () =>
+          cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env)),
+        );
         return json(data, request, env, { maxAge: 1800 });
       }
 
       if (path === '/api/ticker') {
-        const data = await cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env));
+        const data = await edgeCached(request, 'ticker', 1800, () =>
+          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)),
+        );
         return json(data, request, env, { maxAge: 1800 });
       }
 

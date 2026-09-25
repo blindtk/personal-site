@@ -2161,3 +2161,68 @@ test('POST /api/vitals: falha do rate limiter dá o 204 uniforme, não uma exce�
     console.error = origError;
   }
 });
+
+// ---------- revisão CodeRabbit do PR #183: Cache API é best-effort ----------
+
+test('edgeCached: falha da Cache API (match/put) não vira 502 — calcula e responde', async () => {
+  const broken = {
+    async match() { throw new Error('cache down'); },
+    async put() { throw new Error('cache down'); },
+  };
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'caches');
+  const prev = globalThis.caches;
+  globalThis.caches = { default: broken };
+  const origError = console.error;
+  const logs = [];
+  console.error = (...a) => logs.push(a.map(String).join(' '));
+  try {
+    const env = { KV: fakeKV() };
+    const res = await runFetch(fakeRequest('/api/honeypot'), env);
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).attempts24h, 0);
+    assert.ok(logs.some((l) => l.includes('edge_cache_read_failed')));
+    assert.ok(logs.some((l) => l.includes('edge_cache_write_failed')));
+  } finally {
+    console.error = origError;
+    if (had) globalThis.caches = prev;
+    else delete globalThis.caches;
+  }
+});
+
+test('rate limit: falha da Cache API cai no caminho KV (continua a limitar, não dá 502)', async () => {
+  const broken = {
+    async match() { throw new Error('cache down'); },
+    async put() { throw new Error('cache down'); },
+  };
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'caches');
+  const prev = globalThis.caches;
+  globalThis.caches = { default: broken };
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    const env = { KV: fakeKV(), RATE_SALT: 'test' };
+    const ok = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.80' }), env);
+    assert.equal(ok.status, 200);
+    assert.ok([...env.KV.store.keys()].some((k) => k.startsWith('rl:mirror:')), 'estado por-cliente foi para o KV');
+  } finally {
+    console.error = origError;
+    if (had) globalThis.caches = prev;
+    else delete globalThis.caches;
+  }
+});
+
+test('threat-intel/ct/cf-stats/ticker também passam pela Cache API (sem KV em pedidos repetidos)', async () => {
+  await withEdgeCache(async (cache) => {
+    const env = { KV: countingKV() };
+    const now = Date.now();
+    env.KV.store.set('cache:ticker', JSON.stringify({ data: { items: [] }, exp: now + 3600_000 }));
+    let reads = 0;
+    const origGet = env.KV.get.bind(env.KV);
+    env.KV.get = async (...a) => { reads += 1; return origGet(...a); };
+    await runFetch(fakeRequest('/api/ticker'), env);
+    const readsAfterFirst = reads;
+    await runFetch(fakeRequest('/api/ticker'), env);
+    assert.equal(reads, readsAfterFirst, '2.º pedido servido pela Cache API, sem ler o KV');
+    assert.ok([...cache.store.keys()].some((k) => k.endsWith('/api/__cache/ticker')));
+  });
+});

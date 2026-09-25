@@ -48,6 +48,11 @@ test('gpsToDecimal: sem GPS IFD devolve null', () => {
   assert.equal(gpsToDecimal({}), null);
 });
 
+test('gpsToDecimal: coordenadas não finitas (racional /0) devolvem null', () => {
+  assert.equal(gpsToDecimal({ lat: [NaN, 0, 0], lon: [1, 2, 3] }), null);
+  assert.equal(gpsToDecimal({ lat: [1, 2, 3], lon: [Infinity, 0, 0] }), null);
+});
+
 test('parseExif: não-JPEG devolve null', () => {
   assert.equal(parseExif(new Uint8Array([0, 1, 2, 3])), null);
   assert.equal(parseExif(new Uint8Array()), null);

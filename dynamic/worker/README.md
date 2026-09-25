@@ -187,9 +187,13 @@ rate-limit state and the HIBP range cache. Before the 2026-09-25 security
 audit both lived in KV, and a single client could exhaust the account's
 daily writes through them in ~16 minutes
 ([`docs/security-audit-2026-09-25/`](../../docs/security-audit-2026-09-25/REPORT.md)).
-The short-TTL public aggregates (`/api/honeypot`, `/api/map`,
-`/api/vitals`) are also cached there first, so repeated requests cost no
-KV operations at all. See `dynamic/PLAN.md` and ADRs 0003/0006.
+Every public cached route (`/api/honeypot`, `/api/map`, `/api/vitals`,
+`/api/threat-intel`, `/api/ct`, `/api/cf-stats`, `/api/ticker`) is also
+cached there first, for as long as its response `max-age`. Repeated
+requests therefore cost no KV operations, and they don't re-run the
+producer even while the KV write budget is exhausted. The Cache API is
+best-effort: a failed read counts as a miss and a failed write is ignored.
+If the rate limiter's Cache API calls fail, it falls back to the KV path. See `dynamic/PLAN.md` and ADRs 0003/0006.
 
 ## Development
 
