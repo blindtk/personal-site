@@ -1,5 +1,5 @@
 language: javascript
-# Sem isto, o build com sanitizer: coverage (fuzzing.yml) compila também
+# Sem isto, o build com sanitizer: coverage (ci-fuzzing.yml) compila também
 # variantes de honggfuzz/AFL — infra genérica de C/C++ que o base-builder-
 # javascript ainda arrasta para $OUT mesmo não fazendo sentido para JS (o
 # único engine suportado é libFuzzer). Essas variantes "crashavam" sempre

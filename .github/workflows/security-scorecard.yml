@@ -8,7 +8,7 @@
 # securityscorecards.dev (publish_results). Ambos só possíveis com o
 # repositório público — ver docs/security-review-2026-07-29.md §4
 # "OpenSSF Scorecard".
-name: Scorecard
+name: security-scorecard
 
 on:
   schedule:

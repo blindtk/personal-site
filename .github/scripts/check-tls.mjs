@@ -1,5 +1,5 @@
 // Avalia o JSON produzido pelo testssl.sh (--jsonfile, formato "flat" — ver
-// tls-check.yml) e classifica cada achado pela severidade que o próprio
+// verify-tls.yml) e classifica cada achado pela severidade que o próprio
 // testssl.sh já atribui (CRITICAL/HIGH/MEDIUM/LOW/WARN/INFO/OK), em vez de
 // reinventar heurísticas de "o que é grave": CRITICAL/HIGH (grade F,
 // protocolos obsoletos ainda aceites, vulnerabilidades conhecidas tipo

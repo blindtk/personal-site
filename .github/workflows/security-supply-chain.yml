@@ -5,7 +5,7 @@
 # ~100 PRs/mês; acrescentar mais passos ao caminho de cada PR piora isso).
 # Em vez disso: semanal + à mão. Cobre os dois lockfiles (static/ e
 # dynamic/worker/), mesma lógica de "dois jobs" do osv-scanner/ci.yml.
-name: Supply chain
+name: security-supply-chain
 
 on:
   schedule:

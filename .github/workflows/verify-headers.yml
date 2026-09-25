@@ -3,7 +3,7 @@
 # deployment_status, criado pela integração GitHub da Cloudflare), num cron
 # diário de rede de segurança, e à mão (workflow_dispatch, com URL opcional).
 # A lista de headers esperados é versionada em .github/expected-headers.json.
-name: Headers
+name: verify-headers
 
 on:
   deployment_status:

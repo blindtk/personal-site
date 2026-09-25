@@ -6,7 +6,7 @@
 # partido, abre (ou atualiza) uma Issue — que chega ao dono do repo por
 # email/notificação do GitHub sem ele ter de ir espreitar o dashboard.
 # Quando a verificação volta a passar, a Issue fecha-se sozinha.
-name: Invariants
+name: verify-worker
 
 on:
   schedule:
@@ -48,7 +48,7 @@ jobs:
           # Opcionais — ver check-headers.mjs para a mesma convenção.
           ACCESS_CLIENT_ID: ${{ secrets.ACCESS_CLIENT_ID }}
           ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
-          # Mesmo segredo do bypass WAF usado em headers.yml — ver
+          # Mesmo segredo do bypass WAF usado em verify-headers.yml — ver
           # check-headers.mjs.
           CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
         run: node .github/scripts/check-invariants.mjs
@@ -65,7 +65,7 @@ jobs:
           set -e
           # idempotente: cria a label na 1.ª vez, atualiza-a (sem erro) nas seguintes
           gh label create "automated-alert" --color "B60205" \
-            --description "Alertas automáticos de invariantes de produção (invariants.yml)" --force
+            --description "Alertas automáticos de invariantes de produção (verify-worker.yml)" --force
           existing=$(gh issue list --state open --label "automated-alert" --json number --jq '.[0].number // empty')
           body="Verificação de invariantes falhou. Ver o log completo: ${RUN_URL}
 

@@ -49,7 +49,7 @@ danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 > the only declaration of the domain owner's intent (and the only place
 > the `iodef` comes from); without them, CAA policy is entirely dependent
 > on whatever Cloudflare decides to use internally, including if the
-> domain ever leaves Cloudflare. The `dns-check.yml` workflow treats this
+> domain ever leaves Cloudflare. The `verify-dns.yml` workflow treats this
 > as a subset check — it only fails if one of the 7 is missing, and warns
 > (doesn't fail) if extra CAs show up.
 
@@ -97,7 +97,7 @@ danielmala.co.  IN  CAA  0 iodef "mailto:me@danielmala.co"
 ## Relationship to the rest of the repo
 
 - The headers served (including HSTS) are checked in production by the
-  `Headers` workflow (`.github/workflows/headers.yml`) against
+  `Headers` workflow (`.github/workflows/verify-headers.yml`) against
   `.github/expected-headers.json`. When you enable `preload`, add
   `"preload"` to that file's `strict-transport-security` entry so the
   check starts requiring it.

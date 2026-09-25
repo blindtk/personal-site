@@ -1,13 +1,13 @@
 # Automatiza o Mozilla HTTP Observatory contra produção — decisão tomada em
 # conjunto com o dono do repo (2026-08-01), depois de confirmar que, ao
-# contrário do Qualys SSL Labs (redundante com tls-check.yml) e do
+# contrário do Qualys SSL Labs (redundante com verify-tls.yml) e do
 # Security Headers (API descontinuada em abril de 2026), o Observatory tem
 # API grátis, sem chave, feita de propósito para CI/CD. Semanal: mais
 # barato que o TLS check (uma chamada HTTP, sem Docker) mas não precisa da
 # cadência diária do Headers — o Observatory testa uma rubrica própria
 # (cookies, redirects, isolamento cross-origin), que não muda com a
 # frequência de um deploy individual.
-name: Observatory check
+name: verify-observatory
 
 on:
   schedule:

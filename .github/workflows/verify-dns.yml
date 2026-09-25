@@ -2,12 +2,12 @@
 # em docs/dns-tls.md que ninguém volta a reler: verifica SPF, DMARC, CAA e a
 # cadeia de confiança DNSSEC (.github/scripts/check-dns.mjs, fonte de
 # verdade em .github/expected-dns.json). Workflow separado do TLS check
-# (tls-check.yml), mesmo padrão de headers.yml vs invariants.yml — concerns
+# (verify-tls.yml), mesmo padrão de verify-headers.yml vs verify-worker.yml — concerns
 # diferentes (DNS não depende de certificado/cifras, e vice-versa), cada um
 # com o seu histórico de execuções. Semanal (mais frequente que o TLS
 # mensal): um `dig` é uma consulta UDP, segundos de runner — ao contrário do
 # scan completo do testssl.sh, não há razão de custo para espaçar mais.
-name: DNS check
+name: verify-dns
 
 on:
   schedule:
@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       # dig não vem garantido nas imagens ubuntu-latest (ao contrário do
-      # Docker, usado no tls-check.yml) — instalar em vez de assumir.
+      # Docker, usado no verify-tls.yml) — instalar em vez de assumir.
       - name: Instalar dnsutils
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dnsutils
 

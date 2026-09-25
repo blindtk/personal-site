@@ -9,7 +9,7 @@
 # Só possível gratuitamente com o repositório público (upload de SARIF para
 # Security → Code scanning exige GitHub Advanced Security em repo privado —
 # ver docs/security-review-2026-07-29.md §4 "CodeQL").
-name: CodeQL
+name: security-codeql
 
 on:
   push:

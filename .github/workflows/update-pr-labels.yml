@@ -10,7 +10,7 @@
 # poder aplicar. As que faltam hoje: content, static, dynamic, ci
 # (claude e documentation já existem). Se faltar alguma, o passo falha —
 # de propósito, para dar sinal em vez de a criar silenciosamente.
-name: Labeler
+name: update-pr-labels
 
 on:
   pull_request:

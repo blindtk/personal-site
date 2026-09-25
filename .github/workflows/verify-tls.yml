@@ -4,12 +4,12 @@
 # cache dele. Mensal, não semanal: a superfície TLS (cifras, protocolo,
 # certificado) muda raramente — mais cadência não detetava nada mais cedo,
 # só gastava minutos do plano Free do GitHub Actions (o repo já anda perto
-# da quota, ver supply-chain.yml). O scan corre via a imagem Docker oficial
+# da quota, ver security-supply-chain.yml). O scan corre via a imagem Docker oficial
 # do testssl.sh, pinada por digest — a mesma disciplina de pin exato do
 # resto do repo (actions por SHA), aplicada aqui a uma imagem em vez de uma
 # action, porque testssl.sh não é distribuído como GitHub Action nem como
 # pacote apt.
-name: TLS check
+name: verify-tls
 
 on:
   schedule:
