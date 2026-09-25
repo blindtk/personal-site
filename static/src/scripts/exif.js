@@ -153,6 +153,9 @@ export function gpsToDecimal(gps) {
   if (gps.latRef === 'S') lat = -lat;
   let lon = dms(gps.lon);
   if (gps.lonRef === 'W') lon = -lon;
+  // Racionais com denominador 0 (ficheiro malformado) dão NaN/Infinity —
+  // sem coordenadas válidas não há GPS a mostrar nem link de mapa a montar.
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   const result = { lat, lon, altitude: null };
   if (typeof gps.alt === 'number') {
     result.altitude = gps.altRef === 1 ? -gps.alt : gps.alt;

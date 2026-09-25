@@ -28,7 +28,10 @@ export function byDecoyPath(byKey, path) {
  */
 export function techOf(ev, tech) {
   const id = ev?.technique ?? byDecoyPath(tech.byPath, ev?.path)?.id ?? null;
-  return id ? (tech.byId[id] ?? byDecoyPath(tech.byPath, ev?.path) ?? null) : null;
+  // Object.hasOwn: `id` vem de dados do KV — um valor como 'constructor' não
+  // pode devolver um membro do protótipo (mesma regra do byDecoyPath).
+  const known = typeof id === 'string' && Object.hasOwn(tech.byId, id) ? tech.byId[id] : null;
+  return id ? (known ?? byDecoyPath(tech.byPath, ev?.path) ?? null) : null;
 }
 
 /** Classe visual (cor) de um ponto no gráfico de risco por país. */

@@ -14,6 +14,7 @@ import {
   configUrlMismatch,
   isProductionConfigured,
   isTrustedTarget,
+  isProductionTarget,
   resolveTarget,
 } from './lib/target.mjs';
 
@@ -151,7 +152,8 @@ if (targetUrl === null) {
 const target = targetUrl.href;
 const trustedHost = isTrustedTarget(targetUrl);
 const sendAccessHeaders = trustedHost ? accessHeaders : {};
-const sendWafHeaders = trustedHost ? wafHeaders : {};
+// WAF token: production origin only (see isProductionTarget in lib/target.mjs).
+const sendWafHeaders = isProductionTarget(targetUrl) ? wafHeaders : {};
 if (!trustedHost && (accessHeaders['CF-Access-Client-Id'] || wafHeaders['x-ci-waf-token'])) {
   console.log(`::warning::check-headers: target (${targetUrl.origin}) outside the production/preview allowlist — Access/WAF secrets NOT sent.`);
 }

@@ -13,13 +13,13 @@ Worker + one KV namespace.
 | Route | What it does | Cache | Rate limit |
 | --- | --- | --- | --- |
 | *(decoys)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Records metadata (country, ASN, path, timestamp) and returns 404; the source IP is recorded separately, and published (ADR 0020 — see Privacy section below) | — | — |
-| `GET /api/honeypot` | Aggregated stats + last 30 attempts (no IP — see Privacy section) | 60 s | — |
-| `GET /api/map` | Origins by country (24 h / 7 d) | 60 s | — |
-| `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | — | — |
+| `GET /api/honeypot` | Aggregated stats + last 30 attempts (no IP — see Privacy section) | 60 s (data-center Cache API, then KV) | — |
+| `GET /api/map` | Origins by country (24 h / 7 d) | 60 s (data-center Cache API, then KV) | — |
+| `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | 24 h per prefix (data-center Cache API — never KV) | 20/min per client |
 | `GET /api/ticker` | CISA KEV + critical NVD entries, sanitized | 1 h | — |
 | `GET /api/threat-intel` | Heatmap, time-of-day, tops (country/ASN/technique), recent events, and the honeypot's published IP list (`ips` — ADR 0020) | 6 h | — |
-| `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (fails closed with 429 past this limit) + 150/day global write cap (silently dropped past the cap, still 204) |
-| `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s | — |
+| `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (429 past this limit) + global daily write budget of 300 writes = 150 samples (silently dropped past the cap, still 204) |
+| `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s (data-center Cache API, then KV) | — |
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, **never the IP**) | — (per-request, `no-store`) | 30/min per client |
@@ -159,21 +159,41 @@ Client-facing error responses are always generic (`upstream_error`,
 The detail (the stack) stays only in the Worker's logs (server-side) via
 `console.error`, and those logs never include the IP.
 
-### KV write cap
+### KV write budget
 
-Every attempt against the decoys triggers several writes. To limit
-cost/abuse if someone hammers the decoy paths, there's a **global write
-cap per DAY** (`HONEYPOT_WRITE_CAP` in `src/index.js`, defaulting to 60
-events/day): past the ceiling, extra events are dropped and the request
-still returns the same indistinguishable 404. See `src/lib/kvcap.js`
-(best-effort — KV is eventually consistent, the goal is bounding the
-order of magnitude). `VITALS_WRITE_CAP`
-(150/day) follows the same pattern. Both are **daily** caps (not
-hourly) on purpose: the Workers KV Free plan has a ceiling of ~1,000
-writes/day for the **whole** account, shared between
-honeypot/vitals/rate-limit/cron — a generous hourly cap let a single
-burst of scanners or organic traffic consume several days of quota by
-itself. See `dynamic/PLAN.md` for the decision and the numbers.
+The Workers KV Free plan allows ~1,000 writes/day for the **whole**
+account, shared by everything this Worker persists. Every write reachable
+from an anonymous request is therefore counted against a **daily budget
+measured in writes** (not events — `src/lib/kvcap.js`, `cost` = the number
+of puts the event makes, including its own counter):
+
+| Budget | Writes/day | Covers |
+| --- | --- | --- |
+| `HONEYPOT_WRITE_CAP` | 300 | decoy events (4 puts each, 5 when the IP enters `iplist`) — ~60 events |
+| `VITALS_WRITE_CAP` | 300 | RUM samples (2 puts each) — 150 samples |
+| `CACHE_WRITE_CAP` | 80 | KV cache refreshes triggered by public GETs (2 puts each) |
+| `REFRESH_WRITE_CAP` | 40 | `/api/cf-stats?refresh=1` (2 puts each) |
+| cron (fixed rate) | ~90 | cache warm-up every 30 min, firewall snapshot, `iplist` pruning |
+
+Total ≈ 810/day, leaving headroom for the overshoot concurrent requests can
+cause (the counters are best-effort read-then-write on an eventually
+consistent store). Past a budget, the event is dropped (the decoy still
+returns the same 404, the beacon the same 204) or the cache serves its
+stale copy instead of rewriting it.
+
+Two things deliberately **don't** use KV, so they cost none of that budget
+(`src/lib/edgecache.js`, the data-center Cache API): the per-client
+rate-limit state and the HIBP range cache. Before the 2026-09-25 security
+audit both lived in KV, and a single client could exhaust the account's
+daily writes through them in ~16 minutes
+([`docs/security-audit-2026-09-25/`](../../docs/security-audit-2026-09-25/REPORT.md)).
+Every public cached route (`/api/honeypot`, `/api/map`, `/api/vitals`,
+`/api/threat-intel`, `/api/ct`, `/api/cf-stats`, `/api/ticker`) is also
+cached there first, for as long as its response `max-age`. Repeated
+requests therefore cost no KV operations, and they don't re-run the
+producer even while the KV write budget is exhausted. The Cache API is
+best-effort: a failed read counts as a miss and a failed write is ignored.
+If the rate limiter's Cache API calls fail, it falls back to the KV path. See `dynamic/PLAN.md` and ADRs 0003/0006.
 
 ## Development
 

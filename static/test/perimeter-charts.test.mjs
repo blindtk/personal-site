@@ -24,6 +24,9 @@ test('techOf: prefere a técnica do evento, senão faz lookup por path', () => {
   assert.deepEqual(techOf({ technique: 'T1190', path: '/x' }, tech), tech.byId.T1190);
   assert.deepEqual(techOf({ path: '/phpmyadmin/setup.php' }, tech), tech.byPath['/phpmyadmin/']);
   assert.equal(techOf({ path: '/unknown' }, tech), null);
+  // técnica vinda do KV com nome de membro do protótipo: nunca devolve o protótipo
+  assert.equal(techOf({ technique: 'constructor', path: '/x' }, tech), null);
+  assert.deepEqual(techOf({ technique: '__proto__', path: '/phpmyadmin/a' }, tech), tech.byPath['/phpmyadmin/']);
 });
 
 test('riskDotClass: amostra pequena vence a taxa, senão os limiares 50%/20%', () => {

@@ -26,7 +26,8 @@ import { parseCfStats, firewallBreakdown, firewallDetailBreakdown } from '../src
 import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import { serverView } from '../src/lib/mirror.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from '../src/lib/notfound.js';
-import { DECOYS, isDecoy } from '../src/lib/decoys.js';
+import { DECOYS, isDecoy, boundDecoyPath, MAX_DECOY_PATH } from '../src/lib/decoys.js';
+import { edgeKey, edgeGetJSON, edgePutJSON } from '../src/lib/edgecache.js';
 import { isPublicIp } from '../src/lib/ipguard.js';
 import {
   emptyIpList, recordIpSighting, pruneExpiredIps, ipThreatList,
@@ -709,8 +710,8 @@ test('honeypot: cap de escritas descarta eventos acima do teto', async () => {
   const now = Date.now();
   const hourKey = `h:${new Date(now).toISOString().slice(0, 13)}`;
   const dayKey = `d:${new Date(now).toISOString().slice(0, 10)}`;
-  // pré-carrega o contador da janela (diária) no teto (max=60)
-  env.KV.store.set(`wcap:${dayKey}`, JSON.stringify({ count: 60, windowStart: now }));
+  // pré-carrega o contador da janela (diária) no teto (max=300 escritas)
+  env.KV.store.set(`wcap:${dayKey}`, JSON.stringify({ count: 300, windowStart: now }));
 
   const req = fakeRequest('/wp-login.php', { ip: '198.51.100.5', country: 'RU', asn: 64500 });
   const res = await runFetch(req, env);
@@ -730,10 +731,11 @@ test('honeypot: abaixo do teto escreve normalmente', async () => {
   assert.ok(env.KV.store.has('recent'));
   const recent = JSON.parse(env.KV.store.get('recent'));
   assert.equal(recent[0].country, 'CN');
-  // o contador de escritas foi criado e conta 1
+  // o contador foi criado e conta as ESCRITAS do evento (recent + hora +
+  // dia + contador; IP de documentação não entra em iplist)
   const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('wcap:'));
   assert.ok(capKey);
-  assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+  assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 4);
 });
 
 
@@ -853,7 +855,7 @@ test('rate limit: abaixo do teto global escreve normalmente e o cap acumula', as
   assert.equal(res.status, 200);
   const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('rlcap:'));
   assert.ok(capKey, 'devia ter criado o contador do cap global');
-  assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+  assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 2); // 2 escritas por pedido aceite
   const rlKey = [...env.KV.store.keys()].find((k) => k.startsWith('rl:mirror:'));
   assert.ok(rlKey, 'devia ter persistido o estado por-cliente também');
 });
@@ -1625,7 +1627,7 @@ test('/api/cf-stats?refresh=1: cap global no teto degrada para a cache existente
   };
   const now = Date.now();
   const capKey = `refreshcap:d:${new Date(now).toISOString().slice(0, 10)}`;
-  env.KV.store.set(capKey, JSON.stringify({ count: 20, windowStart: now }));
+  env.KV.store.set(capKey, JSON.stringify({ count: 40, windowStart: now })); // teto em escritas (2 por refresh)
   env.KV.store.set('cache:cfstats', JSON.stringify({
     data: { zone: { requests: 7 }, worker: {}, fetchedAt: 1 },
     exp: now + 3600_000,
@@ -1657,14 +1659,14 @@ test('cap global dos refresh manuais: acumula entre pedidos, não é por-cliente
     assert.equal(r1.status, 200);
     const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('refreshcap:'));
     assert.ok(capKey, 'devia ter criado o contador global do cap de refresh');
-    assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 1);
+    assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 2); // 2 escritas por refresh (contador + cache)
 
     // outro cliente (IP diferente, para não bater no rate limit por-cliente)
     const r2 = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.203' }), env);
     assert.equal(r2.status, 200);
     assert.equal(
       JSON.parse(env.KV.store.get(capKey)).count,
-      2,
+      4,
       'o contador global acumula entre pedidos de clientes diferentes',
     );
   } finally {
@@ -1895,4 +1897,332 @@ test('vitalsStats: LCP mau classifica poor; merge soma histogramas', () => {
   const stats = vitalsStats([b1, b2]);
   assert.equal(stats.metrics.lcp.rating, 'poor');
   assert.equal(stats.metrics.lcp.samples, 4);
+});
+
+// ---------- auditoria de segurança 2026-09-25 (docs/security-audit-2026-09-25/) ----------
+// Regressões para os achados do audit: escritas KV a partir de pedidos
+// anónimos têm de caber no orçamento diário da conta (~1.000/dia no Free),
+// e o path dos iscos guardado tem tamanho limitado.
+
+/** Cache API falsa (Map por URL), com o mesmo contrato de match/put. */
+function fakeEdgeCache() {
+  const store = new Map();
+  return {
+    store,
+    async match(url) {
+      const v = store.get(String(url));
+      return v === undefined ? undefined : new Response(v);
+    },
+    async put(url, res) { store.set(String(url), await res.text()); },
+  };
+}
+
+/** Corre `fn` com `caches.default` definido (runtime Cloudflare) e repõe no fim. */
+async function withEdgeCache(fn) {
+  const cache = fakeEdgeCache();
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'caches');
+  const prev = globalThis.caches;
+  globalThis.caches = { default: cache };
+  try {
+    return await fn(cache);
+  } finally {
+    if (had) globalThis.caches = prev;
+    else delete globalThis.caches;
+  }
+}
+
+/** Conta puts no KV falso, por prefixo da chave. */
+function countingKV() {
+  const kv = fakeKV();
+  kv.puts = {};
+  const orig = kv.put.bind(kv);
+  kv.put = async (key, ...rest) => {
+    const prefix = key.split(':')[0];
+    kv.puts[prefix] = (kv.puts[prefix] ?? 0) + 1;
+    return orig(key, ...rest);
+  };
+  kv.total = () => Object.values(kv.puts).reduce((a, b) => a + b, 0);
+  return kv;
+}
+
+/** Date.now simulado durante `fn`. */
+async function withClock(start, fn) {
+  const orig = Date.now;
+  let t = start;
+  Date.now = () => t;
+  try {
+    return await fn({ advance: (ms) => { t += ms; }, now: () => t });
+  } finally {
+    Date.now = orig;
+  }
+}
+
+test('underCap: `cost` conta escritas, não eventos', () => {
+  const now = 1_000_000;
+  const cfg = { now, windowMs: 1000, max: 10, cost: 4 };
+  const a = underCap(null, cfg);
+  assert.deepEqual(a, { allowed: true, state: { count: 4, windowStart: now } });
+  const b = underCap(a.state, cfg);
+  assert.equal(b.state.count, 8);
+  // 8 + 4 > 10: recusado, contagem inalterada
+  const c = underCap(b.state, cfg);
+  assert.equal(c.allowed, false);
+  assert.equal(c.state.count, 8);
+  // sem cost continua a contar 1 (compatível)
+  assert.equal(underCap(null, { now, windowMs: 1000, max: 1 }).state.count, 1);
+});
+
+test('boundDecoyPath: limita o tamanho e tira controlos/tags', () => {
+  assert.equal(boundDecoyPath('/phpmyadmin/setup.php'), '/phpmyadmin/setup.php');
+  const long = `/phpmyadmin/${'A'.repeat(16_000)}`;
+  assert.equal(boundDecoyPath(long).length, MAX_DECOY_PATH);
+  assert.equal(boundDecoyPath('/phpmyadmin/<x>\n'), '/phpmyadmin/x');
+  assert.equal(boundDecoyPath(undefined), '');
+});
+
+test('honeypot: path-isco longo é guardado limitado, e um `recent` antigo inchado encolhe no evento seguinte', async () => {
+  const env = { KV: fakeKV() };
+  const huge = `/phpmyadmin/${'A'.repeat(16_000)}`;
+  // `recent` de antes da correção: 199 eventos com paths de 16 KB
+  env.KV.store.set('recent', JSON.stringify(Array.from({ length: 199 }, () => ({ ts: 0, path: huge }))));
+  const res = await runFetch(fakeRequest(huge, { ip: '198.51.100.8', country: 'PT', asn: 1 }), env);
+  assert.equal(res.status, 404);
+  const recent = JSON.parse(env.KV.store.get('recent'));
+  assert.equal(recent.length, 200);
+  for (const e of recent) assert.ok(e.path.length <= MAX_DECOY_PATH);
+  assert.equal(recent[0].technique, 'T1190'); // técnica calculada do path completo
+  assert.ok(env.KV.store.get('recent').length < 50_000, 'recent devia ficar com poucos KB, não MB');
+  const day = JSON.parse(env.KV.store.get(`d:${new Date().toISOString().slice(0, 10)}`));
+  for (const k of Object.keys(day.byPath ?? {})) assert.ok(k.length <= MAX_DECOY_PATH);
+});
+
+test('honeypot: com o cap no teto não lê os buckets (só o contador)', async () => {
+  const env = { KV: fakeKV() };
+  const now = Date.now();
+  env.KV.store.set(`wcap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 300, windowStart: now }));
+  const reads = [];
+  const origGet = env.KV.get.bind(env.KV);
+  env.KV.get = async (key, type) => { reads.push(key); return origGet(key, type); };
+  await runFetch(fakeRequest('/.env', { ip: '8.8.8.8', country: 'US', asn: 15169 }), env);
+  assert.deepEqual(reads.map((k) => k.split(':')[0]), ['wcap']);
+});
+
+test('cached: GETs públicos repetidos não passam do orçamento diário de escritas (achado médio)', async () => {
+  // Reprodução do achado: /api/honeypot, /api/map e /api/vitals, cada um a
+  // cada 61s durante 24h simuladas. Antes: ~3.500 puts `cache:*`, sem teto.
+  const kv = countingKV();
+  const env = { KV: kv, RATE_SALT: 'test' };
+  await withClock(Date.parse('2026-09-25T00:00:30Z'), async ({ advance }) => {
+    for (let i = 0; i < 24 * 60; i += 1) {
+      for (const route of ['/api/honeypot', '/api/map', '/api/vitals']) {
+        const res = await runFetch(fakeRequest(route), env);
+        assert.equal(res.status, 200);
+      }
+      advance(61_000);
+      if (Date.now() >= Date.parse('2026-09-26T00:00:00Z')) break;
+    }
+  });
+  // orçamento CACHE_WRITE_CAP = 80 escritas (contador incluído)
+  assert.ok(kv.total() <= 80, `puts no KV: ${JSON.stringify(kv.puts)}`);
+});
+
+test('cached: com o orçamento esgotado serve o stale sem reescrever', async () => {
+  const kv = countingKV();
+  const env = { KV: kv };
+  const now = Date.now();
+  kv.store.set(`cachecap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 80, windowStart: now }));
+  kv.store.set('cache:honeypot', JSON.stringify({ data: { attempts24h: 42 }, exp: now - 1000 }));
+  const logs = [];
+  const origError = console.error;
+  console.error = (...a) => logs.push(a.map(String).join(' '));
+  try {
+    const res = await runFetch(fakeRequest('/api/honeypot'), env);
+    assert.equal((await res.json()).attempts24h, 42);
+  } finally {
+    console.error = origError;
+  }
+  assert.equal(kv.total(), 0);
+  assert.ok(logs.some((l) => l.includes('cache_write_cap_exhausted')));
+});
+
+test('scheduled: o cron aquece as caches mesmo com o orçamento dos pedidos esgotado', async () => {
+  const kv = countingKV();
+  const env = { KV: kv };
+  const now = Date.now();
+  kv.store.set(`cachecap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 80, windowStart: now }));
+  await runScheduled(env);
+  assert.ok(kv.store.has('cache:threatintel'), 'o cron não passa pelo orçamento dos pedidos');
+});
+
+test('rate limit: com Cache API o estado por-cliente não escreve no KV e continua a limitar', async () => {
+  await withEdgeCache(async (cache) => {
+    const kv = countingKV();
+    const env = { KV: kv, RATE_SALT: 'test' };
+    for (let i = 0; i < 30; i += 1) {
+      const res = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.50' }), env);
+      assert.equal(res.status, 200);
+    }
+    const blocked = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.50' }), env);
+    assert.equal(blocked.status, 429);
+    assert.ok(Number(blocked.headers.get('retry-after')) > 0);
+    // outro cliente não é afetado (não há teto global a esgotar)
+    const other = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.51' }), env);
+    assert.equal(other.status, 200);
+    assert.equal(kv.total(), 0, `puts no KV: ${JSON.stringify(kv.puts)}`);
+    assert.ok([...cache.store.keys()].every((k) => k.startsWith('https://danielmala.co/api/__cache/')));
+  });
+});
+
+test('pwned-range: cache por prefixo na Cache API, sem escritas no KV', async () => {
+  await withEdgeCache(async () => {
+    const kv = countingKV();
+    const env = { KV: kv, RATE_SALT: 'test' };
+    const orig = globalThis.fetch;
+    let upstream = 0;
+    globalThis.fetch = async () => { upstream += 1; return { ok: true, status: 200, text: async () => 'ABCDEF0123456789ABCDEF0123456789ABC:3\r\n' }; };
+    try {
+      for (let i = 0; i < 2; i += 1) {
+        const res = await runFetch(fakeRequest('/api/pwned-range?prefix=21BD1', { ip: '203.0.113.60' }), env);
+        assert.equal(res.status, 200);
+      }
+    } finally {
+      globalThis.fetch = orig;
+    }
+    assert.equal(upstream, 1, 'o 2.º pedido do mesmo prefixo vem da cache');
+    assert.equal(kv.total(), 0);
+  });
+});
+
+test('orçamento: um só IP, só por caminhos com teto, não passa das escritas diárias da conta (achado baixo)', async () => {
+  // Reprodução do achado: 20 prefixos novos/min em /api/pwned-range durante
+  // 16 min + 70 toques num isco, do mesmo IP. Antes: 1.141 puts no KV.
+  await withEdgeCache(async () => {
+    const kv = countingKV();
+    const env = { KV: kv, RATE_SALT: 'test' };
+    const orig = globalThis.fetch;
+    globalThis.fetch = async () => ({ ok: true, status: 200, text: async () => '' });
+    try {
+      await withClock(Date.parse('2026-09-25T10:00:00Z'), async ({ advance }) => {
+        let n = 0x10000;
+        for (let m = 0; m < 16; m += 1) {
+          for (let i = 0; i < 20; i += 1) {
+            n += 1;
+            await runFetch(fakeRequest(`/api/pwned-range?prefix=${n.toString(16).toUpperCase()}`, { ip: '8.8.8.8' }), env);
+          }
+          advance(61_000);
+        }
+        for (let i = 0; i < 70; i += 1) await runFetch(fakeRequest('/.env', { ip: '8.8.8.8', country: 'US', asn: 15169 }), env);
+      });
+    } finally {
+      globalThis.fetch = orig;
+    }
+    // só o honeypot escreve (HONEYPOT_WRITE_CAP = 300 escritas) + 1 do `meta`
+    assert.ok(kv.total() <= 301, `puts no KV: ${JSON.stringify(kv.puts)}`);
+    assert.equal(kv.puts.rl ?? 0, 0);
+    assert.equal(kv.puts.cache ?? 0, 0);
+  });
+});
+
+test('edgecache: chave na origem do pedido, JSON ida e volta, lixo → null', async () => {
+  const cache = fakeEdgeCache();
+  const url = edgeKey('https://danielmala.co/api/mirror?x=1', 'rl:mirror:abc');
+  assert.equal(url, 'https://danielmala.co/api/__cache/rl%3Amirror%3Aabc');
+  await edgePutJSON(cache, url, { count: 1 }, 0.2);
+  assert.deepEqual(await edgeGetJSON(cache, url), { count: 1 });
+  cache.store.set(url, 'não é json');
+  assert.equal(await edgeGetJSON(cache, url), null);
+  assert.equal(await edgeGetJSON(cache, `${url}x`), null);
+});
+
+test('OPTIONS a um path-isco devolve o mesmo 404 HTML (sem "tell" da API) e no-store', async () => {
+  const env = { KV: fakeKV() };
+  const res = await runFetch(fakeRequest('/wp-login.php', { method: 'OPTIONS', ip: '198.51.100.9' }), env);
+  assert.equal(res.status, 404);
+  assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.ok(res.headers.get('strict-transport-security'));
+  // OPTIONS a uma rota da API continua a ser o preflight 204
+  const pre = await runFetch(fakeRequest('/api/health', { method: 'OPTIONS' }), env);
+  assert.equal(pre.status, 204);
+});
+
+test('POST /api/vitals: falha do rate limiter dá o 204 uniforme, não uma exceção', async () => {
+  const env = {
+    RATE_SALT: 'test',
+    KV: { async get() { throw new Error('kv down'); }, async put() { throw new Error('kv down'); } },
+  };
+  const req = { ...fakeRequest('/api/vitals', { method: 'POST', ip: '203.0.113.70' }), text: async () => '{}' };
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    const res = await runFetch(req, env);
+    assert.equal(res.status, 204);
+  } finally {
+    console.error = origError;
+  }
+});
+
+// ---------- revisão CodeRabbit do PR #183: Cache API é best-effort ----------
+
+test('edgeCached: falha da Cache API (match/put) não vira 502 — calcula e responde', async () => {
+  const broken = {
+    async match() { throw new Error('cache down'); },
+    async put() { throw new Error('cache down'); },
+  };
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'caches');
+  const prev = globalThis.caches;
+  globalThis.caches = { default: broken };
+  const origError = console.error;
+  const logs = [];
+  console.error = (...a) => logs.push(a.map(String).join(' '));
+  try {
+    const env = { KV: fakeKV() };
+    const res = await runFetch(fakeRequest('/api/honeypot'), env);
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).attempts24h, 0);
+    assert.ok(logs.some((l) => l.includes('edge_cache_read_failed')));
+    assert.ok(logs.some((l) => l.includes('edge_cache_write_failed')));
+  } finally {
+    console.error = origError;
+    if (had) globalThis.caches = prev;
+    else delete globalThis.caches;
+  }
+});
+
+test('rate limit: falha da Cache API cai no caminho KV (continua a limitar, não dá 502)', async () => {
+  const broken = {
+    async match() { throw new Error('cache down'); },
+    async put() { throw new Error('cache down'); },
+  };
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'caches');
+  const prev = globalThis.caches;
+  globalThis.caches = { default: broken };
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    const env = { KV: fakeKV(), RATE_SALT: 'test' };
+    const ok = await runFetch(fakeRequest('/api/mirror', { ip: '203.0.113.80' }), env);
+    assert.equal(ok.status, 200);
+    assert.ok([...env.KV.store.keys()].some((k) => k.startsWith('rl:mirror:')), 'estado por-cliente foi para o KV');
+  } finally {
+    console.error = origError;
+    if (had) globalThis.caches = prev;
+    else delete globalThis.caches;
+  }
+});
+
+test('threat-intel/ct/cf-stats/ticker também passam pela Cache API (sem KV em pedidos repetidos)', async () => {
+  await withEdgeCache(async (cache) => {
+    const env = { KV: countingKV() };
+    const now = Date.now();
+    env.KV.store.set('cache:ticker', JSON.stringify({ data: { items: [] }, exp: now + 3600_000 }));
+    let reads = 0;
+    const origGet = env.KV.get.bind(env.KV);
+    env.KV.get = async (...a) => { reads += 1; return origGet(...a); };
+    await runFetch(fakeRequest('/api/ticker'), env);
+    const readsAfterFirst = reads;
+    await runFetch(fakeRequest('/api/ticker'), env);
+    assert.equal(reads, readsAfterFirst, '2.º pedido servido pela Cache API, sem ler o KV');
+    assert.ok([...cache.store.keys()].some((k) => k.endsWith('/api/__cache/ticker')));
+  });
 });

@@ -31,7 +31,8 @@ import { serverView } from './lib/mirror.js';
 import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
 import { techniqueForPath } from './lib/attack-map.js';
 import { renderNotFoundHtml, NOT_FOUND_CSP } from './lib/notfound.js';
-import { isDecoy } from './lib/decoys.js';
+import { isDecoy, boundDecoyPath } from './lib/decoys.js';
+import { edgeCache, edgeKey, edgeGetJSON, edgePutJSON } from './lib/edgecache.js';
 import { isPublicIp } from './lib/ipguard.js';
 import {
   emptyIpList, recordIpSighting, pruneExpiredIps, ipThreatList,
@@ -56,7 +57,12 @@ const ANON_WINDOW_MS = 5 * 60_000;
 // espaço para o resto. Trade-off consciente: sob scanning pesado
 // sustentado, eventos a mais no mesmo dia são descartados (o 404 continua a
 // sair) — perde-se granularidade no Threat Intel, não a proteção do core.
-const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 60 };
+//
+// `max` em ESCRITAS, não eventos (auditoria de segurança 2026-09-25 — ver
+// lib/kvcap.js): cada evento gasta o seu custo real (4 puts, +1 com iplist),
+// o que dá os mesmos ~60 eventos/dia de antes, mas agora com a soma dos caps
+// a bater certo com o orçamento.
+const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
 
 // ADR 0020 (docs/adr/0020-honeypot-public-ip.md): retenção da lista de
 // IPs, mais curta que a do projeto irmão (VPS externa, 60-90 dias — ver
@@ -77,7 +83,10 @@ const UPSTREAM_TIMEOUT_MS = 5000;
 // Free — tráfego orgânico normal já bastava para estourar o teto diário
 // muito antes de qualquer flood malicioso.
 const VITALS_MAX_BODY = 2 * 1024;
-const VITALS_WRITE_CAP = { windowMs: DAY_MS, max: 150 };
+// Em escritas (2 por amostra: histograma + contador) — as mesmas 150
+// amostras/dia de antes.
+const VITALS_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
+const VITALS_WRITE_COST = 2;
 
 // ---------- helpers de tempo/KV ----------
 
@@ -115,8 +124,11 @@ async function recordHoneypot(env, request, path, now) {
   const ts = floorToWindow(now, ANON_WINDOW_MS);
   // Lookup local (sem rede): anexa a técnica ATT&CK do path-isco ao evento,
   // para que o registo em KV já conte a que classe de ataque corresponde.
+  // A técnica vem do path completo; o que se GUARDA é o path limitado
+  // (boundDecoyPath, lib/decoys.js — o sufixo de /phpmyadmin/* é escolhido
+  // por quem pede e não tinha limite de tamanho).
   const technique = techniqueForPath(path);
-  const event = { ts, country, asn, path, technique };
+  const event = { ts, country, asn, path: boundDecoyPath(path), technique };
 
   // IP: só entra na lista se for público e válido (lib/ipguard.js) —
   // gamas privadas/reservadas nunca deviam chegar aqui vindas da
@@ -124,25 +136,30 @@ async function recordHoneypot(env, request, path, now) {
   const ip = request.headers.get('cf-connecting-ip');
   const ipValid = isPublicIp(ip);
 
+  // Cap de escritas por janela, verificado ANTES de ler o resto: passado o
+  // teto, descarta o evento (o pedido já devolveu 404 na mesma) sem pagar as
+  // 4-5 leituras dos buckets. O custo é o nº real de puts deste evento
+  // (recent + bucket hora + bucket dia + contador, +1 com iplist); a escrita
+  // única do `meta` (só no 1.º evento de sempre) fica de fora.
   const capKey = `wcap:${dayKey(now)}`;
-  const [recent, hBucket, dBucket, meta, capPrev, ipList] = await Promise.all([
+  const cost = 4 + (ipValid ? 1 : 0);
+  const { allowed, state: capState } = underCap(await getJSON(env, capKey), { now, cost, ...HONEYPOT_WRITE_CAP });
+  if (!allowed) return;
+
+  const [recent, hBucket, dBucket, meta, ipList] = await Promise.all([
     getJSON(env, 'recent', []),
     getJSON(env, hourKey(now), emptyBucket()),
     getJSON(env, dayKey(now), emptyBucket()),
     getJSON(env, 'meta', {}),
-    getJSON(env, capKey),
     ipValid ? getJSON(env, 'iplist', emptyIpList()) : null,
   ]);
 
-  // Cap de escritas por janela: passado o teto, descarta o evento (o
-  // pedido já devolveu 404 na mesma) para não inflacionar o custo do KV.
-  const { allowed, state: capState } = underCap(capPrev, { now, ...HONEYPOT_WRITE_CAP });
-  if (!allowed) return;
-
   // 200 (não 30): a tabela de Registo da Threat Intelligence pagina/pesquisa
   // sobre esta lista. Continua a ser só metadados por evento — nunca o IP,
-  // mesmo depois do ADR 0020 (que só toca `iplist`, abaixo).
-  const nextRecent = [event, ...recent].slice(0, 200);
+  // mesmo depois do ADR 0020 (que só toca `iplist`, abaixo). Os eventos já
+  // guardados também passam pelo limite: um `recent` inchado de antes desta
+  // correção encolhe no 1.º evento seguinte, em vez de esperar 200 eventos.
+  const nextRecent = [event, ...recent.slice(0, 199).map((e) => ({ ...e, path: boundDecoyPath(e?.path) }))];
   addEvent(hBucket, event);
   addEvent(dBucket, event);
 
@@ -211,7 +228,7 @@ async function recordVitals(env, sample, now) {
     getJSON(env, dayK, emptyVitalsBucket()),
     getJSON(env, capKey),
   ]);
-  const { allowed, state } = underCap(capPrev, { now, ...VITALS_WRITE_CAP });
+  const { allowed, state } = underCap(capPrev, { now, cost: VITALS_WRITE_COST, ...VITALS_WRITE_CAP });
   if (!allowed) return;
   addVitals(bucket, sample);
   await Promise.all([
@@ -298,16 +315,57 @@ async function readFirewall7d(env, now) {
 // Cache de leitura com stale-while-revalidate: um valor expirado ainda é
 // servido de imediato enquanto um único refresh corre em background
 // (ctx.waitUntil) — evita a debandada de N fetches concorrentes ao upstream
-// (NVD/KEV têm rate limit) quando a cache expira com tráfego. A cópia no KV
-// vive 10 min além do exp lógico para haver "stale" que servir.
-async function cached(env, ctx, key, ttlSec, producer) {
+// (NVD/KEV têm rate limit) quando a cache expira com tráfego.
+//
+// Cada refresh é uma ESCRITA no KV — e as rotas públicas sem rate limit
+// (/api/honeypot, /api/map com TTL de 60s, /api/vitals com 120s) deixavam o
+// ritmo dessas escritas nas mãos de qualquer visitante anónimo: 3 pedidos
+// por minuto chegavam para ~3.500 puts/dia, muito acima do teto de ~1.000/dia
+// da conta (auditoria de segurança 2026-09-25, achado de severidade média).
+// Por isso os refresh vindos de pedidos passam pelo orçamento diário
+// CACHE_WRITE_CAP; esgotado, serve-se o valor stale (sem recalcular) ou, sem
+// stale, o valor calculado sem o persistir. O cron (`scheduled`) passa
+// `{ capped: false }`: o ritmo dele é fixo (a cada 30 min) e já está contado
+// no orçamento. A cópia no KV vive STALE_GRACE_SEC além do exp lógico, para
+// haver sempre stale que servir enquanto o orçamento do dia está esgotado.
+const STALE_GRACE_SEC = 86400;
+
+// Orçamento diário (em escritas) dos refresh de cache vindos de pedidos. Cada
+// refresh aceite custa 2 (valor + contador). Soma dos orçamentos diários do
+// Worker: honeypot 300 + vitals 300 + cache 80 + refresh manual 40 + cron
+// (~90: ticker 24, ct/cfstats/fw/threatintel ~16, poda de iplist ≤ 48) ≈ 810
+// — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
+// pedidos concorrentes conseguem (underCap não é atómico, ver lib/kvcap.js).
+// O rate limiter já não entra nesta conta: vive na Cache API (ver rateLimit).
+const CACHE_WRITE_CAP = { windowMs: DAY_MS, max: 80 };
+
+/**
+ * Consome `cost` escritas do orçamento diário `prefix` (contador em
+ * `<prefix>:d:<dia>`). Devolve true se cabe (e já registou o consumo — essa
+ * é uma das `cost` escritas); false se o orçamento do dia está esgotado, sem
+ * escrever nada.
+ */
+async function consumeWriteBudget(env, prefix, cap, cost, now = Date.now()) {
+  const capKey = `${prefix}:${dayKey(now)}`;
+  const { allowed, state } = underCap(await getJSON(env, capKey), { now, cost, ...cap });
+  if (allowed) {
+    await env.KV.put(capKey, JSON.stringify(state), { expirationTtl: Math.ceil(cap.windowMs / 1000) + 60 });
+  }
+  return allowed;
+}
+
+async function cached(env, ctx, key, ttlSec, producer, { capped = true } = {}) {
   const now = Date.now();
   const hit = await getJSON(env, key);
   if (hit && hit.exp > now) return hit.data;
   const refresh = async () => {
+    if (capped && !(await consumeWriteBudget(env, 'cachecap', CACHE_WRITE_CAP, 2))) {
+      console.error('cache_write_cap_exhausted', key);
+      return hit ? hit.data : producer();
+    }
     const data = await producer();
     await env.KV.put(key, JSON.stringify({ data, exp: Date.now() + ttlSec * 1000 }), {
-      expirationTtl: ttlSec + 600,
+      expirationTtl: ttlSec + STALE_GRACE_SEC,
     });
     return data;
   };
@@ -320,57 +378,38 @@ async function cached(env, ctx, key, ttlSec, producer) {
 
 // ---------- rate limiting ----------
 
-// Teto global (não por-cliente) de escritas do PRÓPRIO rate limiter, por
-// dia — mesmo padrão do honeypot/vitals (ver lib/kvcap.js). Sem isto,
-// um cliente dentro do limite por rota (ex.: 30/min em /api/mirror ou
-// /api/vitals) força até ~43 mil escritas/dia SÓ NESTA ROTA — muito acima
-// do teto de ~1.000 escritas/dia da conta inteira no plano Free, e
-// esgotá-lo apaga o orçamento de que honeypot/vitals/snapshot de
-// firewall dependem (todos escrevem no mesmo KV, mesma conta — descoberto
-// numa revisão de segurança, 2026-07).
+// Onde vive o estado por-cliente do rate limiter (auditoria de segurança
+// 2026-09-25, docs/security-audit-2026-09-25/, achado de severidade baixa):
 //
-// Passado este cap, `rateLimit()` FALHA FECHADO (achado de uma revisão de
-// segurança, 2026-07-29 — docs/security-review-2026-07-29.md, achado A1):
-// a versão anterior continuava a devolver `allowed: true` sem persistir o
-// estado por-cliente, o que congelava a janela desse cliente para sempre —
-// na prática, ~300 pedidos triviais (10 min de tráfego num único cliente
-// em /api/mirror+/api/vitals, sem distribuir por IPs) desligavam o rate
-// limit da rota inteira até à meia-noite UTC. Falhar fechado inverte o
-// trade-off: em vez de "todos os pedidos passam", a rota devolve 429 a
-// todos até o cap global re-abrir — sem gastar nenhuma escrita extra (o
-// 429 continua grátis, ver o teste "sem nenhum put no KV"). Só afeta as
-// rotas que aceitam input de visitante (mirror/vitals/pwned/
-// refresh); as leituras públicas sem rate limit (honeypot/map/ticker/ct/
-// cf-stats sem refresh) continuam servidas da cache.
+// No KV, cada pedido aceite custava 2 escritas (estado + contador global) e
+// o teto global contava 1 — as 300 "escritas"/dia de RATE_LIMIT_WRITE_CAP
+// eram na verdade 600, e um único IP, sem sair dos limites por rota,
+// passava das ~1.000 escritas/dia da conta em ~16 minutos (somando a cache
+// do relay HIBP, que também escrevia no KV por prefixo novo). Por isso o
+// estado passou para a Cache API do data center (lib/edgecache.js): zero
+// escritas no KV, e portanto nenhum teto global a esgotar — o "falhar
+// fechado para TODOS os visitantes" do ADR 0003 deixa de ser alcançável por
+// um só cliente. O limite fica por data center, como na prática já era no
+// KV (propagação eventual de ~60s entre colos, ver ADR 0003); uma entrada
+// despejada antes do fim da janela só reinicia a contagem desse cliente.
+//
+// O KV continua como recurso (runtime sem Cache API — Node nos testes, ou um
+// Worker com Cloudflare Access à frente, onde a Cache API não existe), com
+// o teto global em ESCRITAS (2 por pedido aceite) e a falha FECHADA do achado
+// A1 da revisão de 2026-07-29 (docs/security-review-2026-07-29.md): com o
+// orçamento esgotado a rota devolve 429 a todos, sem escrever nada, em vez
+// de deixar tudo passar com a janela congelada.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
+const RATE_LIMIT_WRITE_COST = 2;
 
 // Cap global de escritas dos refresh manuais (/api/cf-stats?refresh=1) —
-// mesma classe de risco da lacuna #1 (rate limiter), descoberta tarde de
-// mais e aplicada só ao rate limiter na altura: o rate limit por cliente
-// desta rota (3/10min) ainda permite até 432 escritas/dia por IP — quase
-// metade do teto diário da conta SÓ NESTA ROTA. Global (não por-rota) por
-// desenho, para cobrir sem esforço extra qualquer outra rota de refresh
-// manual que venha a existir. Descoberto numa revisão de segurança (2026-07,
-// ronda 4).
-const REFRESH_WRITE_CAP = { windowMs: DAY_MS, max: 20 };
-
-/**
- * Consome uma unidade do cap partilhado dos refresh manuais. Devolve
- * `true` se a escrita cabe no orçamento do dia (e já regista o consumo);
- * `false` se o cap já foi atingido — o chamador deve degradar para a cache
- * existente em vez de gastar mais orçamento.
- */
-async function underRefreshCap(env, now) {
-  const capKey = `refreshcap:${dayKey(now)}`;
-  const capPrev = await getJSON(env, capKey);
-  const { allowed, state } = underCap(capPrev, { now, ...REFRESH_WRITE_CAP });
-  if (allowed) {
-    await env.KV.put(capKey, JSON.stringify(state), {
-      expirationTtl: Math.ceil(REFRESH_WRITE_CAP.windowMs / 1000) + 60,
-    });
-  }
-  return allowed;
-}
+// o rate limit por cliente desta rota (3/10min) ainda permitia até 432
+// escritas/dia por IP, quase metade do teto diário da conta SÓ NESTA ROTA.
+// Global (não por-rota) por desenho, para cobrir sem esforço extra qualquer
+// outra rota de refresh manual que venha a existir. Descoberto numa revisão
+// de segurança (2026-07, ronda 4). Em escritas: cada refresh aceite custa 2
+// (contador + cache:cfstats) — os mesmos 20 refresh/dia de antes.
+const REFRESH_WRITE_CAP = { windowMs: DAY_MS, max: 40 };
 
 async function rateLimit(env, request, route, { windowMs, max }) {
   if (!env.RATE_SALT) {
@@ -386,6 +425,22 @@ async function rateLimit(env, request, route, { windowMs, max }) {
   const id = await clientHash(ip, salt);
   const key = `rl:${route}:${id}`;
   const now = Date.now();
+
+  const cache = edgeCache();
+  if (cache) {
+    try {
+      const url = edgeKey(request.url, key);
+      const { allowed, state, retryAfterSec } = nextState(await edgeGetJSON(cache, url), { now, windowMs, max });
+      // Bloqueado ⇒ o estado não mudou — nada a guardar.
+      if (allowed) await edgePutJSON(cache, url, state, (state.windowStart + windowMs - now) / 1000 + 1);
+      return { allowed, retryAfterSec };
+    } catch (err) {
+      // Cache API em falha: segue para o caminho KV abaixo (com o seu teto
+      // global e a falha fechada), em vez de rebentar a rota com um 502.
+      console.error('ratelimit_edge_cache_failed', route, err?.message ?? String(err));
+    }
+  }
+
   const prev = await getJSON(env, key);
   const { allowed, state, retryAfterSec } = nextState(prev, { now, windowMs, max });
   // Bloqueado ⇒ o estado não mudou (nextState devolve a mesma contagem) —
@@ -395,7 +450,9 @@ async function rateLimit(env, request, route, { windowMs, max }) {
   if (allowed) {
     const capKey = `rlcap:${dayKey(now)}`;
     const capPrev = await getJSON(env, capKey);
-    const { allowed: capAllowed, state: capState } = underCap(capPrev, { now, ...RATE_LIMIT_WRITE_CAP });
+    const { allowed: capAllowed, state: capState } = underCap(capPrev, {
+      now, cost: RATE_LIMIT_WRITE_COST, ...RATE_LIMIT_WRITE_CAP,
+    });
     if (!capAllowed) {
       // Orçamento de escrita do dia esgotado: falhar FECHADO (ver o
       // comentário de RATE_LIMIT_WRITE_CAP acima) em vez de deixar
@@ -413,6 +470,34 @@ async function rateLimit(env, request, route, { windowMs, max }) {
     ]);
   }
   return { allowed, retryAfterSec };
+}
+
+/**
+ * Resposta JSON calculada por `compute` e guardada na Cache API do data
+ * center durante `ttlSec` — à frente do KV, para que tráfego repetido nas
+ * rotas públicas não custe nem leituras nem escritas no KV. Sem Cache API
+ * (Node/testes), calcula sempre.
+ */
+async function edgeCached(request, key, ttlSec, compute) {
+  const cache = edgeCache();
+  if (!cache) return compute();
+  const url = edgeKey(request.url, key);
+  // A Cache API é best-effort: uma falha na leitura é um miss, e uma falha
+  // na escrita não pode transformar uma resposta já calculada num 502.
+  let hit = null;
+  try {
+    hit = await edgeGetJSON(cache, url);
+  } catch (err) {
+    console.error('edge_cache_read_failed', key, err?.message ?? String(err));
+  }
+  if (hit !== null) return hit;
+  const data = await compute();
+  try {
+    await edgePutJSON(cache, url, data, ttlSec);
+  } catch (err) {
+    console.error('edge_cache_write_failed', key, err?.message ?? String(err));
+  }
+  return data;
 }
 
 // ---------- respostas ----------
@@ -465,13 +550,6 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        status: 204,
-        headers: { ...RESPONSE_SECURITY_HEADERS, ...corsHeaders(request, env) },
-      });
-    }
-
     // endpoints-isco: registar (em background) e devolver um 404 visualmente
     // igual ao 404 real do site (lib/notfound.js) — texto simples era um
     // "tell" mais fácil de distinguir do resto do site, não mais difícil.
@@ -489,7 +567,20 @@ export default {
           'content-type': 'text/html; charset=utf-8',
           'x-content-type-options': 'nosniff',
           'content-security-policy': NOT_FOUND_CSP,
+          'strict-transport-security': RESPONSE_SECURITY_HEADERS['strict-transport-security'],
+          'cache-control': 'no-store',
         },
+      });
+    }
+
+    // Preflight CORS — depois dos iscos (auditoria de segurança 2026-09-25):
+    // antes vinha primeiro, e um OPTIONS a um path-isco recebia um 204 da API
+    // em vez do mesmo 404 de qualquer outro método — um "tell" de que ali
+    // havia um Worker, não o site.
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: { ...RESPONSE_SECURITY_HEADERS, ...corsHeaders(request, env) },
       });
     }
 
@@ -503,10 +594,17 @@ export default {
       if (ctype !== '' && ctype !== 'application/json' && ctype !== 'text/plain') {
         return json({ error: 'unsupported_media_type' }, request, env, { status: 415 });
       }
-      const { allowed, retryAfterSec } = await rateLimit(env, request, 'vitals', {
-        windowMs: 60_000,
-        max: 30,
-      });
+      // Fora do try/catch do router (este POST vem antes dele): uma falha do
+      // rate limiter (KV/Cache API) tem de dar a mesma resposta uniforme de
+      // qualquer beacon descartado, não uma exceção por tratar.
+      let limit;
+      try {
+        limit = await rateLimit(env, request, 'vitals', { windowMs: 60_000, max: 30 });
+      } catch (err) {
+        console.error('vitals_ratelimit_failed', err?.message ?? String(err));
+        return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
+      }
+      const { allowed, retryAfterSec } = limit;
       if (!allowed) {
         return json({ error: 'rate_limited' }, request, env, {
           status: 429,
@@ -548,15 +646,19 @@ export default {
       }
 
       if (path === '/api/honeypot') {
-        const data = await cached(env, ctx, 'cache:honeypot', 60, async () =>
-          honeypotStats(await readBuckets(env, Date.now())),
+        const data = await edgeCached(request, 'honeypot', 60, () =>
+          cached(env, ctx, 'cache:honeypot', 60, async () =>
+            honeypotStats(await readBuckets(env, Date.now())),
+          ),
         );
         return json(data, request, env, { maxAge: 60 });
       }
 
       if (path === '/api/map') {
-        const data = await cached(env, ctx, 'cache:map', 60, async () =>
-          mapData(await readBuckets(env, Date.now())),
+        const data = await edgeCached(request, 'map', 60, () =>
+          cached(env, ctx, 'cache:map', 60, async () =>
+            mapData(await readBuckets(env, Date.now())),
+          ),
         );
         return json(data, request, env, { maxAge: 60 });
       }
@@ -581,7 +683,11 @@ export default {
             extra: { 'retry-after': String(retryAfterSec) },
           });
         }
-        const data = await cached(env, ctx, `cache:pwned:${prefix}`, 86400, async () => ({
+        // Cache por prefixo na Cache API, não no KV (auditoria de segurança
+        // 2026-09-25): o prefixo é escolhido pelo cliente, por isso cada
+        // prefixo novo era uma escrita KV fora de qualquer teto — ~300/dia
+        // a partir de um só IP dentro do rate limit.
+        const data = await edgeCached(request, `pwned:${prefix}`, 86400, async () => ({
           suffixes: await fetchRange(prefix, { timeoutMs: UPSTREAM_TIMEOUT_MS }),
         }));
         return json(data, request, env, { maxAge: 3600 });
@@ -598,23 +704,30 @@ export default {
       // padrão de cache já usado nesta rota) para não estourar o teto
       // diário do KV no plano Free — ver dynamic/PLAN.md.
       if (path === '/api/threat-intel') {
-        const data = await cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
-          const now = Date.now();
-          const [buckets, firewall7d, ipList] = await Promise.all([
-            readThreatBuckets(env, now),
-            readFirewall7d(env, now),
-            getJSON(env, 'iplist', {}),
-          ]);
-          return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
-        });
+        // Cache do data center com o mesmo TTL da resposta (5 min), não as 6h
+        // do KV: a poda de `iplist` apaga cache:threatintel para um IP
+        // expirado sair logo (ADR 0020), e uma cópia de 6h aqui adiava isso.
+        const data = await edgeCached(request, 'threatintel', 300, () =>
+          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
+            const now = Date.now();
+            const [buckets, firewall7d, ipList] = await Promise.all([
+              readThreatBuckets(env, now),
+              readFirewall7d(env, now),
+              getJSON(env, 'iplist', {}),
+            ]);
+            return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
+          }),
+        );
         return json(data, request, env, { maxAge: 300 });
       }
 
       // Core Web Vitals (RUM): p75 por métrica dos últimos 7 dias, dos
       // histogramas acumulados pelo beacon. Só agregados.
       if (path === '/api/vitals') {
-        const data = await cached(env, ctx, 'cache:vitals', 120, async () =>
-          vitalsStats(await readVitalsBuckets(env, Date.now())),
+        const data = await edgeCached(request, 'vitals', 120, () =>
+          cached(env, ctx, 'cache:vitals', 120, async () =>
+            vitalsStats(await readVitalsBuckets(env, Date.now())),
+          ),
         );
         return json(data, request, env, { maxAge: 120 });
       }
@@ -625,7 +738,9 @@ export default {
       // isso sem rate limit próprio: a cache de 6h com SWR já garante que
       // o crt.sh só é consultado de longe em longe.
       if (path === '/api/ct') {
-        const data = await cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env));
+        const data = await edgeCached(request, 'ct', 1800, () =>
+          cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)),
+        );
         return json(data, request, env, { maxAge: 1800 });
       }
 
@@ -649,22 +764,36 @@ export default {
             });
           }
           // Cap global de refresh manuais (ver REFRESH_WRITE_CAP).
-          if (!(await underRefreshCap(env, Date.now()))) {
-            const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
+          if (!(await consumeWriteBudget(env, 'refreshcap', REFRESH_WRITE_CAP, 2))) {
+            const data = await edgeCached(request, 'cfstats', 1800, () =>
+              cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env)),
+            );
             return json(data, request, env, { maxAge: 1800 });
           }
           const data = await fetchCfStats(env);
           await env.KV.put('cache:cfstats', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
             expirationTtl: 6 * 3600 + 60,
           });
+          // A cópia do data center também passa a ser a fresca — senão os GET
+          // normais seguintes neste colo continuavam a ver a antiga até 30 min.
+          const cache = edgeCache();
+          if (cache) {
+            await edgePutJSON(cache, edgeKey(request.url, 'cfstats'), data, 1800).catch((err) =>
+              console.error('edge_cache_write_failed', 'cfstats', err?.message ?? String(err)),
+            );
+          }
           return json(data, request, env);
         }
-        const data = await cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env));
+        const data = await edgeCached(request, 'cfstats', 1800, () =>
+          cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env)),
+        );
         return json(data, request, env, { maxAge: 1800 });
       }
 
       if (path === '/api/ticker') {
-        const data = await cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env));
+        const data = await edgeCached(request, 'ticker', 1800, () =>
+          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)),
+        );
         return json(data, request, env, { maxAge: 1800 });
       }
 
@@ -719,8 +848,8 @@ export default {
         await pruneIpList(env, Date.now()).catch(() => {});
 
         await Promise.all([
-          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)).catch(() => {}),
-          cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env)).catch(() => {}),
+          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env), { capped: false }).catch(() => {}),
+          cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env), { capped: false }).catch(() => {}),
           // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
           // O snapshot vive dentro do producer do `cached()` — corre só
           // quando o cfstats É DE FACTO REFRESCADO (~4×/dia, TTL 6h), não em
@@ -732,7 +861,7 @@ export default {
             const stats = await fetchCfStats(env);
             await snapshotFirewall(env, stats, Date.now()).catch(() => {});
             return stats;
-          }).catch(() => {}),
+          }, { capped: false }).catch(() => {}),
           // Threat Intel é caro de ler (168 buckets horários) — aquece-se
           // aqui para as visitas caírem sempre em cache. TTL 6h (ver
           // comentário na rota /api/threat-intel) para não repetir o
@@ -745,7 +874,7 @@ export default {
               getJSON(env, 'iplist', {}),
             ]);
             return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
-          }).catch(() => {}),
+          }, { capped: false }).catch(() => {}),
         ]);
       })(),
     );

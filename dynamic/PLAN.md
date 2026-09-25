@@ -10,6 +10,38 @@
 
 ## Recorded decisions
 
+- **2026-09-25 — Fixes for the security audit run with Cloudflare's
+  `security-audit` skill** (requested by the repo owner; report in
+  `docs/security-audit-2026-09-25/`). All four records are addressed in
+  one PR:
+    1. *(medium, confirmed)* Uncapped KV writes from public GETs via
+       `cached()`. Request-driven refreshes now draw from a
+       `CACHE_WRITE_CAP` budget (80 writes/day) and serve stale copies
+       past it. The cron is exempt, and the short-TTL routes are
+       cached in the data-center Cache API first.
+    2. *(low, confirmed)* The caps counted events, not writes, and the
+       HIBP cache was uncounted. `underCap` now takes a `cost`. The
+       per-client rate-limit state and the HIBP cache moved to the Cache
+       API, which uses no KV writes. See ADR 0003 and ADR 0006 updates.
+    3. *(needs validation)* The decoy path was unbounded in `recent`. It is
+       now stored truncated to 128 characters (`boundDecoyPath`), and
+       existing entries shrink on the next event. The cap is checked
+       before the buckets are read.
+    4. *(needs validation)* `headers.yml` on `deployment_status` ran with
+       `CI_WAF_TOKEN`. The token is now withheld from `deployment_status`
+       runs and only ever sent to the production origin
+       (`isProductionTarget`), including by `tls-check.yml`. The part
+       source cannot close is a workflow file modified in a fork commit.
+       That needs the owner to keep Pages from building fork PRs and to
+       move the secrets to an Environment restricted to `main`
+       (`docs/cloudflare-deploy.md` §6).
+  Hardening from the same report was also applied:
+    - OPTIONS to a decoy now returns the same 404.
+    - The decoy 404 gets `no-store` and HSTS.
+    - A rate-limiter failure on `POST /api/vitals` returns the uniform 204.
+    - `techOf` uses `Object.hasOwn`.
+    - The EXIF map link requires finite coordinates.
+
 - **2026-07-29 — TEMPORARY: expose the pathname in self/self CSP
   violations** (direct request from the repo owner, for diagnosis): the
   "CSP Violations" panel kept showing new `script-src-elem`/`self` and
