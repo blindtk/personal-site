@@ -9,22 +9,31 @@
 // indistinguível). É best-effort — o KV é eventualmente consistente, por
 // isso pedidos concorrentes podem passar um pouco do teto; o objetivo é
 // limitar a ordem de grandeza do custo, não contar ao evento exato.
+//
+// Unidade = ESCRITAS, não eventos (auditoria de segurança 2026-09-25,
+// docs/security-audit-2026-09-25/): um evento do honeypot custa 4-5 puts, um
+// pedido aceite pelo rate limiter custa 2 (estado + contador), mas os caps
+// contavam 1 por evento — a soma real ultrapassava o orçamento da conta que
+// os caps diziam respeitar. `cost` é o nº de puts que o evento vai fazer,
+// INCLUINDO a escrita do próprio contador, e `max` passa a ser um orçamento
+// de escritas por janela.
 
 /**
- * Decide se uma escrita cabe dentro do cap da janela atual.
+ * Decide se um evento que custa `cost` escritas cabe no cap da janela.
  *   prev — { count, windowStart } | null (estado lido do KV)
  *   now  — epoch ms
- *   windowMs, max — configuração da janela
+ *   windowMs, max — configuração da janela (max em escritas)
+ *   cost — escritas que o evento vai fazer (por omissão 1)
  * Devolve { allowed, state }. Quando allowed é false, state mantém a
- * contagem no teto (não a incrementa) para não crescer sem limite.
+ * contagem (não a incrementa) para não crescer sem limite.
  */
-export function underCap(prev, { now, windowMs, max }) {
+export function underCap(prev, { now, windowMs, max, cost = 1 }) {
   let count = prev?.count ?? 0;
   let windowStart = prev?.windowStart ?? now;
   if (now - windowStart >= windowMs) {
     count = 0;
     windowStart = now;
   }
-  const allowed = count < max;
-  return { allowed, state: { count: allowed ? count + 1 : count, windowStart } };
+  const allowed = count + cost <= max;
+  return { allowed, state: { count: allowed ? count + cost : count, windowStart } };
 }

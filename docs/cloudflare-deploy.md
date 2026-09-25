@@ -251,6 +251,28 @@ scanning — **was not re-verified by this agent** (outside the scope of a
 session with no access to the repository's GitHub settings); worth
 confirming manually that it was done.
 
+**Deployment-triggered workflows and fork PRs (2026-09-25 security
+audit).** `headers.yml` runs on `deployment_status`. For that event GitHub
+runs the workflow file and checks out the code from the **deployment's
+commit**, not from `main`. So if the Pages project ever deploys a commit
+from a fork PR, that PR's own version of the workflow runs, with whatever
+repository secrets it asks for. The code no longer sends `CI_WAF_TOKEN` on
+those runs, and only ever sends it to `https://danielmala.co`. A modified
+workflow file can still ask for the secret, and only settings can close
+that:
+
+- **Pages → Settings → Builds:** make sure pull requests from forks are
+  not built. Preview deployments for this project's own branches are
+  fine, because only people with write access create those branches.
+- **GitHub → Settings → Actions → General:** require approval for all
+  outside collaborators' fork workflows.
+- **GitHub → Settings → Environments:** create an environment such as
+  `production-checks` restricted to the `main` branch. Move
+  `CI_WAF_TOKEN`, `ACCESS_CLIENT_ID` and `ACCESS_CLIENT_SECRET` from
+  repository secrets into it, and add `environment: production-checks` to
+  the jobs that use them (`headers.yml`, `invariants.yml`,
+  `tls-check.yml`). A workflow from any other ref then cannot read them.
+
 ## 7. Current status and what's left
 
 **Done:** production launch (Phase 3, 2026-07-31 — Access disabled for

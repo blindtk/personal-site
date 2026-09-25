@@ -48,7 +48,14 @@ jobs:
             exit 0
           fi
           host="$(node -e "console.log(new URL(process.argv[1]).host)" "$url")"
+          # O CI_WAF_TOKEN só vai para a origem de produção — a mesma regra
+          # de check-headers/check-invariants (isProductionTarget em
+          # .github/scripts/lib/target.mjs). Antes ia para qualquer host
+          # passado no input do workflow_dispatch (auditoria de segurança
+          # 2026-09-25).
+          waf="$(node --input-type=module -e "import { isProductionTarget } from './.github/scripts/lib/target.mjs'; console.log(isProductionTarget(new URL(process.argv[1])))" "$url")"
           echo "host=$host" >> "$GITHUB_OUTPUT"
+          echo "waf=$waf" >> "$GITHUB_OUTPUT"
           echo "skip=false" >> "$GITHUB_OUTPUT"
 
       - name: Correr testssl.sh
@@ -67,6 +74,7 @@ jobs:
           # vindos de um runner do GitHub (normalmente fora de PT).
           CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
           HOST: ${{ steps.target.outputs.host }}
+          WAF_OK: ${{ steps.target.outputs.waf }}
         run: |
           set -e
           mkdir -p tls-report
@@ -77,7 +85,7 @@ jobs:
           # (não reproduz o bug descrito), mas o array evita depender dessa
           # subtileza e é mais fácil de auditar.
           args=(--quiet --jsonfile /data/testssl.json)
-          if [ -n "$CI_WAF_TOKEN" ]; then
+          if [ -n "$CI_WAF_TOKEN" ] && [ "$WAF_OK" = "true" ]; then
             args+=(--reqheader "x-ci-waf-token: ${CI_WAF_TOKEN}")
           fi
           # Imagem: drwetter/testssl.sh:3.2, pinada por digest (não há tag

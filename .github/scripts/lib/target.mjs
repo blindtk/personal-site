@@ -78,6 +78,21 @@ export function isTrustedTarget(url) {
 }
 
 /**
+ * May the target receive CI_WAF_TOKEN? Only the production origin, over
+ * HTTPS on the default port. The token bypasses the WAF policy of the
+ * danielmala.co zone — it means nothing to *.pages.dev (a Cloudflare-owned
+ * domain outside the zone), so previews never need it. Before the
+ * 2026-09-25 security audit (docs/security-audit-2026-09-25/) it followed
+ * isTrustedTarget, which also trusts every preview alias of the Pages
+ * project: a preview built from branch/PR code (e.g. with Pages Functions)
+ * would have received the token. Access credentials still follow
+ * isTrustedTarget, because the previews sit behind Access.
+ */
+export function isProductionTarget(url) {
+  return url.protocol === 'https:' && url.port === '' && url.origin === PROD_ORIGIN;
+}
+
+/**
  * Resolves the target in order of priority, skipping empty candidates:
  * workflow inputs (TARGET_URL/DEPLOY_URL) first, PROD_URL by default.
  * Returns null if an explicit candidate is not a valid URL — a mistyped

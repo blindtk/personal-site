@@ -43,5 +43,16 @@ jobs:
           # Segredo do bypass da regra WAF "CI headers check" (docs/
           # cloudflare-deploy.md §5, regra 2) — substitui o match por
           # User-Agent, que era uma string pública e spoofable.
-          CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
+          #
+          # Fora das execuções deployment_status (auditoria de segurança
+          # 2026-09-25, docs/security-audit-2026-09-25/): nesse evento o
+          # código que corre (workflow + script) é o do commit do deploy, não
+          # o da main, e o alvo é o URL do deploy em *.pages.dev — fora da
+          # zona, onde o token não serve para nada. O token só é preciso no
+          # cron/dispatch contra a produção, que correm o código da main.
+          # Isto não fecha sozinho o caso de um commit de fork alterar este
+          # ficheiro (o workflow também vem desse commit): isso resolve-se
+          # nas definições — secrets num Environment restrito à main e sem
+          # builds de forks no Pages (docs/cloudflare-deploy.md §6).
+          CI_WAF_TOKEN: ${{ github.event_name != 'deployment_status' && secrets.CI_WAF_TOKEN || '' }}
         run: node .github/scripts/check-headers.mjs

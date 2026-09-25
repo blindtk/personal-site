@@ -46,3 +46,29 @@ day's quota by itself.
   `dynamic/PLAN.md`.
 - A regression test in `dynamic/worker/test/logic.test.mjs` pins the
   window and the per-day keys.
+
+## Update — 2026-09-25: caps count writes, and every anonymous write path is budgeted
+
+The [2026-09-25 security audit](../security-audit-2026-09-25/REPORT.md)
+found two gaps in the arithmetic above:
+
+1. **Caps counted events, not writes.** A decoy event costs 4–5 puts and an
+   allowed rate-limited request cost 2. `underCap` now takes a `cost` (the
+   event's real number of puts, counter included), and every `max` is a
+   write budget: honeypot 300 (~60 events, unchanged), vitals 300 (150
+   samples, unchanged), manual refresh 40 (20 refreshes, unchanged).
+2. **Some anonymous write paths had no cap at all.** `cached()` rewrote KV
+   on every logical expiry, so public GETs with a 60 s TTL produced
+   ~3,500 puts/day. That was the medium-severity finding. Request-driven
+   refreshes now draw from `CACHE_WRITE_CAP` (80 writes/day). Once it is
+   exhausted, the stale copy is served, and it is kept for a day
+   (`STALE_GRACE_SEC`). The cron keeps its fixed-rate refreshes outside
+   that budget. The short-TTL aggregates are also cached in the
+   data-center Cache API first.
+
+The shared "circuit breaker" mentioned above is therefore implemented as a
+sized set of per-path budgets. Honeypot 300 + vitals 300 + cache 80 +
+refresh 40 + cron ~90 comes to about 810/day, with the remainder left as
+headroom for concurrency overshoot. KV has no atomic increment, so
+the counters remain best-effort. A Durable Object would be needed for an
+exact counter, and the headroom is the accepted alternative.

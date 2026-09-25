@@ -164,7 +164,10 @@ const jsStrings = {
     const orientKey = tags.orientation ? ORIENTATION_LABELS[tags.orientation as keyof typeof ORIENTATION_LABELS] : null;
     row(S.rowOrientation, orientKey ? S.orientations[orientKey] ?? tags.orientation : null);
 
-    if (dec) {
+    // Number.isFinite: o link do mapa é montado por substituição de texto —
+    // hoje lat/lon são sempre números (aritmética do dms() em exif.js), mas a
+    // guarda impede que um valor não numérico chegue alguma vez ao href.
+    if (dec && Number.isFinite(dec.lat) && Number.isFinite(dec.lon)) {
       const alt = typeof dec.altitude === 'number' ? `  ·  ${Math.round(dec.altitude)}m` : '';
       gpsCoords.textContent = `${dec.lat.toFixed(5)}, ${dec.lon.toFixed(5)}${alt}`;
       mapLink.href = S.openMapBase

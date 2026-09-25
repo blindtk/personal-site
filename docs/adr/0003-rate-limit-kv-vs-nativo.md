@@ -63,3 +63,32 @@ Cloudflare dashboard (outside what a code PR can express) — see
 - A regression test in `dynamic/worker/test/logic.test.mjs` ("rate limit:
   daily global cap at ceiling fails closed…") pins this behavior; any
   future change that reverts it fails the tests.
+
+## Update — 2026-09-25: per-client state moved to the Cache API
+
+The [2026-09-25 security audit](../security-audit-2026-09-25/REPORT.md)
+confirmed that the KV rate limiter undercounted its own cost: each allowed
+request wrote **two** keys (`rl:<route>:<hash>` + `rlcap:<day>`) while
+`RATE_LIMIT_WRITE_CAP` counted one, and the HIBP relay also wrote an
+uncapped `cache:pwned:<prefix>` per new prefix. One client staying within
+every per-IP limit reached 1,141 KV writes in ~16 minutes, above the whole
+account's daily budget.
+
+**Decision:** the per-client state now lives in the data-center Cache API
+(`caches.default`, `src/lib/edgecache.js`), which costs no KV writes, and
+the HIBP cache moved there too. Consequences:
+
+- No global rate-limiter budget remains to exhaust, so the "429 for every
+  visitor until midnight UTC" failure mode of the fail-closed design above
+  is no longer reachable by a single client.
+- The limit is per data center, which matches what the KV version did in
+  practice (eventual consistency meant colos could read stale counts). A
+  cache entry evicted before its window ends only resets that one
+  client's count.
+- KV remains as the fallback when the Cache API is unavailable (Node in the
+  tests, or a Worker fronted by Cloudflare Access). The fallback keeps the
+  fail-closed behavior, now with its cap counted in writes (2 per allowed
+  request).
+- The native WAF rate-limiting rule is still the preferred end state. It
+  enforces the limit before the Worker runs, so it also bounds CPU. It is
+  still a dashboard change, pending the repo owner.

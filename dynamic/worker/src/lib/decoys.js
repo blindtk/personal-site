@@ -15,6 +15,8 @@
 // Convenção: uma entrada terminada em '/' cobre o próprio path e tudo por
 // baixo dele (prefixo) — para os iscos declarados como glob no
 // wrangler.toml. Uma entrada sem '/' final é match exato.
+import { sanitizeText } from './sanitize.js';
+
 export const DECOYS = ['/wp-login.php', '/.env', '/admin', '/phpmyadmin/', '/.git/config'];
 
 /** true se `path` corresponde a algum isco (exato ou por prefixo, ver acima). */
@@ -23,4 +25,18 @@ export function isDecoy(path) {
     if (decoy.endsWith('/') ? path.startsWith(decoy) : path === decoy) return true;
   }
   return false;
+}
+
+// Tamanho máximo do path guardado por evento do honeypot (auditoria de
+// segurança 2026-09-25): o isco `/phpmyadmin/` é por prefixo, por isso o
+// resto do path é escolhido por quem pede e não tinha limite — ~200 eventos
+// com paths de 16 KB punham a chave `recent` (sem TTL) nos ~3 MB, a ser lida
+// e reescrita em cada toque seguinte e em cada refresh dos painéis. 128
+// chega para os paths que os scanners reais pedem (`/phpmyadmin/setup.php`,
+// `/phpmyadmin/scripts/setup.php`, ...).
+export const MAX_DECOY_PATH = 128;
+
+/** Path do isco pronto a guardar: tamanho limitado, sem controlos nem `<>`. */
+export function boundDecoyPath(path) {
+  return sanitizeText(typeof path === 'string' ? path : '', MAX_DECOY_PATH);
 }
