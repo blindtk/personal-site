@@ -45,11 +45,13 @@ jobs:
 
           labels=()
           case "$HEAD" in claude/*) labels+=(claude);; esac
-          grep -q  '^content/'          <<<"$files" && labels+=(content)       || true
-          grep -q  '^static/'           <<<"$files" && labels+=(static)        || true
-          grep -q  '^dynamic/'          <<<"$files" && labels+=(dynamic)       || true
-          grep -q  '^\.github/'         <<<"$files" && labels+=(ci)            || true
-          grep -qE '^docs/|^[^/]+\.md$' <<<"$files" && labels+=(documentation) || true
+          # `if`, não `grep && labels+=() || true`: SC2015 (o shellcheck do
+          # runner hospedado reporta-o; o 0.11 já não) — e é mais legível.
+          if grep -q  '^content/'          <<<"$files"; then labels+=(content);       fi
+          if grep -q  '^static/'           <<<"$files"; then labels+=(static);        fi
+          if grep -q  '^dynamic/'          <<<"$files"; then labels+=(dynamic);       fi
+          if grep -q  '^\.github/'         <<<"$files"; then labels+=(ci);            fi
+          if grep -qE '^docs/|^[^/]+\.md$' <<<"$files"; then labels+=(documentation); fi
 
           if [ ${#labels[@]} -eq 0 ]; then
             echo "Sem labels a aplicar."
