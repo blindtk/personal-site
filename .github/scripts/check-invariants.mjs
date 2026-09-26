@@ -3,7 +3,7 @@
 // are PULL only — they show data when someone deliberately opens the page,
 // but nothing warns anyone when something breaks. This is the missing piece:
 // it checks the Worker's read endpoints and returns exit 1 if something is
-// genuinely wrong, so the workflow (invariants.yml) can open an Issue that
+// genuinely wrong, so the workflow (verify-worker.yml) can open an Issue that
 // reaches the repo owner without them having to go looking.
 //
 // Target, same pattern as check-headers.mjs:

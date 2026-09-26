@@ -10,7 +10,7 @@
 # poder aplicar. As que faltam hoje: content, static, dynamic, ci
 # (claude e documentation já existem). Se faltar alguma, o passo falha —
 # de propósito, para dar sinal em vez de a criar silenciosamente.
-name: Labeler
+name: update-pr-labels
 
 on:
   pull_request:
@@ -45,15 +45,22 @@ jobs:
 
           labels=()
           case "$HEAD" in claude/*) labels+=(claude);; esac
-          grep -q  '^content/'          <<<"$files" && labels+=(content)       || true
-          grep -q  '^static/'           <<<"$files" && labels+=(static)        || true
-          grep -q  '^dynamic/'          <<<"$files" && labels+=(dynamic)       || true
-          grep -q  '^\.github/'         <<<"$files" && labels+=(ci)            || true
-          grep -qE '^docs/|^[^/]+\.md$' <<<"$files" && labels+=(documentation) || true
+          # `if`, não `grep && labels+=() || true`: SC2015 (o shellcheck do
+          # runner hospedado reporta-o; o 0.11 já não) — e é mais legível.
+          if grep -q  '^content/'          <<<"$files"; then labels+=(content);       fi
+          if grep -q  '^static/'           <<<"$files"; then labels+=(static);        fi
+          if grep -q  '^dynamic/'          <<<"$files"; then labels+=(dynamic);       fi
+          if grep -q  '^\.github/'         <<<"$files"; then labels+=(ci);            fi
+          if grep -qE '^docs/|^[^/]+\.md$' <<<"$files"; then labels+=(documentation); fi
 
           if [ ${#labels[@]} -eq 0 ]; then
             echo "Sem labels a aplicar."
             exit 0
           fi
           echo "A aplicar: ${labels[*]}"
-          gh pr edit "$PR" --repo "$REPO" $(printf ' --add-label %s' "${labels[@]}")
+          # Um argumento por label, sem word splitting (SC2046, apanhado pelo
+          # actionlint a 2026-09-25): as labels de hoje não têm espaços, mas
+          # a forma anterior partia-se na primeira que tivesse.
+          args=()
+          for label in "${labels[@]}"; do args+=(--add-label "$label"); done
+          gh pr edit "$PR" --repo "$REPO" "${args[@]}"

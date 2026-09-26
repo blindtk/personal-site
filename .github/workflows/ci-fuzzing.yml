@@ -29,7 +29,7 @@
 # por esta action — mesmo resultado com ou sem). Cron desligado até a
 # Google corrigir a imagem publicada; corre manualmente (workflow_dispatch)
 # de vez em quando para verificar se já passou a funcionar.
-name: Fuzzing
+name: ci-fuzzing
 
 on:
   workflow_dispatch: {}

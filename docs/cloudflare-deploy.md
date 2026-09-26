@@ -164,7 +164,7 @@ order**):
 | 5 | Blocked Countries - Site | outside the paths above **and** country is not PT | **Block**, stops evaluation |
 
 Why each rule:
-- **2**: `.github/workflows/headers.yml` and `.github/workflows/invariants.yml`
+- **2**: `.github/workflows/verify-headers.yml` and `.github/workflows/verify-worker.yml`
   `fetch` production from GitHub runners (usually outside PT) — without
   this rule, both workflows fall into the country policy (rules 4/5) after
   launch and start reporting production as broken because of the WAF
@@ -252,7 +252,7 @@ session with no access to the repository's GitHub settings); worth
 confirming manually that it was done.
 
 **Deployment-triggered workflows and fork PRs (2026-09-25 security
-audit).** `headers.yml` runs on `deployment_status`. For that event GitHub
+audit).** `verify-headers.yml` runs on `deployment_status`. For that event GitHub
 runs the workflow file and checks out the code from the **deployment's
 commit**, not from `main`. So if the Pages project ever deploys a commit
 from a fork PR, that PR's own version of the workflow runs, with whatever
@@ -270,8 +270,8 @@ that:
   `production-checks` restricted to the `main` branch. Move
   `CI_WAF_TOKEN`, `ACCESS_CLIENT_ID` and `ACCESS_CLIENT_SECRET` from
   repository secrets into it, and add `environment: production-checks` to
-  the jobs that use them (`headers.yml`, `invariants.yml`,
-  `tls-check.yml`). A workflow from any other ref then cannot read them.
+  the jobs that use them (`verify-headers.yml`, `verify-worker.yml`,
+  `verify-tls.yml`). A workflow from any other ref then cannot read them.
 
 ## 7. Current status and what's left
 

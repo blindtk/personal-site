@@ -4,7 +4,7 @@
 # (que varre os dois lockfiles inteiros a cada push/PR). Complementar, não
 # redundante: isto é o gate rápido no diff; o OSV é a rede de segurança
 # completa.
-name: Dependency Review
+name: security-dependency-review
 
 on:
   pull_request:

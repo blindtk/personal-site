@@ -49,7 +49,7 @@ build-time generation, no per-page `<meta>`.
 > layer on top of it is gone. See `dynamic/PLAN.md`.
 >
 > The presence of these headers in production is checked automatically by
-> the `Headers` workflow (`.github/workflows/headers.yml`) against the
+> the `Headers` workflow (`.github/workflows/verify-headers.yml`) against the
 > versioned list in `.github/expected-headers.json` — after every deploy
 > and on a daily cron.
 

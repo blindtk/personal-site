@@ -27,10 +27,10 @@
        now stored truncated to 128 characters (`boundDecoyPath`), and
        existing entries shrink on the next event. The cap is checked
        before the buckets are read.
-    4. *(needs validation)* `headers.yml` on `deployment_status` ran with
+    4. *(needs validation)* `verify-headers.yml` on `deployment_status` ran with
        `CI_WAF_TOKEN`. The token is now withheld from `deployment_status`
        runs and only ever sent to the production origin
-       (`isProductionTarget`), including by `tls-check.yml`. The part
+       (`isProductionTarget`), including by `verify-tls.yml`. The part
        source cannot close is a workflow file modified in a fork commit.
        That needs the owner to keep Pages from building fork PRs and to
        move the secrets to an Environment restricted to `main`
@@ -79,7 +79,7 @@
   reappear, reopen with the flag and re-evaluate the risk now that
   production is no longer behind Access.
 
-- **2026-07-29 — `invariants.yml` workflow: closes the detection → alert
+- **2026-07-29 — `verify-worker.yml` workflow: closes the detection → alert
   loop** (discussed with the repo owner after the same day's security
   review): the honeypot/threat-intel/CT/CF-stats dashboards are
   **pull-only** — they show data when someone opens the page on purpose,
@@ -129,7 +129,7 @@
   real `wrangler dev`/`deploy` do (the workerd binary), and those stay
   manual, outside CI.
 
-- **2026-07-29 — `supply-chain.yml` workflow (weekly + manual): `npm
+- **2026-07-29 — `security-supply-chain.yml` workflow (weekly + manual): `npm
   audit signatures` + SBOM (CycloneDX)**: verification of npm registry
   signatures (catches a package served without its expected signature —
   a compromised registry, a tampered mirror) and generation of a real SBOM

@@ -1,6 +1,6 @@
 # Build do site. Actions pinadas por commit SHA (o Renovate atualiza os
 # digests); as verificações de segurança vivem em security.yml.
-name: CI
+name: ci
 
 on:
   push:

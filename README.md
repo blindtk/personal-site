@@ -1,16 +1,16 @@
 # personal-site
 
-[![CI](https://github.com/blindtk/personal-site/actions/workflows/ci.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/ci.yml)
-[![Security](https://github.com/blindtk/personal-site/actions/workflows/security.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security.yml)
-[![CodeQL](https://github.com/blindtk/personal-site/actions/workflows/codeql.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/codeql.yml)
-[![Headers](https://github.com/blindtk/personal-site/actions/workflows/headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/headers.yml)
-[![Supply chain](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/supply-chain.yml)
-[![Invariants](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/invariants.yml)
-[![TLS check](https://github.com/blindtk/personal-site/actions/workflows/tls-check.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/tls-check.yml)
-[![DNS check](https://github.com/blindtk/personal-site/actions/workflows/dns-check.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/dns-check.yml)
-[![Observatory check](https://github.com/blindtk/personal-site/actions/workflows/observatory-check.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/observatory-check.yml)
-[![Fuzzing](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/fuzzing.yml)
-[![Release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
+[![ci](https://github.com/blindtk/personal-site/actions/workflows/ci.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/ci.yml)
+[![security](https://github.com/blindtk/personal-site/actions/workflows/security.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security.yml)
+[![security-codeql](https://github.com/blindtk/personal-site/actions/workflows/security-codeql.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security-codeql.yml)
+[![verify-headers](https://github.com/blindtk/personal-site/actions/workflows/verify-headers.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/verify-headers.yml)
+[![security-supply-chain](https://github.com/blindtk/personal-site/actions/workflows/security-supply-chain.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/security-supply-chain.yml)
+[![verify-worker](https://github.com/blindtk/personal-site/actions/workflows/verify-worker.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/verify-worker.yml)
+[![verify-tls](https://github.com/blindtk/personal-site/actions/workflows/verify-tls.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/verify-tls.yml)
+[![verify-dns](https://github.com/blindtk/personal-site/actions/workflows/verify-dns.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/verify-dns.yml)
+[![verify-observatory](https://github.com/blindtk/personal-site/actions/workflows/verify-observatory.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/verify-observatory.yml)
+[![ci-fuzzing](https://github.com/blindtk/personal-site/actions/workflows/ci-fuzzing.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/ci-fuzzing.yml)
+[![release](https://github.com/blindtk/personal-site/actions/workflows/release.yml/badge.svg)](https://github.com/blindtk/personal-site/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/blindtk/personal-site/badge)](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site)
 
 Daniel Malaco's personal site: technical writing, interactive security
@@ -139,8 +139,8 @@ way — is documented in
 
 The repository treats its own build chain as attack surface. Every push/PR
 goes through build + tests + `npm audit`, Dependency Review, OSV-Scanner,
-gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), zizmor
-auditing the workflows themselves, and CodeRabbit for AI-assisted review
+gitleaks, CodeQL, Semgrep (with custom `.astro` DOM-XSS rules), zizmor and
+actionlint auditing the workflows themselves, and CodeRabbit for AI-assisted review
 (calibrated per-folder, not generic — `.coderabbit.yaml`). Production gets
 its own scheduled checks:
 security headers against a versioned allowlist, a TLS/cipher scan, DNS
