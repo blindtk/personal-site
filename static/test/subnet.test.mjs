@@ -27,6 +27,9 @@ test('classify: gamas conhecidas RFC 1918/3927/6598/5771 e público', () => {
   assert.equal(classify(parseCidr('100.64.0.1/32').ip), 'cgnat');
   assert.equal(classify(parseCidr('100.127.255.254/32').ip), 'cgnat');
   assert.equal(classify(parseCidr('224.0.0.1/32').ip), 'multicast');
+  assert.equal(classify(parseCidr('239.255.255.255/32').ip), 'multicast'); // topo de 224.0.0.0/4
+  assert.equal(classify(parseCidr('240.0.0.1/32').ip), 'public'); // logo acima do multicast
+  assert.equal(classify(parseCidr('169.1.1.1/32').ip), 'public'); // link-local é só 169.254/16
   assert.equal(classify(parseCidr('8.8.8.8/32').ip), 'public');
 });
 

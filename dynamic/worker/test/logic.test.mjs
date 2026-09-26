@@ -51,6 +51,11 @@ test('sanitizeText remove controlos, tags e trunca', () => {
   assert.equal(sanitizeText(42), '');
 });
 
+test('sanitizeText: texto com exatamente maxLen chars não é truncado', () => {
+  assert.equal(sanitizeText('a'.repeat(10), 10), 'a'.repeat(10));
+  assert.equal(sanitizeText('a'.repeat(11), 10), `${'a'.repeat(9)}…`);
+});
+
 test('normalizeCveId valida o formato', () => {
   assert.equal(normalizeCveId('cve-2026-1042'), 'CVE-2026-1042');
   assert.equal(normalizeCveId('CVE-2026-1'), '');
@@ -207,6 +212,14 @@ test('rate limit: janela fixa bloqueia ao atingir o máximo', () => {
   // nova janela liberta
   const s4 = nextState(s3.state, { ...cfg, now: 1000 + 60_001 });
   assert.equal(s4.allowed, true);
+});
+
+test('rate limit: a janela reinicia no ms exato em que termina, nem antes', () => {
+  const cfg = { now: 1000, windowMs: 60_000, max: 1 };
+  const cheio = nextState(nextState(null, cfg).state, cfg);
+  assert.equal(cheio.allowed, false);
+  assert.equal(nextState(cheio.state, { ...cfg, now: 1000 + 59_999 }).allowed, false);
+  assert.equal(nextState(cheio.state, { ...cfg, now: 1000 + 60_000 }).allowed, true);
 });
 
 test('dailySalt roda por dia UTC', () => {
@@ -395,6 +408,12 @@ test('floorToWindow arredonda ao início da janela (anonimização)', () => {
   assert.equal(floorToWindow(base + 123_456, w) % w, 0);
 });
 
+test('floorToWindow: input que não é número finito, ou janela não positiva, passa intacto', () => {
+  assert.equal(floorToWindow('x', 300_000), 'x');
+  assert.ok(Number.isNaN(floorToWindow(NaN, 300_000)));
+  assert.equal(floorToWindow(123, 0), 123);
+});
+
 // ---------- cap de escritas ao KV (tarefa 6) ----------
 
 test('underCap: bloqueia ao teto e reinicia por janela', () => {
@@ -487,6 +506,15 @@ test('isPublicIp: aceita IPv6 público real', () => {
   assert.equal(isPublicIp('2001:4860:4860::8888'), true); // Google DNS
   assert.equal(isPublicIp('2606:4700:4700::1111'), true); // Cloudflare DNS
   assert.equal(isPublicIp('::ffff:8.8.8.8'), true); // IPv4 mapeado, público
+});
+
+test('isPublicIp: IPv6 malformado dentro de 2000::/3 é rejeitado (falha fechado)', () => {
+  // Todos começam por um prefixo global — um parser permissivo aceitá-los-ia.
+  assert.equal(isPublicIp('2001:4860::zzzz'), false); // hex inválido
+  assert.equal(isPublicIp('2001:4860::88888'), false); // grupo com 5 dígitos
+  assert.equal(isPublicIp('1::2::3'), false); // "::" duas vezes
+  assert.equal(isPublicIp('2001:4860:4860:0:0:0:0:8888:1'), false); // 9 grupos
+  assert.equal(isPublicIp('2001:4860:4860:8888'), false); // 4 grupos sem "::"
 });
 
 // ---------- ipthreat: lista de ameaças por IP (ADR 0020) ----------
