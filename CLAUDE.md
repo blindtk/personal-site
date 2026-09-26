@@ -62,6 +62,21 @@ npm run preview   # serve the build locally
   `dynamic/PLAN.md`, and this file are in English; see the note in
   `README.md`'s Contributing section for the reasoning.
 
+## Writing tests
+
+- A test must fail on a real bug that nothing else catches (the rest of the
+  suite, the `verify-*` workflows against production). If you can't name
+  that bug, don't write the test.
+- Before writing a guard (`ipguard`, `sanitize`, rate limits, caps), list
+  how it can fail; each test covers one failure mode. Pin the **exact
+  boundary**: the ms a window ends, a string of exactly `maxLen`, the last
+  address of a range. Malformed input that must fail closed gets its own
+  vector.
+- Pure logic takes known vectors (RFCs, real addresses); don't restate the
+  implementation. No snapshots of built HTML, no assertions on CSS classes,
+  no mocks of this repo's own modules. Mock only at the edge (`fetch`, KV,
+  Cache API, the clock).
+
 ## Before finishing any change
 
 1. `cd static && npm run build` — must complete with no errors or new warnings.
