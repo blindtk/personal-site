@@ -56,6 +56,25 @@ test('sanitizeText: texto com exatamente maxLen chars não é truncado', () => {
   assert.equal(sanitizeText('a'.repeat(11), 10), `${'a'.repeat(9)}…`);
 });
 
+test('sanitizeText: truncar não parte um emoji (par de surrogates) ao meio', () => {
+  // o corte cai entre as duas metades do 😀: sai o emoji inteiro, não meio
+  assert.equal(sanitizeText('a😀cd', 3), 'a…');
+  // o corte cai logo a seguir ao emoji: fica inteiro
+  assert.equal(sanitizeText('a😀cd', 4), 'a😀…');
+  // surrogate solto na entrada (JSON de fora) não chega ao cliente
+  assert.equal(sanitizeText('a\uD83Db'), 'a\uFFFDb');
+});
+
+test('sanitizeText remove controlos C1 e controlos bidi', () => {
+  // C1: U+0080 e U+009F são os extremos do intervalo; U+009B é o CSI
+  assert.equal(sanitizeText('a\u0080b\u009Bc\u009Fd'), 'a b c d');
+  // U+00A0 (NBSP) é o primeiro a seguir ao C1: não é controlo, \s colapsa-o
+  assert.equal(sanitizeText('a\u00A0b'), 'a b');
+  // RLO num user-agent inverteria visualmente o resto no painel
+  assert.equal(sanitizeText('curl\u202E1.8/exe'), 'curl1.8/exe');
+  assert.equal(sanitizeText('\u200E\u200F\u061C\u202A\u202D\u2066\u2069x'), 'x');
+});
+
 test('normalizeCveId valida o formato', () => {
   assert.equal(normalizeCveId('cve-2026-1042'), 'CVE-2026-1042');
   assert.equal(normalizeCveId('CVE-2026-1'), '');

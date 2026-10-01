@@ -78,18 +78,29 @@ export function escapeHtml(str) {
 
 /**
  * Texto plano seguro: remove caracteres de controlo e os sinais de tag,
- * colapsa espaços e trunca. Nunca devolve markup.
+ * colapsa espaços e trunca. Nunca devolve markup nem UTF-16 malformado.
  */
 export function sanitizeText(input, maxLen = 160) {
   if (typeof input !== 'string') return '';
   const cleaned = input
-    // remove caracteres de controlo (C0 + DEL), incluindo \n e \t
-    .replace(/[\x00-\x1F\x7F]/g, ' ')
+    // surrogates soltos (JSON de fora pode trazê-los) viram U+FFFD
+    .toWellFormed()
+    // remove caracteres de controlo (C0 + DEL + C1), incluindo \n e \t —
+    // o C1 inclui o CSI (U+009B), que um terminal interpreta como ESC [
+    .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
+    // controlos bidi (LRM/RLM/ALM, embeddings/overrides, isolates): um
+    // U+202E num path do honeypot ou num user-agent inverte visualmente o
+    // resto do texto no painel. São invisíveis, por isso saem sem espaço.
+    .replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '')
     // tira sinais de tag por precaução (o texto legítimo não os tem)
     .replace(/[<>]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
-  return cleaned.length > maxLen ? `${cleaned.slice(0, maxLen - 1)}…` : cleaned;
+  if (cleaned.length <= maxLen) return cleaned;
+  let cut = cleaned.slice(0, maxLen - 1);
+  // não partir um par de surrogates (emoji e afins) ao meio
+  if (/[\uD800-\uDBFF]$/.test(cut)) cut = cut.slice(0, -1);
+  return `${cut}…`;
 }
 
 /** Valida/normaliza um CVE-ID (CVE-AAAA-NNNN+). Devolve '' se inválido. */
