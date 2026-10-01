@@ -1,0 +1,44 @@
+# Dicionário do libFuzzer para sanitize_fuzz: tokens que a mutação às cegas
+# dificilmente monta sozinha byte a byte. Bytes UTF-8 em \xNN.
+
+# markup e entidades (escapeHtml / sanitizeText)
+"<"
+">"
+"&"
+"\""
+"'"
+"&amp;"
+"&lt;"
+"&#39;"
+"<script>"
+
+# controlo C0/DEL e espaços que o \s apanha
+"\x00"
+"\x09"
+"\x0a"
+"\x0d"
+"\x7f"
+# NBSP, U+2028, U+FEFF
+"\xc2\xa0"
+"\xe2\x80\xa8"
+"\xef\xbb\xbf"
+
+# controlo C1 (U+0085, U+009B CSI) e bidi (U+202E RLO)
+"\xc2\x85"
+"\xc2\x9b"
+"\xe2\x80\xae"
+
+# fora do BMP (par de surrogates em UTF-16) e UTF-8 inválido
+"\xf0\x9f\x98\x80"
+"\xed\xa0\x80"
+"\xff"
+
+# formatos dos normalizadores
+"CVE-"
+"CVE-2024-"
+"1234567"
+"AS"
+"4294967294"
+"4294967295"
+"pt"
+"PT"

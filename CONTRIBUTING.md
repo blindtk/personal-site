@@ -42,9 +42,10 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
    [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) §4.
 5. If you touched `dynamic/worker/src/lib/sanitize.js`, also run the
    fuzzing harness locally (`.clusterfuzzlite/fuzz/`) for a few seconds,
-   to confirm it still compiles and runs without crashing:
+   to confirm it still compiles and its contract checks still hold (same
+   Jazzer.js version and dictionary as CI):
    ```bash
-   npx --yes -p @jazzer.js/core@4.0.0 jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=5
+   npx --yes -p @jazzer.js/core@2.1.0 jazzer .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync -- -max_total_time=30 -dict=.clusterfuzzlite/fuzz/sanitize_fuzz.dict
    ```
 6. Open the Pull Request — the template
    (`.github/pull_request_template.md`) guides what to include. CI
