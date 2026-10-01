@@ -923,6 +923,19 @@ function crtshEntry(over = {}) {
 const CT_NOW = Date.parse('2026-07-17T12:00:00Z');
 const CT_OPTS = { domain: 'danielmala.co', now: CT_NOW };
 
+// Os testes do endpoint correm com o relógio real (o /api/ct filtra à janela
+// de CT_WINDOW_DAYS a partir de Date.now()), por isso as datas do fixture
+// têm de ser relativas a agora — datas fixas expiram e o teste parte sozinho.
+function recentCrtshEntry() {
+  const crtshDate = (ms) => new Date(ms).toISOString().replace(/Z$/, ''); // crt.sh: sem timezone
+  const now = Date.now();
+  return crtshEntry({
+    entry_timestamp: crtshDate(now - 86400_000),
+    not_before: crtshDate(now - 86400_000 - 3600_000),
+    not_after: crtshDate(now + 89 * 86400_000),
+  });
+}
+
 test('issuerLabel: DN do crt.sh → rótulo curto sanitizado', () => {
   assert.equal(issuerLabel("C=US, O=Let's Encrypt, CN=R11"), "Let's Encrypt R11");
   assert.equal(issuerLabel('C=US, O=Google Trust Services, CN=WE1'), 'Google Trust Services WE1');
@@ -999,7 +1012,7 @@ test('/api/ct: junta as duas queries do crt.sh, deduplica e devolve o sumário',
   globalThis.fetch = async (url) => {
     urls.push(String(url));
     // as duas queries devolvem o mesmo certificado — a dedupe trata da sobreposição
-    return { ok: true, status: 200, json: async () => [crtshEntry()] };
+    return { ok: true, status: 200, json: async () => [recentCrtshEntry()] };
   };
   try {
     const res = await runFetch(fakeRequest('/api/ct'), env);
@@ -1023,7 +1036,7 @@ test('/api/ct: uma query falhada degrada para a outra; as duas → 502', async (
   globalThis.fetch = async () => {
     call += 1;
     if (call === 1) throw new Error('timeout');
-    return { ok: true, status: 200, json: async () => [crtshEntry()] };
+    return { ok: true, status: 200, json: async () => [recentCrtshEntry()] };
   };
   try {
     const res = await runFetch(fakeRequest('/api/ct'), env);
