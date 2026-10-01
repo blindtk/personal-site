@@ -24,4 +24,13 @@ COPY .clusterfuzzlite/package.json $SRC/repo/package.json
 COPY .clusterfuzzlite/package-lock.json $SRC/repo/package-lock.json
 COPY .clusterfuzzlite/build.sh $SRC/
 
+# Com sanitizer: coverage (o único aceite para JS, ver ci-fuzzing.yml), o
+# compile do OSS-Fuzz copia o $SRC inteiro para $OUT/src depois do
+# build.sh, para os relatórios de cobertura. O $SRC da imagem base traz o
+# honggfuzz, cujos wrappers de compilador (hfuzz_cc/hfuzz-clang, …)
+# contêm a string LLVMFuzzerTestOneInput — o run_fuzzers apanhava-os como
+# alvos e "crashavam" sempre (execvp('clang'): No such file or directory).
+# Com libFuzzer (o único engine para JS) o honggfuzz não é usado.
+RUN rm -rf $SRC/honggfuzz
+
 WORKDIR $SRC/repo

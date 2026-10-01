@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@jazzer.js/core": "4.0.0"
+    "@jazzer.js/core": "2.1.0"
+  },
+  "overrides": {
+    "tar": "7.5.22"
   }
 }
