@@ -1,10 +1,12 @@
 # Release assinada (Sigstore) para o Scorecard reconhecer Signed-Releases —
-# não faz deploy nenhum: o Worker continua manual (npx wrangler deploy à
-# mão, ver dynamic/PLAN.md), este workflow só empacota o que já passou no CI
-# (ci.yml) e assina a proveniência dos tarballs com
+# não faz deploy nenhum: o deploy é da Cloudflare a cada push para main
+# (Workers Builds para o Worker, Pages para o site — ver
+# docs/cloudflare-deploy.md §4), este workflow só empacota o que já passou no
+# CI (ci.yml) e assina a proveniência dos tarballs com
 # actions/attest-build-provenance (build_fuzzers/run_fuzzers idem para o
-# alerta de Fuzzing, ver ci-fuzzing.yml). O dono cria a tag manualmente depois
-# de fazer o deploy à mão.
+# alerta de Fuzzing, ver ci-fuzzing.yml). O dono cria a tag manualmente
+# depois de confirmar que o deploy desse commit passou (checks "Workers
+# Builds" e "Cloudflare Pages" verdes no commit).
 #
 # Dois jobs, não um: `build` corre `npm ci`/`npx wrangler` (código de
 # terceiros) e só tem contents: read; `release` (assina + publica) é o
@@ -137,9 +139,25 @@ jobs:
           name: release-artifacts
 
       - name: Assinar proveniência (Sigstore)
+        id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: '*.tar.gz'
+
+      # A attestation fica na API de attestations do GitHub, não na Release —
+      # e o check Signed-Releases do Scorecard só olha para os ficheiros da
+      # Release (`*.intoto.jsonl` = proveniência, `*.sigstore*` = assinatura).
+      # Sem isto a v2026.10.01 saiu assinada e o Scorecard continuou a dar 0.
+      # Anexam-se as duas formas: o bundle Sigstore completo (verificável com
+      # `gh attestation verify <tarball> --bundle provenance.sigstore.json`)
+      # e o envelope DSSE com o statement in-toto/SLSA, numa linha.
+      - name: Exportar proveniência para a Release
+        env:
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          cp "$BUNDLE_PATH" provenance.sigstore.json
+          jq -c '.dsseEnvelope' "$BUNDLE_PATH" > provenance.intoto.jsonl
+          test -s provenance.intoto.jsonl
 
       - name: Criar GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -151,3 +169,5 @@ jobs:
             worker-bundle.tar.gz
             static/sbom-static.cdx.json
             dynamic/worker/sbom-worker.cdx.json
+            provenance.sigstore.json
+            provenance.intoto.jsonl
