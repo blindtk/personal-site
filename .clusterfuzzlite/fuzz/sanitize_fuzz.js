@@ -15,6 +15,7 @@ import {
 	normalizeCveId,
 } from "../../dynamic/worker/src/lib/sanitize.js";
 
+/** Lança com o input e o output quando uma propriedade do contrato falha. */
 function check(ok, what, input, output) {
 	if (!ok) {
 		throw new Error(
@@ -23,6 +24,7 @@ function check(ok, what, input, output) {
 	}
 }
 
+/** Inverso de escapeHtml (ordem inversa: &amp; por último). */
 function unescapeHtml(s) {
 	return s
 		.replaceAll("&#39;", "'")
@@ -46,7 +48,14 @@ export function fuzz(data) {
 	// sanitizeText: texto plano, nunca markup, nunca maior que maxLen.
 	const plain = sanitizeText(text, maxLen);
 	check(!/[<>]/.test(plain), "sanitizeText deixou < ou >", text, plain);
-	check(!/[\x00-\x1F\x7F]/.test(plain), "sanitizeText deixou controlo C0/DEL", text, plain);
+	check(!/[\x00-\x1F\x7F-\x9F]/.test(plain), "sanitizeText deixou controlo C0/DEL/C1", text, plain);
+	check(
+		!/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/.test(plain),
+		"sanitizeText deixou controlo bidi",
+		text,
+		plain,
+	);
+	check(plain.isWellFormed(), "sanitizeText devolveu UTF-16 malformado", text, plain);
 	check(plain.length <= maxLen, `sanitizeText passou maxLen=${maxLen}`, text, plain);
 	check(!/\s\s/.test(plain), "sanitizeText deixou espaços seguidos", text, plain);
 	check(plain === plain.trimStart(), "sanitizeText deixou espaço inicial", text, plain);
