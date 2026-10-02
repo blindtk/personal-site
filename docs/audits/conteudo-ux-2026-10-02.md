@@ -115,3 +115,29 @@ página, `hreflang` e `og:image` por idioma.
 3. Chave PGP: publicar ou retirar a caixa?
 4. Lab com 5 ferramentas: intencional?
 5. Que lotes aprovas?
+
+---
+
+## Estado — implementação (mesmo dia)
+
+Decisões do dono: sem CTA na Home (C1 fechado sem alteração); números do
+site retirados da Home e substituídos por números pessoais (C2); caixa PGP
+retirada (C5); Lab com 5 ferramentas é intencional (C8); todos os lotes
+aprovados.
+
+| Lote | Achados | Estado |
+|---|---|---|
+| 1 | U1, U2, U3, U6, U9, U11, U12, U13, C6 | ✅ |
+| 2+3 | U4, U5, C2 (C1 dispensado) | ✅ — painel "em números": anos, países, certificações, CTFs, todos calculados no build |
+| 4 | C3, U10 | ✅ |
+| 5 | C4 | ✅ — só a Home usa a descrição por omissão |
+| 6 | U7 | ✅ — e as mensagens que diziam "o Worker ainda não está publicado" passaram a "não respondeu" |
+| 7 | U8, C5 | ✅ |
+| — | C7 (blog), C8 (Lab) | por decisão do dono, sem alteração |
+
+**Verificação depois das alterações** (mesmo método da Fase 1):
+`npm run build` e `astro check` limpos, `npm test` 131/131; axe sem
+violações nas 21 páginas a 390px e 1440px; nenhum overflow horizontal;
+Lighthouse mobile — Home 99/100/100/100, Sobre, Este site e ATT&CK com
+acessibilidade 100 e CLS 0 (o 96 de best-practices em Este site são os
+erros de consola de não haver Worker em local).
