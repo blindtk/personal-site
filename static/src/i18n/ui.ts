@@ -27,6 +27,26 @@ export const ui = {
     // Bloco de cross-links partilhado pelas páginas do "sistema" do site
     // (Segurança, Honeypot, Cloudflare, Provas, Performance e o projeto
     // este-site — ATT&CK fica de fora de propósito, ver SiteLayers.astro).
+    // <meta name="description"> por página (≤ 155 caracteres) — chave = a
+    // RouteKey de routes.ts; BaseLayout escolhe pela rota atual. Sem entrada
+    // (ex.: home) usa SITE.description de config.ts. Projetos, posts e
+    // ferramentas trazem a sua própria descrição.
+    metaDesc: {
+      about: 'Percurso de Daniel Malaco: de redes de metro e ferrovia em 5 países à arquitetura de segurança de infraestrutura crítica rodoviária.',
+      projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot ligado ao MITRE ATT&CK, um homelab k3s e mais.',
+      tools: 'Ferramentas de rede e segurança: subnets, hashes, CSP, cabeçalhos de email, EXIF, passkeys e mais — a maioria corre só no browser.',
+      links: 'Repositórios do GitHub organizados por categoria e as ferramentas externas de rede e segurança que uso no dia a dia.',
+      contact: 'Como contactar Daniel Malaco — email, GitHub, LinkedIn e Credly — e a política de divulgação responsável (security.txt).',
+      lab: 'Um ambiente de trabalho no browser: terminal e as ferramentas do site em janelas, para explorar sem sair da página.',
+      siteOverview: 'Como este site é construído, protegido e monitorizado — stack, arquitetura e estado ao vivo, com observabilidade própria.',
+      security: 'A postura de segurança deste site: modelo de ameaça, cabeçalhos HTTP, privacidade, cadeia de entrega e como reportar vulnerabilidades.',
+      honeypot: 'Endpoints-isco deste site e o scan automático que os toca, ao vivo — correlacionado com MITRE ATT&CK e CISA KEV.',
+      cloudflare: 'O que a Cloudflare vê e trava na zona deste site, ao vivo: pedidos, ameaças, países e redes de origem.',
+      performance: 'Performance real deste site: pedidos ao longo do tempo, cache e Core Web Vitals (LCP, INP, CLS, TTFB) medidos em visitas reais.',
+      evidence: 'Provas verificáveis deste site, geradas no build ou lidas ao vivo: último commit, cabeçalhos, Certificate Transparency e workflows de CI.',
+      attack: 'Heatmap pessoal do MITRE ATT&CK: as técnicas que cubro defensivamente, tática a tática, e o que as cobre.',
+      certifications: 'Certificações de Daniel Malaco — Fortinet, SANS, Microsoft, CyberDefenders e mais — com verificação independente no Credly.',
+    },
     layers: {
       title: 'Este site, por camadas',
       intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
@@ -1036,6 +1056,26 @@ export const ui = {
     // Shared cross-link block for the site's "system" pages (Security,
     // Honeypot, Cloudflare, Evidence, Performance and the este-site
     // project — ATT&CK is deliberately left out, see SiteLayers.astro).
+    // Per-page <meta name="description"> (≤ 155 chars) — key = the RouteKey
+    // in routes.ts; BaseLayout picks it from the current route. No entry
+    // (e.g. home) falls back to SITE.description in config.ts. Projects,
+    // posts and tools carry their own description.
+    metaDesc: {
+      about: 'Daniel Malaco’s path: from metro and rail networks in 5 countries to security architecture for critical road infrastructure.',
+      projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot mapped to MITRE ATT&CK, a k3s homelab and more.',
+      tools: 'Networking and security tools: subnets, hashes, CSP, email headers, EXIF, passkeys and more — most run entirely in your browser.',
+      links: 'GitHub repositories organised by category, and the external networking and security tools I use day to day.',
+      contact: 'How to reach Daniel Malaco — email, GitHub, LinkedIn and Credly — and the responsible disclosure policy (security.txt).',
+      lab: 'A desktop in the browser: a terminal and the site’s tools in windows, to explore without leaving the page.',
+      siteOverview: 'How this site is built, protected and monitored — stack, architecture and live status, with its own observability.',
+      security: 'This site’s security posture: threat model, HTTP headers, privacy, delivery chain, and how to report vulnerabilities.',
+      honeypot: 'This site’s decoy endpoints and the automated scanning that hits them, live — correlated with MITRE ATT&CK and CISA KEV.',
+      cloudflare: 'What Cloudflare sees and blocks on this site’s zone, live: requests, threats, source countries and networks.',
+      performance: 'This site’s real performance: requests over time, cache, and Core Web Vitals (LCP, INP, CLS, TTFB) measured on real visits.',
+      evidence: 'Verifiable evidence for this site, generated at build or read live: latest commit, headers, Certificate Transparency and CI workflows.',
+      attack: 'Personal MITRE ATT&CK heatmap: the techniques I cover defensively, tactic by tactic, and what covers them.',
+      certifications: 'Daniel Malaco’s certifications — Fortinet, SANS, Microsoft, CyberDefenders and more — independently verifiable on Credly.',
+    },
     layers: {
       title: 'This site, layer by layer',
       intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',

@@ -20,7 +20,12 @@ interface Props {
 const { lang, title, description, altUrl, active, wide } = Astro.props;
 const dict = t(lang);
 const otherLang: Lang = lang === 'pt' ? 'en' : 'pt';
-const desc = description ?? SITE.description[lang];
+// Descrição: a que a página passar (projetos, posts, ferramentas) ou, para
+// as rotas de routes.ts, a de dict.metaDesc[rota]; o resto (home, 404) cai
+// em SITE.description.
+const routeKey = (Object.keys(routes) as RouteKey[]).find((key) => routes[key][lang] === Astro.url.pathname);
+const routeDesc = routeKey && routeKey in dict.metaDesc ? dict.metaDesc[routeKey as keyof typeof dict.metaDesc] : undefined;
+const desc = description ?? routeDesc ?? SITE.description[lang];
 const pageTitle = `${title} · ${SITE.handle}`;
 
 // "Blog" só aparece na nav se houver pelo menos um post publicado
