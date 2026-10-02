@@ -1,29 +1,64 @@
 ---
 title: 'star-organizer'
-description: 'As estrelas do GitHub num catálogo navegável por categorias, gerado automaticamente.'
-tags: ['github', 'automação', 'curadoria']
+description: 'As estrelas do GitHub numa base de conhecimento por categorias — Markdown e JSON, atualizada todas as semanas.'
+tags: ['python', 'github-actions', 'automação', 'curadoria']
 order: 3
 ---
 
-Ferramenta que transforma a lista caótica de estrelas do GitHub num catálogo
-organizado por categorias. Gera `catalog/catalog.json`, que alimenta a
-biblioteca navegável no separador [Links](/links/) deste site.
+Uma CLI em Python que pega nas estrelas de qualquer utilizador do GitHub e
+as transforma numa base de conhecimento arrumada: um ficheiro Markdown por
+categoria, com front-matter YAML pronto para o Obsidian, e um
+`catalog.json` com o mesmo conteúdo para outras ferramentas consumirem. É
+esse JSON que alimenta a biblioteca navegável em [Links](/links/) e o
+comando `stars` do terminal do [Lab](/lab/). Nada está preso a uma pessoa:
+muda o `--user` e as regras e serve para outra conta.
 
-## Decisões técnicas
+## Como decide a categoria
 
-O `star_organizer.py` corre no repo `github-stars`, separado deste, com uma
-GitHub Action semanal (e a pedido) que gera `catalog/catalog.json` e comita a
-versão atualizada — mas `github-stars` é um repo **privado**, e
-`raw.githubusercontent.com` não serve ficheiros de repos privados sem
-autenticação (devolve 404, indistinguível de "o ficheiro não existe"). O
-desenho original — ler o catálogo em build time diretamente do raw do GitHub
-— não funciona por causa disso.
+As regras vivem num ficheiro editável, `categories.yaml`. Para cada
+repositório, cada categoria ganha pontos — 3 por *topic* que corresponda, 2
+por palavra-chave no nome, descrição ou *topics*, 1 pela linguagem — e só
+reclama o repositório a partir de 2 pontos, para que a linguagem sozinha
+nunca chegue (senão todo o Python acabava no mesmo sítio). A categoria com
+mais pontos fica como principal; as outras que passem o limiar viram
+*tags* secundárias.
 
-A solução atual, enquanto isso não muda: o `catalog.json` gerado é
-vendorizado à mão para `content/catalog.json` neste repo, e
-`static/src/lib/catalog.ts` importa-o como um import estático — sem pedido de
-rede. Um `content/catalog.json` em falta ou com schema inválido **falha o
-build**, de propósito: nunca há um fallback silencioso para dados de
-exemplo. O próximo passo, já no roadmap do [Lab](/lab/), é ler o catálogo via
-API do GitHub autenticada com um token, o que permite manter `github-stars`
-privado e voltar a sincronizar sem intervenção manual.
+À volta disto, três mecanismos fecham os casos difíceis:
+
+- **Subcategorias** para as categorias grandes (a de ferramentas de IA, por
+  exemplo, divide-se em agentes, servidores MCP, RAG, inferência local…).
+- **Nenhum repositório fica de fora**: o que não encaixa em regra nenhuma
+  vai para uma categoria de recurso ("Misc & Other") em vez de uma pilha de
+  "por classificar".
+- **Overrides** fixam à mão os repositórios sem descrição ou com *topics*
+  enganadores — cada grupo comentado no próprio ficheiro.
+
+As regras são revistas contra os dados reais: na revisão de setembro de
+2026 todos os repositórios foram verificados à mão, não só os novos. O
+método — reconstruir a colocação de tudo e comparar categoria *e*
+subcategoria com a execução anterior antes de publicar — mostra exatamente
+que repositórios cada alteração de regra move.
+
+## Automação, no homelab
+
+Uma GitHub Action reconstrói o catálogo todas as segundas-feiras (e a
+pedido) e só faz commit se algo mudou. Corre num runner self-hosted num
+Raspberry Pi 5 do [homelab](/projetos/homelab/) — e, por ser um runner
+persistente e partilhado, está endurecida como tal: actions fixadas por
+SHA, dependências de um lockfile com hashes, checkout sem guardar o token,
+e o token com permissão de escrita entregue só ao `git push` final. Cada PR
+passa por testes unitários, `ruff`, `bandit` e `pip-audit`, e por
+`gitleaks`, `zizmor` e `actionlint`.
+
+## Ligação a este site
+
+O repositório `github-stars` é **privado**, e o
+`raw.githubusercontent.com` não serve ficheiros de repositórios privados
+sem autenticação — devolve 404, indistinguível de "o ficheiro não existe".
+Por isso o `catalog.json` gerado é copiado à mão para `content/catalog.json`
+neste repositório, e `static/src/lib/catalog.ts` importa-o de forma
+estática, sem pedido de rede. Um ficheiro em falta ou com schema inválido
+**falha o build**, de propósito: nunca há um recurso silencioso a dados de
+exemplo. O passo seguinte, no roadmap do [Lab](/lab/), é ler o catálogo
+pela API do GitHub com um token, para manter o repositório privado e deixar
+de depender da cópia manual.
