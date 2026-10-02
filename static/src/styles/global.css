@@ -2152,6 +2152,44 @@ select {
   visibility: visible;
 }
 
+/* Telemóvel: as 14 colunas num scroll horizontal mostravam 1,5 táticas de
+   cada vez e o tooltip dependia de hover. Abaixo de 48rem as táticas ficam
+   empilhadas, sem scroll, e o "coberto por" de cada técnica aparece por
+   baixo dela, sempre visível. */
+@media (max-width: 47.99rem) {
+  .atk-hint,
+  .atk-fade { display: none; }
+  .atk-scroll { overflow-x: visible; }
+  .atk {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    gap: 1.1rem;
+  }
+  .atk-tactic {
+    min-height: 0;
+    font-size: 0.72rem;
+  }
+  .atk-cell {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.6rem;
+  }
+  .atk-tip {
+    position: static;
+    display: block;
+    width: auto;
+    max-width: none;
+    margin-top: 0.3rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--muted);
+    opacity: 1;
+    visibility: visible;
+  }
+  .atk-cell.prod, .atk-cell.exp { cursor: default; }
+}
+
 /* ---------- Rodapé ---------- */
 
 .site-footer {

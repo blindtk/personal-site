@@ -396,7 +396,7 @@ export const ui = {
       metaTitle: 'Cobertura MITRE ATT&CK',
       title: 'Heatmap ATT&CK pessoal',
       intro:
-        'As 14 táticas do MITRE ATT&CK Enterprise, com as técnicas que cubro defensivamente acesas. O meu CV na linguagem nativa da indústria — passa o rato (ou foca) numa técnica para ver o que a cobre.',
+        'As 14 táticas do MITRE ATT&CK Enterprise, com as técnicas que cubro defensivamente acesas. O meu CV na linguagem nativa da indústria — passa o rato (ou foca) numa técnica para ver o que a cobre; no telemóvel aparece por baixo de cada uma.',
       legendProd: 'Controlo em produção',
       legendExp: 'Experiência pontual / lab',
       legendOff: 'Fora do meu âmbito',
@@ -982,7 +982,6 @@ export const ui = {
       securityLink: 'Segurança',
       securityTxtLabel: 'security.txt (RFC 9116)',
       pgpLabel: 'Chave PGP',
-      pgpPending: 'por publicar — se precisares de canal cifrado entretanto, pede-me a chave por email.',
       note: 'Fora do terminal ando por homelab e CTFs — mais sobre isso na página',
       noteLink: 'Sobre',
     },
@@ -1401,7 +1400,7 @@ export const ui = {
       metaTitle: 'MITRE ATT&CK coverage',
       title: 'Personal ATT&CK heatmap',
       intro:
-        "The 14 tactics of MITRE ATT&CK Enterprise, with the techniques I cover defensively lit up. My CV in the industry's native language — hover (or focus) a technique to see what covers it.",
+        "The 14 tactics of MITRE ATT&CK Enterprise, with the techniques I cover defensively lit up. My CV in the industry's native language — hover (or focus) a technique to see what covers it; on a phone it shows under each one.",
       legendProd: 'Control in production',
       legendExp: 'Occasional experience / lab',
       legendOff: 'Outside my scope',
@@ -1975,7 +1974,6 @@ export const ui = {
       securityLink: 'Security page',
       securityTxtLabel: 'security.txt (RFC 9116)',
       pgpLabel: 'PGP key',
-      pgpPending: 'not published yet — if you need an encrypted channel in the meantime, ask me for the key by email.',
       note: 'Away from the terminal I run a homelab and do CTFs — more on that on the',
       noteLink: 'About',
     },

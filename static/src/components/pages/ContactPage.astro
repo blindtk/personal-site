@@ -84,10 +84,10 @@ const displayUrl = (url: string) => url.replace('https://', '').replace(/^www\./
     </div>
     <p>{c.securityBody} <a href={routes.security[lang]}>{c.securityLink}</a>.</p>
     <p class="mono"><a href="/.well-known/security.txt" rel="noopener">→ {c.securityTxtLabel}</a></p>
-    {SITE.contact.pgpFingerprint ? (
+    {/* Só aparece quando há chave publicada (config.ts). Sem chave, nada:
+       uma caixa de aviso "por publicar" lia-se como trabalho inacabado. */}
+    {SITE.contact.pgpFingerprint && (
       <p class="mono"><strong>{c.pgpLabel}:</strong> <code>{SITE.contact.pgpFingerprint}</code></p>
-    ) : (
-      <p class="hp-fallback">{c.pgpLabel}: {c.pgpPending}</p>
     )}
   </section>
 
