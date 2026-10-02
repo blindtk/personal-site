@@ -19,18 +19,14 @@ workers_dev = false
 preview_urls = false
 
 # --- Rotas no domínio ---
-# Faz o Worker interceptar os paths-isco e a API no próprio site, mantendo
-# a CSP connect-src 'self'. O resto do site continua servido pelo Pages.
+# Faz o Worker servir a API no próprio site, mantendo a CSP connect-src
+# 'self'. (Os paths-isco do honeypot interno saíram com o ADR 0022 — esses
+# pedidos voltam a ser só o 404 do Pages.) O resto do site continua servido pelo Pages.
 # Tem de ficar antes do [vars] abaixo: em TOML, uma chave solta depois de
 # abrir uma tabela ([vars]) pertence a essa tabela — foi assim que "routes"
 # acabou a ser lido como env.routes (variável), em vez da config de rotas.
 routes = [
   { pattern = "danielmala.co/api/*", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/wp-login.php", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/.env", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/admin", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/phpmyadmin/*", zone_name = "danielmala.co" },
-  { pattern = "danielmala.co/.git/config", zone_name = "danielmala.co" },
 ]
 
 # Um namespace KV. Cria-o e cola o id:
@@ -61,21 +57,6 @@ SCAN_TARGET = "https://danielmala.co/"
 # Services, o par primário/backup que a Cloudflare usa). Qualquer
 # certificado de outro emissor aparece como "inesperado" no painel.
 CT_EXPECTED_ISSUERS = ""
-# Marca temporal do deploy (epoch ms) para "tempo até 1.º scan". Opcional:
-# se vazio, usa a 1.ª tentativa registada. Define no deploy, ex.:
-#   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
-#
-# ATENÇÃO (2026-08): estando vazio, `deployTs` fica igual a `firstScanTs` e a
-# métrica é zero POR CONSTRUÇÃO — não é uma medição. Era o que estava em
-# produção (o painel anunciava "0s até ao 1.º scan"); honeypotStats passou a
-# devolver null nesse caso e o cartão mostra "—". Para o passar a medir a
-# sério não basta preencher esta var: o `meta` do KV só é escrito uma vez e
-# já tem os dois timestamps iguais. É preciso apagar a chave e voltar a
-# publicar com a var:
-#   npx wrangler kv key delete meta --binding KV --remote
-#   npx wrangler deploy --var DEPLOY_TS:$(date +%s000)
-# (o primeiro scan que chegar depois disso é que passa a ser cronometrado).
-DEPLOY_TS = ""
 # IDs da zona/conta para o painel "Estado da Cloudflare" (/api/cf-stats,
 # GraphQL Analytics API — NÃO o Radar, ver src/lib/cf-analytics.js). Não
 # são segredos (identificam a zona/conta, não dão acesso sozinhos), mas sem
@@ -90,7 +71,6 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 
 # Secrets (NÃO ficam aqui — o gitleaks do CI apanha qualquer deslize):
 #   npx wrangler secret put RATE_SALT    # segredo p/ o hash de rate limit
-#   npx wrangler secret put NVD_API_KEY  # opcional, sobe o rate limit do NVD
 #   npx wrangler secret put CF_API_TOKEN # token criado em dash.cloudflare.com → Meu perfil → Tokens de API
 #     · Base (pedidos/cache/ameaças/país/código HTTP, 7d): "Account
 #       Analytics:Read" + "Zone Analytics:Read".
@@ -122,8 +102,9 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # faltava esta nota, ao contrário do RATE_SALT que já a tinha.
 
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
-# A cada 30 min: aquece ticker/ct/cf-stats/threat-intel (para as visitas
-# caírem sempre em cache). O snapshot da firewall (fw:<dia>, para acumular 7
+# A cada 30 min: aquece ct/cf-stats/threat-intel (para as visitas caírem
+# sempre em cache) e apaga o que o honeypot interno deixou no KV, enquanto
+# houver (ADR 0022). O snapshot da firewall (fw:<dia>, para acumular 7
 # dias a partir do dataset cru do Free, que só retém 24h) só é fotografado
 # quando o cf-stats É DE FACTO refrescado (TTL 6h, ~4×/dia) — não em cada um
 # dos 48 ticks. TTLs de threat-intel/cf-stats/ct alinhados a 6h (≥
@@ -145,7 +126,7 @@ crons = ["*/30 * * * *"]
 # explícito aqui.
 
 # Observabilidade dos logs do Worker (console.error/log): sem isto, os
-# `honeypot_write_failed`/`vitals_write_failed`/`request_failed`/
+# `vitals_write_failed`/`request_failed`/`legacy_honeypot_purge_failed`/
 # `rate_salt_missing` nunca ficam retidos em lado nenhum — não há resposta a
 # incidentes possível, só reconstituição a partir de nada. head_sampling_rate
 # 1 = sem amostragem (o volume de pedidos aqui é baixo o suficiente para não

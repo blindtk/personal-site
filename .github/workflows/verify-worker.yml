@@ -1,5 +1,5 @@
 # Fecha o loop deteção → alerta (discutido numa revisão de segurança,
-# 2026-07-29): os dashboards do honeypot/threat-intel/CT/CF-stats são só
+# 2026-07-29): os dashboards de threat-intel/CT/CF-stats/vitals são só
 # PULL — só mostram algo a quem abrir a página de propósito. Este workflow
 # é o PUSH que faltava: verifica os endpoints de leitura do Worker
 # (.github/scripts/check-invariants.mjs) e, se algo estiver genuinamente

@@ -353,7 +353,7 @@ export function firewallDetailBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
  * para o painel. Qualquer coisa que não bata com o shape esperado vira 0 —
  * nunca lança, para o Worker poder responder mesmo que a Cloudflare mude o
  * schema entretanto (o mesmo princípio de "degradar em silêncio" do resto
- * do projeto — ver techniquesForText em attack-map.js).
+ * do projeto).
  */
 export function parseCfStats(raw, { now = Date.now(), windowDays = CF_STATS_WINDOW_DAYS } = {}) {
   const zones = raw?.data?.viewer?.zones;

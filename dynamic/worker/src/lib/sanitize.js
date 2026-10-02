@@ -4,13 +4,6 @@
 // aqui. O frontend ainda renderiza via textContent (nunca innerHTML), mas
 // isto é a defesa em profundidade do lado do servidor.
 
-/** Garante um inteiro dentro de [min, max]; devolve dflt se não for número. */
-export function clampInt(value, min, max, dflt) {
-  const n = Number.parseInt(value, 10);
-  if (Number.isNaN(n)) return dflt;
-  return Math.min(max, Math.max(min, n));
-}
-
 /**
  * Normaliza um código de país ISO-3166-1 alpha-2 (ex.: cf-ipcountry).
  * Só aceita exatamente duas letras A-Z; qualquer outra coisa (incluindo
@@ -44,18 +37,6 @@ export function normalizeAsn(input) {
   }
   if (typeof value !== 'number' || !Number.isInteger(value)) return null;
   return value >= 1 && value <= 4_294_967_294 ? value : null;
-}
-
-/**
- * Arredonda um timestamp (epoch ms) para o início da sua janela de
- * `windowMs`. Usado para anonimizar os eventos do honeypot: guardar o
- * instante exato permitiria correlacionar ASN+path+timestamp preciso com
- * logs de terceiros; uma granularidade de 5 min corta essa correlação
- * mantendo os buckets horários/diários corretos. Puro e determinístico.
- */
-export function floorToWindow(ms, windowMs) {
-  if (typeof ms !== 'number' || !Number.isFinite(ms) || windowMs <= 0) return ms;
-  return Math.floor(ms / windowMs) * windowMs;
 }
 
 /** Escapa os cinco caracteres perigosos em contexto HTML. */
@@ -101,40 +82,4 @@ export function sanitizeText(input, maxLen = 160) {
   // não partir um par de surrogates (emoji e afins) ao meio
   if (/[\uD800-\uDBFF]$/.test(cut)) cut = cut.slice(0, -1);
   return `${cut}…`;
-}
-
-/** Valida/normaliza um CVE-ID (CVE-AAAA-NNNN+). Devolve '' se inválido. */
-export function normalizeCveId(input) {
-  if (typeof input !== 'string') return '';
-  const m = input.trim().toUpperCase().match(/^CVE-(\d{4})-(\d{4,7})$/);
-  return m ? `CVE-${m[1]}-${m[2]}` : '';
-}
-
-/** Lista de IDs de técnica ATT&CK (TNNNN), validados e sem repetições. */
-export function normalizeTechniques(input) {
-  if (!Array.isArray(input)) return [];
-  const out = [];
-  for (const t of input) {
-    if (typeof t === 'string' && /^T\d{4}$/.test(t) && !out.includes(t)) out.push(t);
-  }
-  return out;
-}
-
-/**
- * Normaliza uma entrada do ticker vinda de CISA KEV ou NVD para uma forma
- * estrita e escapada. Devolve null se não for válida (sem CVE-ID).
- * source ∈ {'kev','nvd'}; severity é uma string curta livre (sanitizada).
- */
-export function normalizeTickerItem(raw) {
-  const id = normalizeCveId(raw && raw.id);
-  if (!id) return null;
-  const source = raw.source === 'kev' ? 'kev' : 'nvd';
-  return {
-    id,
-    source,
-    severity: sanitizeText(raw.severity ?? '', 24),
-    title: sanitizeText(raw.title ?? '', 140),
-    // técnicas ATT&CK prováveis (correlação com o honeypot); [] se nenhuma.
-    techniques: normalizeTechniques(raw.techniques),
-  };
 }

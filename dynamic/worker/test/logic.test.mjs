@@ -1,45 +1,25 @@
 // Testes da lógica pura do Worker (node --test, sem rede nem Cloudflare).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 
 import {
-  clampInt, escapeHtml, sanitizeText, normalizeCveId, normalizeTechniques, normalizeTickerItem,
-  normalizeCountry, normalizeAsn, floorToWindow,
+  escapeHtml, sanitizeText, normalizeCountry, normalizeAsn,
 } from '../src/lib/sanitize.js';
-import {
-  emptyBucket, addEvent, mergeBuckets, honeypotStats, mapData, threatIntel, mergeFirewall7d,
-} from '../src/lib/aggregate.js';
+import { mergeFirewall7d } from '../src/lib/firewall.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
 } from '../src/lib/vitals.js';
 import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
-import { parseKev, parseNvd, mergeFeeds } from '../src/lib/feeds.js';
 import { normalizePrefix, parseRanges } from '../src/lib/pwned.js';
 import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
 import { parseCfStats, firewallBreakdown, firewallDetailBreakdown } from '../src/lib/cf-analytics.js';
-import { PATH_TECHNIQUE, techniqueForPath, techniquesForText } from '../src/lib/attack-map.js';
 import { serverView } from '../src/lib/mirror.js';
-import { renderNotFoundHtml, NOT_FOUND_CSP } from '../src/lib/notfound.js';
-import { DECOYS, isDecoy, boundDecoyPath, MAX_DECOY_PATH } from '../src/lib/decoys.js';
 import { edgeKey, edgeGetJSON, edgePutJSON } from '../src/lib/edgecache.js';
-import { isPublicIp } from '../src/lib/ipguard.js';
-import {
-  emptyIpList, recordIpSighting, pruneExpiredIps, ipThreatList,
-} from '../src/lib/ipthreat.js';
 import worker from '../src/index.js';
-
-test('clampInt', () => {
-  assert.equal(clampInt('5', 1, 10, 0), 5);
-  assert.equal(clampInt('50', 1, 10, 0), 10);
-  assert.equal(clampInt('-3', 1, 10, 0), 1);
-  assert.equal(clampInt('abc', 1, 10, 7), 7);
-});
 
 test('escapeHtml cobre os cinco caracteres', () => {
   assert.equal(escapeHtml(`<img src=x onerror="a">'&`), '&lt;img src=x onerror=&quot;a&quot;&gt;&#39;&amp;');
@@ -75,150 +55,6 @@ test('sanitizeText remove controlos C1 e controlos bidi', () => {
   assert.equal(sanitizeText('\u200E\u200F\u061C\u202A\u202D\u2066\u2069x'), 'x');
 });
 
-test('normalizeCveId valida o formato', () => {
-  assert.equal(normalizeCveId('cve-2026-1042'), 'CVE-2026-1042');
-  assert.equal(normalizeCveId('CVE-2026-1'), '');
-  assert.equal(normalizeCveId('not-a-cve'), '');
-});
-
-test('normalizeTickerItem rejeita sem CVE e sanitiza', () => {
-  assert.equal(normalizeTickerItem({ id: 'x' }), null);
-  assert.deepEqual(
-    normalizeTickerItem({
-      id: 'CVE-2026-0891', source: 'nvd', severity: 'CRIT 9.8', title: 'Struts <x> RCE',
-      techniques: ['T1190', 'bad', 'T1190'],
-    }),
-    { id: 'CVE-2026-0891', source: 'nvd', severity: 'CRIT 9.8', title: 'Struts x RCE', techniques: ['T1190'] },
-  );
-});
-
-test('normalizeTechniques valida IDs e remove repetições', () => {
-  assert.deepEqual(normalizeTechniques(['T1190', 'T1592', 'T1190']), ['T1190', 'T1592']);
-  assert.deepEqual(normalizeTechniques(['x', 'T99999', 42, null]), []);
-  assert.deepEqual(normalizeTechniques('T1190'), []);
-});
-
-test('attack-map: técnica por path-isco', () => {
-  assert.equal(techniqueForPath('/wp-login.php'), 'T1110');
-  assert.equal(techniqueForPath('/.env'), 'T1592');
-  assert.equal(techniqueForPath('/.git/config'), 'T1592');
-  assert.equal(techniqueForPath('/admin'), 'T1595');
-  assert.equal(techniqueForPath('/phpmyadmin/'), 'T1190');
-  assert.equal(techniqueForPath('/robots.txt'), null);
-});
-
-test('attack-map: técnica por prefixo para /phpmyadmin/* (mesma convenção do isDecoy)', () => {
-  // wrangler.toml roteia danielmala.co/phpmyadmin/* — os paths que os
-  // scanners reais pedem (revisão de segurança 2026-07, ronda 4, N5).
-  assert.equal(techniqueForPath('/phpmyadmin/index.php'), 'T1190');
-  assert.equal(techniqueForPath('/phpmyadmin/setup.php'), 'T1190');
-  assert.equal(techniqueForPath('/admin/x'), null); // /admin é match exato, não glob
-});
-
-test('attack-map: técnicas por texto de CVE (heurística conservadora)', () => {
-  assert.deepEqual(techniquesForText('Ivanti Connect Secure authentication bypass'), ['T1110']);
-  assert.deepEqual(techniquesForText('Apache Struts remote code execution'), ['T1190']);
-  assert.deepEqual(techniquesForText('Path traversal leads to information disclosure'), ['T1592']);
-  assert.deepEqual(techniquesForText('A generic medium-severity bug'), []);
-  assert.deepEqual(techniquesForText(null), []);
-});
-
-test('attack-map sincroniza com content/honeypot-attack.json', () => {
-  const url = new URL('../../../content/honeypot-attack.json', import.meta.url);
-  const content = JSON.parse(readFileSync(fileURLToPath(url), 'utf8'));
-  assert.deepEqual(PATH_TECHNIQUE, content.paths);
-});
-
-test('isDecoy: match exato para a maioria, prefixo para os iscos com glob no wrangler.toml', () => {
-  assert.equal(isDecoy('/admin'), true);
-  assert.equal(isDecoy('/admin/x'), false); // /admin é rota exata, não glob
-  assert.equal(isDecoy('/phpmyadmin/'), true);
-  assert.equal(isDecoy('/phpmyadmin/index.php'), true); // o que os scanners reais pedem
-  assert.equal(isDecoy('/phpmyadmindiferente'), false); // não é um sub-path, não conta
-  assert.equal(isDecoy('/nao-existe'), false);
-});
-
-test('decoys: DECOYS (index.js, via lib/decoys.js) bate certo com as rotas-isco do wrangler.toml', () => {
-  // Achado da revisão de segurança 2026-07 (ronda 4, N5): as duas listas já
-  // divergiram — /phpmyadmin/* era um glob no wrangler.toml mas string
-  // exata em DECOYS, perdendo o sinal E denunciando o Worker (404 JSON em
-  // vez do 404 HTML disfarçado) nos paths reais que os scanners pedem.
-  const url = new URL('../wrangler.toml', import.meta.url);
-  const toml = readFileSync(fileURLToPath(url), 'utf8');
-  const routePaths = [...toml.matchAll(/pattern = "danielmala\.co([^"]*)"/g)]
-    .map((m) => m[1])
-    .filter((p) => !p.startsWith('/api/')); // /api/* é a API real, não um isco
-  assert.ok(routePaths.length > 0, 'não encontrou nenhuma rota-isco em wrangler.toml — regex desatualizado?');
-
-  // toda rota-isco do wrangler.toml tem de ser reconhecida como isco
-  for (const routePath of routePaths) {
-    const probe = routePath.endsWith('*') ? `${routePath.slice(0, -1)}sonda-real-de-scanner` : routePath;
-    assert.ok(
-      isDecoy(probe),
-      `wrangler.toml roteia '${routePath}' para o Worker mas isDecoy('${probe}') é false — ` +
-        'o pedido cairia no 404 JSON da API, não no 404 HTML disfarçado, e o evento perdia-se do honeypot.',
-    );
-  }
-
-  // e o inverso: todo isco reconhecido em DECOYS tem de estar coberto por
-  // alguma rota real — senão a Cloudflare nunca entrega esses pedidos ao
-  // Worker e a entrada em DECOYS é morta.
-  for (const decoy of DECOYS) {
-    const covered = routePaths.some((r) => (r.endsWith('*') ? decoy.startsWith(r.slice(0, -1)) : r === decoy));
-    assert.ok(covered, `DECOYS tem '${decoy}' mas nenhuma rota do wrangler.toml o cobre`);
-  }
-});
-
-test('agregação: addEvent/mergeBuckets contam por país e path', () => {
-  const b = emptyBucket();
-  addEvent(b, { country: 'RU', path: '/.env' });
-  addEvent(b, { country: 'RU', path: '/wp-login.php' });
-  addEvent(b, { country: 'CN', path: '/.env' });
-  assert.equal(b.total, 3);
-  assert.equal(b.byCountry.RU, 2);
-  assert.equal(b.byPath['/.env'], 2);
-  const m = mergeBuckets([b, b]);
-  assert.equal(m.total, 6);
-  assert.equal(m.byCountry.RU, 4);
-});
-
-test('honeypotStats: 24h, top path, países 7d, tempo até 1.º scan', () => {
-  const h = emptyBucket();
-  addEvent(h, { country: 'RU', path: '/wp-login.php' });
-  addEvent(h, { country: 'RU', path: '/wp-login.php' });
-  addEvent(h, { country: 'US', path: '/.env' });
-  const d = emptyBucket();
-  addEvent(d, { country: 'BR', path: '/admin' });
-  const stats = honeypotStats({
-    hourly: [h],
-    days: [h, d],
-    recent: [{ ts: 1, country: 'RU', asn: 1, path: '/.env' }],
-    meta: { deployTs: 1000, firstScanTs: 32_000 },
-  });
-  assert.equal(stats.attempts24h, 3);
-  assert.equal(stats.topPath, '/wp-login.php');
-  assert.equal(stats.countryCount, 3); // RU, US, BR nos 7 dias
-  assert.equal(stats.timeToFirstScanSec, 31);
-  assert.equal(stats.recent.length, 1);
-  // Sem DEPLOY_TS configurado o Worker grava deployTs = ts do 1.º evento, e
-  // aí a diferença é zero por construção, não uma medição: tem de dar null
-  // (o painel mostra "—") em vez de anunciar "0s até ao 1.º scan".
-  assert.equal(
-    honeypotStats({ hourly: [h], days: [h], meta: { deployTs: 1000, firstScanTs: 1000 } }).timeToFirstScanSec,
-    null,
-  );
-});
-
-test('mapData ordena países por contagem', () => {
-  const h = emptyBucket();
-  addEvent(h, { country: 'RU', path: '/a' });
-  addEvent(h, { country: 'RU', path: '/a' });
-  addEvent(h, { country: 'CN', path: '/a' });
-  const data = mapData({ hourly: [h], days: [h] });
-  assert.deepEqual(data.last24h, [{ country: 'RU', count: 2 }, { country: 'CN', count: 1 }]);
-  assert.equal(data.totals.countries7d, 2);
-});
-
 test('rate limit: janela fixa bloqueia ao atingir o máximo', () => {
   const cfg = { now: 1000, windowMs: 60_000, max: 2 };
   const s1 = nextState(null, cfg);
@@ -245,60 +81,6 @@ test('dailySalt roda por dia UTC', () => {
   const a = dailySalt('sec', Date.parse('2026-07-15T23:00:00Z'));
   const b = dailySalt('sec', Date.parse('2026-07-16T01:00:00Z'));
   assert.notEqual(a, b);
-});
-
-test('parseKev normaliza e ordena por data', () => {
-  const items = parseKev({
-    vulnerabilities: [
-      { cveID: 'CVE-2025-9977', vendorProject: 'Fortinet', product: 'FortiOS', dateAdded: '2025-01-01' },
-      { cveID: 'CVE-2026-1042', vendorProject: 'Ivanti', product: 'Connect Secure', dateAdded: '2026-02-01' },
-      { cveID: 'bad-id', dateAdded: '2026-03-01' },
-    ],
-  });
-  assert.equal(items[0].id, 'CVE-2026-1042'); // mais recente primeiro
-  assert.equal(items[0].source, 'kev');
-  assert.equal(items.length, 2); // o id inválido cai
-});
-
-test('parseKev anexa técnicas ATT&CK a partir da descrição da vuln', () => {
-  const items = parseKev({
-    vulnerabilities: [
-      {
-        cveID: 'CVE-2026-1042', vendorProject: 'Ivanti', product: 'Connect Secure', dateAdded: '2026-02-01',
-        vulnerabilityName: 'Ivanti Connect Secure Authentication Bypass',
-        shortDescription: 'Allows an attacker to bypass authentication.',
-      },
-      {
-        cveID: 'CVE-2026-0500', vendorProject: 'Acme', product: 'Widget', dateAdded: '2026-01-01',
-        vulnerabilityName: 'Acme Widget Remote Code Execution', shortDescription: 'Unauthenticated RCE.',
-      },
-    ],
-  });
-  assert.deepEqual(items[0].techniques, ['T1110']); // authentication bypass
-  assert.equal(items[0].title, 'Ivanti Connect Secure'); // título continua vendor+product
-  assert.deepEqual(items[1].techniques, ['T1190']); // RCE / unauthenticated
-});
-
-test('parseNvd só aceita CRITICAL', () => {
-  const items = parseNvd({
-    vulnerabilities: [
-      { cve: { id: 'CVE-2026-0891', descriptions: [{ lang: 'en', value: 'Struts RCE' }],
-        metrics: { cvssMetricV31: [{ type: 'Primary', cvssData: { baseSeverity: 'CRITICAL', baseScore: 9.8 } }] } } },
-      { cve: { id: 'CVE-2026-0001', descriptions: [{ lang: 'en', value: 'medium bug' }],
-        metrics: { cvssMetricV31: [{ type: 'Primary', cvssData: { baseSeverity: 'MEDIUM', baseScore: 5.0 } }] } } },
-    ],
-  });
-  assert.equal(items.length, 1);
-  assert.equal(items[0].id, 'CVE-2026-0891');
-  assert.equal(items[0].severity, 'CRIT 9.8');
-});
-
-test('mergeFeeds intercala e remove duplicados', () => {
-  const kev = [{ id: 'CVE-2026-1042', source: 'kev' }, { id: 'CVE-2025-9977', source: 'kev' }];
-  const nvd = [{ id: 'CVE-2026-0891', source: 'nvd' }, { id: 'CVE-2026-1042', source: 'nvd' }];
-  const merged = mergeFeeds(kev, nvd, 16);
-  const ids = merged.map((i) => i.id);
-  assert.deepEqual(ids, ['CVE-2026-1042', 'CVE-2026-0891', 'CVE-2025-9977']);
 });
 
 // ---------- pwned: k-anonimato (validação de prefixo + parse dos ranges) ----------
@@ -403,7 +185,7 @@ test('normalizeAsn: inteiro no espaço 32-bit ou null', () => {
 });
 
 test('normalizeAsn: aceita a string de dígitos do clientAsn da Cloudflare', () => {
-  // O `request.cf.asn` do honeypot é número, mas o `clientAsn` do
+  // O `request.cf.asn` (Espelho) é número, mas o `clientAsn` do
   // firewallEventsAdaptive vem como string — só se aceitar número, todos os
   // `fw:<dia>` ficavam com byAsn {} (foi o que aconteceu em produção).
   assert.equal(normalizeAsn('64512'), 64512);
@@ -415,22 +197,6 @@ test('normalizeAsn: aceita a string de dígitos do clientAsn da Cloudflare', () 
   assert.equal(normalizeAsn('-5'), null);
   assert.equal(normalizeAsn('12.5'), null);
   assert.equal(normalizeAsn(''), null);
-});
-
-test('floorToWindow arredonda ao início da janela (anonimização)', () => {
-  const w = 5 * 60_000; // 5 min
-  const base = Date.parse('2026-07-16T12:00:00Z');
-  assert.equal(floorToWindow(base + 4 * 60_000 + 59_000, w), base); // 12:04:59 → 12:00
-  assert.equal(floorToWindow(base + 5 * 60_000, w), base + 5 * 60_000); // 12:05 exato
-  assert.equal(floorToWindow(base, w), base);
-  // resultado é sempre múltiplo da janela (sem instante preciso)
-  assert.equal(floorToWindow(base + 123_456, w) % w, 0);
-});
-
-test('floorToWindow: input que não é número finito, ou janela não positiva, passa intacto', () => {
-  assert.equal(floorToWindow('x', 300_000), 'x');
-  assert.ok(Number.isNaN(floorToWindow(NaN, 300_000)));
-  assert.equal(floorToWindow(123, 0), 123);
 });
 
 // ---------- cap de escritas ao KV (tarefa 6) ----------
@@ -466,151 +232,7 @@ test('clientHash: isola por IP e por salt, hex de 16 chars', async () => {
 
 // ---------- ipguard: validação de IP público (ADR 0020) ----------
 
-test('isPublicIp: rejeita gamas IPv4 privadas/reservadas/documentação', () => {
-  assert.equal(isPublicIp('10.0.0.1'), false);
-  assert.equal(isPublicIp('172.16.5.5'), false);
-  assert.equal(isPublicIp('192.168.1.1'), false);
-  assert.equal(isPublicIp('127.0.0.1'), false); // loopback
-  assert.equal(isPublicIp('169.254.1.1'), false); // link-local
-  assert.equal(isPublicIp('100.64.0.1'), false); // CGNAT
-  assert.equal(isPublicIp('192.0.2.1'), false); // TEST-NET-1
-  assert.equal(isPublicIp('198.51.100.1'), false); // TEST-NET-2
-  assert.equal(isPublicIp('203.0.113.1'), false); // TEST-NET-3
-  assert.equal(isPublicIp('224.0.0.1'), false); // multicast
-  assert.equal(isPublicIp('255.255.255.255'), false); // broadcast
-});
-
-test('isPublicIp: aceita IPv4 público real', () => {
-  assert.equal(isPublicIp('8.8.8.8'), true);
-  assert.equal(isPublicIp('1.1.1.1'), true);
-  assert.equal(isPublicIp('203.0.114.1'), true); // fora do /24 de TEST-NET-3
-});
-
-test('isPublicIp: rejeita formatos IPv4 inválidos', () => {
-  assert.equal(isPublicIp('999.1.1.1'), false);
-  assert.equal(isPublicIp('1.2.3'), false);
-  assert.equal(isPublicIp(''), false);
-  assert.equal(isPublicIp(null), false);
-  assert.equal(isPublicIp(undefined), false);
-});
-
-test('isPublicIp: rejeita gamas IPv6 privadas/reservadas/documentação', () => {
-  assert.equal(isPublicIp('::1'), false); // loopback
-  assert.equal(isPublicIp('::'), false); // não especificado
-  assert.equal(isPublicIp('fe80::1'), false); // link-local
-  assert.equal(isPublicIp('fc00::1'), false); // ULA
-  assert.equal(isPublicIp('fd12:3456:789a::1'), false); // ULA (dentro de fc00::/7)
-  assert.equal(isPublicIp('ff02::1'), false); // multicast
-  assert.equal(isPublicIp('2001:db8::1'), false); // documentação (RFC 3849)
-  assert.equal(isPublicIp('3fff::1'), false); // documentação (RFC 9637, 2024)
-  assert.equal(isPublicIp('fec0::1'), false); // site-local descontinuado (RFC 3879)
-  assert.equal(isPublicIp('::ffff:192.168.1.1'), false); // IPv4 mapeado, privado
-});
-
-test('isPublicIp: rejeita IPv6 fora do unicast global (2000::/3) mesmo sem exclusão explícita', () => {
-  // Achado de revisão: uma lista de exclusões deixava passar qualquer
-  // gama nunca alocada pela IANA (não está em nenhuma exclusão, mas
-  // também não está atribuída a tráfego público). A regra correta é um
-  // allow-list de 2000::/3, não uma lista de bloqueio.
-  assert.equal(isPublicIp('4000::1'), false);
-  assert.equal(isPublicIp('8000::1'), false);
-  // NAT64 (RFC 6052): tráfego real de tradução, mas o prefixo em si não
-  // está em 2000::/3 — decisão deliberada de o tratar como não-público
-  // (ver comentário em ipguard.js), documentada aqui para não regredir
-  // silenciosamente para "aceitar" numa refactor futura.
-  assert.equal(isPublicIp('64:ff9b::c000:0201'), false); // 192.0.2.1 via NAT64
-});
-
-test('isPublicIp: aceita IPv6 público real', () => {
-  assert.equal(isPublicIp('2001:4860:4860::8888'), true); // Google DNS
-  assert.equal(isPublicIp('2606:4700:4700::1111'), true); // Cloudflare DNS
-  assert.equal(isPublicIp('::ffff:8.8.8.8'), true); // IPv4 mapeado, público
-});
-
-test('isPublicIp: IPv6 malformado dentro de 2000::/3 é rejeitado (falha fechado)', () => {
-  // Todos começam por um prefixo global — um parser permissivo aceitá-los-ia.
-  assert.equal(isPublicIp('2001:4860::zzzz'), false); // hex inválido
-  assert.equal(isPublicIp('2001:4860::88888'), false); // grupo com 5 dígitos
-  assert.equal(isPublicIp('1::2::3'), false); // "::" duas vezes
-  assert.equal(isPublicIp('2001:4860:4860:0:0:0:0:8888:1'), false); // 9 grupos
-  assert.equal(isPublicIp('2001:4860:4860:8888'), false); // 4 grupos sem "::"
-});
-
-// ---------- ipthreat: lista de ameaças por IP (ADR 0020) ----------
-
-test('recordIpSighting: 1.ª deteção define firstSeen=lastSeen; acumula técnicas sem repetir', () => {
-  const list = emptyIpList();
-  recordIpSighting(list, { ip: '203.0.113.1', now: 1000, country: 'US', asn: 15169, technique: 'T1595' });
-  assert.deepEqual(list['203.0.113.1'], {
-    firstSeen: 1000, lastSeen: 1000, count: 1, country: 'US', asn: 15169, techniques: ['T1595'],
-  });
-  recordIpSighting(list, { ip: '203.0.113.1', now: 2000, country: 'US', asn: 15169, technique: 'T1595' });
-  recordIpSighting(list, { ip: '203.0.113.1', now: 3000, country: 'US', asn: 15169, technique: 'T1110' });
-  assert.equal(list['203.0.113.1'].count, 3);
-  assert.equal(list['203.0.113.1'].firstSeen, 1000); // nunca muda
-  assert.equal(list['203.0.113.1'].lastSeen, 3000); // atualiza sempre
-  assert.deepEqual(list['203.0.113.1'].techniques, ['T1595', 'T1110']); // sem repetir
-});
-
-test('pruneExpiredIps: remove só quem passou a janela; devolve lista nova', () => {
-  const now = 100 * 86400_000;
-  const maxAgeMs = 30 * 86400_000;
-  const list = {
-    fresco: { firstSeen: now, lastSeen: now - 1000, count: 1, country: 'PT', asn: 1, techniques: [] },
-    expirado: { firstSeen: now, lastSeen: now - 31 * 86400_000, count: 1, country: 'PT', asn: 1, techniques: [] },
-  };
-  const { list: pruned, prunedCount } = pruneExpiredIps(list, { now, maxAgeMs });
-  assert.equal(prunedCount, 1);
-  assert.ok('fresco' in pruned);
-  assert.ok(!('expirado' in pruned));
-  assert.ok('expirado' in list, 'pruneExpiredIps não deve mutar a lista recebida');
-});
-
-test('pruneExpiredIps: fronteira exata da janela — mantém no limite, remove um ms acima', () => {
-  const now = 100 * 86400_000;
-  const maxAgeMs = 30 * 86400_000;
-  const list = {
-    'no-limite': { lastSeen: now - maxAgeMs, count: 1, country: 'PT', asn: 1, techniques: [] },
-    'passou-1ms': { lastSeen: now - maxAgeMs - 1, count: 1, country: 'PT', asn: 1, techniques: [] },
-  };
-  const { list: pruned, prunedCount } = pruneExpiredIps(list, { now, maxAgeMs });
-  assert.equal(prunedCount, 1);
-  assert.ok('no-limite' in pruned, 'exatamente na janela ainda não expirou (> estrito, não >=)');
-  assert.ok(!('passou-1ms' in pruned));
-});
-
-test('pruneExpiredIps: entrada malformada (sem lastSeen) trata-se como já expirada; lista vazia/undefined não rebenta', () => {
-  const now = 100 * 86400_000;
-  const maxAgeMs = 30 * 86400_000;
-  const { list: pruned, prunedCount } = pruneExpiredIps({ semData: { count: 1 } }, { now, maxAgeMs });
-  assert.equal(prunedCount, 1); // lastSeen ausente → 0 → "now - 0" sempre > maxAgeMs aqui
-  assert.equal(Object.keys(pruned).length, 0);
-
-  assert.deepEqual(pruneExpiredIps(undefined, { now, maxAgeMs }), { list: {}, prunedCount: 0 });
-  assert.deepEqual(pruneExpiredIps({}, { now, maxAgeMs }), { list: {}, prunedCount: 0 });
-});
-
-test('emptyIpList: devolve objeto vazio novo a cada chamada', () => {
-  const a = emptyIpList();
-  const b = emptyIpList();
-  assert.deepEqual(a, {});
-  assert.notEqual(a, b, 'não deve devolver a mesma referência partilhada');
-});
-
-test('ipThreatList: forma pública ordenada por lastSeen (mais recente primeiro), com limite', () => {
-  const list = {
-    a: { firstSeen: 1, lastSeen: 100, count: 2, country: 'US', asn: 1, techniques: ['T1595'] },
-    b: { firstSeen: 1, lastSeen: 300, count: 5, country: 'DE', asn: 2, techniques: ['T1110'] },
-    c: { firstSeen: 1, lastSeen: 200, count: 1, country: 'RU', asn: 3, techniques: [] },
-  };
-  const out = ipThreatList(list);
-  assert.deepEqual(out.map((r) => r.ip), ['b', 'c', 'a']);
-  assert.equal(out[0].country, 'DE');
-  assert.equal(out.length, 3);
-  assert.equal(ipThreatList(list, { limit: 1 }).length, 1);
-});
-
-// ---------- integração do honeypot: fetch() do Worker sem rede ----------
+// ---------- integração: fetch() do Worker sem rede ----------
 
 function fakeKV() {
   const store = new Map();
@@ -643,7 +265,7 @@ async function runFetch(request, env) {
   const tasks = [];
   const ctx = { waitUntil: (p) => tasks.push(p) };
   const res = await worker.fetch(request, env, ctx);
-  await Promise.allSettled(tasks); // deixa o recordHoneypot em background terminar
+  await Promise.allSettled(tasks); // deixa o trabalho em background (ctx.waitUntil) terminar
   return res;
 }
 
@@ -654,141 +276,9 @@ async function runScheduled(env) {
   await Promise.allSettled(tasks);
 }
 
-test('scheduled: poda de iplist invalida cache:threatintel antes de a reaquecer (achado de revisão)', async () => {
-  const env = { KV: fakeKV() };
-  const now = Date.now();
-  env.KV.store.set('iplist', JSON.stringify({
-    fresco: { firstSeen: now, lastSeen: now, count: 1, country: 'PT', asn: 1, techniques: [] },
-    expirado: {
-      firstSeen: now - 40 * 86400_000,
-      lastSeen: now - 31 * 86400_000, // > IP_RETENTION_MS (30 dias)
-      count: 1,
-      country: 'RU',
-      asn: 2,
-      techniques: [],
-    },
-  }));
-  // Cache de threat-intel ainda "fresca" (dentro das 6h), com o IP
-  // expirado lá dentro — é exatamente o que uma poda concorrente sem
-  // invalidação deixava escapar até 6h a mais do que a retenção promete.
-  env.KV.store.set('cache:threatintel', JSON.stringify({
-    data: { ips: [{ ip: 'expirado-fake' }] },
-    exp: now + 3 * 3600_000,
-  }));
-
-  await runScheduled(env);
-
-  const ipList = JSON.parse(env.KV.store.get('iplist'));
-  assert.ok('fresco' in ipList);
-  assert.ok(!('expirado' in ipList));
-
-  // A cache foi invalidada e reconstruída (não continua a servir o valor
-  // antigo com o IP expirado) — o novo `ips` reflete a lista já podada.
-  const rebuilt = JSON.parse(env.KV.store.get('cache:threatintel'));
-  const ipsInCache = (rebuilt.data.ips ?? []).map((r) => r.ip);
-  assert.ok(!ipsInCache.includes('expirado-fake'));
-});
-
-// ATUALIZADO (ADR 0020, docs/adr/0020-honeypot-public-ip.md): o honeypot
-// passou a publicar o IP de origem — decisão explícita do dono do repo,
-// separada da postura zero-IP original (ADR 0004, que continua válida
-// para o painel Cloudflare Status/firewall). O teste antigo afirmava que
-// o IP nunca aparecia em NENHUM valor do KV; agora divide-se em dois:
-// os buckets/`recent` anónimos continuam INTOCADOS (mesma garantia de
-// sempre), e o IP passa a aparecer, mas só na chave separada `iplist`.
-test('honeypot: IP público entra em iplist, mas nunca nos buckets/recent anónimos; ts arredondado; país/ASN validados', async () => {
-  // Nota: não usar 192.0.2.0/24, 198.51.100.0/24 nem 203.0.113.0/24 aqui —
-  // são as gamas de documentação/TEST-NET que isPublicIp() rejeita de
-  // propósito (ver o teste dedicado acima); precisamos de um IP mesmo
-  // público para testar o caminho de escrita em iplist.
-  const IP = '8.8.4.4';
-  const env = { KV: fakeKV() };
-  const req = fakeRequest('/.env', { ip: IP, country: 'T1', asn: 64512 });
-  const res = await runFetch(req, env);
-  assert.equal(res.status, 404); // isco devolve 404 seco
-
-  // buckets/recent anónimos: garantia inalterada desde o ADR 0004 — nunca o IP
-  const values = [...env.KV.store.entries()].filter(([k]) => k !== 'iplist').map(([, v]) => v);
-  assert.ok(values.length > 0, 'deve ter escrito buckets');
-  for (const v of values) assert.equal(v.includes(IP), false, `IP fugiu para fora de iplist: ${v}`);
-
-  const recent = JSON.parse(env.KV.store.get('recent'));
-  assert.equal(recent[0].ts % (5 * 60_000), 0); // timestamp arredondado a 5 min
-  assert.equal(recent[0].country, 'XX'); // 'T1' inválido → XX
-  assert.equal(recent[0].asn, 64512);
-  assert.equal(recent[0].path, '/.env');
-  assert.equal(recent[0].technique, 'T1592'); // correlação com /attack anexada no registo
-  assert.equal('ip' in recent[0], false); // o evento nem tem campo de IP
-
-  // iplist (ADR 0020): o mesmo IP, com os mesmos metadados, guardado à parte
-  const ipList = JSON.parse(env.KV.store.get('iplist'));
-  assert.ok(ipList[IP], 'IP público devia entrar em iplist');
-  assert.equal(ipList[IP].count, 1);
-  assert.equal(ipList[IP].firstSeen, ipList[IP].lastSeen);
-  assert.equal(ipList[IP].country, 'XX');
-  assert.equal(ipList[IP].asn, 64512);
-  assert.deepEqual(ipList[IP].techniques, ['T1592']);
-});
-
-test('honeypot: IP privado/reservado nunca entra em iplist (defesa em profundidade)', async () => {
-  const env = { KV: fakeKV() };
-  const req = fakeRequest('/wp-login.php', { ip: '192.168.1.5', country: 'PT', asn: 1234 });
-  const res = await runFetch(req, env);
-  assert.equal(res.status, 404);
-  assert.equal(env.KV.store.has('iplist'), false, 'IP privado não devia gerar escrita em iplist');
-  // o resto do registo continua normal
-  const recent = JSON.parse(env.KV.store.get('recent'));
-  assert.equal(recent[0].country, 'PT');
-});
-
-test('honeypot: segundo toque do mesmo IP acumula count e técnicas sem duplicar', async () => {
-  const env = { KV: fakeKV() };
-  const IP = '9.9.9.9'; // público real — ver nota no teste anterior sobre TEST-NET
-  await runFetch(fakeRequest('/wp-login.php', { ip: IP, country: 'DE', asn: 555 }), env);
-  await runFetch(fakeRequest('/admin', { ip: IP, country: 'DE', asn: 555 }), env);
-  const ipList = JSON.parse(env.KV.store.get('iplist'));
-  assert.equal(ipList[IP].count, 2);
-  assert.deepEqual(ipList[IP].techniques.sort(), ['T1110', 'T1595']);
-  assert.ok(ipList[IP].lastSeen >= ipList[IP].firstSeen);
-});
-
-test('honeypot: cap de escritas descarta eventos acima do teto', async () => {
-  const env = { KV: fakeKV() };
-  const now = Date.now();
-  const hourKey = `h:${new Date(now).toISOString().slice(0, 13)}`;
-  const dayKey = `d:${new Date(now).toISOString().slice(0, 10)}`;
-  // pré-carrega o contador da janela (diária) no teto (max=300 escritas)
-  env.KV.store.set(`wcap:${dayKey}`, JSON.stringify({ count: 300, windowStart: now }));
-
-  const req = fakeRequest('/wp-login.php', { ip: '198.51.100.5', country: 'RU', asn: 64500 });
-  const res = await runFetch(req, env);
-  assert.equal(res.status, 404); // continua a devolver 404 indistinguível
-
-  // com o cap atingido, não pode ter escrito buckets nem 'recent'
-  assert.equal(env.KV.store.has('recent'), false);
-  assert.equal(env.KV.store.has(hourKey), false);
-  assert.equal([...env.KV.store.keys()].some((k) => k.startsWith('d:')), false);
-});
-
-test('honeypot: abaixo do teto escreve normalmente', async () => {
-  const env = { KV: fakeKV() };
-  const req = fakeRequest('/admin', { ip: '198.51.100.6', country: 'CN', asn: 4808 });
-  const res = await runFetch(req, env);
-  assert.equal(res.status, 404);
-  assert.ok(env.KV.store.has('recent'));
-  const recent = JSON.parse(env.KV.store.get('recent'));
-  assert.equal(recent[0].country, 'CN');
-  // o contador foi criado e conta as ESCRITAS do evento (recent + hora +
-  // dia + contador; IP de documentação não entra em iplist)
-  const capKey = [...env.KV.store.keys()].find((k) => k.startsWith('wcap:'));
-  assert.ok(capKey);
-  assert.equal(JSON.parse(env.KV.store.get(capKey)).count, 4);
-});
-
-
 // ---------- cabeçalhos de segurança das respostas do Worker ----------
 // O _headers do Pages não cobre as rotas do Worker — cada resposta tem de
-// trazer nosniff + CSP 'none' por si (API JSON e 404 dos iscos).
+// trazer nosniff + CSP 'none' por si.
 
 test('respostas da API trazem nosniff e CSP none', async () => {
   const env = { KV: fakeKV() };
@@ -798,41 +288,22 @@ test('respostas da API trazem nosniff e CSP none', async () => {
   assert.equal(res.headers.get('content-security-policy'), "default-src 'none'");
 });
 
-test('404 dos paths-isco traz nosniff, CSP restrita e HTML igual ao 404 real', async () => {
-  const env = { KV: fakeKV() };
-  const res = await runFetch(fakeRequest('/wp-login.php', { ip: '198.51.100.7', country: 'US', asn: 1 }), env);
-  assert.equal(res.status, 404);
-  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
-  assert.equal(res.headers.get('content-security-policy'), NOT_FOUND_CSP);
-  assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
-  const body = await res.text();
-  assert.equal(body, renderNotFoundHtml()); // sempre a mesma página, qualquer que seja o path-isco
-});
-
-test('renderNotFoundHtml: autocontido, sem script nem dados do pedido', () => {
-  const html = renderNotFoundHtml();
-  assert.ok(html.includes('<h1>404</h1>'));
-  assert.ok(html.includes('cd: /404: No such file or directory')); // mesma piada do 404 real
-  assert.equal(html.includes('<script'), false); // CSP da resposta não permite script-src
-  assert.equal(html, renderNotFoundHtml()); // determinístico, sem input
-});
-
 // ---------- cache: stale-while-revalidate ----------
 
 test('cache expirada serve o valor stale e renova em background', async () => {
   const env = { KV: fakeKV() };
   const now = Date.now();
   // valor logicamente expirado, mas ainda presente no KV (janela stale)
-  env.KV.store.set('cache:honeypot', JSON.stringify({ data: { attempts24h: 42 }, exp: now - 1000 }));
+  env.KV.store.set('cache:vitals', JSON.stringify({ data: { stale: 42 }, exp: now - 1000 }));
 
-  const res = await runFetch(fakeRequest('/api/honeypot'), env);
+  const res = await runFetch(fakeRequest('/api/vitals'), env);
   const body = await res.json();
-  assert.equal(body.attempts24h, 42); // resposta imediata = stale
+  assert.equal(body.stale, 42); // resposta imediata = stale
 
   // depois do waitUntil, a cache foi renovada (exp no futuro, dados frescos)
-  const refreshed = JSON.parse(env.KV.store.get('cache:honeypot'));
+  const refreshed = JSON.parse(env.KV.store.get('cache:vitals'));
   assert.ok(refreshed.exp > now, 'refresh em background devia ter renovado o exp');
-  assert.equal(refreshed.data.attempts24h, 0); // buckets vazios → 0
+  assert.equal(refreshed.data.stale, undefined); // recalculado a partir dos histogramas
 });
 
 // ---------- rate limit: teto global de escritas do próprio limiter ----------
@@ -840,7 +311,7 @@ test('cache expirada serve o valor stale e renova em background', async () => {
 // por rota (ex.: 30/min em /api/mirror) força uma escrita KV por pedido —
 // sem este cap, ~43 mil escritas/dia SÓ NESTA ROTA, muito acima do teto de
 // ~1.000/dia da conta inteira no plano Free, esgotando o orçamento que o
-// honeypot/vitals também precisam.
+// vitals e as caches também precisam.
 //
 // ATUALIZADO 2026-07-29 (achado A1, docs/security-review-2026-07-29.md): a
 // versão original deste teste afirmava `res.status === 200` com o cap
@@ -857,7 +328,7 @@ test('rate limit: cap global diário no teto falha fechado (429) sem escrever na
   const kv = fakeKV();
   const env = { KV: kv };
   const now = Date.now();
-  // rlcap:d:<dia> — o "d:" vem de dayKey() (ver honeypot: mesmo padrão)
+  // rlcap:d:<dia> — o "d:" vem de dayKey() (mesmo padrão dos outros contadores)
   const capKey = `rlcap:d:${new Date(now).toISOString().slice(0, 10)}`;
   // pré-carrega o cap GLOBAL do rate limiter já no teto (max=300)
   kv.store.set(capKey, JSON.stringify({ count: 300, windowStart: now }));
@@ -1173,20 +644,6 @@ test('parseCfStats: série por dia, visitantes e risk score por país', () => {
   const ptIndex = zone.riskByCountry.findIndex((r) => r.country === 'PT');
   const usIndex = zone.riskByCountry.findIndex((r) => r.country === 'US');
   assert.ok(ptIndex < usIndex, 'países com amostra suficiente vêm antes dos de amostra pequena');
-});
-
-test('threatIntel: atacantes novos vs recorrentes por ASN', () => {
-  // day[0] = hoje. AS4837 em 3 dias (recorrente); AS9999 só hoje (novo).
-  const mkDay = (asns) => { const b = emptyBucket(); b.byAsn = asns; return b; };
-  const ti = threatIntel({
-    days: [
-      mkDay({ AS4837: 10, AS9999: 4 }), // hoje
-      mkDay({ AS4837: 8 }),
-      mkDay({ AS4837: 6, AS1000: 2 }),
-    ],
-  });
-  assert.deepEqual(ti.recurringAttackers, [{ key: 'AS4837', count: 24, days: 3 }]);
-  assert.deepEqual(ti.newAttackers, [{ key: 'AS9999', count: 4 }]);
 });
 
 test('parseCfStats: topCountries soma ameaças através dos dias, ordena e filtra XX/zero', () => {
@@ -1798,76 +1255,6 @@ test('/api/mirror: 200 sem IP no corpo, no-store, e rate limit ao fim de 30/min'
 
 // ---------- Threat Intelligence (aggregate.js) ----------
 
-test('addEvent acumula ASN e técnica a par de país/path', () => {
-  const b = emptyBucket();
-  addEvent(b, { country: 'CN', path: '/.env', asn: 4837, technique: 'T1190' });
-  addEvent(b, { country: 'CN', path: '/.env', asn: 4837, technique: 'T1190' });
-  addEvent(b, { country: 'RU', path: '/admin', asn: 12345, technique: 'T1078' });
-  assert.equal(b.total, 3);
-  assert.deepEqual(b.byAsn, { AS4837: 2, AS12345: 1 });
-  assert.deepEqual(b.byTech, { T1190: 2, T1078: 1 });
-  // asn/técnica nulos não criam chave nova
-  addEvent(b, { country: 'US', path: '/x', asn: null, technique: null });
-  assert.equal(Object.keys(b.byAsn).length, 2);
-  assert.equal(Object.keys(b.byTech).length, 2);
-});
-
-test('mergeBuckets funde byAsn/byTech e tolera buckets antigos sem esses campos', () => {
-  const legacy = { total: 1, byCountry: { PT: 1 }, byPath: { '/a': 1 } }; // sem byAsn/byTech
-  const modern = emptyBucket();
-  addEvent(modern, { country: 'PT', path: '/a', asn: 1000, technique: 'T1190' });
-  const merged = mergeBuckets([legacy, modern]);
-  assert.equal(merged.total, 2);
-  assert.deepEqual(merged.byAsn, { AS1000: 1 });
-  assert.deepEqual(merged.byTech, { T1190: 1 });
-});
-
-test('threatIntel: heatmap, hora-do-dia, tops e eventos', () => {
-  // dois buckets horários em horas UTC conhecidas
-  const h1 = emptyBucket(); h1.total = 5;
-  const h2 = emptyBucket(); h2.total = 3;
-  const ms1 = Date.UTC(2026, 6, 20, 14, 0, 0); // 2026-07-20 14:00 UTC
-  const ms2 = Date.UTC(2026, 6, 20, 14, 30, 0); // mesma hora/dia
-  const ms3 = Date.UTC(2026, 6, 21, 9, 0, 0); // 2026-07-21 09:00 UTC
-  const h3 = emptyBucket(); h3.total = 2;
-
-  const day = emptyBucket();
-  addEvent(day, { country: 'CN', path: '/.env', asn: 4837, technique: 'T1190' });
-  addEvent(day, { country: 'CN', path: '/wp-login.php', asn: 4837, technique: 'T1110' });
-
-  const ti = threatIntel({
-    hourlySeries: [
-      { ms: ms1, bucket: h1 },
-      { ms: ms2, bucket: h2 },
-      { ms: ms3, bucket: h3 },
-    ],
-    days: [day],
-    recent: [{ ts: ms3, country: 'CN', asn: 4837, path: '/.env', technique: 'T1190' }],
-  });
-
-  // hora-do-dia: 14h = 5+3 = 8, 9h = 2
-  assert.equal(ti.byHourOfDay[14], 8);
-  assert.equal(ti.byHourOfDay[9], 2);
-  assert.deepEqual(ti.peakHour, { hour: 14, count: 8 });
-  // heatmap: dois dias distintos
-  assert.equal(ti.heatmap.length, 2);
-  const d20 = ti.heatmap.find((r) => r.date === '2026-07-20');
-  assert.equal(d20.hours[14], 8);
-  // tops do dia
-  assert.deepEqual(ti.topCountries, [{ key: 'CN', count: 2 }]);
-  assert.deepEqual(ti.topAsns, [{ key: 'AS4837', count: 2 }]);
-  assert.equal(ti.totals.techniques7d, 2);
-  assert.equal(ti.events.length, 1);
-});
-
-test('threatIntel: entrada vazia não rebenta', () => {
-  const ti = threatIntel({});
-  assert.equal(ti.totals.events7d, 0);
-  assert.equal(ti.peakHour, null);
-  assert.deepEqual(ti.heatmap, []);
-  assert.deepEqual(ti.topAsns, []);
-});
-
 // ---------- mergeFirewall7d (dashboard "Mitigação por dia") ----------
 
 test('mergeFirewall7d: tops iguais ao antigo readFirewall7d embutido no index.js', () => {
@@ -1961,8 +1348,7 @@ test('vitalsStats: LCP mau classifica poor; merge soma histogramas', () => {
 
 // ---------- auditoria de segurança 2026-09-25 (docs/security-audit-2026-09-25/) ----------
 // Regressões para os achados do audit: escritas KV a partir de pedidos
-// anónimos têm de caber no orçamento diário da conta (~1.000/dia no Free),
-// e o path dos iscos guardado tem tamanho limitado.
+// anónimos têm de caber no orçamento diário da conta (~1.000/dia no Free).
 
 /** Cache API falsa (Map por URL), com o mesmo contrato de match/put. */
 function fakeEdgeCache() {
@@ -2032,49 +1418,15 @@ test('underCap: `cost` conta escritas, não eventos', () => {
   assert.equal(underCap(null, { now, windowMs: 1000, max: 1 }).state.count, 1);
 });
 
-test('boundDecoyPath: limita o tamanho e tira controlos/tags', () => {
-  assert.equal(boundDecoyPath('/phpmyadmin/setup.php'), '/phpmyadmin/setup.php');
-  const long = `/phpmyadmin/${'A'.repeat(16_000)}`;
-  assert.equal(boundDecoyPath(long).length, MAX_DECOY_PATH);
-  assert.equal(boundDecoyPath('/phpmyadmin/<x>\n'), '/phpmyadmin/x');
-  assert.equal(boundDecoyPath(undefined), '');
-});
-
-test('honeypot: path-isco longo é guardado limitado, e um `recent` antigo inchado encolhe no evento seguinte', async () => {
-  const env = { KV: fakeKV() };
-  const huge = `/phpmyadmin/${'A'.repeat(16_000)}`;
-  // `recent` de antes da correção: 199 eventos com paths de 16 KB
-  env.KV.store.set('recent', JSON.stringify(Array.from({ length: 199 }, () => ({ ts: 0, path: huge }))));
-  const res = await runFetch(fakeRequest(huge, { ip: '198.51.100.8', country: 'PT', asn: 1 }), env);
-  assert.equal(res.status, 404);
-  const recent = JSON.parse(env.KV.store.get('recent'));
-  assert.equal(recent.length, 200);
-  for (const e of recent) assert.ok(e.path.length <= MAX_DECOY_PATH);
-  assert.equal(recent[0].technique, 'T1190'); // técnica calculada do path completo
-  assert.ok(env.KV.store.get('recent').length < 50_000, 'recent devia ficar com poucos KB, não MB');
-  const day = JSON.parse(env.KV.store.get(`d:${new Date().toISOString().slice(0, 10)}`));
-  for (const k of Object.keys(day.byPath ?? {})) assert.ok(k.length <= MAX_DECOY_PATH);
-});
-
-test('honeypot: com o cap no teto não lê os buckets (só o contador)', async () => {
-  const env = { KV: fakeKV() };
-  const now = Date.now();
-  env.KV.store.set(`wcap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 300, windowStart: now }));
-  const reads = [];
-  const origGet = env.KV.get.bind(env.KV);
-  env.KV.get = async (key, type) => { reads.push(key); return origGet(key, type); };
-  await runFetch(fakeRequest('/.env', { ip: '8.8.8.8', country: 'US', asn: 15169 }), env);
-  assert.deepEqual(reads.map((k) => k.split(':')[0]), ['wcap']);
-});
-
 test('cached: GETs públicos repetidos não passam do orçamento diário de escritas (achado médio)', async () => {
-  // Reprodução do achado: /api/honeypot, /api/map e /api/vitals, cada um a
-  // cada 61s durante 24h simuladas. Antes: ~3.500 puts `cache:*`, sem teto.
+  // Reprodução do achado (então com /api/honeypot e /api/map, TTL 60s; hoje
+  // /api/vitals, 120s, e /api/threat-intel): cada rota a cada 61s durante
+  // 24h simuladas. Antes: ~3.500 puts `cache:*`, sem teto.
   const kv = countingKV();
   const env = { KV: kv, RATE_SALT: 'test' };
   await withClock(Date.parse('2026-09-25T00:00:30Z'), async ({ advance }) => {
     for (let i = 0; i < 24 * 60; i += 1) {
-      for (const route of ['/api/honeypot', '/api/map', '/api/vitals']) {
+      for (const route of ['/api/vitals', '/api/threat-intel']) {
         const res = await runFetch(fakeRequest(route), env);
         assert.equal(res.status, 200);
       }
@@ -2091,13 +1443,13 @@ test('cached: com o orçamento esgotado serve o stale sem reescrever', async () 
   const env = { KV: kv };
   const now = Date.now();
   kv.store.set(`cachecap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 80, windowStart: now }));
-  kv.store.set('cache:honeypot', JSON.stringify({ data: { attempts24h: 42 }, exp: now - 1000 }));
+  kv.store.set('cache:vitals', JSON.stringify({ data: { stale: 42 }, exp: now - 1000 }));
   const logs = [];
   const origError = console.error;
   console.error = (...a) => logs.push(a.map(String).join(' '));
   try {
-    const res = await runFetch(fakeRequest('/api/honeypot'), env);
-    assert.equal((await res.json()).attempts24h, 42);
+    const res = await runFetch(fakeRequest('/api/vitals'), env);
+    assert.equal((await res.json()).stale, 42);
   } finally {
     console.error = origError;
   }
@@ -2112,6 +1464,48 @@ test('scheduled: o cron aquece as caches mesmo com o orçamento dos pedidos esgo
   kv.store.set(`cachecap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 80, windowStart: now }));
   await runScheduled(env);
   assert.ok(kv.store.has('cache:threatintel'), 'o cron não passa pelo orçamento dos pedidos');
+});
+
+// ---------- ADR 0022: limpeza do que o honeypot interno deixou no KV ----------
+// `iplist` guardava IPs de origem publicados (ADR 0020). Com o honeypot fora
+// do Worker, o cron tem de os apagar — e, depois disso, não pode gastar
+// escritas a cada tick (o teto da conta é ~1.000/dia).
+
+test('scheduled: apaga iplist/recent/meta e a cache antiga de threat-intel (com `ips`)', async () => {
+  const kv = countingKV();
+  const env = { KV: kv };
+  kv.store.set('iplist', JSON.stringify({ '203.0.113.9': { lastSeen: Date.now() } }));
+  kv.store.set('recent', JSON.stringify([{ path: '/.env' }]));
+  kv.store.set('meta', JSON.stringify({ firstScanTs: 1 }));
+  kv.store.set('cache:map', JSON.stringify({ data: {}, exp: Date.now() + 60_000 }));
+  kv.store.set('cache:threatintel', JSON.stringify({ data: { ips: [{ ip: '203.0.113.9' }] }, exp: Date.now() + 3600_000 }));
+  await runScheduled(env);
+  for (const key of ['iplist', 'recent', 'meta', 'cache:map']) assert.equal(kv.store.has(key), false, key);
+  // a cache foi reconstruída pelo próprio cron, já sem o campo `ips`
+  const ti = JSON.parse(kv.store.get('cache:threatintel'));
+  assert.equal('ips' in ti.data, false);
+  assert.ok(ti.data.firewall7d);
+});
+
+test('scheduled: sem nada antigo para apagar, a limpeza não apaga a cache nova nem escreve', async () => {
+  const kv = countingKV();
+  const deletes = [];
+  const origDelete = kv.delete.bind(kv);
+  kv.delete = async (key) => { deletes.push(key); return origDelete(key); };
+  const env = { KV: kv };
+  const fresh = { data: { firewall7d: { byAction: [] } }, exp: Date.now() + 3600_000 };
+  kv.store.set('cache:threatintel', JSON.stringify(fresh));
+  await runScheduled(env);
+  assert.deepEqual(deletes, []);
+  assert.deepEqual(JSON.parse(kv.store.get('cache:threatintel')), fresh);
+});
+
+test('/api/threat-intel: só a firewall, nunca IPs', async () => {
+  const env = { KV: fakeKV() };
+  env.KV.store.set('iplist', JSON.stringify({ '203.0.113.9': { lastSeen: Date.now() } }));
+  const res = await runFetch(fakeRequest('/api/threat-intel'), env);
+  assert.equal(res.status, 200);
+  assert.deepEqual(Object.keys(await res.json()), ['firewall7d']);
 });
 
 test('rate limit: com Cache API o estado por-cliente não escreve no KV e continua a limitar', async () => {
@@ -2155,7 +1549,8 @@ test('pwned-range: cache por prefixo na Cache API, sem escritas no KV', async ()
 
 test('orçamento: um só IP, só por caminhos com teto, não passa das escritas diárias da conta (achado baixo)', async () => {
   // Reprodução do achado: 20 prefixos novos/min em /api/pwned-range durante
-  // 16 min + 70 toques num isco, do mesmo IP. Antes: 1.141 puts no KV.
+  // 16 min, do mesmo IP. Antes: 1.141 puts no KV (com os toques nos iscos do
+  // honeypot interno, que saiu com o ADR 0022).
   await withEdgeCache(async () => {
     const kv = countingKV();
     const env = { KV: kv, RATE_SALT: 'test' };
@@ -2171,13 +1566,12 @@ test('orçamento: um só IP, só por caminhos com teto, não passa das escritas 
           }
           advance(61_000);
         }
-        for (let i = 0; i < 70; i += 1) await runFetch(fakeRequest('/.env', { ip: '8.8.8.8', country: 'US', asn: 15169 }), env);
       });
     } finally {
       globalThis.fetch = orig;
     }
-    // só o honeypot escreve (HONEYPOT_WRITE_CAP = 300 escritas) + 1 do `meta`
-    assert.ok(kv.total() <= 301, `puts no KV: ${JSON.stringify(kv.puts)}`);
+    // rate limit e cache por prefixo vivem na Cache API: zero escritas no KV
+    assert.equal(kv.total(), 0, `puts no KV: ${JSON.stringify(kv.puts)}`);
     assert.equal(kv.puts.rl ?? 0, 0);
     assert.equal(kv.puts.cache ?? 0, 0);
   });
@@ -2192,18 +1586,6 @@ test('edgecache: chave na origem do pedido, JSON ida e volta, lixo → null', as
   cache.store.set(url, 'não é json');
   assert.equal(await edgeGetJSON(cache, url), null);
   assert.equal(await edgeGetJSON(cache, `${url}x`), null);
-});
-
-test('OPTIONS a um path-isco devolve o mesmo 404 HTML (sem "tell" da API) e no-store', async () => {
-  const env = { KV: fakeKV() };
-  const res = await runFetch(fakeRequest('/wp-login.php', { method: 'OPTIONS', ip: '198.51.100.9' }), env);
-  assert.equal(res.status, 404);
-  assert.equal(res.headers.get('content-type'), 'text/html; charset=utf-8');
-  assert.equal(res.headers.get('cache-control'), 'no-store');
-  assert.ok(res.headers.get('strict-transport-security'));
-  // OPTIONS a uma rota da API continua a ser o preflight 204
-  const pre = await runFetch(fakeRequest('/api/health', { method: 'OPTIONS' }), env);
-  assert.equal(pre.status, 204);
 });
 
 test('POST /api/vitals: falha do rate limiter dá o 204 uniforme, não uma exceção', async () => {
@@ -2237,9 +1619,9 @@ test('edgeCached: falha da Cache API (match/put) não vira 502 — calcula e res
   console.error = (...a) => logs.push(a.map(String).join(' '));
   try {
     const env = { KV: fakeKV() };
-    const res = await runFetch(fakeRequest('/api/honeypot'), env);
+    const res = await runFetch(fakeRequest('/api/vitals'), env);
     assert.equal(res.status, 200);
-    assert.equal((await res.json()).attempts24h, 0);
+    assert.equal(typeof (await res.json()), 'object');
     assert.ok(logs.some((l) => l.includes('edge_cache_read_failed')));
     assert.ok(logs.some((l) => l.includes('edge_cache_write_failed')));
   } finally {
@@ -2271,18 +1653,18 @@ test('rate limit: falha da Cache API cai no caminho KV (continua a limitar, não
   }
 });
 
-test('threat-intel/ct/cf-stats/ticker também passam pela Cache API (sem KV em pedidos repetidos)', async () => {
+test('threat-intel/ct/cf-stats também passam pela Cache API (sem KV em pedidos repetidos)', async () => {
   await withEdgeCache(async (cache) => {
     const env = { KV: countingKV() };
     const now = Date.now();
-    env.KV.store.set('cache:ticker', JSON.stringify({ data: { items: [] }, exp: now + 3600_000 }));
+    env.KV.store.set('cache:ct', JSON.stringify({ data: { items: [] }, exp: now + 3600_000 }));
     let reads = 0;
     const origGet = env.KV.get.bind(env.KV);
     env.KV.get = async (...a) => { reads += 1; return origGet(...a); };
-    await runFetch(fakeRequest('/api/ticker'), env);
+    await runFetch(fakeRequest('/api/ct'), env);
     const readsAfterFirst = reads;
-    await runFetch(fakeRequest('/api/ticker'), env);
+    await runFetch(fakeRequest('/api/ct'), env);
     assert.equal(reads, readsAfterFirst, '2.º pedido servido pela Cache API, sem ler o KV');
-    assert.ok([...cache.store.keys()].some((k) => k.endsWith('/api/__cache/ticker')));
+    assert.ok([...cache.store.keys()].some((k) => k.endsWith('/api/__cache/ct')));
   });
 });

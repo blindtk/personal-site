@@ -1,5 +1,5 @@
 // Closes the detection → alert loop that was missing (discussed in a
-// security review, 2026-07-29): the honeypot/threat-intel/CT/CF dashboards
+// security review, 2026-07-29): the threat-intel/CT/CF/vitals dashboards
 // are PULL only — they show data when someone deliberately opens the page,
 // but nothing warns anyone when something breaks. This is the missing piece:
 // it checks the Worker's read endpoints and returns exit 1 if something is
@@ -134,8 +134,7 @@ const CRITICAL = ['/api/health'];
 // once already smells like a real Worker problem, not one specific upstream
 // being down).
 const INFORMATIONAL = [
-  '/api/honeypot', '/api/map',
-  '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror',
+  '/api/threat-intel', '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror',
 ];
 
 const results = await Promise.all([...CRITICAL, ...INFORMATIONAL].map(checkJson));
