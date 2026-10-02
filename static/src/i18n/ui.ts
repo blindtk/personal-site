@@ -520,46 +520,35 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
-      statsLabel: 'stats do site',
+      statsLabel: 'em números',
       location: 'Porto, Portugal',
       bio: 'Desenho e opero a arquitetura de segurança de infraestrutura crítica rodoviária. Em infraestrutura de transporte, uma falha de rede não é um incómodo: é um sistema parado e milhares de pessoas em terra. A maior parte do trabalho é privada — o que está aqui demonstra as práticas por trás dele.',
-      meta: ['@ Ascendi · desde 2020', 'MSc · FEUP', '9+ anos em redes & segurança'],
-      // Credenciais: linha discreta ligada a /certificacoes/, só a contagem
-      // verificável — o total sozinho ("30 certificações") só levanta a
-      // pergunta "e as outras?"; calculado em build a partir de
-      // content/certs.json (critério verified!==false, mesmo da página
-      // Certificações).
-      credentials: '{certsVerified} certificações verificáveis no Credly',
-      // Nomeia em vez de contar (ver comparação com o README do perfil
-      // GitHub) — a credencial mais forte (CCDL2, com badge) vem primeiro;
-      // NIS2 substitui SEC504/ATT&CK como diferenciador de setor, já que
-      // ambas continuam acessíveis via {awards} e o rodapé "Percurso".
-      // {awards} = comprimento de content/awards.json — mesma lógica da
-      // galeria de prémios na página Sobre.
-      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', '{awards} CTFs vencidos', 'NIS2', 'ISO 27001'],
+      meta: ['@ Ascendi · desde 2020', 'MSc · FEUP'],
+      // Nomeia em vez de contar — a credencial mais forte (CCDL2, com badge)
+      // vem primeiro; NIS2 como diferenciador de setor. Os CTFs vencidos e a
+      // contagem de certificações estão no painel `stats` ao lado.
+      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Nomes de vendors/plataformas — o payload de palavras-chave que um
       // recrutador pesquisa (Splunk, Entra ID, …), ausente dos chips acima.
       stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
-      // Stats do site: sinais estruturais (o que o site é/tem), não métricas
-      // pessoais — essas migraram para `credentials` e `chips` acima.
-      // {ciLayers} = dict.evidence.pipeline.length (HomePage.astro), para
-      // nunca divergir da tabela de CI em Provas; {tools}/{toolsClient} vêm
-      // de lib/tools.ts; {headers} é manual (lista em
-      // dynamic/worker/src/lib/scan.js, fora do build estático); {decoys}
-      // vem de content/honeypot-attack.json.
-      statsStatic: [
-        { key: 'ciLayers', n: '{ciLayers}', d: 'camadas de CI · o build falha em qualquer uma', tone: 'green' },
-        { key: 'tools', n: '{tools}', d: 'ferramentas · {toolsClient} no browser', tone: 'green' },
-        { key: 'headers', n: '{headers}', d: 'cabeçalhos verificados em CI', tone: 'blue' },
-        { key: 'decoys', n: '{decoys}', d: 'paths-isco → correlação MITRE ATT&CK', tone: 'amber' },
+      // Números sobre mim — calculados no build (HomePage.astro) a partir de
+      // content/ e deste ficheiro, para nunca divergirem da página que os
+      // prova: {years} = ano atual − 2017 (primeira paragem do percurso,
+      // journey.items); {countries} = países distintos em journey.items;
+      // {certsVerified} = content/certs.json (verified !== false, o critério
+      // da página Certificações); {awards} = content/awards.json (galeria do
+      // Sobre). Os números do site vivem em Este site, não aqui.
+      stats: [
+        { key: 'years', n: '{years}+', d: 'anos em redes e segurança', tone: 'green' },
+        { key: 'countries', n: '{countries}', d: 'países · metro, ferrovia e rodovia', tone: 'green' },
+        { key: 'certs', n: '{certsVerified}', d: 'certificações verificáveis no Credly', tone: 'blue' },
+        { key: 'awards', n: '{awards}', d: 'CTFs vencidos · 1.º lugar', tone: 'amber' },
       ],
-      statsNoteBody: 'Números lidos do build — nenhum escolhido para ficar bem. Estado ao vivo em',
-      statsNoteCta: 'Este site →',
+      statsNote: 'Cada número liga à página que o prova.',
       // flag = código do SVG em public/flags/ (render consistente entre
       // sistemas; o emoji nativo variava com o OS).
       journey: {
         title: 'Percurso · redes & segurança em 5 países',
-        scrollHint: '← scroll para ver as 5 paragens →',
         items: [
           { years: '2017–18', flag: 'qa', name: 'Metro de Doha', place: 'Doha, Qatar', note: 'Redes IP e WiFi móvel (BBRS) · Thales/Altran' },
           { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brasil', note: 'Redes IP em ferrovia ligeira · Thales/Altran' },
@@ -1503,46 +1492,35 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
-      statsLabel: 'site stats',
+      statsLabel: 'in numbers',
       location: 'Porto, Portugal',
       bio: 'Designing and operating the security architecture for critical road infrastructure. In transport infrastructure, a network failure isn’t an inconvenience — it’s a stopped system and thousands of people stranded. Most of the work is private; what’s here demonstrates the practices behind it.',
-      meta: ['@ Ascendi · since 2020', 'MSc · FEUP', '9+ years in networking & security'],
-      // Credentials: a discreet line linked to /certifications/, only the
-      // verifiable count — the total alone ("30 certifications") just
-      // invites "what about the rest?"; computed at build from
-      // content/certs.json (verified!==false criterion, same as the
-      // Certifications page).
-      credentials: '{certsVerified} certifications verifiable on Credly',
-      // Names instead of counts (see comparison with the GitHub profile
-      // README) — the strongest credential (CCDL2, badge-verified) leads;
-      // NIS2 replaces SEC504/ATT&CK as the sector differentiator, since both
-      // stay reachable via {awards} and the "Path" footer group.
-      // {awards} = length of content/awards.json — same logic as the awards
-      // gallery on the About page.
-      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', '{awards} CTFs won', 'NIS2', 'ISO 27001'],
+      meta: ['@ Ascendi · since 2020', 'MSc · FEUP'],
+      // Names instead of counts — the strongest credential (CCDL2,
+      // badge-verified) leads; NIS2 as the sector differentiator. CTFs won and
+      // the certification count live in the `stats` panel next to it.
+      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Vendor/platform names — the keyword payload a recruiter searches
       // for (Splunk, Entra ID, …), missing from the chips above.
       stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
-      // Site stats: structural signals (what the site is/has), not personal
-      // metrics — those moved to `credentials` and `chips` above.
-      // {ciLayers} = dict.evidence.pipeline.length (HomePage.astro), so it
-      // never drifts from the CI table on Evidence; {tools}/{toolsClient}
-      // come from lib/tools.ts; {headers} is manual (list lives in
-      // dynamic/worker/src/lib/scan.js, outside the static build); {decoys}
-      // comes from content/honeypot-attack.json.
-      statsStatic: [
-        { key: 'ciLayers', n: '{ciLayers}', d: 'CI layers · build fails on any one', tone: 'green' },
-        { key: 'tools', n: '{tools}', d: 'tools · {toolsClient} in-browser', tone: 'green' },
-        { key: 'headers', n: '{headers}', d: 'headers verified in CI', tone: 'blue' },
-        { key: 'decoys', n: '{decoys}', d: 'decoy paths → MITRE ATT&CK correlation', tone: 'amber' },
+      // Numbers about me — computed at build (HomePage.astro) from content/
+      // and this file, so they never drift from the page that proves them:
+      // {years} = current year − 2017 (first stop of journey.items);
+      // {countries} = distinct countries in journey.items; {certsVerified} =
+      // content/certs.json (verified !== false, the Certifications page's
+      // rule); {awards} = content/awards.json (About page gallery). Site
+      // numbers live on This site, not here.
+      stats: [
+        { key: 'years', n: '{years}+', d: 'years in networking & security', tone: 'green' },
+        { key: 'countries', n: '{countries}', d: 'countries · metro, rail and road', tone: 'green' },
+        { key: 'certs', n: '{certsVerified}', d: 'verifiable certifications on Credly', tone: 'blue' },
+        { key: 'awards', n: '{awards}', d: 'CTFs won · 1st place', tone: 'amber' },
       ],
-      statsNoteBody: 'Numbers read from the build — none picked to look good. Live status on',
-      statsNoteCta: 'This site →',
+      statsNote: 'Each number links to the page that proves it.',
       // flag = code of the SVG in public/flags/ (consistent rendering across
       // systems; native emoji varied with the OS).
       journey: {
         title: 'Journey · networking & security across 5 countries',
-        scrollHint: '← scroll to see all 5 stops →',
         items: [
           { years: '2017–18', flag: 'qa', name: 'Doha Metro', place: 'Doha, Qatar', note: 'IP networks & mobile WiFi (BBRS) · Thales/Altran' },
           { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brazil', note: 'IP networks in light rail · Thales/Altran' },

@@ -593,6 +593,29 @@ a.card:hover {
   flex: none;
 }
 .mini-list a:hover .go { color: var(--accent); }
+/* Em telemóvel a linha única deixava ~15 caracteres de descrição antes do
+   "…" — não dizia nada. Abaixo de 40rem: nome por cima, descrição por baixo
+   em até 2 linhas, seta centrada à direita. */
+@media (max-width: 40rem) {
+  .mini-list a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.8rem;
+    align-items: center;
+  }
+  .mini-list .desc {
+    grid-column: 1;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .mini-list .go {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
 
 .badge {
   display: inline-block;
@@ -738,20 +761,6 @@ a.card:hover {
   font-family: var(--mono);
   font-size: 0.78rem;
   color: var(--muted);
-}
-
-.credentials-link {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--muted);
-  text-decoration: none;
-  margin-top: 0.5rem;
-}
-.credentials-link:hover,
-.credentials-link:focus-visible {
-  color: var(--accent);
-  text-decoration: underline;
 }
 
 .chip-row {
@@ -1362,62 +1371,53 @@ select {
   min-height: 2.9rem;
 }
 
-/* ---------- Percurso (timeline horizontal) ---------- */
+/* ---------- Percurso (timeline) ---------- */
 
-.journey-hint {
-  text-align: right;
-}
-/* 1100px e não 901px: as 5 paragens ocupam ~1040px, e entre 901–1100px o
-   scroll horizontal ainda existe — o hint tem de continuar visível aí
-   (abaixo disso, o JS esconde-o quando se chega ao fim do scroll). */
-@media (min-width: 1100px) {
-  .journey-hint { display: none; }
-}
-
-.journey-wrap {
-  position: relative;
-}
-/* Sombra no bordo direito, só onde o scroll horizontal é mesmo preciso
-   (até ~1100px, a largura em que as 5 paragens deixam de caber no
-   container), para sinalizar que há mais paragens fora do ecrã. */
-@media (max-width: 1099px) {
-  .journey-wrap::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 2.4rem;
-    background: linear-gradient(to right, transparent, var(--bg));
-    pointer-events: none;
-  }
-}
-
+/* Vertical por omissão (mobile-first) e horizontal só a partir de 1100px,
+   a largura em que as 5 paragens (~1040px) cabem no container. Antes era
+   sempre horizontal com scroll: em telemóvel via-se 1,5 paragens com o texto
+   cortado, e a região de scroll não era alcançável por teclado. */
 .journey {
   list-style: none;
   margin: 0;
-  padding: 1.4rem 0.2rem 0.6rem;
+  padding: 0.8rem 0 0 0.4rem;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(13rem, 1fr);
   gap: 0;
-  overflow-x: auto;
-  position: relative;
 }
 .journey .stop {
   position: relative;
-  padding: 1.1rem 1.2rem 0.4rem 0;
-  border-top: 2px solid var(--border-strong);
+  padding: 0 0 1.3rem 1.4rem;
+  border-left: 2px solid var(--border-strong);
+}
+.journey .stop:last-child {
+  padding-bottom: 0.2rem;
 }
 .journey .stop .dot {
   position: absolute;
-  top: -6px;
-  left: 0;
+  top: 0.35rem;
+  left: -6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--bg);
   border: 2px solid var(--accent);
+}
+@media (min-width: 1100px) {
+  .journey {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    padding: 1.4rem 0.2rem 0.6rem;
+  }
+  .journey .stop,
+  .journey .stop:last-child {
+    padding: 1.1rem 1.2rem 0.4rem 0;
+    border-left: none;
+    border-top: 2px solid var(--border-strong);
+  }
+  .journey .stop .dot {
+    top: -6px;
+    left: 0;
+  }
 }
 .journey .stop:last-child .dot {
   background: var(--accent);
@@ -1455,7 +1455,10 @@ select {
   /* --muted e não --faint: é a nota real de cada paragem, não decoração. */
   color: var(--muted);
   margin-top: 0.35rem;
-  max-width: 15rem;
+  max-width: 34rem;
+}
+@media (min-width: 1100px) {
+  .journey .note { max-width: 15rem; }
 }
 
 /* ---------- Catálogo de estrelas (Links) ---------- */
