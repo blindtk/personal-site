@@ -23,7 +23,7 @@ Copia o bloco abaixo como pedido a um agente.
 >   ficheiro nos dois lados liga as versões.
 > - `content/blog/pt/*.md` e `content/blog/en/*.md`.
 > - `content/*.json` — `awards`, `attack`, `certs`, `catalog`,
->   `honeypot-attack`, `links`. Conteúdo estruturado, mas com texto visível.
+>   `links`. Conteúdo estruturado, mas com texto visível.
 > - `static/src/i18n/ui.ts` — **todas** as strings de interface, PT e EN na
 >   mesma estrutura (títulos, intros, labels, blocos de cross-links como
 >   `layers`). É aqui que vive a maior parte do texto "de página".

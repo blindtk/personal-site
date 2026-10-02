@@ -30,6 +30,9 @@ export const SITE = {
   /** Perfil Credly — usado na página Certificações e nos Contactos para
    *  verificação independente dos badges. Deixa '' para esconder. */
   credly: 'https://www.credly.com/users/daniel-malaco/badges/credly',
+  /** Painel público do honeypot externo (repo honeypot-vps-infra): feed,
+   *  relatório e dossiês. Linkado a partir do projeto Honeypot. */
+  honeypotIntel: 'https://intel.danielmala.co/',
   /** Página de contactos: estado atual e chave PGP. */
   contact: {
     availability: {

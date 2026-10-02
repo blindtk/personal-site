@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import type { Lang } from '../../config';
+import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, projectUrl } from '../../i18n/routes';
 
@@ -33,22 +33,22 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
           <p>{entry.data.description}</p>
           <div class="meta">
             {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-            {/* Sinal visual de que este-site e Honeypot fazem parte da teia
-               de cross-links "por camadas" (SiteLayers) com Segurança/Provas/
-               Cloudflare/Performance — distingue-os, sem precisar de clicar,
-               dos projetos independentes (Homelab, star-organizer). */}
-            {(slug === 'este-site' || slug === 'honeypot') && (
+            {/* Sinal visual de que este-site faz parte da teia de cross-links
+               "por camadas" (SiteLayers) com Segurança/Provas/Cloudflare/
+               Performance — distingue-o, sem precisar de clicar, dos projetos
+               independentes (Honeypot, Homelab, star-organizer). */}
+            {slug === 'este-site' && (
               <span class="badge amber">{dict.projects.systemBadge}</span>
             )}
           </div>
           {/* Uma linha de ações igual em todos os cartões: abrir o projeto e,
-             só onde existe, o código, o painel ao vivo do Honeypot (destino
-             distinto da página do projeto — telemetria vs. arquitetura) e o
-             gancho de "Este site" para a teia de páginas de segurança. */}
+             só onde existe, o código, o painel público do Honeypot (outro
+             domínio — intel.danielmala.co, o relatório do sensor externo) e
+             o gancho de "Este site" para a teia de páginas de segurança. */}
           <div class="card-links mono">
             <a href={projectUrl(lang, slug)}>[{dict.projects.open}]</a>
             {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
-            {slug === 'honeypot' && <a href={routes.honeypot[lang]}>[{dict.projects.live}]</a>}
+            {slug === 'honeypot' && <a href={SITE.honeypotIntel} rel="noopener">[{dict.projects.live}]</a>}
             {slug === 'este-site' && <a href={routes.security[lang]}>[{dict.projects.systemCta}]</a>}
           </div>
         </div>

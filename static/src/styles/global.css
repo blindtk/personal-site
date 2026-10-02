@@ -882,44 +882,9 @@ a.card:hover {
 .bar-fill.warn { background: var(--accent-2); }
 .bar-fill.down { background: var(--danger); }
 
-/* Heatmap dia × hora e faixa de horas da Threat Intelligence. Vivem no CSS
-   GLOBAL (não scoped) de propósito: as células/barras são criadas por script
-   (createElement) e por isso não recebem o atributo de scope do Astro — um
-   seletor scoped nunca lhes bateria (mesma razão das .bar-* acima). */
-.heatmap { display: flex; flex-direction: column; gap: 3px; overflow-x: auto; }
-.heatmap-row {
-  display: grid;
-  grid-template-columns: 3rem repeat(24, minmax(9px, 1fr));
-  gap: 3px;
-  align-items: center;
-}
-.heat-label { font-size: 0.6rem; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
-.heat-cell { height: 15px; min-width: 9px; border-radius: 2px; background: var(--bg-raise-2); }
-.heatmap-axis {
-  display: flex;
-  justify-content: space-between;
-  padding-left: 3rem; /* alinha com a coluna de rótulos das linhas */
-  margin-top: 4px;
-  font-size: 0.58rem;
-  color: var(--muted);
-}
-.hours-strip {
-  display: grid;
-  grid-template-columns: repeat(24, 1fr);
-  gap: 2px;
-  align-items: end;
-  height: 3.4rem;
-}
-.hour-bar { background: var(--accent-2); border-radius: 2px 2px 0 0; min-height: 2px; align-self: end; }
-.heatmap-legend { display: flex; align-items: center; gap: 0.35rem; font-size: 0.66rem; color: var(--muted); margin-top: 0.6rem; }
-.heatmap-legend .swatch { width: 13px; height: 13px; border-radius: 2px; }
-.heatmap-legend .i1 { background: rgba(61, 220, 132, 0.25); }
-.heatmap-legend .i2 { background: rgba(61, 220, 132, 0.5); }
-.heatmap-legend .i3 { background: rgba(61, 220, 132, 0.75); }
-.heatmap-legend .i4 { background: rgba(61, 220, 132, 1); }
-
 /* Sparklines (timelines Requests/Threats) — SVG criado por script, por isso
-   as classes vivem no global (mesma razão das barras e do heatmap acima). */
+   as classes vivem no global (mesma razão das barras acima): elementos
+   criados com createElement não recebem o atributo de scope do Astro. */
 .spark-svg { width: 100%; height: 48px; display: block; overflow: visible; }
 .spark-area { fill: var(--accent-dim); }
 .spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; }
@@ -953,7 +918,6 @@ a.card:hover {
 .scatter-dot.med { fill: var(--accent-2); fill-opacity: 0.85; }
 .scatter-dot.low { fill: var(--accent); fill-opacity: 0.85; }
 .scatter-dot.sample { fill: none; stroke: var(--muted); stroke-width: 1.5; }
-.timeline-dot { fill: var(--accent); stroke: var(--bg-raise); stroke-width: 2; }
 
 /* Lista chave→valor do painel de estado (versão, commit, branch…). */
 .kv-list {
@@ -1654,9 +1618,8 @@ select {
   margin-bottom: 2rem;
 }
 
-/* ---------- Honeypot (/perimetro) ---------- */
+/* ---------- Painéis ao vivo: aviso de indisponível e carregamento ---------- */
 
-.honeypot .stats-grid { margin-bottom: 1.2rem; }
 /* o atributo hidden tem de vencer o display:grid/flex das classes */
 .stats-grid[hidden], .table-scroll[hidden] { display: none; }
 .hp-fallback {
@@ -1667,140 +1630,8 @@ select {
   color: var(--accent-2);
   font-size: 0.9rem;
 }
-.hp-table th { white-space: nowrap; }
 .hp-loading { color: var(--muted); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
 .hp-cc { color: var(--text); }
-.hp-path { color: var(--accent-2); }
-.hp-verdict { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
-
-/* Coluna Técnica: link para /attack#<id> + cruzamento com o ticker CISA KEV. */
-.hp-tech { white-space: nowrap; font-size: 0.82rem; }
-.hp-tech-id { color: var(--accent-3); border-bottom: 1px dotted currentColor; }
-.hp-tech-id:hover { color: var(--accent); }
-/* Selo "explorada agora": técnica tentada = técnica ativa no ticker KEV. */
-.hp-corr-badge {
-  display: inline-block;
-  margin-left: 0.4rem;
-  padding: 0 0.35rem;
-  border: 1px solid var(--accent-2);
-  border-radius: 999px;
-  background: rgba(240, 180, 92, 0.08);
-  color: var(--accent-2);
-  font-size: 0.72rem;
-  white-space: nowrap;
-}
-.hp-corr-badge:hover { background: rgba(240, 180, 92, 0.16); color: var(--accent-2); }
-.hp-corr-row td { background: rgba(240, 180, 92, 0.05); }
-.hp-corr-row .hp-path { color: var(--accent-2); font-weight: 600; }
-/* Banner de correlação: só aparece quando há pelo menos um cruzamento vivo. */
-.hp-corr-banner {
-  border: 1px solid var(--accent-2);
-  border-left-width: 3px;
-  border-radius: var(--radius);
-  background: rgba(240, 180, 92, 0.06);
-  padding: 0.8rem 1rem;
-  margin-bottom: 1.2rem;
-  color: var(--accent-2);
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-.hp-corr-banner[hidden] { display: none; }
-.hp-corr-spark { margin-right: 0.35rem; }
-
-/* ---------- Ticker SOC (topo do Perímetro) ---------- */
-
-.ticker {
-  overflow: hidden;
-  white-space: nowrap;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-raise-2);
-  padding: 0.5rem 0;
-  margin-bottom: 1.4rem;
-}
-.ticker-track {
-  display: inline-flex;
-  gap: 0;
-  animation: ticker-slide 60s linear infinite;
-  will-change: transform;
-}
-.ticker:hover .ticker-track,
-.ticker:focus-within .ticker-track {
-  animation-play-state: paused;
-}
-.ticker .ti {
-  margin: 0 1.6rem;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-.ticker .ti a { color: var(--muted); }
-.ticker .ti a:hover { color: var(--accent); }
-.ticker .tag { color: var(--danger); margin-right: 0.5rem; }
-.ticker .tag.k { color: var(--accent-2); }
-@keyframes ticker-slide {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-@media (max-width: 480px) {
-  .ticker { padding: 0.35rem 0; }
-  .ticker .ti { margin: 0 1rem; font-size: 0.7rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ticker { white-space: normal; }
-  .ticker-track { animation: none; flex-wrap: wrap; }
-}
-
-/* ---------- Mapa de tráfego hostil (/perimetro) ---------- */
-
-.hostmap { margin-top: 2rem; }
-.map-frame {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-raise);
-  padding: 0.6rem;
-  overflow: hidden;
-}
-.map-svg { width: 100%; height: auto; display: block; }
-.map-svg #map-dots circle { fill: var(--border-strong); }
-.map-svg .src { fill: var(--bg-raise-2); stroke: var(--faint); stroke-width: 1; }
-.map-svg .arc {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.3;
-  opacity: 0.8;
-  stroke-dasharray: 6 5;
-  animation: map-flow 2.2s linear infinite;
-}
-.map-svg .arc.amber { stroke: var(--accent-2); opacity: 0.5; animation-duration: 3s; }
-.map-svg .map-dst { fill: var(--accent); }
-.map-svg .map-pulse {
-  fill: none;
-  stroke: var(--accent);
-  opacity: 0.6;
-  animation: map-pulse 1.8s ease-out infinite;
-}
-.map-svg .map-label { fill: var(--muted); font-size: 9px; font-family: var(--mono); }
-.map-svg .map-label.pt { fill: var(--accent); }
-@keyframes map-flow { to { stroke-dashoffset: -22; } }
-@keyframes map-pulse { from { r: 5; opacity: 0.7; } to { r: 16; opacity: 0; } }
-.map-legend {
-  display: flex;
-  gap: 1.1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0.6rem 0.4rem 0.2rem;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  /* --muted e não --faint: é o texto que explica o que as cores do mapa
-     significam — se ele próprio for ilegível, a regra "não só por cor"
-     deixa de valer. */
-  color: var(--muted);
-}
-.map-legend .mk { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
-.map-legend .mk.g { background: var(--accent); }
-.map-legend .mk.a { background: var(--accent-2); }
-.map-legend .map-totals { margin-left: auto; }
 
 /* ---------- Diagrama do homelab (projeto /projetos/homelab) ---------- */
 
@@ -2118,7 +1949,7 @@ select {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* Deep-link vindo de /perimetro: destaca a técnica alvo da âncora. */
+/* Deep-link (/attack#<id>): destaca a técnica alvo da âncora. */
 .atk-cell:target {
   outline: 2px solid var(--accent-2);
   outline-offset: 2px;
@@ -2479,6 +2310,4 @@ select {
   .net-bg .pulse { animation: none; opacity: 0; }
   .net-bg .node.live { animation: none; fill-opacity: 0.6; }
   /* mapa de tráfego: arcos param (visíveis, sólidos), pulso some */
-  .map-svg .arc { animation: none; stroke-dasharray: none; }
-  .map-svg .map-pulse { animation: none; opacity: 0; }
 }

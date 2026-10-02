@@ -192,18 +192,18 @@ export function createTerminal(ctx) {
         return {
           lines: pt
             ? [
-                'honeypot — endpoints-isco que registam scan automático (só metadados:',
-                'país, ASN e path; nenhum IP é armazenado).',
-                'o painel ao vivo (honeypot + estado da Cloudflare) precisa do Worker',
-                'publicado. a garantia de privacidade está coberta por testes.',
-                'detalhes em /perimetro',
+                'honeypot — sensor externo, numa VPS à parte deste site: Cowrie',
+                '(SSH/Telnet), um labirinto HTTP e um tarpit. o que apanha é',
+                'enriquecido, mapeado para MITRE ATT&CK e publicado em',
+                'intel.danielmala.co.',
+                'detalhes em /projetos/honeypot',
               ]
             : [
-                'honeypot — decoy endpoints that log automated scanning (metadata',
-                'only: country, ASN and path; no IP is ever stored).',
-                'the live panel (honeypot + Cloudflare status) needs the Worker',
-                'published. the privacy guarantee is covered by tests.',
-                'details at /perimeter',
+                'honeypot — an external sensor on a VPS separate from this site:',
+                'Cowrie (SSH/Telnet), an HTTP maze and a tarpit. what it catches',
+                'is enriched, mapped to MITRE ATT&CK and published at',
+                'intel.danielmala.co.',
+                'details at /en/projects/honeypot',
               ],
         };
       }

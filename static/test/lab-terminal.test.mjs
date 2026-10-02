@@ -110,7 +110,7 @@ test('createTerminal (pt): comandos-espelho do site (attack/projetos/honeypot/pr
   });
   assert.deepEqual(await exec('projetos'), { lines: ['1 projetos:', '  Este Site  →  /projetos/este-site/'] });
   const hp = await exec('honeypot');
-  assert.ok(hp.lines.some((l) => l.includes('/perimetro')));
+  assert.ok(hp.lines.some((l) => l.includes('/projetos/honeypot')));
   assert.deepEqual(await exec('provas'), {
     lines: ['último commit: abc1234', 'scan aos cabeçalhos ao vivo e workflows em /provas'],
   });

@@ -13,7 +13,6 @@ export const routes = {
   siteOverview: { pt: '/este-site/', en: '/en/this-site/' },
   performance: { pt: '/este-site/performance/', en: '/en/this-site/performance/' },
   security: { pt: '/este-site/seguranca/', en: '/en/this-site/security/' },
-  honeypot: { pt: '/este-site/honeypot/', en: '/en/this-site/honeypot/' },
   cloudflare: { pt: '/este-site/cloudflare/', en: '/en/this-site/cloudflare/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
   evidence: { pt: '/este-site/provas/', en: '/en/this-site/evidence/' },
