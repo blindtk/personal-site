@@ -5,45 +5,48 @@ tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
 
-Site pessoal bilingue construído com Astro: calculadora de subnets, gerador
-de hashes e mais — as ferramentas correm no browser, e o pouco que precisa
-mesmo de servidor vive num Cloudflare Worker isolado, à parte.
+Como foi feito este site, e porquê. O sistema a funcionar — o que está em
+vigor, o que acontece ao vivo e as provas — está na secção
+[Este site](/este-site/); aqui ficam as decisões por trás dele.
 
-Bilingue por construção: o conteúdo (markdown/JSON) vive separado do código
-e alimenta as duas versões (PT/EN) a partir das mesmas componentes — sem
-duplicar lógica entre idiomas.
+## O que é
 
-A segurança moldou o design desde o início: Content-Security-Policy
-estrita sem 'unsafe-inline', cabeçalhos de segurança e uma política de
-divulgação responsável publicada. O porquê de cada camada está em
-[Segurança](/este-site/seguranca/); as provas — commit, scan aos cabeçalhos
-ao vivo, workflows — são verificáveis em [Provas](/este-site/provas/).
+Um site pessoal bilingue (PT/EN), estático, com ferramentas de rede e
+segurança que correm no browser. O pouco que precisa mesmo de servidor — o
+verificador de passwords, o espelho, o vigia de certificados e os painéis
+de Cloudflare e Performance — vive num Cloudflare Worker isolado, à parte
+do site.
+
+O conteúdo (markdown/JSON) vive separado do código e alimenta as duas
+línguas a partir das mesmas componentes, sem duplicar lógica entre PT e EN.
+
+A segurança moldou o desenho desde o início: Content-Security-Policy
+estrita sem `'unsafe-inline'`, cabeçalhos de segurança e uma política de
+divulgação responsável publicada. O que está em vigor e porquê está em
+[Segurança](/este-site/seguranca/); o que se pode verificar — commit,
+cabeçalhos ao vivo, workflows — está em [Provas](/este-site/provas/).
 
 ## Decisões de arquitetura
 
-**Porquê Astro sem framework client-side.** Zero React/Vue/Svelte por
-omissão — as páginas nascem sem JavaScript, e as ilhas que precisam de
-interatividade (as ferramentas de rede, o Lab) não carregam runtime de
-hidratação nenhum. Isto não é só uma escolha de performance: torna a CSP
-estrita sem `'unsafe-inline'` fácil de manter, porque não há um framework a
-injetar estilo ou script inline em tempo de execução de forma invisível —
-e porque escrevo os meus próprios `<script>` como ficheiros externos, nunca
-inline, `script-src 'self'` e `style-src 'self'` chegam sem precisar de uma
-única hash. (Já tentei o caminho inverso — hashes SHA-256 por script/estilo
-inline — mas o número de hashes cresce com o número de páginas, e ao fim de
-umas dezenas a Content-Security-Policy passa dos 2000 caracteres que o
-Cloudflare Pages aceita por linha de cabeçalho; eliminar o inline em vez de
-o catalogar resolve na raiz.)
+**Porquê Astro sem framework no browser.** Zero React/Vue/Svelte por
+omissão — as páginas nascem sem JavaScript, e as partes que precisam de
+interatividade (as ferramentas, o Lab) não carregam runtime de hidratação
+nenhum. Não é só uma escolha de performance: torna a CSP estrita sem
+`'unsafe-inline'` fácil de manter, porque não há um framework a injetar
+estilo ou script inline em tempo de execução — e, como os meus próprios
+`<script>` são ficheiros externos, nunca inline, `script-src 'self'` e
+`style-src 'self'` chegam sem uma única hash. (Tentei primeiro o caminho
+inverso — uma hash SHA-256 por script/estilo inline —, mas o número de
+hashes cresce com o número de páginas, e ao fim de umas dezenas a CSP passa
+dos 2000 caracteres que o Cloudflare Pages aceita por linha de cabeçalho.
+Eliminar o inline em vez de o catalogar resolve na raiz.)
 
-**Porquê monorepo com o Worker separado do estático.** O `static/` (este
-site) mantém o modelo de ameaça descrito na página de
-[Segurança](/este-site/seguranca/) o mais simples possível: sem backend, sem base de
-dados, sem input de utilizador que chegue a um servidor. As funcionalidades
-que precisam mesmo de servidor — o [honeypot](/projetos/honeypot/), o mapa de
-tráfego, o vigia de Certificate Transparency, ticker de threat intel — vivem isoladas num
-Cloudflare Worker (`dynamic/worker/`), publicado à parte. Isso significa que
-o site estático continua a funcionar (e a cumprir a promessa de "sem
-backend") mesmo que o Worker esteja em baixo ou nem sequer publicado — as
-secções que dependem dele degradam com graça em vez de partir o resto. O
-resultado ao vivo destas camadas está no [Honeypot](/este-site/honeypot/)
-e na [Cloudflare](/este-site/cloudflare/).
+**Porquê o Worker à parte do site estático.** O site em si fica sem
+backend, sem base de dados e sem input de visitantes que chegue a um
+servidor — o modelo de ameaça descrito em [Segurança](/este-site/seguranca/)
+mantém-se o mais simples possível. O que precisa mesmo de servidor vive
+isolado no Worker, publicado à parte, e não guarda dados pessoais. Se o
+Worker estiver em baixo, o site continua a funcionar: as partes que
+dependem dele dizem que estão indisponíveis em vez de partir o resto. O
+resultado ao vivo está em [Cloudflare](/este-site/cloudflare/) e
+[Performance](/este-site/performance/).

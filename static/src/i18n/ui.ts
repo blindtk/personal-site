@@ -12,11 +12,11 @@ export const ui = {
       projects: 'Projetos',
       tools: 'Ferramentas',
       security: 'Segurança',
-      thisSite: 'Este Site',
-      overview: 'Visão Geral',
+      thisSite: 'Este site',
+      overview: 'Visão geral',
       performance: 'Performance',
       cloudflare: 'Cloudflare',
-      projectThisSite: 'Projeto «Este site»',
+      projectThisSite: 'Como foi feito',
       links: 'Links',
       contact: 'Contactos',
       lab: 'Lab',
@@ -47,22 +47,21 @@ export const ui = {
     },
     layers: {
       title: 'Este site, por camadas',
-      intro: 'Segurança, provas e telemetria são faces do mesmo projeto — cada página cobre uma camada:',
-      overview: 'Visão Geral — stack e estado ao vivo',
+      intro: 'Cada página mostra uma camada do mesmo sistema:',
+      overview: 'Visão geral — o que corre e o estado ao vivo',
       security: 'Segurança — postura, cabeçalhos e porquê',
       cloudflare: 'Cloudflare — o que a Internet tenta contra a zona inteira, e o que é travado',
       evidence: 'Provas — tudo verificável, gerado no build',
       performance: 'Performance — tráfego, cache, latência e Core Web Vitals',
-      project: 'Projeto «Este site» — arquitetura e decisões',
+      project: 'Como foi feito — as decisões por trás da arquitetura',
     },
     // Secção "Este Site" — Visão Geral, Analytics e Performance.
     site: {
       // ----- Visão Geral -----
-      overviewMetaTitle: 'Este Site — como funciona por dentro',
-      overviewTitle: 'Este site: visão geral',
-      overviewIntro:
-        'Uma vista pública, ao vivo, de como este site é construído, protegido e monitorizado. Não é um dashboard da Cloudflare colado aqui — é observabilidade própria: a mesma disciplina que aplico em produção, exposta para quem quiser inspecionar.',
-      hubTitle: 'Mapa desta secção',
+      overviewMetaTitle: 'Este site — como funciona',
+      overviewTitle: 'Este site',
+      overviewIntro: 'Este site é também um sistema pequeno em produção: protegido, monitorizado e com provas públicas do que afirma. Esta secção mostra-o por camadas — o que está em vigor, o que acontece ao vivo e como verificar. O porquê das decisões está em «Como foi feito».',
+      hubTitle: 'As camadas',
       // ----- Este site, em números: os três números da zona Cloudflare -----
       chainTitle: 'Este site, em números',
       chainRequests: 'pedidos à zona',
@@ -74,8 +73,8 @@ export const ui = {
       archTitle: 'Arquitetura',
       archBody:
         'O que chega ao teu browser é estático: HTML/CSS gerados no build, sem base de dados nem sessões. O pouco que precisa mesmo de servidor (verificador de passwords, vigia de certificados, telemetria) vive num Cloudflare Worker isolado, sem estado pessoal — e o site mantém-se inteiro sem ele. Tudo à borda da Cloudflare, com deploy automático a partir do GitHub.',
-      overviewProjectBody: 'O porquê de cada decisão de arquitetura — Astro sem framework client-side, o monorepo com o Worker separado do estático — está contado no projeto que serve este site.',
-      overviewProjectCta: 'Ver o projeto Este site →',
+      overviewProjectBody: 'As decisões por trás desta arquitetura — porquê Astro sem framework no browser, porquê o Worker à parte do site estático — estão em «Como foi feito».',
+      overviewProjectCta: 'Ver como foi feito →',
       stackTitle: 'Stack',
       stackIntro: 'As peças e o papel de cada uma:',
       stackFrontend: 'Frontend',
@@ -223,7 +222,7 @@ export const ui = {
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
-        'A arquitetura — estática, sem contas nem sessões, com o pouco que precisa mesmo de servidor (verificador de passwords, telemetria) isolado num Worker à parte — está descrita em Este Site. Para o modelo de ameaça, o que importa é a consequência: a superfície de ataque fica mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
+        'A arquitetura — estática, sem contas nem sessões, com o pouco que precisa mesmo de servidor (verificador de passwords, telemetria) isolado num Worker à parte — está descrita na Visão geral desta secção. Para o modelo de ameaça, o que importa é a consequência: a superfície de ataque fica mínima. O que interessa proteger é a integridade (não servir código adulterado) e a privacidade de quem visita — é aí que as camadas abaixo se concentram.',
       perimeterBody: 'Isto é o modelo — o que tenta mesmo entrar, ao vivo (o que a Cloudflare trava na zona), está no hub, em «Este site, em números», com detalhe na página Cloudflare.',
       perimeterCta: 'Ver os números ao vivo →',
       // ----- Cabeçalhos e porquê -----
@@ -260,9 +259,8 @@ export const ui = {
         'Nada aqui é para acreditares — é para verificares. Reuni as provas num só sítio: o hash do último commit, o contrato de cabeçalhos (CSP incluída) e os workflows de CI, por push, cron ou tag.',
       evidenceCta: 'Ver a página Provas →',
       // ----- Projeto (narrativa) -----
-      projectBody:
-        'A segurança aqui é uma faceta do projeto que serve este site — o modelo de ameaça e as decisões de arquitetura por trás dela estão contados na página do projeto.',
-      projectCta: 'Ver o projeto Este site →',
+      projectBody: 'A segurança é uma das camadas deste site; o modelo de ameaça e as decisões de arquitetura que a sustentam estão em «Como foi feito».',
+      projectCta: 'Ver como foi feito →',
     },
     evidence: {
       metaTitle: 'Provas — transparência verificável',
@@ -920,11 +918,11 @@ export const ui = {
       projects: 'Projects',
       tools: 'Tools',
       security: 'Security',
-      thisSite: 'This Site',
+      thisSite: 'This site',
       overview: 'Overview',
       performance: 'Performance',
       cloudflare: 'Cloudflare',
-      projectThisSite: 'This site project',
+      projectThisSite: 'How it was built',
       links: 'Links',
       contact: 'Contact',
       lab: 'Lab',
@@ -955,22 +953,21 @@ export const ui = {
     },
     layers: {
       title: 'This site, layer by layer',
-      intro: 'Security, evidence and telemetry are facets of the same project — each page covers one layer:',
-      overview: 'Overview — stack and live status',
+      intro: 'Each page shows one layer of the same system:',
+      overview: 'Overview — what runs and its live status',
       security: 'Security — posture, headers and why',
       cloudflare: 'Cloudflare — what the Internet tries against the whole zone, and what gets stopped',
       evidence: 'Evidence — everything verifiable, generated at build',
       performance: 'Performance — traffic, cache, latency and Core Web Vitals',
-      project: '“This site” project — architecture and decisions',
+      project: 'How it was built — the decisions behind the architecture',
     },
     // "This Site" section — Overview, Analytics and Performance.
     site: {
       // ----- Overview -----
-      overviewMetaTitle: 'This Site — how it works inside',
-      overviewTitle: 'This site: overview',
-      overviewIntro:
-        'A public, live view of how this site is built, protected and monitored. Not a Cloudflare dashboard pasted in — it is my own observability: the same discipline I apply in production, exposed for anyone who wants to inspect it.',
-      hubTitle: 'Map of this section',
+      overviewMetaTitle: 'This site — how it works',
+      overviewTitle: 'This site',
+      overviewIntro: 'This site is also a small production system: protected, monitored and with public proof of what it claims. This section shows it layer by layer — what is in place, what happens live and how to check it. The why behind the decisions is in “How it was built”.',
+      hubTitle: 'The layers',
       // ----- This site, in numbers: the three Cloudflare zone numbers -----
       chainTitle: 'This site, in numbers',
       chainRequests: 'requests to the zone',
@@ -982,8 +979,8 @@ export const ui = {
       archTitle: 'Architecture',
       archBody:
         'What reaches your browser is static: HTML/CSS generated at build, no database, no sessions. The little that genuinely needs a server (password checker, certificate watch, telemetry) lives in an isolated Cloudflare Worker with no personal state — and the site stays whole without it. Everything at Cloudflare\'s edge, deployed automatically from GitHub.',
-      overviewProjectBody: 'The why behind each architecture decision — Astro with no client-side framework, the monorepo with the Worker kept separate from the static site — is told in the project that serves this site.',
-      overviewProjectCta: 'See the This site project →',
+      overviewProjectBody: 'The decisions behind this architecture — why Astro with no framework in the browser, why the Worker sits apart from the static site — are in “How it was built”.',
+      overviewProjectCta: 'See how it was built →',
       stackTitle: 'Stack',
       stackIntro: 'The pieces and what each one does:',
       stackFrontend: 'Frontend',
@@ -1116,7 +1113,7 @@ export const ui = {
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
-        'The architecture — static, no accounts or sessions, with the little that genuinely needs a server (password checker, telemetry) isolated in a separate Worker — is described on This Site. For the threat model, what matters is the consequence: the attack surface stays minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
+        'The architecture — static, no accounts or sessions, with the little that genuinely needs a server (password checker, telemetry) isolated in a separate Worker — is described in the Overview of this section. For the threat model, what matters is the consequence: the attack surface stays minimal. What matters is integrity (not serving tampered code) and the privacy of visitors — that is where the layers below focus.',
       perimeterBody: 'That is the model — what actually tries to get in, live (what Cloudflare stops on the zone), is on the hub, under "This site, in numbers", with detail on the Cloudflare page.',
       perimeterCta: 'See the live numbers →',
       // ----- Headers and why -----
@@ -1153,9 +1150,8 @@ export const ui = {
         "None of this is meant to be taken on faith — it's meant to be checked. I gathered the proof in one place: the latest commit hash, the header contract (CSP included), and the CI workflows, on push, cron, or tag.",
       evidenceCta: 'See the Evidence page →',
       // ----- Project (narrative) -----
-      projectBody:
-        'The security here is one facet of the project that serves this site — the threat model and the architecture decisions behind it are told on the project page.',
-      projectCta: 'See the This site project →',
+      projectBody: 'Security is one of this site’s layers; the threat model and the architecture decisions behind it are in “How it was built”.',
+      projectCta: 'See how it was built →',
     },
     evidence: {
       metaTitle: 'Evidence — verifiable transparency',
