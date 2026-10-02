@@ -1,6 +1,6 @@
 ---
 title: 'Honeypot'
-description: 'Decoy endpoints that log automated Internet scanning — the source IP is published by explicit design decision, correlated with MITRE ATT&CK and CISA KEV.'
+description: 'Decoy endpoints that catch automated Internet scanning and map it to MITRE ATT&CK and CISA KEV.'
 tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
 order: 2
 ---

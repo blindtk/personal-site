@@ -1,6 +1,6 @@
 ---
 title: 'This site'
-description: 'Monorepo with an Astro static site, markdown content, and client-side tools.'
+description: 'A personal site run like a production system: threat model, strict CSP, verifiable evidence.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---

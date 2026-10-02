@@ -1,6 +1,6 @@
 ---
 title: 'Honeypot'
-description: 'Endpoints-isco que registam o scan automático da Internet — o IP de origem é publicado por decisão explícita, correlacionados com MITRE ATT&CK e CISA KEV.'
+description: 'Endpoints-isco que apanham o scan automático da Internet e o ligam ao MITRE ATT&CK e CISA KEV.'
 tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
 order: 2
 ---

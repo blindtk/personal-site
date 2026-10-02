@@ -1,6 +1,6 @@
 ---
 title: 'Este site'
-description: 'Monorepo com site estático em Astro, conteúdo em markdown e ferramentas client-side.'
+description: 'Um site pessoal gerido como sistema de produção: threat model, CSP estrita, provas verificáveis.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
