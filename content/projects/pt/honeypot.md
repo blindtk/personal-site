@@ -1,7 +1,7 @@
 ---
 title: 'Honeypot'
 description: 'Honeypot SSH e HTTP numa VPS à parte, com enriquecimento, ATT&CK e um feed público de ameaças.'
-tags: ['cowrie', 'threat-intel', 'mitre-attack', 'python', 'oracle-cloud']
+tags: ['ssh', 'threat-intel', 'mitre-attack', 'python', 'oracle-cloud']
 order: 2
 ---
 
@@ -14,13 +14,13 @@ uma página por endereço e por artefacto, e um feed legível por máquinas.
 
 ## O que corre na VPS
 
-- **Cowrie** na porta 22: emulação completa de shell — nunca uma shell
-  real. O login só passa depois de 2 a 5 credenciais diferentes, e a
+- **Acesso SSH** na porta 22: uma shell emulada por completo — nunca uma
+  shell real. O login só passa depois de 2 a 5 credenciais diferentes, e a
   que "funcionou" continua a funcionar, como numa máquina comprometida a
-  sério; aceitar tudo à primeira era o sinal mais fácil de que aquilo é um
-  honeypot. No sistema de ficheiros falso há credenciais-isco (AWS, `.env`,
-  histórico de bash) geradas na altura de cada instalação, nunca guardadas
-  no repositório.
+  sério; aceitar tudo à primeira seria o sinal mais fácil de que aquilo é
+  um honeypot. No sistema de ficheiros falso há credenciais-isco (AWS,
+  `.env`, histórico de bash) geradas na altura de cada instalação, nunca
+  guardadas no repositório.
 - **Um labirinto HTTP** nas portas 80/443: texto gerado sem fim, com links
   que só levam a mais texto, para prender crawlers e scanners — com tetos
   de ligações, bytes e tempo, para não ser a própria VPS a esgotar-se
@@ -32,12 +32,12 @@ uma página por endereço e por artefacto, e um feed legível por máquinas.
 
 ## Do registo ao feed
 
-Os eventos dos quatro serviços entram numa base de estado e saem, a cada
+Os eventos dos serviços entram numa base de estado e saem, a cada
 15 minutos, como `feed.json`/`feed.txt`, uma exportação MISP, um bundle
 STIX 2.1 e o relatório em HTML. Pelo caminho:
 
-- **ATT&CK por comando, não por palavra-chave solta**: o Cowrie capta o que
-  o atacante escreve, por isso cada padrão (`curl … | sh`, `chmod +x`,
+- **ATT&CK por comando, não por palavra-chave solta**: o acesso SSH capta
+  o que o atacante escreve, por isso cada padrão (`curl … | sh`, `chmod +x`,
   `crontab`, mineradores, leitura de `.ssh/id_rsa`…) mapeia para a técnica
   que lhe corresponde. Sem padrão claro, sem técnica — nunca um palpite.
 - **Enriquecimento com regras explícitas**: dez fontes (RDAP, AbuseIPDB,
@@ -52,9 +52,8 @@ STIX 2.1 e o relatório em HTML. Pelo caminho:
   o hash e o veredicto, nunca a amostra.
 - **Dossiês que agrupam comportamento, não pessoas**: endereços ligados
   pelos mesmos hashes (uma chave SSH reutilizada, os mesmos artefactos)
-  ficam juntos, publicados como
-  inferência que o leitor pode rejeitar — sem nomes de campanha nem de
-  atores.
+  ficam juntos, publicados como inferência que o leitor pode rejeitar —
+  sem nomes de campanha nem de atores.
 
 ## Privacidade e retenção
 
@@ -77,13 +76,3 @@ corre as cinco suites de testes, `pip-audit` sobre lockfiles com hashes (os
 mesmos que a VPS instala), SBOM, `ruff`, `bandit`, `shellcheck` e
 verificações de que a documentação bate certo com o código. As páginas
 publicadas não têm JavaScript nenhum, com uma CSP que não permite scripts.
-
-## E este site?
-
-Este site chegou a ter o seu próprio honeypot — alguns caminhos-isco
-(`/wp-login.php`, `/.env`…) servidos pelo Worker. Saiu (ADR 0022): estava
-atrás de um Managed Challenge da Cloudflare, por isso via pouco do scan em
-massa que devia apanhar, e guardava IPs para um cruzamento com este sensor
-que nunca chegou a existir. Os dois são agora o que deviam ser desde o
-início: este site é estático e não guarda IPs; o honeypot é uma máquina à
-parte, com o seu próprio domínio e a sua própria política de privacidade.

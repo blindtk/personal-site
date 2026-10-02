@@ -12,9 +12,8 @@ import { routes, projectUrl } from '../i18n/routes';
  * essa página já lista as mesmas ligações em "Mapa desta secção", uma
  * segunda cópia do mesmo bloco ali seria redundante.
  *
- * Havia também uma camada Honeypot (os paths-isco do próprio site); saiu
- * com o ADR 0022 — o honeypot é agora um projeto à parte
- * (honeypot-vps-infra), em Projetos, não uma camada deste site.
+ * O honeypot não é uma camada deste site: é um projeto à parte
+ * (honeypot-vps-infra), descrito em Projetos.
  *
  * ATT&CK fica de fora de propósito (mesma razão que o exclui do dropdown
  * "Este Site" na nav principal — ver BaseLayout.astro): não é sobre este

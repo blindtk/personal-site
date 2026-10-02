@@ -55,9 +55,7 @@ const currentPath = Astro.url.pathname;
 // Performance (tráfego + Core Web Vitals) e o projeto «Este site»
 // (arquitetura e decisões). Cloudflare (ataque ao vivo) vem antes de Provas
 // (o audit trail — commit, cabeçalhos, CI) de propósito: mostra primeiro o
-// que está a acontecer, só depois o "não acredites, verifica". Havia uma
-// camada Honeypot; saiu com o ADR 0022 (o honeypot é agora um projeto à
-// parte, em Projetos).
+// que está a acontecer, só depois o "não acredites, verifica".
 // `href` explícito, não RouteKey: o projeto «Este site» vive nos posts de
 // /projetos/ (projectUrl), não é uma rota estática de routes.ts — e usar
 // href também para as outras cinco simplifica o aria-current para uma só

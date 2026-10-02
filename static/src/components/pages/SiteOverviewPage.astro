@@ -63,10 +63,8 @@ const jsStrings = {
     </ul>
   </section>
 
-  <!-- ---------- Este site, em números: os três números da zona inteira
-       (a quarta fonte, o honeypot interno, e as tabelas de países/redes que
-       cruzavam as duas saíram com o ADR 0022 — o detalhe por país/rede vive
-       na página Cloudflare) ---------- -->
+  {/* Este site, em números: os três números da zona inteira; o detalhe por
+     país, rede e regra vive na página Cloudflare. */}
   <section aria-labelledby="h-numbers" id="numbers-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
     <div class="section-title"><h2 id="h-numbers">{s.chainTitle}</h2></div>
     <div class="chain-grid">

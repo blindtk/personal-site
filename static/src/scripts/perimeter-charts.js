@@ -1,8 +1,5 @@
 // Lógica pura dos gráficos de CloudflarePage.astro — sem DOM, testável em
-// Node (ver CLAUDE.md). As funções da antiga página Honeypot (lookup por
-// path-isco, técnica por evento, linha do tempo) saíram com ela (ADR 0022). Extraído do antigo
-// PerimeterPage.astro (1682 linhas, um único ficheiro) quando a página se
-// dividiu em duas — ver docs/this-site-section-audit-2026-08-06.md.
+// Node (ver CLAUDE.md).
 
 /** Classe visual (cor) de um ponto no gráfico de risco por país. */
 export function riskDotClass(row) {

@@ -63,8 +63,7 @@ export const ui = {
       overviewIntro:
         'Uma vista pública, ao vivo, de como este site é construído, protegido e monitorizado. Não é um dashboard da Cloudflare colado aqui — é observabilidade própria: a mesma disciplina que aplico em produção, exposta para quem quiser inspecionar.',
       hubTitle: 'Mapa desta secção',
-      // ----- Este site, em números: os três números da zona Cloudflare (o
-      // quarto, do honeypot interno, saiu com o ADR 0022) -----
+      // ----- Este site, em números: os três números da zona Cloudflare -----
       chainTitle: 'Este site, em números',
       chainRequests: 'pedidos à zona',
       chainThreats: 'classificados como ameaça',
@@ -972,8 +971,7 @@ export const ui = {
       overviewIntro:
         'A public, live view of how this site is built, protected and monitored. Not a Cloudflare dashboard pasted in — it is my own observability: the same discipline I apply in production, exposed for anyone who wants to inspect it.',
       hubTitle: 'Map of this section',
-      // ----- This site, in numbers: the three Cloudflare zone numbers (the
-      // fourth, from the internal honeypot, went with ADR 0022) -----
+      // ----- This site, in numbers: the three Cloudflare zone numbers -----
       chainTitle: 'This site, in numbers',
       chainRequests: 'requests to the zone',
       chainThreats: 'classed as threat',
