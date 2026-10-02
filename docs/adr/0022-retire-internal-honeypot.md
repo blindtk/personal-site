@@ -74,6 +74,3 @@ this site.
   - after the first deploy, `/api/threat-intel` should show only
     `firewall7d`, and `iplist` should no longer exist in KV
     (`npx wrangler kv key get iplist --binding KV --remote` → not found).
-- `honeypot-vps-infra`'s README still describes a cross-origin `fetch()`
-  of its feed from this site; that never existed and should be corrected
-  there.
