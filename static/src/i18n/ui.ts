@@ -275,7 +275,7 @@ export const ui = {
         { name: 'Permissions-Policy', why: 'Desliga APIs de browser que o site não usa (câmara, micro, geolocalização, pagamentos, USB).' },
         { name: 'Cross-Origin-Opener-Policy', why: 'Isola o contexto de navegação (window/tab) de outras origens — impede que uma janela de outro site controle esta.' },
         { name: 'Cross-Origin-Embedder-Policy', why: 'Só carrega recursos de outras origens que autorizem explicitamente (CORP/CORS) — parte do isolamento cross-origin, a par de COOP.' },
-        { name: 'Cross-Origin-Resource-Policy', why: 'Impede que outros sites carreguem os recursos deste directamente — completa o trio cross-origin, os mesmos nove cabeçalhos exigidos no contrato das Provas.' },
+        { name: 'Cross-Origin-Resource-Policy', why: 'Impede que outros sites carreguem os recursos deste diretamente — completa o trio cross-origin, os mesmos nove cabeçalhos exigidos no contrato das Provas.' },
       ],
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',

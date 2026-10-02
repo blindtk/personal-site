@@ -11,6 +11,8 @@
   --border-strong: #2b3646;
   --text: #dbe4ef;
   --muted: #8593a5;
+  /* Só decoração (//, setas, bordas, pontos): 3,2:1 sobre --bg, abaixo de
+     4,5:1. Qualquer texto que se lê usa --muted (6,2:1). */
   --faint: #586475;
   --accent: #3ddc84;
   --accent-dim: rgba(61, 220, 132, 0.12);
@@ -48,6 +50,12 @@ html {
 
 body {
   margin: 0;
+  /* Coluna flex com altura mínima do ecrã: em páginas curtas o <main> cresce
+     (flex: 1) e o rodapé assenta no fundo em vez de ficar a meio do ecrã. */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--sans);
@@ -79,6 +87,19 @@ a {
 a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* Links no meio de texto corrido: a cor sozinha não chega para os distinguir
+   (WCAG 1.4.1 — o axe acusa "link-in-text-block"). Sublinhado discreto em
+   repouso, cheio no hover. Nav, cartões e listas de navegação não são texto
+   corrido e ficam fora deste seletor. */
+main :is(p, td, dd, .note, .prose li) a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+main :is(p, td, dd, .note, .prose li) a:hover {
+  text-decoration-color: currentColor;
 }
 
 code, kbd, pre, .mono {
@@ -413,9 +434,16 @@ img {
 
 /* ---------- Secções e títulos ---------- */
 
-main {
-  min-height: 60vh;
-  padding: 2.2rem 0 4rem;
+/* main.container e não só main: .container (especificidade 0,1,0) define
+   `padding: 0 1.1rem` e anulava o padding vertical de um seletor `main`
+   simples — o h1 de cada página ficava colado à nav. padding-block só toca
+   no eixo vertical e deixa a margem lateral de .container intacta. */
+main.container {
+  flex: 1 0 auto;
+  /* Num body flex em coluna, margin: 0 auto encolheria o main à largura do
+     conteúdo — width: 100% repõe o comportamento de bloco (max-width manda). */
+  width: 100%;
+  padding-block: 2.2rem 4rem;
 }
 
 .section-title {
@@ -499,8 +527,12 @@ a.card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
 }
-.card h3 {
+/* h2 nos cartões que são o primeiro nível sob o h1 (Projetos, Ferramentas —
+   saltar de h1 para h3 quebra a ordem de títulos), h3 nos que vivem dentro
+   de uma secção com h2. Mesmo aspeto nos dois casos. */
+.card :is(h2, h3) {
   margin: 0 0 0.35rem;
+  font-size: 1.05rem;
   overflow-wrap: anywhere;
 }
 .card p {
@@ -860,7 +892,7 @@ a.card:hover {
   padding-left: 3rem; /* alinha com a coluna de rótulos das linhas */
   margin-top: 4px;
   font-size: 0.58rem;
-  color: var(--faint);
+  color: var(--muted);
 }
 .hours-strip {
   display: grid;
@@ -870,7 +902,7 @@ a.card:hover {
   height: 3.4rem;
 }
 .hour-bar { background: var(--accent-2); border-radius: 2px 2px 0 0; min-height: 2px; align-self: end; }
-.heatmap-legend { display: flex; align-items: center; gap: 0.35rem; font-size: 0.66rem; color: var(--faint); margin-top: 0.6rem; }
+.heatmap-legend { display: flex; align-items: center; gap: 0.35rem; font-size: 0.66rem; color: var(--muted); margin-top: 0.6rem; }
 .heatmap-legend .swatch { width: 13px; height: 13px; border-radius: 2px; }
 .heatmap-legend .i1 { background: rgba(61, 220, 132, 0.25); }
 .heatmap-legend .i2 { background: rgba(61, 220, 132, 0.5); }
@@ -1130,6 +1162,9 @@ select {
   word-break: break-all;
 }
 .result-table td .hl { color: var(--accent); }
+/* O binário da calculadora de subnets quebra só nos <wbr> entre octetos;
+   break-all partia-o a meio de um octeto ("1010100 / 0.00000001"). */
+.result-table td#r-binary { word-break: normal; }
 
 /* Em ecrãs estreitos os 11rem fixos do th não deixavam espaço nenhum à
    coluna de valor — um IP de 13 caracteres partia-se a meio mesmo cabendo
@@ -1248,7 +1283,7 @@ select {
 .emailh-verdict[data-v='pass'] { color: var(--accent); }
 .emailh-verdict[data-v='soft'] { color: var(--accent-2); }
 .emailh-verdict[data-v='fail'] { color: var(--danger); }
-.emailh-verdict[data-v='none'] { color: var(--faint); }
+.emailh-verdict[data-v='none'] { color: var(--muted); }
 .emailh-auth-card p {
   margin: 0.5rem 0 0;
   font-size: 0.8rem;
@@ -1257,7 +1292,7 @@ select {
 }
 .emailh-auth-card .emailh-detail {
   font-family: var(--mono);
-  color: var(--faint);
+  color: var(--muted);
   word-break: break-all;
 }
 /* Na tabela de hops o th de 11rem da .result-table não faz sentido. */
@@ -1547,6 +1582,18 @@ select {
   padding: 0.45rem 0.7rem;
   text-align: left;
 }
+/* Em telemóvel as tabelas de 3 colunas do Sobre (Referenciais) excediam a
+   largura do ecrã em ~60px e arrastavam a página inteira para o lado. Letra e
+   padding um pouco menores e, só em último caso, quebra de palavras longas
+   ("Enquadramento") — `anywhere` conta para a largura mínima da célula,
+   `break-word` não, por isso só o primeiro deixa a tabela encolher. */
+@media (max-width: 40rem) {
+  .prose table { font-size: 0.86rem; }
+  .prose table th, .prose table td {
+    padding: 0.4rem 0.45rem;
+    overflow-wrap: anywhere;
+  }
+}
 
 /* Accordions do Percurso (details/summary escritos no markdown do Sobre).
    O corpo fica em sans (herda do body); só o summary é mono, como os títulos. */
@@ -1618,7 +1665,7 @@ select {
   font-size: 0.9rem;
 }
 .hp-table th { white-space: nowrap; }
-.hp-loading { color: var(--faint); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
+.hp-loading { color: var(--muted); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
 .hp-cc { color: var(--text); }
 .hp-path { color: var(--accent-2); }
 .hp-verdict { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
@@ -1730,7 +1777,7 @@ select {
   opacity: 0.6;
   animation: map-pulse 1.8s ease-out infinite;
 }
-.map-svg .map-label { fill: var(--faint); font-size: 9px; font-family: var(--mono); }
+.map-svg .map-label { fill: var(--muted); font-size: 9px; font-family: var(--mono); }
 .map-svg .map-label.pt { fill: var(--accent); }
 @keyframes map-flow { to { stroke-dashoffset: -22; } }
 @keyframes map-pulse { from { r: 5; opacity: 0.7; } to { r: 16; opacity: 0; } }
@@ -1770,7 +1817,7 @@ select {
   stroke-dasharray: 4 4;
 }
 .diagram-homelab .diagram-label {
-  fill: var(--faint);
+  fill: var(--muted);
   font-family: var(--mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -1810,7 +1857,7 @@ select {
 }
 .diagram-homelab .diagram-arrowhead { fill: var(--muted); }
 .diagram-homelab .diagram-caption {
-  fill: var(--faint);
+  fill: var(--muted);
   font-family: var(--mono);
   font-size: 9px;
 }
@@ -1972,7 +2019,7 @@ select {
 .atk-hint {
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--faint);
+  color: var(--muted);
   margin: 0 0 0.6rem;
   text-align: right;
   opacity: 1;
@@ -2288,7 +2335,7 @@ select {
 }
 .pk-n {
   font-size: 0.72rem;
-  color: var(--faint);
+  color: var(--muted);
   border: 1px solid var(--border-strong);
   border-radius: 999px;
   padding: 0.05rem 0.5rem;

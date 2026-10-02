@@ -37,7 +37,7 @@ function excerpt(text: string, max = 90): string {
       const slug = entry.id.slice(3);
       return (
         <div class="card">
-          <h3><a href={projectUrl(lang, slug)}>{entry.data.title}</a></h3>
+          <h2><a href={projectUrl(lang, slug)}>{entry.data.title}</a></h2>
           <p>{excerpt(entry.data.description)}</p>
           <div class="meta">
             {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}

@@ -225,7 +225,7 @@ const windows = [
   }
   .lab-hint {
     font-size: 0.75rem;
-    color: var(--faint);
+    color: var(--muted);
     margin: 0.4rem 0 0.5rem;
   }
 
@@ -471,7 +471,7 @@ const windows = [
   }
   .tb-clock {
     font-size: 0.72rem;
-    color: var(--faint);
+    color: var(--muted);
     white-space: nowrap;
   }
 </style>
@@ -623,8 +623,11 @@ const windows = [
 
     // ---------- relógio ----------
     const clock = document.getElementById('tb-clock')!;
+    // Locale da página e não a do browser: com `[]` a página PT mostrava
+    // "12:48 AM" num browser em inglês. 24h nos dois idiomas, como um terminal.
+    const clockLocale = document.documentElement.lang === 'pt' ? 'pt-PT' : 'en-GB';
     function tick() {
-      clock.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      clock.textContent = new Date().toLocaleTimeString(clockLocale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
     }
     tick();
     setInterval(tick, 30_000);

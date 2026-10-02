@@ -22,7 +22,7 @@ const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug] }));
   <div class="grid grid-2">
     {tools.map((tool) => (
       <a class="card" href={toolUrl(lang, tool.slug)}>
-        <h3>{tool.name}</h3>
+        <h2>{tool.name}</h2>
         <p>{tool.desc}</p>
         <div class="meta">
           <span class={`badge ${tool.kind === 'server' ? 'amber' : ''}`}>

@@ -26,6 +26,11 @@ const jsStrings = {
 const defaultInput = '192.168.1.10/24';
 const initial = calcSubnet(defaultInput)!;
 const initialType = s[initial.kind] + (initial.special ? ` · ${s[initial.special]}` : '');
+
+// O binário só pode quebrar de linha entre octetos (depois de cada ponto),
+// nunca a meio de um — <wbr> marca o ponto de quebra sem entrar no texto
+// copiado. Cada pedaço termina no seu '.', se o tiver.
+const octets = (bits: string) => bits.split(/(?<=\.)/).filter(Boolean);
 ---
 
 <div class="tool-panel" id="subnet-tool" data-strings={JSON.stringify(jsStrings)}>
@@ -58,7 +63,7 @@ const initialType = s[initial.kind] + (initial.special ? ` · ${s[initial.specia
         <tr><th>{s.lastHost}</th><td id="r-last">{intToIp(initial.lastHost)}</td></tr>
         <tr><th>{s.hosts}</th><td id="r-hosts">{initial.hosts.toLocaleString()}</td></tr>
         <tr><th>{s.type}</th><td id="r-type">{initialType}</td></tr>
-        <tr><th>{s.binary}</th><td id="r-binary"><span class="hl">{initial.binary.network}</span>{initial.binary.hosts}</td></tr>
+        <tr><th>{s.binary}</th><td id="r-binary"><span class="hl">{octets(initial.binary.network).map((p) => <>{p}{p.endsWith('.') && <wbr />}</>)}</span>{octets(initial.binary.hosts).map((p) => <>{p}{p.endsWith('.') && <wbr />}</>)}</td></tr>
       </tbody>
     </table>
   </div>
@@ -93,10 +98,19 @@ const initialType = s[initial.kind] + (initial.special ? ` · ${s[initial.specia
     cell('r-hosts').textContent = result.hosts.toLocaleString();
     cell('r-type').textContent =
       strings[result.kind] + (result.special ? ` · ${strings[result.special]}` : '');
+    // Mesma regra do build: quebra só entre octetos (ver `octets` acima).
+    const appendOctets = (parent: ParentNode, bits: string) => {
+      for (const part of bits.split(/(?<=\.)/).filter(Boolean)) {
+        parent.append(part);
+        if (part.endsWith('.')) parent.append(document.createElement('wbr'));
+      }
+    };
     const hl = document.createElement('span');
     hl.className = 'hl';
-    hl.textContent = result.binary.network;
-    cell('r-binary').replaceChildren(hl, result.binary.hosts);
+    appendOctets(hl, result.binary.network);
+    const bin = cell('r-binary');
+    bin.replaceChildren(hl);
+    appendOctets(bin, result.binary.hosts);
     table.hidden = false;
   }
 
