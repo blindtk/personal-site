@@ -26,6 +26,11 @@ or it doesn't get in.
 
 ## 3. Honeypot evolution
 
+> **Closed 2026-10-02:** the internal honeypot was retired instead of
+> evolved ([ADR 0022](adr/0022-retire-internal-honeypot.md)); the
+> external sensor (`honeypot-vps-infra`) covers what this item wanted.
+> Kept as the record.
+
 Critical analysis of the current honeypot — what already works well (pure
 sensor, uniform 404, zero PII), what's too basic today (few decoy paths,
 no attack-family variation), and what would be overkill for a personal

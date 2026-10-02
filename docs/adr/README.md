@@ -19,8 +19,9 @@ existed.
 | [0004](0004-zero-pii-honeypot.md) | Honeypot and analytics zero-PII by choice, not plan limitation |
 | [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget |
 | [0006](0006-caps-escrita-diarios.md) | Worker write caps: daily, sized to the budget, not to abuse resistance |
-| [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability |
-| [0020](0020-honeypot-public-ip.md) | Honeypot events record and publish the source IP, for cross-honeypot correlation (supersedes ADR 0004 for the honeypot; the firewall panel's zero-IP stance is unchanged) |
+| [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability (superseded by ADR 0022) |
+| [0020](0020-honeypot-public-ip.md) | Honeypot events record and publish the source IP, for cross-honeypot correlation (superseded by ADR 0022) |
+| [0022](0022-retire-internal-honeypot.md) | Retire the site's internal honeypot (decoys, IP list, map, ticker); the external sensor is the honeypot (supersedes 0007 and 0020; ADR 0004's zero-IP firewall panel is unchanged) |
 
 ## Repository & tooling
 

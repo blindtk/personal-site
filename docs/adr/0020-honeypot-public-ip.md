@@ -1,7 +1,10 @@
 # ADR 0020 — Honeypot events record and publish the source IP, for cross-honeypot correlation
 
-**Status:** accepted and implemented (`dynamic/worker/src/lib/ipguard.js`,
-`dynamic/worker/src/lib/ipthreat.js`, `recordHoneypot` in `src/index.js`).
+**Status:** superseded by [ADR 0022](0022-retire-internal-honeypot.md)
+(2026-10-02). The correlation this decision was for was never built on
+either side, so the IP list (and the code below: `ipguard.js`,
+`ipthreat.js`, `recordHoneypot`) was removed and the stored list deleted
+by the Worker's cron. Kept as the record of the decision.
 
 ## Context
 

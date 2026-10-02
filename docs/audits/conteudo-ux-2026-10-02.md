@@ -141,3 +141,13 @@ violações nas 21 páginas a 390px e 1440px; nenhum overflow horizontal;
 Lighthouse mobile — Home 99/100/100/100, Sobre, Este site e ATT&CK com
 acessibilidade 100 e CLS 0 (o 96 de best-practices em Este site são os
 erros de consola de não haver Worker em local).
+
+### Alterações pedidas depois da auditoria
+
+- **star-organizer**: catálogo vendorizado atualizado (550 → 691 repos) e
+  página do projeto reescrita a partir do repositório `github-stars`.
+- **Honeypot**: o honeypot interno do site foi retirado
+  ([ADR 0022](../adr/0022-retire-internal-honeypot.md)) — página
+  Honeypot, mapa, ticker, iscos e lista de IPs. O projeto Honeypot passou
+  a descrever o sensor externo (`honeypot-vps-infra`). Os achados U7 e a
+  descrição C3 do Honeypot referem-se ao estado anterior.

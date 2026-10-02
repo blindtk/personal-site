@@ -1,7 +1,8 @@
 # ADR 0004 — Zero-PII in the honeypot and analytics, by choice, not plan limitation
 
 **Status:** accepted and in production for the Cloudflare Status/firewall
-panel (`cf-analytics.js`) — that half is unchanged. **Superseded for the
+panel (`cf-analytics.js`) — that half is unchanged. The honeypot itself
+was retired on 2026-10-02 ([ADR 0022](0022-retire-internal-honeypot.md)). **Superseded for the
 honeypot half by [ADR 0020](0020-honeypot-public-ip.md):** the repo owner
 decided the honeypot itself should record and publish the source IP, to
 correlate hits with the external Cowrie honeypot (ADR 0019). The

@@ -1,6 +1,6 @@
 # ADR 0007 — Honeypot decoy paths behind Managed Challenge: protection over full observability
 
-**Status:** accepted and in production (rule 3, WAF on the `danielmala.co` zone).
+**Status:** superseded by [ADR 0022](0022-retire-internal-honeypot.md) (2026-10-02) — the decoy paths no longer exist; the WAF rule 3 that challenged them can be deleted. Kept as the record of the trade-off, which ADR 0022 cites as one reason for retiring the honeypot.
 
 ## Context
 

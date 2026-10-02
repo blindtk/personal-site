@@ -5,6 +5,13 @@ document is the implementation reference — service topology, data format,
 and the risks accepted along the way. Update it as the design changes;
 the ADR stays a snapshot of the decision.
 
+> **2026-10-02:** `danielmala.co`'s own honeypot was retired
+> ([ADR 0022](adr/0022-retire-internal-honeypot.md)); this external sensor
+> is now the only honeypot. References below to the site's honeypot, its
+> IP list and any correlation between the two describe a design that no
+> longer exists. The `honeypot-vps-infra` repository is the current
+> reference.
+
 This is a **separate project from `danielmala.co`'s honeypot**
 (`dynamic/worker/`, ADR 0004, ADR 0007). Different machine, different
 domain, different data policy. The single rule that keeps the two from

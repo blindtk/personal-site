@@ -95,7 +95,7 @@ Method used: **Workers Builds** (automatic deploy via Git), not a manual
 
 KV namespace created via the dashboard (`Storage & Databases → KV →
 Create a namespace`, one for production and one `_PREVIEW`), with the IDs
-pasted into `wrangler.toml`. Secrets (`RATE_SALT`, `NVD_API_KEY`) via
+pasted into `wrangler.toml`. Secrets (`RATE_SALT`, `CF_API_TOKEN`) via
 `Settings → Variables and Secrets` on the Worker, with **Encrypt**
 enabled — never in `wrangler.toml` (it's a versioned file; CI's gitleaks
 catches any slip-up).
@@ -182,8 +182,12 @@ Why each rule:
   > GitHub Actions (Settings → Secrets → Actions → `CI_WAF_TOKEN`) and in
   > the WAF rule at the same time, same discipline as
   > `RATE_SALT`/`CF_API_TOKEN`.
-- **3**: the honeypot's five decoy paths (`dynamic/worker/`, `DECOYS` in
-  `src/index.js`) get a `Managed Challenge` instead of passing straight
+- **3**: **redundant since 2026-10-02** — the internal honeypot was
+  retired ([ADR 0022](adr/0022-retire-internal-honeypot.md)) and these
+  paths are now plain 404s from Pages. The rule is harmless but can be
+  deleted from the dashboard; when it is, drop the row above. Original
+  rationale, kept as the record: the honeypot's five decoy paths
+  (`dynamic/worker/`, `DECOYS` in `src/index.js`) got a `Managed Challenge` instead of passing straight
   through to the Worker, for any visitor — an explicit decision by the
   repo owner: the decoys don't stay open to the world without some
   barrier, even though they're just a sensor returning a 404.

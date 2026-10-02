@@ -50,19 +50,19 @@ Copia o bloco abaixo como pedido a um agente.
 >    contradiga outra (ex.: um cargo na Home diferente do "Sobre", uma
 >    certificação mencionada num sítio e ausente na página de Certificações).
 > 3. **Terminologia consistente.** O mesmo conceito deve usar sempre o mesmo
->    termo (ex.: "Provas" ↔ "Evidence", "honeypot", "vigia CT", nomes das
+>    termo (ex.: "Provas" ↔ "Evidence", "vigia CT", nomes das
 >    ferramentas, "camadas"). Presta atenção especial ao bloco `layers`
 >    ("Este site, por camadas") em `ui.ts`: as descrições de Segurança,
->    Honeypot, Cloudflare, Provas e Performance têm de descrever fielmente
+>    Cloudflare, Provas e Performance têm de descrever fielmente
 >    o que cada uma dessas páginas realmente diz — ATT&CK fica de fora de
 >    propósito (SiteLayers.astro exclui-a explicitamente: é sobre percurso
 >    pessoal, não sobre o site).
 > 4. **Ligações cruzadas corretas.** Onde uma página remete para outra
 >    (bloco de camadas, "Sobre" → Projetos, projeto "este-site" → Provas/
->    Honeypot/Cloudflare), confirma que o destino existe em `routes.ts` e
+>    Cloudflare), confirma que o destino existe em `routes.ts` e
 >    que a descrição corresponde ao conteúdo do destino.
 > 5. **Coerência narrativa.** Lê Home → Sobre → Projetos → páginas do
->    "sistema" (Segurança, Honeypot, Cloudflare, Provas, Performance) como
+>    "sistema" (Segurança, Cloudflare, Provas, Performance) como
 >    um todo. Sinaliza repetição desnecessária, promessas feitas numa
 >    página e não cumpridas noutra, e saltos de contexto que confundem o
 >    leitor.

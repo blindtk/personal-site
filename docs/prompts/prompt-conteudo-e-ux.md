@@ -44,7 +44,7 @@ Copia o bloco abaixo como pedido a um agente.
 >    que repetem o que outra página já diz, texto que fala da implementação
 >    quando o leitor queria o resultado.
 > 3. **Arquitetura de informação.** A ordem Home → Sobre → Projetos →
->    Ferramentas → "Este site" (Segurança, Honeypot, Cloudflare, Provas,
+>    Ferramentas → "Este site" (Segurança, Cloudflare, Provas,
 >    Performance) → Lab conta uma história? Há páginas a mais, a menos, ou
 >    no sítio errado? A nav (`BaseLayout.astro`, `routes.ts`) reflete isso?
 > 4. **Lacunas.** Ex.: o blog só tem `reservado.md`; projetos sem resultado
@@ -73,7 +73,8 @@ Copia o bloco abaixo como pedido a um agente.
 >    `aria-*` nos widgets/tabs/ferramentas, `prefers-reduced-motion`,
 >    informação transmitida só por cor (verde/âmbar), alt text.
 > 6. **Estados.** Carregamento (`Skeleton.astro`), erro e vazio nos widgets
->    que dependem do Worker (Ticker, HostMap, CtWatch, `pwned`, `mirror`);
+>    que dependem do Worker (Cloudflare, Performance, CtWatch, `pwned`,
+>    `mirror`);
 >    o badge "requer servidor" é claro?
 > 7. **Ferramentas (`/ferramentas/`).** Cada uma: instruções, exemplo
 >    pré-preenchido, feedback ao copiar, mensagens de erro úteis, layout

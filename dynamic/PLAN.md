@@ -1,14 +1,26 @@
 # dynamic/ — dynamic app ("Lab") plan
 
 > **Status: in production.** `dynamic/worker/` (the Worker behind the
-> site's security features — honeypot, hostile-traffic map, SOC ticker,
-> and CT watch) is deployed on the `danielmala.co` domain's
+> site's security features — Cloudflare/firewall panels, CT watch, Web
+> Vitals, the HIBP relay and the mirror) is deployed on the `danielmala.co` domain's
 > routes. Deploy, gotchas, and infrastructure (Access, WAF) are
 > documented in `dynamic/worker/README.md` and `docs/cloudflare-deploy.md`.
 > The network tools below (DNS/whois/…) are still to be built; the
 > `/lab/` page ("under construction") will point to them once they exist.
 
 ## Recorded decisions
+
+- **2026-10-02 — Retire the internal honeypot** (decision by the repo
+  owner; [ADR 0022](../docs/adr/0022-retire-internal-honeypot.md)). The
+  decoy paths sat behind a Managed Challenge and saw little mass scanning,
+  and the IP list from ADR 0020 existed for a correlation with the
+  external Cowrie honeypot that was never built. Removed: decoy routes,
+  `recordHoneypot`, `iplist`, `/api/honeypot`, `/api/map`, `/api/ticker`
+  (its ATT&CK tagging only served the decoy correlation) and the site's
+  Honeypot page. `/api/threat-intel` keeps only `firewall7d`. The cron's
+  `purgeLegacyHoneypotKeys` deletes the leftover KV keys, reading first so
+  later ticks write nothing. Write budget: ~810 → ~440/day. Owner-side
+  follow-ups: delete WAF rule 3 and the `NVD_API_KEY` secret.
 
 - **2026-09-25 — Fixes for the security audit run with Cloudflare's
   `security-audit` skill** (requested by the repo owner; report in
