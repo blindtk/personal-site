@@ -34,8 +34,6 @@
 "\xff"
 
 # formatos dos normalizadores
-"CVE-"
-"CVE-2024-"
 "1234567"
 "AS"
 "4294967294"

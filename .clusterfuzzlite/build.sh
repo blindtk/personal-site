@@ -39,5 +39,5 @@ tar xzf /tmp/jazzer-prebuild.tgz -C node_modules/@jazzer.js/fuzzer
 compile_javascript_fuzzer repo .clusterfuzzlite/fuzz/sanitize_fuzz.js --sync
 
 # Dicionário (tokens de markup, controlo C0/C1, bidi, surrogates, formatos
-# CVE/ASN): o motor libFuzzer do ClusterFuzz usa $OUT/<alvo>.dict sozinho.
+# ASN): o motor libFuzzer do ClusterFuzz usa $OUT/<alvo>.dict sozinho.
 cp .clusterfuzzlite/fuzz/sanitize_fuzz.dict "$OUT/"
