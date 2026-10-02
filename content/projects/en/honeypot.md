@@ -1,58 +1,87 @@
 ---
 title: 'Honeypot'
-description: 'Decoy endpoints that catch automated Internet scanning and map it to MITRE ATT&CK and CISA KEV.'
-tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
+description: 'An SSH and HTTP honeypot on its own VPS, with enrichment, ATT&CK mapping and a public threat feed.'
+tags: ['cowrie', 'threat-intel', 'mitre-attack', 'python', 'oracle-cloud']
 order: 2
 ---
 
-A few paths no human visits on purpose — `/wp-login.php`, `/.env`,
-`/.git/config`, `/admin`, `/phpmyadmin/` — exist on this site for one reason
-only: they're bait. Whoever touches them is, by definition, an automated
-scanner. A Cloudflare Worker logs the attempt (metadata only) and returns the
-same old 404, indistinguishable from a path that never existed. The live
-result is on the [Honeypot](/en/this-site/honeypot/) panel — what Cloudflare
-blocks across the whole zone is separate, on [Cloudflare](/en/this-site/cloudflare/).
+A real sensor, exposed to the Internet with no proxy in front, on a machine
+that has nothing to do with this site: an Oracle Cloud VPS on Always Free
+resources, configured entirely as code in the `honeypot-vps-infra` repository. What it
+catches is processed, enriched and published at
+[intel.danielmala.co](https://intel.danielmala.co/) — a report, dossiers, a
+page per address and per artifact, and a machine-readable feed.
 
-## Why it lives in the Worker, not the static site
+## What runs on the VPS
 
-The monorepo rule is simple: `static/` stays 100% client (see
-[This site](/en/projects/este-site/)), and the honeypot is one of the
-exceptions that genuinely needs a server — someone has to see the request
-arrive. So it lives isolated in a Cloudflare Worker under `dynamic/worker/` —
-the first real code in that area — published separately. If the Worker is
-down, the static site doesn't notice: the panel degrades gracefully instead
-of breaking.
+- **Cowrie** on port 22: full shell emulation — never a real shell. Login only succeeds after 2 to 5 different credentials, and the
+  one that "worked" keeps working, like a genuinely compromised box;
+  accepting anything on the first try was the easiest tell that it's a
+  honeypot. The fake filesystem holds bait credentials (AWS, `.env`, bash
+  history) generated at each install, never stored in the repository.
+- **An HTTP maze** on ports 80/443: endless generated text with links that
+  only lead to more text, to trap crawlers and scanners — capped on
+  connections, bytes and time, so the VPS isn't the one that runs out
+  first.
+- **portlogger and endlessh**: logging and tarpitting on the ports cloud
+  service scanners look for (Docker, Redis, Elasticsearch, RDP, VNC), and
+  a tarpit on port 23 and other secondary ports that holds the connection
+  by dripping a banner.
 
-## Privacy — two postures, by design
+## From log to feed
 
-The Cloudflare panel (whole-zone traffic, which includes every legitimate
-visitor) still never stores an IP: only country (`cf-ipcountry`), ASN and
-the decoy path, with the timestamp rounded to 5 minutes — the rounding is
-anonymisation, not tidiness, and the only thing derived from the IP on
-that path is the rate-limit key, a salted truncated SHA-256 that rotates
-daily, kept only for the limit window. This is covered by a test
-(`test/logic.test.mjs`).
+Events from the four services go into a state database and come out every
+15 minutes as `feed.json`/`feed.txt`, a MISP export, a STIX 2.1 bundle and
+the HTML report. Along the way:
 
-The honeypot's own events are different, by a later and explicit
-decision: the source IP is now recorded in a separate list (never mixed
-into the anonymous buckets above) and published, to correlate hits with
-a second honeypot (Cowrie, on an external VPS) that exists specifically
-to publish this. Only valid, public IPs get in — private, reserved, and
-documentation ranges are excluded before anything is written. Entries
-expire after 30 days without a repeat sighting — more conservative than
-the VPS's sibling list (60–90 days): the HTTP scanners this honeypot
-catches are more likely to run on compromised home routers or cameras
-than SSH brute-forcers are, so an IP seen here has a higher chance of
-belonging to an actual household. Anyone who recognises themselves in an
-entry can request removal — the contact is on the
-[Contact](/en/contact/) page.
+- **ATT&CK by command, not by loose keyword**: Cowrie captures what the
+  attacker types, so each pattern (`curl … | sh`, `chmod +x`, `crontab`,
+  miners, reading `.ssh/id_rsa`…) maps to the technique it stands for. No
+  clear pattern, no technique — never a guess.
+- **Enrichment with explicit rules**: ten sources (RDAP, AbuseIPDB,
+  GreyNoise, ThreatFox, OTX, Shodan, ANY.RUN…), each with what it may and
+  may not conclude — Shodan, for instance, never decides whether an IP is
+  malicious. A disagreement is settled by each source's reliability, and
+  missing data says it is missing.
+- **Malware**: files attackers try to download are held under size and
+  rate limits, and the hash is looked up with analysis services
+  (MalwareBazaar, VirusTotal…) — submitting the sample itself is opt-in and
+  tightly gated. The artifact page shows the hash and the verdict, never
+  the sample.
+- **Dossiers that group behaviour, not people**: addresses linked by the
+  same hashes (a reused SSH key, the same artifacts) are grouped and
+  published as an
+  inference the reader can reject — no campaign or actor names.
 
-## Correlation: honeypot ↔ ATT&CK ↔ threat intel
+## Privacy and retention
 
-Each decoy path is classified with the MITRE ATT&CK technique that best
-describes it — the same IDs as the [ATT&CK heatmap](/en/attack/). And when
-one of those techniques shows up being exploited right now in the CISA KEV
-catalog, the panel lights the correlation: the automated targeting this site
-catches stops being theoretical and links to an active CVE. It's the same idea
-as the rest of the site — don't trust, verify — applied to real hostile
-traffic.
+An IP address is personal data, even when it is almost always botnet
+infrastructure. The legal basis is legitimate interest (GDPR Art. 6(1)(f)),
+with safeguards: an address leaves publication after 75 days without a new
+sighting and the database after 365; private and reserved ranges never get
+in; an IP seen only once, passively, is not published. Username/password
+pairs are only published when they come from at least 5 different ASNs
+**and** 5 different /24 networks, over at least 3 days — without ASN data
+it fails closed and publishes nothing.
+
+## Operations
+
+The VPS is disposable: Oracle can reclaim an Always Free instance, so
+everything needed to rebuild it from scratch is in the repository (an
+idempotent `provision.sh` and optional Terraform). The state database is
+encrypted with `age` and copied off the machine on every run. CI runs the
+five test suites, `pip-audit` against hashed lockfiles (the same ones the
+VPS installs), SBOMs, `ruff`, `bandit`, `shellcheck` and checks that the
+documentation matches the code. The published pages carry no JavaScript at
+all, under a CSP that allows no scripts.
+
+## What about this site?
+
+This site used to have its own honeypot — a few decoy paths
+(`/wp-login.php`, `/.env`…) served by the Worker. It's gone (ADR 0022): it
+sat behind a Cloudflare Managed Challenge, so it saw little of the mass
+scanning it was meant to catch, and it kept IP addresses for a correlation
+with this sensor that was never built. The two are now what they should
+have been from the start: this site is static and keeps no IPs; the
+honeypot is a separate machine, with its own domain and its own privacy
+policy.

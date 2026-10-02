@@ -193,14 +193,14 @@ export function createTerminal(ctx) {
           lines: pt
             ? [
                 'honeypot — sensor externo, numa VPS à parte deste site: Cowrie',
-                '(SSH/Telnet), um labirinto HTTP e um tarpit. o que apanha é',
+                '(SSH), um labirinto HTTP e tarpits. o que apanha é',
                 'enriquecido, mapeado para MITRE ATT&CK e publicado em',
                 'intel.danielmala.co.',
                 'detalhes em /projetos/honeypot',
               ]
             : [
                 'honeypot — an external sensor on a VPS separate from this site:',
-                'Cowrie (SSH/Telnet), an HTTP maze and a tarpit. what it catches',
+                'Cowrie (SSH), an HTTP maze and tarpits. what it catches',
                 'is enriched, mapped to MITRE ATT&CK and published at',
                 'intel.danielmala.co.',
                 'details at /en/projects/honeypot',

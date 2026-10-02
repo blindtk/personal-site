@@ -1,56 +1,89 @@
 ---
 title: 'Honeypot'
-description: 'Endpoints-isco que apanham o scan automático da Internet e o ligam ao MITRE ATT&CK e CISA KEV.'
-tags: ['cloudflare-workers', 'honeypot', 'threat-intel', 'mitre-attack']
+description: 'Honeypot SSH e HTTP numa VPS à parte, com enriquecimento, ATT&CK e um feed público de ameaças.'
+tags: ['cowrie', 'threat-intel', 'mitre-attack', 'python', 'oracle-cloud']
 order: 2
 ---
 
-Alguns paths que nenhum humano visita de propósito — `/wp-login.php`,
-`/.env`, `/.git/config`, `/admin`, `/phpmyadmin/` — existem neste site só por
-uma razão: são isco. Quem lhes toca é, por definição, um scanner automático.
-Um Cloudflare Worker regista a tentativa (só metadados) e devolve o 404 de
-sempre, indistinguível de um path que nunca existisse. O resultado ao vivo
-está no painel [Honeypot](/este-site/honeypot/) — o que a Cloudflare
-bloqueia na zona inteira está à parte, na [Cloudflare](/este-site/cloudflare/).
+Um sensor de verdade, exposto à Internet sem proxy à frente, numa máquina
+que não tem nada a ver com este site: uma VPS na Oracle Cloud, em
+recursos Always Free, configurada inteiramente como código no repositório
+`honeypot-vps-infra`. O que apanha é tratado, enriquecido e publicado em
+[intel.danielmala.co](https://intel.danielmala.co/) — relatório, dossiês,
+uma página por endereço e por artefacto, e um feed legível por máquinas.
 
-## Porque vive no Worker, não no site estático
+## O que corre na VPS
 
-A regra do monorepo é simples: o `static/` fica 100% cliente (ver
-[Este site](/projetos/este-site/)), e o honeypot é uma das exceções que
-precisa mesmo de servidor — alguém tem de ver o pedido chegar. Por isso vive
-isolado num Cloudflare Worker em `dynamic/worker/` — o primeiro código real
-dessa área — publicado à parte. Se o Worker estiver em baixo, o site estático
-não nota: o painel degrada com graça em vez de partir.
+- **Cowrie** na porta 22: emulação completa de shell — nunca uma shell
+  real. O login só passa depois de 2 a 5 credenciais diferentes, e a
+  que "funcionou" continua a funcionar, como numa máquina comprometida a
+  sério; aceitar tudo à primeira era o sinal mais fácil de que aquilo é um
+  honeypot. No sistema de ficheiros falso há credenciais-isco (AWS, `.env`,
+  histórico de bash) geradas na altura de cada instalação, nunca guardadas
+  no repositório.
+- **Um labirinto HTTP** nas portas 80/443: texto gerado sem fim, com links
+  que só levam a mais texto, para prender crawlers e scanners — com tetos
+  de ligações, bytes e tempo, para não ser a própria VPS a esgotar-se
+  primeiro.
+- **portlogger e endlessh**: registo e tarpit nas portas que os scanners de
+  serviços cloud procuram (Docker, Redis, Elasticsearch, RDP, VNC) e um
+  tarpit na porta 23 e noutras secundárias, que segura a ligação a pingar
+  um banner.
 
-## Privacidade — duas posturas, por desenho
+## Do registo ao feed
 
-O painel Cloudflare (tráfego da zona inteira, que inclui todos os
-visitantes legítimos) continua sem guardar IP nenhum: só país
-(`cf-ipcountry`), ASN e o path-isco, com o timestamp arredondado a 5
-minutos — o arredondamento é anonimização, não arrumação, e a única coisa
-derivada do IP nesse caminho é a chave de rate limit, um SHA-256 truncado
-com salt que roda ao dia, guardada só durante a janela do limite. Isto
-está coberto por teste (`test/logic.test.mjs`).
+Os eventos dos quatro serviços entram numa base de estado e saem, a cada
+15 minutos, como `feed.json`/`feed.txt`, uma exportação MISP, um bundle
+STIX 2.1 e o relatório em HTML. Pelo caminho:
 
-Os eventos do próprio honeypot são diferentes, por uma decisão posterior
-e explícita: o IP de origem passa a ser guardado numa lista à parte
-(nunca misturada com os buckets anónimos acima) e publicado, para
-cruzar deteções com um segundo honeypot (Cowrie, numa VPS externa) que
-existe precisamente para publicar isto. Só entram IPs públicos e
-válidos — gamas privadas, reservadas e de documentação são excluídas
-antes de qualquer escrita. As entradas expiram ao fim de 30 dias sem
-nova deteção — mais conservador do que a lista irmã da VPS (60–90 dias):
-os scanners HTTP que este honeypot apanha têm mais chance de correr em
-routers ou câmaras domésticas comprometidas do que os de força bruta
-SSH, por isso um IP visto aqui tem mais chance de ser de uma casa real.
-Quem se reconhecer numa entrada pode pedir a remoção — o contacto está
-na página [Contactos](/contactos/).
+- **ATT&CK por comando, não por palavra-chave solta**: o Cowrie capta o que
+  o atacante escreve, por isso cada padrão (`curl … | sh`, `chmod +x`,
+  `crontab`, mineradores, leitura de `.ssh/id_rsa`…) mapeia para a técnica
+  que lhe corresponde. Sem padrão claro, sem técnica — nunca um palpite.
+- **Enriquecimento com regras explícitas**: dez fontes (RDAP, AbuseIPDB,
+  GreyNoise, ThreatFox, OTX, Shodan, ANY.RUN…), cada uma com o que pode e
+  não pode concluir — o Shodan, por exemplo, nunca decide se um IP é
+  malicioso. Um desacordo resolve-se pela fiabilidade de cada fonte, e o
+  que falta diz que falta.
+- **Malware**: os ficheiros que os atacantes tentam descarregar ficam
+  presos com limites de tamanho e de ritmo, e o hash é consultado em
+  serviços de análise (MalwareBazaar, VirusTotal…) — submeter a própria
+  amostra é opcional e com regras apertadas. A página do artefacto mostra
+  o hash e o veredicto, nunca a amostra.
+- **Dossiês que agrupam comportamento, não pessoas**: endereços ligados
+  pelos mesmos hashes (uma chave SSH reutilizada, os mesmos artefactos)
+  ficam juntos, publicados como
+  inferência que o leitor pode rejeitar — sem nomes de campanha nem de
+  atores.
 
-## Correlação: honeypot ↔ ATT&CK ↔ threat intel
+## Privacidade e retenção
 
-Cada path-isco está classificado com a técnica MITRE ATT&CK que melhor o
-descreve — os mesmos IDs do [heatmap ATT&CK](/attack/). E quando uma dessas
-técnicas aparece a ser explorada agora no catálogo CISA KEV, o painel acende a
-correlação: o alvejamento automático que este site apanha deixa de ser teórico
-e liga-se a um CVE ativo. É a mesma ideia do resto do site — não acredites,
-verifica — aplicada a tráfego hostil real.
+Um IP é um dado pessoal, mesmo quando é quase sempre infraestrutura de
+botnet. A base legal é interesse legítimo (RGPD, art. 6.º, n.º 1, al. f)),
+com salvaguardas: um endereço sai da publicação ao fim de 75 dias sem nova
+deteção e da base de dados ao fim de 365; endereços privados e reservados
+nunca entram; um IP visto uma única vez de forma passiva não é publicado.
+Pares utilizador/password só são publicados quando vêm de pelo menos 5 ASN
+**e** 5 redes /24 diferentes, ao longo de pelo menos 3 dias — sem dados de
+ASN, falha fechado e não publica nada.
+
+## Operação
+
+A VPS é descartável: a Oracle pode recuperar uma instância Always Free, por
+isso tudo o que é preciso para a reconstruir do zero está no repositório
+(`provision.sh` idempotente e Terraform opcional). A base de estado é
+cifrada com `age` e copiada para fora da máquina em cada execução. O CI
+corre as cinco suites de testes, `pip-audit` sobre lockfiles com hashes (os
+mesmos que a VPS instala), SBOM, `ruff`, `bandit`, `shellcheck` e
+verificações de que a documentação bate certo com o código. As páginas
+publicadas não têm JavaScript nenhum, com uma CSP que não permite scripts.
+
+## E este site?
+
+Este site chegou a ter o seu próprio honeypot — alguns caminhos-isco
+(`/wp-login.php`, `/.env`…) servidos pelo Worker. Saiu (ADR 0022): estava
+atrás de um Managed Challenge da Cloudflare, por isso via pouco do scan em
+massa que devia apanhar, e guardava IPs para um cruzamento com este sensor
+que nunca chegou a existir. Os dois são agora o que deviam ser desde o
+início: este site é estático e não guarda IPs; o honeypot é uma máquina à
+parte, com o seu próprio domínio e a sua própria política de privacidade.
