@@ -38,12 +38,10 @@ rebuild every placement and diff category *and* subcategory against the
 previous run before publishing — shows exactly which repositories each
 rule change moves.
 
-## Automation, on the homelab
+## Automation
 
 A GitHub Action rebuilds the catalog every Monday (and on demand) and only
-commits when something changed. It runs on a self-hosted runner on a
-Raspberry Pi 5 in the [homelab](/en/projects/homelab/) — and, being a
-persistent shared runner, it is hardened as one: actions pinned by SHA,
+commits when something changed. It is hardened: actions pinned by SHA,
 dependencies from a hashed lockfile, a checkout that doesn't keep the
 token, and the write-scoped token handed only to the final `git push`.
 Every PR runs unit tests, `ruff`, `bandit` and `pip-audit`, plus

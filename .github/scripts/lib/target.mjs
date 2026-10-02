@@ -82,7 +82,7 @@ export function isTrustedTarget(url) {
  * HTTPS on the default port. The token bypasses the WAF policy of the
  * danielmala.co zone — it means nothing to *.pages.dev (a Cloudflare-owned
  * domain outside the zone), so previews never need it. Before the
- * 2026-09-25 security audit (docs/security-audit-2026-09-25/) it followed
+ * 2026-09-25 security audit (not published) it followed
  * isTrustedTarget, which also trusts every preview alias of the Pages
  * project: a preview built from branch/PR code (e.g. with Pages Functions)
  * would have received the token. Access credentials still follow

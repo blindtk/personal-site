@@ -49,7 +49,7 @@ day's quota by itself.
 
 ## Update — 2026-09-25: caps count writes, and every anonymous write path is budgeted
 
-The [2026-09-25 security audit](../security-audit-2026-09-25/REPORT.md)
+The 2026-09-25 security audit (not published)
 found two gaps in the arithmetic above:
 
 1. **Caps counted events, not writes.** A decoy event costs 4–5 puts and an

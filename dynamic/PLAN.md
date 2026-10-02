@@ -23,8 +23,8 @@
   follow-ups: delete WAF rule 3 and the `NVD_API_KEY` secret.
 
 - **2026-09-25 — Fixes for the security audit run with Cloudflare's
-  `security-audit` skill** (requested by the repo owner; report in
-  `docs/security-audit-2026-09-25/`). All four records are addressed in
+  `security-audit` skill** (requested by the repo owner; the report is
+  not published). All four records are addressed in
   one PR:
     1. *(medium, confirmed)* Uncapped KV writes from public GETs via
        `cached()`. Request-driven refreshes now draw from a
@@ -69,8 +69,7 @@
   temporarily turns on the pathname (never query/fragment) in the `self`
   bucket, just for this diagnosis. Minimal exposure risk while this stays
   on: production is still behind Cloudflare Access
-  (`docs/public-repo-decision.md` — "doesn't load for anyone" except the
-  owner).
+  ("doesn't load for anyone" except the owner).
   **Revert (`DEBUG_EXPOSE_SELF_PATH = false` and the 2 tests that depend
   on the path) as soon as the cause of the self/self violations is
   confirmed.**
@@ -113,7 +112,7 @@
 
 - **2026-07-29 — Rate limit fails closed when the global write cap runs
   out** (finding from a security review, see
-  `docs/security-review-2026-07-29.md` finding A1 and
+  the 2026-07-29 security review (not published) finding A1 and
   `docs/adr/0003-rate-limit-kv-vs-nativo.md`): `rateLimit()` kept
   returning `allowed: true` when `RATE_LIMIT_WRITE_CAP` (300 writes/day)
   ran out — it just stopped persisting per-client state. That froze that
@@ -148,7 +147,7 @@
   of what's installed, as a workflow artifact. Runs weekly and on
   `workflow_dispatch`, not on every PR: the repository is currently over
   the GitHub Actions Free-plan minute quota (see
-  `docs/security-review-2026-07-29.md` §0.2), and adding more steps to
+  §0.2 of the 2026-07-29 security review, not published), and adding more steps to
   every PR's path would make that worse. `dynamic/worker/package.json`
   gained a `version` field (required by `npm sbom` to generate a valid
   purl — without it, `ESBOMPROBLEMS` because the root package ends up

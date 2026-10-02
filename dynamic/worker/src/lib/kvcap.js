@@ -10,8 +10,8 @@
 // isso pedidos concorrentes podem passar um pouco do teto; o objetivo é
 // limitar a ordem de grandeza do custo, não contar ao evento exato.
 //
-// Unidade = ESCRITAS, não eventos (auditoria de segurança 2026-09-25,
-// docs/security-audit-2026-09-25/): um evento do honeypot custa 4-5 puts, um
+// Unidade = ESCRITAS, não eventos (auditoria de segurança de 2026-09-25,
+// não publicada): um evento do honeypot custa 4-5 puts, um
 // pedido aceite pelo rate limiter custa 2 (estado + contador), mas os caps
 // contavam 1 por evento — a soma real ultrapassava o orçamento da conta que
 // os caps diziam respeitar. `cost` é o nº de puts que o evento vai fazer,

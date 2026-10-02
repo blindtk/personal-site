@@ -39,14 +39,12 @@ método — reconstruir a colocação de tudo e comparar categoria *e*
 subcategoria com a execução anterior antes de publicar — mostra exatamente
 que repositórios cada alteração de regra move.
 
-## Automação, no homelab
+## Automação
 
 Uma GitHub Action reconstrói o catálogo todas as segundas-feiras (e a
-pedido) e só faz commit se algo mudou. Corre num runner self-hosted num
-Raspberry Pi 5 do [homelab](/projetos/homelab/) — e, por ser um runner
-persistente e partilhado, está endurecida como tal: actions fixadas por
-SHA, dependências de um lockfile com hashes, checkout sem guardar o token,
-e o token com permissão de escrita entregue só ao `git push` final. Cada PR
+pedido) e só faz commit se algo mudou. Está endurecida: actions fixadas
+por SHA, dependências de um lockfile com hashes, checkout sem guardar o
+token, e o token com permissão de escrita entregue só ao `git push` final. Cada PR
 passa por testes unitários, `ruff`, `bandit` e `pip-audit`, e por
 `gitleaks`, `zizmor` e `actionlint`.
 

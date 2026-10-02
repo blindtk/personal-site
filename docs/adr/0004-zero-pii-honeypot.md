@@ -47,7 +47,7 @@ it's a deliberate choice, made even when the data was within easy reach.
   time of day), not build a per-attacker dossier.
 - Reinforces the site's privacy posture: no visitor — hostile or
   legitimate — has their IP persisted anywhere in the Worker.
-- Accepted residual risk (see `docs/security-review-2026-07-29.md`,
+- Accepted residual risk (see the 2026-07-29 security review, not published,
   finding A2): without a stable per-attacker identifier, an adversary can
   fill the honeypot's daily write budget with trivial requests and skew
   the public dashboard. A possible future mitigation (per-ASN sub-cap) is

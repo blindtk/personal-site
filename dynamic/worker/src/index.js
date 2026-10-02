@@ -223,7 +223,7 @@ async function cached(env, ctx, key, ttlSec, producer, { capped = true } = {}) {
 // ---------- rate limiting ----------
 
 // Onde vive o estado por-cliente do rate limiter (auditoria de segurança
-// 2026-09-25, docs/security-audit-2026-09-25/, achado de severidade baixa):
+// 2026-09-25, não publicada, achado de severidade baixa):
 //
 // No KV, cada pedido aceite custava 2 escritas (estado + contador global) e
 // o teto global contava 1 — as 300 "escritas"/dia de RATE_LIMIT_WRITE_CAP
@@ -240,7 +240,7 @@ async function cached(env, ctx, key, ttlSec, producer, { capped = true } = {}) {
 // O KV continua como recurso (runtime sem Cache API — Node nos testes, ou um
 // Worker com Cloudflare Access à frente, onde a Cache API não existe), com
 // o teto global em ESCRITAS (2 por pedido aceite) e a falha FECHADA do achado
-// A1 da revisão de 2026-07-29 (docs/security-review-2026-07-29.md): com o
+// A1 da revisão de segurança de 2026-07-29, não publicada: com o
 // orçamento esgotado a rota devolve 429 a todos, sem escrever nada, em vez
 // de deixar tudo passar com a janela congelada.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };

@@ -161,8 +161,8 @@ Two things deliberately **don't** use KV, so they cost none of that budget
 (`src/lib/edgecache.js`, the data-center Cache API): the per-client
 rate-limit state and the HIBP range cache. Before the 2026-09-25 security
 audit both lived in KV, and a single client could exhaust the account's
-daily writes through them in ~16 minutes
-([`docs/security-audit-2026-09-25/`](../../docs/security-audit-2026-09-25/REPORT.md)).
+daily writes through them in ~16 minutes (the audit report is not
+published).
 Every public cached route (`/api/vitals`, `/api/threat-intel`, `/api/ct`,
 `/api/cf-stats`) is also
 cached there first, for as long as its response `max-age`. Repeated

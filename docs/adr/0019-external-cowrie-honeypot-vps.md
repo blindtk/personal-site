@@ -10,8 +10,7 @@ ADR 0007, sits behind a Managed Challenge on all five decoy paths — a
 trade of dataset breadth for a security guarantee, accepted on purpose.
 The consequence, also accepted: it observes mostly whoever solves an
 interactive challenge from Portugal, not the indiscriminate mass
-scanning that dominates the Internet (`docs/backlog.md`, item 3, has the
-fuller critique).
+scanning that dominates the Internet.
 
 The repo owner wants a second, different asset: a real interaction
 honeypot (Cowrie, SSH/Telnet) plus an HTTP tarpit, run on hardware outside
@@ -86,11 +85,10 @@ Run this as a **second, independent trust boundary**, never touching
   demonstrates real-interaction capture and a maintained threat-intel
   feed. Conflating them in copy would make the zero-IP claim read as
   situational instead of absolute.
-- Full operational detail — service topology, feed format, retention and
-  dispute process, risk list — lives in
-  [`docs/external-honeypot-vps.md`](../external-honeypot-vps.md), kept
-  separate from this ADR because it's implementation reference, not a
-  one-time decision record.
+- Operational detail — service topology, feed format, retention and
+  dispute process, risk list — lives in the (private)
+  `honeypot-vps-infra` repository, not here: it is implementation
+  reference for a deception asset, not a one-time decision record.
 - **Not implemented yet.** Provisioning the Oracle instance is outside
   this repository's reach; the concrete artifacts (systemd units, Cowrie
   config, the feed generator script, the project page) are written once

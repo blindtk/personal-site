@@ -313,7 +313,7 @@ test('cache expirada serve o valor stale e renova em background', async () => {
 // ~1.000/dia da conta inteira no plano Free, esgotando o orçamento que o
 // vitals e as caches também precisam.
 //
-// ATUALIZADO 2026-07-29 (achado A1, docs/security-review-2026-07-29.md): a
+// ATUALIZADO 2026-07-29 (achado A1 da revisão de segurança de 2026-07-29, não publicada): a
 // versão original deste teste afirmava `res.status === 200` com o cap
 // esgotado — ou seja, com o orçamento de escrita no teto, QUALQUER pedido
 // nessa rota passava a ser aceite indefinidamente (o estado por-cliente
@@ -1346,7 +1346,7 @@ test('vitalsStats: LCP mau classifica poor; merge soma histogramas', () => {
   assert.equal(stats.metrics.lcp.samples, 4);
 });
 
-// ---------- auditoria de segurança 2026-09-25 (docs/security-audit-2026-09-25/) ----------
+// ---------- auditoria de segurança de 2026-09-25 (não publicada) ----------
 // Regressões para os achados do audit: escritas KV a partir de pedidos
 // anónimos têm de caber no orçamento diário da conta (~1.000/dia no Free).
 

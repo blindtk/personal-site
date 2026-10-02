@@ -45,6 +45,5 @@ than any single-origin clean code.
   paths any commodity scanner already probes blindly, so explaining them
   costs nothing and demonstrates the technique instead of hiding it (see
   "Why so much for a personal site?" in the README).
-- Full reasoning, checklist, and risk analysis in
-  [`docs/public-repo-decision.md`](../public-repo-decision.md) (a
-  historical record of the decision, not a living document).
+- The full reasoning, checklist and risk analysis were a one-off working
+  document, kept privately (not a living document).

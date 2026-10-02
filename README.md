@@ -209,7 +209,6 @@ as-is, even if the logic is correct.
 - [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
 - [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
 - [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
-- [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) — the review that seeded the threat model
 
 ## Contributing
 

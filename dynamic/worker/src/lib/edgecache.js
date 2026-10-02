@@ -2,7 +2,7 @@
 // de não saber nada do router: recebe o objeto de cache por parâmetro, para
 // os testes poderem passar um falso.
 //
-// Porquê (auditoria de segurança 2026-09-25, docs/security-audit-2026-09-25/):
+// Porquê (auditoria de segurança de 2026-09-25, não publicada):
 // o KV do plano Free tem ~1.000 escritas/dia para a CONTA INTEIRA, e três
 // coisas gastavam esse orçamento a partir de pedidos anónimos — o estado do
 // rate limiter (2 puts por pedido aceite), a cache do relay HIBP (1 put por

@@ -3,7 +3,7 @@
 Living document — review every quarter or whenever a relevant architecture
 decision is made (record the review date at the bottom of this file).
 Origin: initial analysis in
-[`docs/security-review-2026-07-29.md`](security-review-2026-07-29.md) §8.
+§8 of the 2026-07-29 security review (not published).
 
 ## Assets
 
@@ -101,7 +101,7 @@ secondary manual path still exists (`npx wrangler deploy` from the laptop,
 used to test a branch before merging, `CLAUDE.md`) that points at the same
 production Worker — a compromised laptop can still publish directly,
 without going through GitHub. See finding H3 in
-`docs/security-review-2026-07-29.md`: the real gap isn't "manual deploy",
+the 2026-07-29 security review (not published): the real gap isn't "manual deploy",
 it's the absence of verifiable provenance and a reviewer gate on either
 path.
 

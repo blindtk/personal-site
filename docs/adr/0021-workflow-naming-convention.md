@@ -68,7 +68,7 @@ closed if it finds no workflow at all.
 | `labeler.yml` | `update-pr-labels.yml` |
 | `ci.yml`, `security.yml`, `release.yml` | unchanged (only `name:` changed) |
 
-Older ADRs and dated reviews (`docs/security-review-2026-07-29.md`) keep
+Older ADRs and dated reviews (the 2026-07-29 security review, not published) keep
 the old names — they are a record of what was true then. This table is
 the translation.
 

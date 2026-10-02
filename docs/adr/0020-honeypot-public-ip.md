@@ -34,7 +34,7 @@ the trade-offs of (a) were laid out.
 Honeypot decoy-path events now record and publish the source IP,
 alongside the existing fields (country, ASN, path, technique) — extended
 with first/last-seen and a sighting count, the same shape as the VPS's
-threat list (ADR 0019 / `docs/external-honeypot-vps.md` §3), so the two
+threat list (ADR 0019), so the two
 can be compared directly. Same three controls, applied here too:
 
 1. **Expiry.** Entries age out after a period without a repeat sighting —

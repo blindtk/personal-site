@@ -17,8 +17,7 @@ Three things made it no longer worth its cost:
 1. **It saw little of what it was for.** ADR 0007 put the decoys behind a
    Managed Challenge, so they mostly recorded whoever solved an
    interactive challenge, not the indiscriminate mass scanning that
-   dominates the Internet (ADR 0019 and `docs/backlog.md` §3 already said
-   so).
+   dominates the Internet (ADR 0019 already said so).
 2. **It published personal data for a correlation that was never built.**
    ADR 0020 started storing and publishing source IPs (30-day list) so the
    site's decoys could be correlated with the external Cowrie honeypot.
