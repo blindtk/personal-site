@@ -448,7 +448,7 @@ export const ui = {
       empty: 'Sem certificados na janela de 90 dias — o que, com renovações automáticas, também seria notícia.',
       privacyNote:
         'Dados 100% públicos (logs CT, via crt.sh), com cache de 6 h no Worker. Sem input de visitantes — a query é fixa, derivada do próprio domínio: observabilidade, não é ferramenta de consulta.',
-      unavailable: 'O vigia ao vivo ainda não está ligado — o Worker precisa de estar publicado nas rotas do domínio. A lógica e os testes estão em dynamic/worker/.',
+      unavailable: 'Vigia ao vivo indisponível — o Worker não respondeu. A lógica e os testes estão em dynamic/worker/.',
     },
     pwned: {
       inputLabel: 'Password a verificar',
@@ -467,7 +467,7 @@ export const ui = {
       safe: 'não encontrada em nenhuma fuga conhecida',
       empty: 'escreve uma password para verificar.',
       rateLimited: 'demasiados pedidos — tenta daqui a pouco.',
-      unavailable: 'O verificador ao vivo ainda não está ligado (o Worker precisa de estar publicado).',
+      unavailable: 'Verificador indisponível — o Worker não respondeu. Só o prefixo do hash saiu do browser; tenta de novo daqui a pouco.',
       error: 'não foi possível calcular o hash neste browser.',
       privacyNote:
         'A password nunca sai do teu browser: o SHA-1 é calculado aqui e só os 5 primeiros caracteres do hash são enviados. O servidor devolve todos os hashes que partilham esse prefixo e a correspondência final é feita localmente (k-anonimato, via Have I Been Pwned).',
@@ -530,7 +530,7 @@ export const ui = {
       eventsWordOne: 'evento',
       countriesWord: 'países',
       countriesWordOne: 'país',
-      unavailable: 'Sem dados de mapa até o Worker estar publicado.',
+      unavailable: 'Mapa indisponível — o Worker não respondeu.',
     },
     ticker: {
       label: 'feed: CISA KEV + NVD · cache 1h',
@@ -688,7 +688,7 @@ export const ui = {
         logServer: 'handshake TLS concluído · o servidor já sabe tudo o que está no painel da esquerda',
         logLocal: 'o painel da direita nunca passou pela rede — foi lido localmente pelo teu browser',
         loading: 'a ler o pedido…',
-        unavailable: 'O painel do servidor precisa do Worker publicado nas rotas do domínio. O painel da direita (local) funciona na mesma.',
+        unavailable: 'Painel do servidor indisponível — o Worker não respondeu. O painel da direita (local) funciona na mesma.',
         serverFoot: 'lido pelo Worker no handshake · nunca registado',
         localFoot: 'lido nesta página · nunca enviado a lado nenhum',
         sTls: 'ligação',
@@ -1441,7 +1441,7 @@ export const ui = {
       empty: 'No certificates in the 90-day window — which, with automatic renewals, would also be news.',
       privacyNote:
         '100% public data (CT logs, via crt.sh), cached for 6 h in the Worker. No visitor input — the query is fixed, derived from the domain itself: observability, not a lookup tool.',
-      unavailable: 'The live watch is not wired up yet — the Worker needs to be published on the domain routes. The logic and tests live in dynamic/worker/.',
+      unavailable: 'Live watch unavailable — the Worker did not respond. The logic and tests live in dynamic/worker/.',
     },
     pwned: {
       inputLabel: 'Password to check',
@@ -1460,7 +1460,7 @@ export const ui = {
       safe: 'not found in any known breach',
       empty: 'type a password to check.',
       rateLimited: 'too many requests — try again shortly.',
-      unavailable: 'The live checker is not wired up yet (the Worker needs to be published).',
+      unavailable: 'Checker unavailable — the Worker did not respond. Only the hash prefix left your browser; try again shortly.',
       error: 'could not compute the hash in this browser.',
       privacyNote:
         'The password never leaves your browser: the SHA-1 is computed here and only the first 5 characters of the hash are sent. The server returns every hash sharing that prefix and the final match is done locally (k-anonymity, via Have I Been Pwned).',
@@ -1523,7 +1523,7 @@ export const ui = {
       eventsWordOne: 'event',
       countriesWord: 'countries',
       countriesWordOne: 'country',
-      unavailable: 'No map data until the Worker is published.',
+      unavailable: 'Map unavailable — the Worker did not respond.',
     },
     ticker: {
       label: 'feed: CISA KEV + NVD · 1h cache',
@@ -1681,7 +1681,7 @@ export const ui = {
         logServer: 'TLS handshake done · the server already knows everything in the left panel',
         logLocal: 'the right panel never touched the network — it was read locally by your browser',
         loading: 'reading the request…',
-        unavailable: 'The server panel needs the Worker published on the domain routes. The right (local) panel still works.',
+        unavailable: 'Server panel unavailable — the Worker did not respond. The right (local) panel still works.',
         serverFoot: 'read by the Worker at the handshake · never logged',
         localFoot: 'read on this page · never sent anywhere',
         sTls: 'connection',

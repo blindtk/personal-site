@@ -53,6 +53,7 @@ const jsStrings = {
   sourceCloudflare: s.sourceCloudflare,
   tiEmpty: s.tiEmpty,
   tiDays: s.tiDays,
+  unavailable: s.unavailable,
 };
 ---
 
@@ -341,7 +342,17 @@ const jsStrings = {
         NS.tiEmpty,
       );
     } catch {
-      // Sem Worker/dados: a secção fica com os travessões já pintados.
+      // Sem Worker/dados: os quatro números ficam com o travessão já pintado
+      // e as duas tabelas dizem porquê, com o mesmo aviso das páginas
+      // Honeypot/Cloudflare/Performance — em vez de caixas vazias.
+      for (const id of ['numbers-countries', 'numbers-networks']) {
+        const host = document.getElementById(id);
+        if (!host) continue;
+        const el = document.createElement('p');
+        el.className = 'hp-fallback';
+        el.textContent = NS.unavailable;
+        host.replaceChildren(el);
+      }
     }
   }
 
