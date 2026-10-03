@@ -25,6 +25,38 @@
           "pt": "Motor de busca de dispositivos expostos na internet.",
           "en": "Search engine for internet-exposed devices."
         }
+      },
+      {
+        "name": "CISA CPG",
+        "url": "https://www.cisa.gov/cross-sector-cybersecurity-performance-goals",
+        "desc": {
+          "pt": "Objetivos de cibersegurança de base, com prioridades claras.",
+          "en": "Baseline cybersecurity goals with clear priorities."
+        }
+      },
+      {
+        "name": "CIS Controls IG1",
+        "url": "https://www.cisecurity.org/controls/implementation-groups/ig1",
+        "desc": {
+          "pt": "O conjunto mínimo de controlos de higiene cibernética.",
+          "en": "The minimum set of cyber hygiene controls."
+        }
+      },
+      {
+        "name": "NIST Zero Trust",
+        "url": "https://pages.nist.gov/zero-trust-architecture/index.html",
+        "desc": {
+          "pt": "Arquitetura zero trust de referência (NIST SP 800-207).",
+          "en": "Reference zero trust architecture (NIST SP 800-207)."
+        }
+      },
+      {
+        "name": "Maester",
+        "url": "https://maester.dev/",
+        "desc": {
+          "pt": "Testes automatizados de segurança para Entra ID e Microsoft 365.",
+          "en": "Automated security tests for Entra ID and Microsoft 365."
+        }
       }
     ]
   },
@@ -54,6 +86,14 @@
           "pt": "Explica comandos de shell argumento a argumento.",
           "en": "Explains shell commands argument by argument."
         }
+      },
+      {
+        "name": "Cloudflare Docs",
+        "url": "https://developers.cloudflare.com/",
+        "desc": {
+          "pt": "Documentação oficial da plataforma onde o site corre.",
+          "en": "Official docs for the platform this site runs on."
+        }
       }
     ]
   },
@@ -74,6 +114,22 @@
         "desc": {
           "pt": "Wargames clássicos para praticar Linux e segurança.",
           "en": "Classic wargames to practice Linux and security."
+        }
+      },
+      {
+        "name": "Certified Pre-Owned",
+        "url": "https://specterops.io/wp-content/uploads/sites/3/2022/06/Certified_Pre-Owned.pdf",
+        "desc": {
+          "pt": "Artigo de referência sobre abusos de AD CS.",
+          "en": "Reference paper on AD CS abuse."
+        }
+      },
+      {
+        "name": "ACSC Network Segmentation",
+        "url": "https://www.cyber.gov.au/resources-business-and-government/maintaining-devices-and-systems/system-hardening-and-administration/network-hardening/implementing-network-segmentation-and-segregation",
+        "desc": {
+          "pt": "Guia oficial para implementar segmentação de rede.",
+          "en": "Official guide to implementing network segmentation."
         }
       }
     ]
