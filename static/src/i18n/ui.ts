@@ -44,7 +44,7 @@ export const ui = {
     // (ex.: home) usa SITE.description de config.ts. Projetos, posts e
     // ferramentas trazem a sua própria descrição.
     metaDesc: {
-      about: 'Percurso de Daniel Malaco: de projetos de redes de metro e ferrovia à arquitetura de segurança de infraestrutura crítica rodoviária.',
+      about: 'Percurso de Daniel Malaco: de projetos de redes de metro e ferrovia à arquitetura de segurança de infraestrutura rodoviária.',
       projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot com feed de threat intel, um homelab segmentado e mais.',
       tools: 'Ferramentas de rede e segurança: subnets, hashes, gerador de passwords, análise de CSP, cabeçalhos de email, EXIF e passwords comprometidas. A maioria corre só no browser.',
       links: 'Repositórios do GitHub organizados por categoria e as ferramentas externas de rede e segurança que uso no dia a dia.',
@@ -875,7 +875,7 @@ export const ui = {
     // (e.g. home) falls back to SITE.description in config.ts. Projects,
     // posts and tools carry their own description.
     metaDesc: {
-      about: 'Daniel Malaco’s path: from metro and rail network projects to security architecture for critical road infrastructure.',
+      about: 'Daniel Malaco’s path: from metro and rail network projects to security architecture for road infrastructure.',
       projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot with a threat-intel feed, a segmented homelab and more.',
       tools: 'Networking and security tools: subnets, hashes, password generator, CSP analysis, email headers, EXIF and breached-password checks. Most run entirely in your browser.',
       links: 'GitHub repositories organised by category, and the external networking and security tools I use day to day.',
