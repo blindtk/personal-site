@@ -28,8 +28,7 @@ their own.
 
 No machine trusts another just because it is on the same network. The
 firewall denies all traffic between segments by default (deny all) and only
-opens what each role needs, with an explicit rule. Remote access goes through
-a mesh VPN instead of ports open to the Internet. Each Raspberry Pi has one
+opens what each role needs, with an explicit rule. Each Raspberry Pi has one
 role and lives in its own segment, and the laptops are the administration.
 
 ## What it uses
@@ -42,7 +41,7 @@ role and lives in its own segment, and the laptops are the administration.
 - **Docker.** Services run in containers, managed with Compose, each with its
   own user.
 - **Vaultwarden.** The password manager, self-hosted and in a segment of its
-  own, with no exposure to the Internet.
+  own.
 - **GitHub Actions runners.** My own CI, which also applies the configuration
   to the machines. It runs third-party code, such as workflow dependencies,
   so it sits in the segment I can break without losing anything.

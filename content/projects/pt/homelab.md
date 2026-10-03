@@ -28,8 +28,7 @@ documentados num repositório próprio.
 
 Nenhuma máquina confia noutra só por estar na mesma rede. A firewall nega
 todo o tráfego entre segmentos por omissão (deny all) e só abre o que cada
-função precisa, com uma regra explícita. O acesso remoto passa por uma VPN em
-malha, em vez de portas abertas para a Internet. Cada Raspberry Pi tem um
+função precisa, com uma regra explícita. Cada Raspberry Pi tem um
 papel e vive no seu segmento, e os portáteis são a administração.
 
 ## O que usa
@@ -41,7 +40,7 @@ papel e vive no seu segmento, e os portáteis são a administração.
 - **Docker.** Os serviços correm em contentores, geridos com Compose, cada um
   com o seu utilizador.
 - **Vaultwarden.** O gestor de credenciais, auto-alojado e num segmento só
-  dele, sem exposição à Internet.
+  dele.
 - **Runners do GitHub Actions.** O CI próprio, que também aplica as
   configurações nas máquinas. Executa código de terceiros, como as
   dependências dos workflows, por isso fica no segmento que posso partir sem
