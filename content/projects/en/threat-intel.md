@@ -1,7 +1,7 @@
 ---
 title: 'Threat Intel'
 description: 'An SSH/HTTP honeypot on its own VPS and the public threat feed it produces.'
-tags: ['python', 'cowrie', 'stix']
+tags: ['cowrie', 'terraform', 'oracle-cloud']
 order: 2
 ---
 

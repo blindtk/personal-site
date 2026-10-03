@@ -1,7 +1,7 @@
 ---
 title: 'star-organizer'
 description: 'As minhas estrelas do GitHub, organizadas por categoria em Markdown e JSON.'
-tags: ['python', 'github-actions']
+tags: ['python']
 order: 3
 ---
 
