@@ -1554,7 +1554,8 @@ input[type='file']::file-selector-button:hover {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0.35rem 0.7rem;
-  padding: 0.85rem 1.1rem;
+  position: relative;
+  padding: 0.85rem 1.1rem 0.85rem 2.4rem;
   cursor: pointer;
   list-style: none;
   font-family: var(--mono);
@@ -1562,10 +1563,14 @@ input[type='file']::file-selector-button:hover {
   font-weight: 600;
 }
 .prose summary::-webkit-details-marker { display: none; }
+/* Marcador fora do fluxo: com título longo o texto quebrava para a linha de
+   baixo e deixava o ▸ sozinho numa linha. */
 .prose summary::before {
   content: '▸';
   color: var(--accent);
-  flex: none;
+  position: absolute;
+  left: 1.1rem;
+  top: 0.85rem;
 }
 .prose details[open] > summary::before { content: '▾'; }
 .prose summary:hover { color: var(--accent); }
