@@ -1,7 +1,7 @@
 ---
 title: 'star-organizer'
-description: 'GitHub stars as a knowledge base by category, in Markdown and JSON, refreshed every week.'
-tags: ['python', 'github-actions', 'automation', 'curation']
+description: 'My GitHub stars, organised by category in Markdown and JSON.'
+tags: ['python', 'github-actions']
 order: 3
 ---
 

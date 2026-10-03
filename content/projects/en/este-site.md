@@ -1,7 +1,7 @@
 ---
 title: 'This site'
-description: 'A personal site run like a production system: threat model, strict CSP and evidence you can check.'
-tags: ['astro', 'typescript', 'cloudflare']
+description: 'A personal site run like a production system: strict CSP and verifiable evidence.'
+tags: ['astro', 'cloudflare']
 order: 1
 ---
 

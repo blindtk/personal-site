@@ -1,7 +1,7 @@
 ---
 title: 'Threat Intel'
-description: 'Um honeypot SSH e HTTP numa VPS à parte e o feed público de ameaças que sai dele, enriquecido e mapeado para ATT&CK.'
-tags: ['honeypot', 'threat-intel', 'mitre-attack', 'python']
+description: 'Honeypot SSH/HTTP numa VPS própria e o feed público de ameaças que produz.'
+tags: ['honeypot', 'mitre-attack']
 order: 2
 ---
 

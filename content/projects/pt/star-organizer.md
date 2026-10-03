@@ -1,7 +1,7 @@
 ---
 title: 'star-organizer'
-description: 'As estrelas do GitHub numa base de conhecimento por categorias, em Markdown e JSON, atualizada todas as semanas.'
-tags: ['python', 'github-actions', 'automação', 'curadoria']
+description: 'As minhas estrelas do GitHub, organizadas por categoria em Markdown e JSON.'
+tags: ['python', 'github-actions']
 order: 3
 ---
 

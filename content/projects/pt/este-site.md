@@ -1,7 +1,7 @@
 ---
 title: 'Este site'
-description: 'Um site pessoal gerido como sistema de produção: modelo de ameaça, CSP estrita e provas que podes verificar.'
-tags: ['astro', 'typescript', 'cloudflare']
+description: 'Site pessoal gerido como sistema de produção: CSP estrita e provas verificáveis.'
+tags: ['astro', 'cloudflare']
 order: 1
 ---
 
