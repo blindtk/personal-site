@@ -1,7 +1,7 @@
 ---
 title: 'Homelab'
-description: 'My home network with zero trust by default: Raspberry Pi, a deny-all firewall, a mesh VPN and my own CI.'
-tags: ['homelab', 'zero-trust', 'k3s', 'tailscale']
+description: 'A zero-trust home network: Raspberry Pi, deny-all firewall and a mesh VPN.'
+tags: ['flux', 'docker', 'k3s']
 order: 4
 ---
 

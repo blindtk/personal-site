@@ -1,7 +1,7 @@
 ---
 title: 'star-organizer'
-description: 'GitHub stars as a knowledge base by category, in Markdown and JSON, refreshed every week.'
-tags: ['python', 'github-actions', 'automation', 'curation']
+description: 'My GitHub stars, organised by category in Markdown and JSON.'
+tags: ['python', 'yaml', 'markdown']
 order: 3
 ---
 
@@ -49,7 +49,8 @@ Every PR runs unit tests, `ruff`, `bandit` and `pip-audit`, plus
 
 ## How it reaches this site
 
-The generated catalog is copied into `content/catalog.json` in this
-repository, and the site imports it statically, with no network request. A
+The generated catalog reaches this repository as a pull request opened by a
+GitHub App, touching only `content/catalog.json`; once reviewed and merged,
+the site imports it statically, with no network request. A
 missing or schema-invalid file **fails the build**, on purpose: there is never
 a silent fallback to sample data.

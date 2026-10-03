@@ -1,7 +1,7 @@
 ---
 title: 'star-organizer'
-description: 'As estrelas do GitHub numa base de conhecimento por categorias, em Markdown e JSON, atualizada todas as semanas.'
-tags: ['python', 'github-actions', 'automação', 'curadoria']
+description: 'As minhas estrelas do GitHub, organizadas por categoria em Markdown e JSON.'
+tags: ['python', 'yaml', 'markdown']
 order: 3
 ---
 
@@ -50,7 +50,8 @@ passa por testes unitários, `ruff`, `bandit` e `pip-audit`, e por
 
 ## Ligação a este site
 
-O catálogo gerado é copiado para `content/catalog.json` neste repositório, e
-o site importa-o de forma estática, sem pedido de rede. Um ficheiro em falta
+O catálogo gerado chega a este repositório como um *pull request* aberto por
+uma GitHub App, que só altera `content/catalog.json`; depois de revisto e
+integrado, o site importa-o de forma estática, sem pedido de rede. Um ficheiro em falta
 ou com schema inválido **falha o build**, de propósito: nunca há um recurso
 silencioso a dados de exemplo.

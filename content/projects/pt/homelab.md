@@ -1,7 +1,7 @@
 ---
 title: 'Homelab'
-description: 'A minha rede doméstica com zero trust por omissão: Raspberry Pi, firewall com deny all, VPN em malha e CI próprio.'
-tags: ['homelab', 'zero-trust', 'k3s', 'tailscale']
+description: 'Rede doméstica zero trust: Raspberry Pi, firewall deny all e VPN em malha.'
+tags: ['flux', 'docker', 'k3s']
 order: 4
 ---
 
