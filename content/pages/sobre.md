@@ -1,5 +1,5 @@
 ---
-title: 'Sobre'
+title: 'Sobre mim'
 ---
 
 Sou o **Daniel Malaco**, **Information Security Engineer** no Porto. Desde
@@ -25,7 +25,7 @@ SEC504, acompanho os summits de DFIR e ransomware da SANS e já ganhei quatro
 CTFs, o primeiro em Lisboa, em 2022. As fotos estão no fim desta página.
 
 Gosto de construir as ferramentas que uso. As deste site correm no browser, e
-em casa tenho um homelab com um cluster k3s em Raspberry Pi onde experimento
+em casa tenho um homelab, segmentado por função, onde experimento
 o que quero testar antes de chegar perto de produção. O próprio site faz parte
 disso: é estático, bilingue, não tem trackers e a forma como está protegido
 está explicada em [Este site](/este-site/).

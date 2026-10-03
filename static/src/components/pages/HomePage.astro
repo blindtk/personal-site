@@ -64,12 +64,22 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
         <li class="stop">
           <span class="dot" aria-hidden="true"></span>
           <span class="years">{stop.years}</span>
-          <span class="name">
-            <img class="flag" src={`/flags/${stop.flag}.svg`} alt="" width="20" height="15" decoding="async" />
-            {stop.name}
-          </span>
-          <span class="org">{stop.org}</span>
-          <span class="note">{stop.note}</span>
+          <span class="name">{stop.name}</span>
+          <span class="role">{stop.role}</span>
+          {stop.note && <span class="note">{stop.note}</span>}
+          {stop.projects.length > 0 && (
+            <ul class="projects">
+              {stop.projects.map((project) => (
+                <li>
+                  <span class="pname">
+                    <img class="flag" src={`/flags/${project.flag}.svg`} alt="" width="20" height="15" decoding="async" />
+                    {project.name}
+                  </span>
+                  <span class="note">{project.note}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </li>
       ))}
     </ol>

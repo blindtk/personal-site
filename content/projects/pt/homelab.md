@@ -1,72 +1,88 @@
 ---
 title: 'Homelab'
-description: 'Cluster k3s em Raspberry Pi, em casa, onde testo tudo antes de chegar a produção.'
-tags: ['kubernetes', 'k3s', 'raspberry-pi', 'homelab']
+description: 'A minha infraestrutura pessoal, separada por função, onde cada regra de rede tem um teste que a verifica.'
+tags: ['homelab', 'segmentação', 'raspberry-pi', 'gitops']
 order: 4
 ---
 
-Em casa mantenho um cluster [k3s](https://k3s.io/) a correr em Raspberry Pi.
-O k3s é a distribuição leve do Kubernetes, pensada para hardware modesto e ARM.
-É o mesmo homelab que já mencionei no [Sobre](/sobre/): a cobaia para tudo o
-que quero experimentar antes de chegar perto de produção.
+Em casa mantenho uma pequena infraestrutura pessoal, feita de três
+Raspberry Pi e um portátil. Não é uma montra de serviços. É o sítio onde
+desenho e opero, em ponto pequeno, o que faço no trabalho: segmentação,
+acesso remoto controlado, automação e verificação. O desenho, as decisões e o
+estado de cada parte estão documentados num repositório próprio.
 
-<svg class="diagram-homelab" viewBox="0 0 640 220" role="img" aria-label="Topologia simplificada do homelab: cluster k3s com control-plane e agentes, isolado da produção">
+<svg class="diagram-homelab" viewBox="0 0 640 230" role="img" aria-label="Esquema simplificado do homelab: quatro segmentos (cofre, cópia, oficina e bancada) separados por uma firewall, com o cofre sem acesso à cópia">
   <defs>
     <marker id="homelab-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path class="diagram-arrowhead" d="M0,0 L10,5 L0,10 z"></path>
     </marker>
   </defs>
-  <rect class="diagram-boundary" x="20" y="24" width="380" height="168" rx="8"></rect>
-  <text class="diagram-label" x="34" y="44">homelab</text>
-  <rect class="diagram-node" x="165" y="76" width="110" height="46" rx="6"></rect>
-  <text class="diagram-node-title" x="220" y="97" text-anchor="middle">control-plane</text>
-  <text class="diagram-node-sub" x="220" y="111" text-anchor="middle">k3s server · Pi</text>
-  <rect class="diagram-node" x="60" y="150" width="100" height="40" rx="6"></rect>
-  <text class="diagram-node-title" x="110" y="172" text-anchor="middle">agente</text>
-  <text class="diagram-node-sub" x="110" y="184" text-anchor="middle">k3s agent · Pi</text>
-  <rect class="diagram-node" x="270" y="150" width="100" height="40" rx="6"></rect>
-  <text class="diagram-node-title" x="320" y="172" text-anchor="middle">agente</text>
-  <text class="diagram-node-sub" x="320" y="184" text-anchor="middle">k3s agent · Pi</text>
-  <path class="diagram-edge" d="M192,122 L110,150"></path>
-  <path class="diagram-edge" d="M248,122 L320,150"></path>
-  <rect class="diagram-node diagram-node--prod" x="470" y="99" width="130" height="46" rx="6"></rect>
-  <text class="diagram-node-title" x="535" y="120" text-anchor="middle">produção</text>
-  <text class="diagram-node-sub" x="535" y="134" text-anchor="middle">fora do homelab</text>
-  <path class="diagram-edge diagram-edge--dashed" d="M400,122 L465,122"></path>
-  <text class="diagram-caption" x="432" y="110" text-anchor="middle">testar primeiro</text>
+  <rect class="diagram-boundary" x="20" y="24" width="600" height="182" rx="8"></rect>
+  <text class="diagram-label" x="34" y="44">firewall · fronteiras entre segmentos</text>
+  <rect class="diagram-node" x="39" y="76" width="118" height="64" rx="6"></rect>
+  <text class="diagram-node-title" x="98" y="104" text-anchor="middle">cofre</text>
+  <text class="diagram-node-sub" x="98" y="120" text-anchor="middle">o insubstituível</text>
+  <rect class="diagram-node" x="187" y="76" width="118" height="64" rx="6"></rect>
+  <text class="diagram-node-title" x="246" y="104" text-anchor="middle">cópia</text>
+  <text class="diagram-node-sub" x="246" y="120" text-anchor="middle">sobrevive ao cofre</text>
+  <rect class="diagram-node" x="335" y="76" width="118" height="64" rx="6"></rect>
+  <text class="diagram-node-title" x="394" y="104" text-anchor="middle">oficina</text>
+  <text class="diagram-node-sub" x="394" y="120" text-anchor="middle">código de terceiros</text>
+  <rect class="diagram-node diagram-node--prod" x="483" y="76" width="118" height="64" rx="6"></rect>
+  <text class="diagram-node-title" x="542" y="104" text-anchor="middle">bancada</text>
+  <text class="diagram-node-sub" x="542" y="120" text-anchor="middle">admin · chaves</text>
+  <path class="diagram-edge diagram-edge--dashed" d="M157,112 L185,112"></path>
+  <text class="diagram-caption" x="171" y="100" text-anchor="middle">✕</text>
+  <text class="diagram-caption" x="39" y="170">✕ o cofre nunca inicia ligações para a cópia</text>
+  <text class="diagram-caption" x="39" y="188">acesso remoto só por VPN em malha</text>
 </svg>
 
-*Topologia simplificada e ilustrativa. O número real de nós varia; o que
-interessa aqui é a relação entre o cluster e a produção, não um inventário.*
+*Esquema simplificado. Mostra o papel de cada segmento e a regra que mais
+importa, não um inventário.*
 
-## O que corre lá
+## Como está organizado
 
-Não há uma lista fixa, porque é um terreno de testes. Passam por
-lá as ferramentas deste site antes de irem para o browser de outra pessoa,
-configurações que quero validar antes de as levar para o trabalho, e
-montagens de infraestrutura ofensiva para lab e CTFs (o
-[heatmap ATT&CK](/attack/) mapeia essa prática à técnica *Acquire Infrastructure* do
-MITRE ATT&CK, ao nível "experiência pontual / lab"). O denominador comum é
-sempre o mesmo: nada toca produção sem primeiro passar por aqui.
+A rede de casa está dividida em segmentos, cada um com uma função e um tipo
+de risco próprio.
 
-## Porquê k3s
+| Segmento | Para que serve |
+| --- | --- |
+| Cofre | Guarda o que não se pode perder nem substituir. |
+| Cópia | Guarda a cópia que sobrevive ao cofre, e que o cofre não alcança. |
+| Oficina | Corre código que eu não escrevi, como o CI, e as experiências com k3s. Nada aqui é insubstituível. |
+| Bancada | É onde administro, onde faço o laboratório de máquinas virtuais descartáveis e onde vivem as chaves de administração, longe dos servidores. |
 
-Um Raspberry Pi não tem recursos para um Kubernetes "a sério", e o k3s
-existe exatamente para isso: a mesma API do Kubernetes, com o etcd, os
-controllers legacy e as dependências desnecessárias cortadas para caber em
-hardware ARM de baixo consumo. Ganho prática com os padrões que interessam em
-produção (multi-nó, scheduling, resiliência à perda de um nó) num ambiente
-barato o suficiente para partir sem custar nada.
+Todas as máquinas são minhas, por isso a separação não é por desconfiança.
+É por causa do que um comprometimento alcançaria. O que corre código de
+terceiros fica no segmento que posso partir sem perder nada.
 
-## Decisões técnicas
+## O que decidi, e porquê
 
-- **Cluster, não um Pi isolado.** Um único nó testa "corre o container";
-  vários nós testam o que falha de verdade em produção: perder um nó,
-  agendar com poucos recursos, tolerar reinícios.
-- **Isolamento deliberado da produção.** O homelab não tem acesso a nada que
-  importe fora dele; é um ambiente descartável por construção, para poder
-  ser destruído e reconstruído sem cerimónia.
-- **Sem exposição pública fixa.** Ainda não há um subdomínio a apontar para
-  o homelab (ver `docs/dns-tls.md` neste repo). Decide-se se e quando fizer
-  sentido, sem comprometer entretanto a política de HSTS preload do domínio
-  principal.
+- **Uma regra só conta se alguém a verificar.** Cada fronteira entre
+  segmentos tem um mecanismo que a impõe e um comando que a testa, e a
+  verificação corre todos os dias. O teste também tem de falhar quando o
+  mecanismo não existe: uma ligação recusada porque nada está à escuta não
+  prova restrição nenhuma, por isso espero que a ligação esgote o tempo.
+- **Uma réplica fiel não é uma cópia de segurança.** Um espelho dos
+  repositórios copiava também um `push --force` que apagasse histórico. Por
+  isso a réplica não apaga o que o original já não tem, e a cópia a sério
+  fica noutro segmento.
+- **Nada exposto.** O acesso remoto às máquinas faz-se por uma VPN em malha,
+  e o desenho não prevê nada público.
+- **Segredos fora do git.** Nenhum segredo entra no repositório, e há um
+  scanner de segredos no CI desde o primeiro commit.
+- **Atualizações de segurança automáticas, reinício à mão.** Os pacotes de
+  segurança instalam-se sozinhos, mas nenhuma máquina reinicia sem eu
+  decidir.
+- **O estado vive num sítio só.** Um plano diz o que está feito, a meio,
+  adiado e por fazer, com a prova de cada coisa, e cada decisão tem o seu
+  registo. Uma linha de documentação que não corresponda à máquina é pior do
+  que nenhuma, por isso o que descreve o que existe leva a data e a forma
+  como foi verificado.
+
+## Em que ponto está
+
+Feitos: a segmentação da rede e o acesso remoto, o segmento do cofre com
+réplicas automáticas dos repositórios, a verificação diária das fronteiras e
+as atualizações de segurança. Em construção: o cluster k3s com GitOps (Flux)
+na oficina, um utilizador por runner de CI e as cópias de segurança.

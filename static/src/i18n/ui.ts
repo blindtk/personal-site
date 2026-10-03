@@ -4,10 +4,23 @@ import type { Lang } from '../config';
  * Todas as strings de interface, em PT e EN.
  * O conteúdo longo (posts, sobre, projetos) vive em /content — isto é só UI.
  */
+/**
+ * Uma paragem do percurso da Home: a empresa (ou a função atual) e, dentro
+ * dela, os projetos em que trabalhei. A bandeira identifica a rede do
+ * projeto, não onde vivi; só os projetos a levam.
+ */
+export interface JourneyStop {
+  years: string;
+  name: string;
+  role: string;
+  note?: string;
+  projects: { flag: string; name: string; note: string }[];
+}
+
 export const ui = {
   pt: {
     nav: {
-      about: 'Sobre',
+      about: 'Sobre mim',
       blog: 'Blog',
       projects: 'Projetos',
       tools: 'Ferramentas',
@@ -31,7 +44,7 @@ export const ui = {
     // ferramentas trazem a sua própria descrição.
     metaDesc: {
       about: 'Percurso de Daniel Malaco: de projetos de redes de metro e ferrovia à arquitetura de segurança de infraestrutura crítica rodoviária.',
-      projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot com feed de threat intel, um homelab k3s e mais.',
+      projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot com feed de threat intel, um homelab segmentado e mais.',
       tools: 'Ferramentas de rede e segurança: subnets, hashes, gerador de passwords, análise de CSP, cabeçalhos de email, EXIF e passwords comprometidas. A maioria corre só no browser.',
       links: 'Repositórios do GitHub organizados por categoria e as ferramentas externas de rede e segurança que uso no dia a dia.',
       contact: 'Como contactar Daniel Malaco (email, GitHub, LinkedIn e Credly) e a política de divulgação responsável (security.txt).',
@@ -402,23 +415,44 @@ export const ui = {
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP'],
       // Nomeia em vez de contar — a credencial mais forte (CCDL2, com badge)
       // vem primeiro; NIS2 como diferenciador de setor.
-      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
+      chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Nomes de vendors/plataformas — o payload de palavras-chave que um
       // recrutador pesquisa (Splunk, Entra ID, …), ausente dos chips acima.
-      stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
-      // Cada paragem é um projeto (ou a função atual), não um sítio onde
-      // vivi: `org` é quem o fez, e a bandeira identifica a rede, não uma
-      // morada. flag = código do SVG em public/flags/ (render consistente
-      // entre sistemas; o emoji nativo variava com o OS).
+      stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
+      // Cada paragem é uma empresa e, dentro dela, os projetos em que
+      // trabalhei. A bandeira identifica a rede do projeto, não uma morada,
+      // por isso só os projetos a levam. flag = código do SVG em
+      // public/flags/ (render consistente entre sistemas; o emoji nativo
+      // variava com o OS).
       journey: {
         title: 'Percurso · de redes de transporte a segurança',
         items: [
-          { years: '2017–18', flag: 'qa', name: 'Metro de Doha', org: 'Thales/Altran', note: 'Redes IP e WiFi móvel (BBRS)' },
-          { years: '2017–18', flag: 'br', name: 'VLT Santos', org: 'Thales/Altran', note: 'Redes IP em ferrovia ligeira' },
-          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', org: 'Efacec', note: 'Redes e segurança em metro ligeiro' },
-          { years: '2019–20', flag: 'no', name: 'Bergen D42', org: 'Efacec', note: 'Redes e segurança em metro ligeiro' },
-          { years: '2020–hoje', flag: 'pt', name: 'Ascendi', org: 'Information Security Engineer', note: 'Segurança de infraestruturas críticas rodoviárias' },
-        ],
+          {
+            years: '2017–18',
+            name: 'Thales / Altran',
+            role: 'Network Engineer',
+            projects: [
+              { flag: 'qa', name: 'Metro de Doha', note: 'Redes IP e WiFi móvel (BBRS)' },
+              { flag: 'br', name: 'VLT Santos', note: 'Redes IP em ferrovia ligeira' },
+            ],
+          },
+          {
+            years: '2019–20',
+            name: 'Efacec',
+            role: 'Systems Engineer',
+            projects: [
+              { flag: 'dk', name: 'Odense Letbane', note: 'Redes e segurança em metro ligeiro' },
+              { flag: 'no', name: 'Bergen D42', note: 'Redes e segurança em metro ligeiro' },
+            ],
+          },
+          {
+            years: '2020–hoje',
+            name: 'Ascendi',
+            role: 'Information Security Engineer',
+            note: 'Segurança de infraestruturas críticas rodoviárias',
+            projects: [],
+          },
+        ] as JourneyStop[],
       },
       latestPosts: 'Últimos posts',
       allPosts: 'todos os posts',
@@ -762,7 +796,7 @@ export const ui = {
       securityTxtLabel: 'security.txt (RFC 9116)',
       pgpLabel: 'Chave PGP',
       note: 'Fora do terminal tenho um homelab e faço CTFs. Há mais sobre isso na página',
-      noteLink: 'Sobre',
+      noteLink: 'Sobre mim',
     },
     lab: {
       title: 'Lab',
@@ -783,9 +817,8 @@ export const ui = {
       winClose: 'Fechar janela',
       roadmapBody: [
         'A seguir:',
-        '  [ ] Catálogo de estrelas: sincronização automática via API do',
-        '      GitHub autenticada (github-stars é privado; hoje o catalog.json',
-        '      é vendorizado à mão em content/)',
+        '  [ ] Catálogo de estrelas: sincronização automática com a API',
+        '      do GitHub (hoje o catalog.json é copiado à mão para content/)',
         '',
         'Depois, ferramentas com backend (ver dynamic/PLAN.md):',
         '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
@@ -814,7 +847,7 @@ export const ui = {
   },
   en: {
     nav: {
-      about: 'About',
+      about: 'About me',
       blog: 'Blog',
       projects: 'Projects',
       tools: 'Tools',
@@ -838,7 +871,7 @@ export const ui = {
     // posts and tools carry their own description.
     metaDesc: {
       about: 'Daniel Malaco’s path: from metro and rail network projects to security architecture for critical road infrastructure.',
-      projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot with a threat-intel feed, a k3s homelab and more.',
+      projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot with a threat-intel feed, a segmented homelab and more.',
       tools: 'Networking and security tools: subnets, hashes, password generator, CSP analysis, email headers, EXIF and breached-password checks. Most run entirely in your browser.',
       links: 'GitHub repositories organised by category, and the external networking and security tools I use day to day.',
       contact: 'How to reach Daniel Malaco (email, GitHub, LinkedIn and Credly) and the responsible disclosure policy (security.txt).',
@@ -1182,23 +1215,44 @@ export const ui = {
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP'],
       // Names instead of counts — the strongest credential (CCDL2,
       // badge-verified) leads; NIS2 as the sector differentiator.
-      chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
+      chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Vendor/platform names — the keyword payload a recruiter searches
       // for (Splunk, Entra ID, …), missing from the chips above.
-      stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
-      // Each stop is a project (or the current role), not a place I lived:
-      // `org` is who delivered it, and the flag identifies the network, not
-      // an address. flag = code of the SVG in public/flags/ (consistent
-      // rendering across systems; native emoji varied with the OS).
+      stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
+      // Each stop is a company and, inside it, the projects I worked on. The
+      // flag identifies the project's network, not an address, so only the
+      // projects carry it. flag = code of the SVG in public/flags/
+      // (consistent rendering across systems; native emoji varied with the
+      // OS).
       journey: {
         title: 'Journey · from transport networks to security',
         items: [
-          { years: '2017–18', flag: 'qa', name: 'Doha Metro', org: 'Thales/Altran', note: 'IP networks & mobile WiFi (BBRS)' },
-          { years: '2017–18', flag: 'br', name: 'VLT Santos', org: 'Thales/Altran', note: 'IP networks in light rail' },
-          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', org: 'Efacec', note: 'Light-metro networks & security' },
-          { years: '2019–20', flag: 'no', name: 'Bergen D42', org: 'Efacec', note: 'Light-metro networks & security' },
-          { years: '2020–now', flag: 'pt', name: 'Ascendi', org: 'Information Security Engineer', note: 'Critical road-infrastructure security' },
-        ],
+          {
+            years: '2017–18',
+            name: 'Thales / Altran',
+            role: 'Network Engineer',
+            projects: [
+              { flag: 'qa', name: 'Doha Metro', note: 'IP networks & mobile WiFi (BBRS)' },
+              { flag: 'br', name: 'VLT Santos', note: 'IP networks in light rail' },
+            ],
+          },
+          {
+            years: '2019–20',
+            name: 'Efacec',
+            role: 'Systems Engineer',
+            projects: [
+              { flag: 'dk', name: 'Odense Letbane', note: 'Light-metro networks & security' },
+              { flag: 'no', name: 'Bergen D42', note: 'Light-metro networks & security' },
+            ],
+          },
+          {
+            years: '2020–now',
+            name: 'Ascendi',
+            role: 'Information Security Engineer',
+            note: 'Critical road-infrastructure security',
+            projects: [],
+          },
+        ] as JourneyStop[],
       },
       latestPosts: 'Latest posts',
       allPosts: 'all posts',
@@ -1542,7 +1596,7 @@ export const ui = {
       securityTxtLabel: 'security.txt (RFC 9116)',
       pgpLabel: 'PGP key',
       note: 'Away from the terminal I run a homelab and do CTFs. More on that on the',
-      noteLink: 'About',
+      noteLink: 'About me',
     },
     lab: {
       title: 'Lab',
@@ -1563,9 +1617,8 @@ export const ui = {
       winClose: 'Close window',
       roadmapBody: [
         'Up next:',
-        '  [ ] Star catalog: automatic sync via an authenticated GitHub API',
-        '      (github-stars is private; catalog.json is hand-vendored into',
-        '      content/ for now)',
+        '  [ ] Star catalog: automatic sync with the GitHub API',
+        '      (for now catalog.json is copied by hand into content/)',
         '',
         'Then, backend tools (see dynamic/PLAN.md):',
         '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',

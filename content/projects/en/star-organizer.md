@@ -49,13 +49,7 @@ Every PR runs unit tests, `ruff`, `bandit` and `pip-audit`, plus
 
 ## How it reaches this site
 
-The `github-stars` repository is **private**, and
-`raw.githubusercontent.com` won't serve files from private repositories
-without authentication: it returns a 404, indistinguishable from "the
-file doesn't exist". So the generated `catalog.json` is copied by hand into
-`content/catalog.json` in this repository, and `static/src/lib/catalog.ts`
-imports it statically, with no network request. A missing or
-schema-invalid file **fails the build**, on purpose: there is never a silent
-fallback to sample data. The next step, on the [Lab](/en/lab/) roadmap, is
-reading the catalog through the GitHub API with a token, keeping the
-repository private and dropping the manual copy.
+The generated catalog is copied into `content/catalog.json` in this
+repository, and the site imports it statically, with no network request. A
+missing or schema-invalid file **fails the build**, on purpose: there is never
+a silent fallback to sample data.

@@ -50,13 +50,7 @@ passa por testes unitários, `ruff`, `bandit` e `pip-audit`, e por
 
 ## Ligação a este site
 
-O repositório `github-stars` é **privado**, e o
-`raw.githubusercontent.com` não serve ficheiros de repositórios privados
-sem autenticação: devolve 404, indistinguível de "o ficheiro não existe".
-Por isso o `catalog.json` gerado é copiado à mão para `content/catalog.json`
-neste repositório, e `static/src/lib/catalog.ts` importa-o de forma
-estática, sem pedido de rede. Um ficheiro em falta ou com schema inválido
-**falha o build**, de propósito: nunca há um recurso silencioso a dados de
-exemplo. O passo seguinte, no roadmap do [Lab](/lab/), é ler o catálogo
-pela API do GitHub com um token, para manter o repositório privado e deixar
-de depender da cópia manual.
+O catálogo gerado é copiado para `content/catalog.json` neste repositório, e
+o site importa-o de forma estática, sem pedido de rede. Um ficheiro em falta
+ou com schema inválido **falha o build**, de propósito: nunca há um recurso
+silencioso a dados de exemplo.

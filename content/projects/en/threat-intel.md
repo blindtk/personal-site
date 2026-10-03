@@ -1,33 +1,27 @@
 ---
 title: 'Threat Intel'
 description: 'An SSH and HTTP honeypot on its own VPS and the public threat feed it produces, enriched and mapped to ATT&CK.'
-tags: ['ssh', 'threat-intel', 'mitre-attack', 'python', 'oracle-cloud']
+tags: ['honeypot', 'threat-intel', 'mitre-attack', 'python']
 order: 2
 ---
 
 A real sensor, exposed to the Internet with no proxy in front, on a machine
-that has nothing to do with this site: an Oracle Cloud VPS on Always Free
-resources, configured entirely as code in the `honeypot-vps-infra`
-repository. What it catches is processed, enriched and published at
-[intel.danielmala.co](https://intel.danielmala.co/): a report, dossiers, a
-page per address and per artifact, and a machine-readable feed.
+that has nothing to do with this site. What it catches is processed, enriched
+and published at [intel.danielmala.co](https://intel.danielmala.co/): a
+report, dossiers, a page per address and per artifact, and a machine-readable
+feed.
 
-## What runs on the VPS
+## What runs on the sensor
 
-- **SSH access** on port 22: a fully emulated shell, never a real one.
-  Login only succeeds after 2 to 5 different credentials, and the one
-  that "worked" keeps working, like a genuinely compromised box; accepting
-  anything on the first try would be the easiest tell that it's a
-  honeypot. The fake filesystem holds bait credentials (AWS, `.env`, bash
-  history) generated at each install, never stored in the repository.
-- **An HTTP maze** on ports 80/443: endless generated text with links that
-  only lead to more text, to trap crawlers and scanners. It is capped on
-  connections, bytes and time, so the VPS isn't the one that runs out
-  first.
-- **portlogger and endlessh**: logging and tarpitting on the ports cloud
-  service scanners look for (Docker, Redis, Elasticsearch, RDP, VNC), and
-  a tarpit on port 23 and other secondary ports that holds the connection
-  by dripping a banner.
+- **Emulated SSH access**: a fully emulated shell, never a real one, that
+  records what the attacker types. The bait credentials in the fake
+  filesystem are generated at each install and are never stored in the
+  repository.
+- **An HTTP maze**: endless generated text with links that only lead to more
+  text, to trap crawlers and scanners. It is capped on connections, bytes and
+  time, so the sensor isn't the one that runs out first.
+- **Logging and tarpits** on the services scanners look for most: it holds
+  the connection by dripping a banner instead of refusing it.
 
 ## From log to feed
 
@@ -67,11 +61,8 @@ it fails closed and publishes nothing.
 
 ## Operations
 
-The VPS is disposable: Oracle can reclaim an Always Free instance, so
-everything needed to rebuild it from scratch is in the repository (an
-idempotent `provision.sh` and optional Terraform). The state database is
-encrypted with `age` and copied off the machine on every run. CI runs the
-five test suites, `pip-audit` against hashed lockfiles (the same ones the
-VPS installs), SBOMs, `ruff`, `bandit`, `shellcheck` and checks that the
-documentation matches the code. The published pages carry no JavaScript at
-all, under a CSP that allows no scripts.
+The sensor is disposable: everything needed to rebuild it from scratch is in
+the infrastructure repository, and the state database is encrypted and copied
+off the machine on every run. CI runs the tests, dependency analysis, static
+analysis and checks that the documentation matches the code. The published
+pages have no JavaScript at all, with a CSP that allows no scripts.

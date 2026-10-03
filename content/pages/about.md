@@ -1,5 +1,5 @@
 ---
-title: 'About'
+title: 'About me'
 ---
 
 I'm **Daniel Malaco**, an **Information Security Engineer** in Porto, Portugal.
@@ -25,7 +25,7 @@ took SANS SEC504, I follow the SANS DFIR and ransomware summits, and I have won
 four CTFs, the first in Lisbon in 2022. The photos are at the end of this page.
 
 I like building the tools I use. The ones on this site run in the browser, and
-at home I run a homelab with a k3s cluster on Raspberry Pi where I try things
+at home I run a homelab, segmented by role, where I try things
 out before they get anywhere near production. The site itself is part of that:
 it is static, bilingual, has no trackers, and how it is protected is explained
 in [This site](/en/this-site/).

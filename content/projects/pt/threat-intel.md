@@ -1,34 +1,27 @@
 ---
 title: 'Threat Intel'
 description: 'Um honeypot SSH e HTTP numa VPS à parte e o feed público de ameaças que sai dele, enriquecido e mapeado para ATT&CK.'
-tags: ['ssh', 'threat-intel', 'mitre-attack', 'python', 'oracle-cloud']
+tags: ['honeypot', 'threat-intel', 'mitre-attack', 'python']
 order: 2
 ---
 
 Um sensor de verdade, exposto à Internet sem proxy à frente, numa máquina
-que não tem nada a ver com este site: uma VPS na Oracle Cloud, em
-recursos Always Free, configurada inteiramente como código no repositório
-`honeypot-vps-infra`. O que apanha é tratado, enriquecido e publicado em
-[intel.danielmala.co](https://intel.danielmala.co/): relatório, dossiês,
-uma página por endereço e por artefacto, e um feed legível por máquinas.
+que não tem nada a ver com este site. O que apanha é tratado, enriquecido e
+publicado em [intel.danielmala.co](https://intel.danielmala.co/): relatório,
+dossiês, uma página por endereço e por artefacto, e um feed legível por
+máquinas.
 
-## O que corre na VPS
+## O que corre no sensor
 
-- **Acesso SSH** na porta 22: uma shell emulada por completo, nunca uma
-  shell real. O login só passa depois de 2 a 5 credenciais diferentes, e a
-  que "funcionou" continua a funcionar, como numa máquina comprometida a
-  sério; aceitar tudo à primeira seria o sinal mais fácil de que aquilo é
-  um honeypot. No sistema de ficheiros falso há credenciais-isco (AWS,
-  `.env`, histórico de bash) geradas na altura de cada instalação, nunca
-  guardadas no repositório.
-- **Um labirinto HTTP** nas portas 80/443: texto gerado sem fim, com links
-  que só levam a mais texto, para prender crawlers e scanners. Tem tetos
-  de ligações, bytes e tempo, para não ser a própria VPS a esgotar-se
-  primeiro.
-- **portlogger e endlessh**: registo e tarpit nas portas que os scanners de
-  serviços cloud procuram (Docker, Redis, Elasticsearch, RDP, VNC) e um
-  tarpit na porta 23 e noutras secundárias, que segura a ligação a pingar
-  um banner.
+- **Acesso SSH emulado**: uma shell emulada por completo, nunca uma shell
+  real, que regista o que o atacante escreve. As credenciais-isco do sistema
+  de ficheiros falso são geradas em cada instalação e nunca ficam guardadas
+  no repositório.
+- **Um labirinto HTTP**: texto gerado sem fim, com ligações que só levam a
+  mais texto, para prender crawlers e scanners. Tem tetos de ligações, bytes
+  e tempo, para não ser o próprio sensor a esgotar-se primeiro.
+- **Registo e tarpits** nos serviços que os scanners mais procuram: segura a
+  ligação a pingar um banner, em vez de a recusar.
 
 ## Do registo ao feed
 
@@ -68,11 +61,9 @@ ASN, falha fechado e não publica nada.
 
 ## Operação
 
-A VPS é descartável: a Oracle pode recuperar uma instância Always Free, por
-isso tudo o que é preciso para a reconstruir do zero está no repositório
-(`provision.sh` idempotente e Terraform opcional). A base de estado é
-cifrada com `age` e copiada para fora da máquina em cada execução. O CI
-corre as cinco suites de testes, `pip-audit` sobre lockfiles com hashes (os
-mesmos que a VPS instala), SBOM, `ruff`, `bandit`, `shellcheck` e
-verificações de que a documentação bate certo com o código. As páginas
-publicadas não têm JavaScript nenhum, com uma CSP que não permite scripts.
+O sensor é descartável: tudo o que é preciso para o reconstruir do zero está
+no repositório de infraestrutura, e a base de estado é cifrada e copiada para
+fora da máquina em cada execução. O CI corre os testes, a análise das
+dependências, a análise estática e verificações de que a documentação bate
+certo com o código. As páginas publicadas não têm JavaScript nenhum, com uma
+CSP que não permite scripts.
