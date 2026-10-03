@@ -34,7 +34,7 @@ depend on the GitHub API; the vendored file avoids both.
 ## One-time setup
 
 1. **Create a GitHub App** (Settings → Developer settings → GitHub Apps
-   → New). Name e.g. `github-stars-catalog`; no webhook; homepage = the
+   → New). Name e.g. `stars-catalog-sync`; no webhook; homepage = the
    `github-stars` repo URL. Repository permissions: **Contents: Read &
    write**, **Pull requests: Read & write** (Metadata: Read is implied).
    "Where can it be installed": only this account.
