@@ -1,6 +1,6 @@
 ---
 title: 'Homelab'
-description: 'A home network built on zero-trust principles: Raspberry Pi, segmentation and GitOps with Flux.'
+description: 'A zero-trust home network: Raspberry Pi, firewall and GitOps with Flux.'
 tags: ['flux', 'docker', 'k3s']
 order: 4
 ---
