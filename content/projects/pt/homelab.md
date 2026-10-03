@@ -46,18 +46,12 @@ formam o bench, de onde administro.
 
 - **Firewall, switch e access points.** A firewall impõe as fronteiras entre
   segmentos, e o switch e os access points levam as VLANs até às máquinas.
-- **Tailscale.** A VPN em malha para o acesso remoto, com as permissões
-  definidas por ACL.
+- **Tailscale.** A VPN em malha para o acesso remoto.
 - **Docker.** Os serviços correm em contentores, geridos com Compose, cada um
   com o seu utilizador.
-- **Vaultwarden.** O gestor de credenciais, auto-alojado e a viver no
-  vault.
-- **Runners do GitHub Actions.** O CI próprio, que também aplica as
-  configurações nas máquinas. Executa código de terceiros, como as
-  dependências dos workflows, por isso fica no workshop, que posso partir sem
-  perder nada.
-- **k3s.** Um Kubernetes leve para aprender e testar, no workshop e
-  longe do que é insubstituível.
+- **Gestor de passwords.** Auto-alojado.
+- **Runners do GitHub Actions.** O CI próprio.
+- **k3s.** Um Kubernetes leve, para aprender e testar.
 
 ## Como o mantenho
 

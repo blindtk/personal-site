@@ -47,17 +47,12 @@ laptops form the bench, where I administer.
 - **Firewall, switch and access points.** The firewall enforces the
   boundaries between segments, and the switch and access points carry the
   VLANs to the machines.
-- **Tailscale.** The mesh VPN for remote access, with permissions defined by
-  ACL.
+- **Tailscale.** The mesh VPN for remote access.
 - **Docker.** Services run in containers, managed with Compose, each with its
   own user.
-- **Vaultwarden.** The password manager, self-hosted and living in the
-  vault.
-- **GitHub Actions runners.** My own CI, which also applies the configuration
-  to the machines. It runs third-party code, such as workflow dependencies,
-  so it sits in the workshop, which I can break without losing anything.
-- **k3s.** A lightweight Kubernetes for learning and testing, in the workshop
-  and away from anything irreplaceable.
+- **Password manager.** Self-hosted.
+- **GitHub Actions runners.** My own CI.
+- **k3s.** A lightweight Kubernetes, for learning and testing.
 
 ## How I keep it
 
