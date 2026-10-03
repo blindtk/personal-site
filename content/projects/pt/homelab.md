@@ -1,7 +1,7 @@
 ---
 title: 'Homelab'
 description: 'Rede doméstica zero trust: Raspberry Pi, firewall deny all e VPN em malha.'
-tags: ['raspbian', 'docker', 'k3s']
+tags: ['raspberry-pi-os', 'docker', 'k3s']
 order: 4
 ---
 
