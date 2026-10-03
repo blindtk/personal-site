@@ -1,7 +1,7 @@
 ---
 title: 'Homelab'
 description: 'A zero-trust home network: Raspberry Pi, deny-all firewall and a mesh VPN.'
-tags: ['raspberry-pi-os', 'docker', 'k3s']
+tags: ['flux', 'docker', 'k3s']
 order: 4
 ---
 
