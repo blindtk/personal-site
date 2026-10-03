@@ -1515,16 +1515,26 @@ input[type='file']::file-selector-button:hover {
   text-align: left;
 }
 /* Em telemóvel as tabelas de 3 colunas do Sobre (Referenciais) excediam a
-   largura do ecrã em ~60px e arrastavam a página inteira para o lado. Letra e
-   padding um pouco menores e, só em último caso, quebra de palavras longas
-   ("Enquadramento") — `anywhere` conta para a largura mínima da célula,
-   `break-word` não, por isso só o primeiro deixa a tabela encolher. */
+   largura do ecrã e arrastavam a página para o lado. Letra e padding menores
+   resolvem a maior parte. As palavras ficam inteiras ("Profundidade",
+   "Enquadramento"): `break-word` não conta para a largura mínima da célula,
+   por isso as colunas estreitas ficam com o tamanho da palavra mais longa e a
+   coluna do meio, que tem texto corrido, é a que encolhe. `anywhere` fazia o
+   contrário e esmagava as colunas laterais a ~50px, partindo as palavras. */
 @media (max-width: 40rem) {
-  .prose table { font-size: 0.86rem; }
+  .prose table { font-size: 0.84rem; }
   .prose table th, .prose table td {
-    padding: 0.4rem 0.45rem;
-    overflow-wrap: anywhere;
+    padding: 0.4rem 0.4rem;
+    overflow-wrap: break-word;
   }
+}
+@media (max-width: 24rem) {
+  .prose table { font-size: 0.78rem; }
+  .prose table th, .prose table td { padding: 0.35rem 0.3rem; }
+}
+@media (max-width: 21rem) {
+  .prose table { font-size: 0.7rem; }
+  .prose table th, .prose table td { padding: 0.3rem 0.25rem; }
 }
 
 /* Accordions do Percurso (details/summary escritos no markdown do Sobre).
