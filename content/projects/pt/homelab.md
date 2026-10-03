@@ -11,18 +11,28 @@ ponto pequeno, o que faço no trabalho: segmentação de rede, acesso remoto
 controlado, automação e verificação. O desenho e as decisões estão
 documentados num repositório próprio.
 
-<svg class="diagram-homelab" viewBox="0 0 640 170" role="img" aria-label="Esquema simplificado do homelab: quatro segmentos por função (dados, cópias, experiências e administração) separados por uma firewall com deny all por omissão">
-  <rect class="diagram-boundary" x="20" y="20" width="600" height="130" rx="8"></rect>
-  <text class="diagram-label" x="34" y="40">firewall · deny all por omissão</text>
-  <rect class="diagram-node" x="39" y="64" width="118" height="60" rx="6"></rect>
-  <text class="diagram-node-title" x="98" y="98" text-anchor="middle">dados</text>
-  <rect class="diagram-node" x="187" y="64" width="118" height="60" rx="6"></rect>
-  <text class="diagram-node-title" x="246" y="98" text-anchor="middle">cópias</text>
-  <rect class="diagram-node" x="335" y="64" width="118" height="60" rx="6"></rect>
-  <text class="diagram-node-title" x="394" y="98" text-anchor="middle">experiências</text>
-  <rect class="diagram-node diagram-node--prod" x="483" y="64" width="118" height="60" rx="6"></rect>
-  <text class="diagram-node-title" x="542" y="98" text-anchor="middle">administração</text>
+<svg class="diagram-homelab" viewBox="0 0 640 214" role="img" aria-label="Esquema simplificado do homelab: uma firewall que liga quatro segmentos (dados, cópias, experiências e administração) e bloqueia tudo por omissão">
+  <rect class="diagram-node" x="40" y="20" width="560" height="44" rx="6"></rect>
+  <text class="diagram-node-title" x="320" y="47" text-anchor="middle">firewall · deny all por omissão</text>
+  <path class="diagram-edge" d="M80,64 L80,110"></path>
+  <rect class="diagram-node" x="12" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="80" y="146" text-anchor="middle">dados</text>
+  <text class="diagram-node-sub" x="80" y="164" text-anchor="middle">o que não pode perder-se</text>
+  <path class="diagram-edge" d="M240,64 L240,110"></path>
+  <rect class="diagram-node" x="172" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="240" y="146" text-anchor="middle">cópias</text>
+  <text class="diagram-node-sub" x="240" y="164" text-anchor="middle">cópia do que importa</text>
+  <path class="diagram-edge" d="M400,64 L400,110"></path>
+  <rect class="diagram-node" x="332" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="400" y="146" text-anchor="middle">experiências</text>
+  <text class="diagram-node-sub" x="400" y="164" text-anchor="middle">onde se testa e se parte</text>
+  <path class="diagram-edge" d="M560,64 L560,110"></path>
+  <rect class="diagram-node diagram-node--prod" x="492" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="560" y="146" text-anchor="middle">administração</text>
+  <text class="diagram-node-sub" x="560" y="164" text-anchor="middle">de onde giro tudo</text>
 </svg>
+
+*Os segmentos só comunicam através da firewall, que bloqueia tudo o que não tenha uma regra explícita.*
 
 ## Zero trust por omissão
 
