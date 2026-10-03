@@ -4,9 +4,8 @@ title: 'Sobre mim'
 
 Sou o **Daniel Malaco**, **Information Security Engineer** no Porto. Desde
 2020 trabalho na Ascendi, onde desenho e opero a segurança de infraestrutura
-crítica rodoviária. O trabalho cobre o ciclo todo: firewalls de nova geração,
-SIEM, proteção de endpoints, gestão de identidades, threat intelligence e
-resposta a incidentes. Tanto desenho o controlo como analiso o evento que ele
+rodoviária. O trabalho cobre o ciclo todo: firewalls, SIEM, proteção de
+endpoints, gestão de identidades, threat intelligence e resposta a incidentes. Tanto desenho o controlo como analiso o evento que ele
 apanha.
 
 Cheguei à segurança pelas redes. Entre 2017 e 2020 desenhei, instalei e
@@ -37,7 +36,7 @@ Abre cada função para ver o detalhe.
 <details>
 <summary>Information Security Engineer · Ascendi <span>nov 2020 → presente</span></summary>
 
-- **Contexto:** segurança da infraestrutura crítica rodoviária da Ascendi, em
+- **Contexto:** segurança da infraestrutura rodoviária da Ascendi, em
   Portugal.
 - **Papel:** desenho, implementação e operação da arquitetura de segurança da
   informação; gestão de pedidos e incidentes em ITSM.
@@ -57,7 +56,7 @@ Abre cada função para ver o detalhe.
 <details>
 <summary>Cyber Security Engineer · Hardsecure <span>fev 2020 → set 2020</span></summary>
 
-- **Contexto:** implementação de firewalls de nova geração e testes de
+- **Contexto:** implementação de firewalls e testes de
   intrusão internos.
 - **Papel:** instalação, configuração e suporte de NGFW.
 - **Tecnologias:** NGFW, scanning e enumeração de redes.
@@ -152,9 +151,9 @@ profundidade.
 | Referencial | Onde entra no trabalho | Profundidade |
 | --- | --- | --- |
 | ISO 27001 | Base para as políticas e procedimentos de segurança e para organizar os controlos técnicos por domínio. | Referência |
-| NIS2 | Enquadramento regulatório do setor em que trabalho, a infraestrutura crítica de transportes. Orienta as prioridades de controlo e de reporte. | Enquadramento |
+| NIS2 | Enquadramento regulatório do setor em que trabalho, a infraestrutura de transportes. Orienta as prioridades de controlo e de reporte. | Enquadramento |
 | CIS Controls & Benchmarks | Base para o hardening de sistemas e equipamentos de rede, e para verificar configurações. | Aplicado |
-| CISA CPG | Termo de comparação para priorizar os controlos de base em infraestrutura crítica. | Referência |
+| CISA CPG | Termo de comparação para priorizar os controlos de base em infraestrutura. | Referência |
 | OWASP Top 10 | Vocabulário comum para classificar o que a análise de vulnerabilidades e os testes internos encontram, e para afinar regras de WAF. | Aplicado |
 | MITRE ATT&CK | Mapear a cobertura de deteção e estruturar a análise de incidentes. O detalhe, técnica a técnica, está no [heatmap](/attack/). | Aplicado |
 

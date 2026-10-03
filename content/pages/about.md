@@ -4,9 +4,8 @@ title: 'About me'
 
 I'm **Daniel Malaco**, an **Information Security Engineer** in Porto, Portugal.
 Since 2020 I have worked at Ascendi, where I design and run the security of
-critical road infrastructure. The work covers the whole cycle: next-generation
-firewalls, SIEM, endpoint protection, identity management, threat intelligence
-and incident response. I design the control and I also analyse the event it
+road infrastructure. The work covers the whole cycle: firewalls, SIEM, endpoint protection, identity management,
+threat intelligence and incident response. I design the control and I also analyse the event it
 catches.
 
 I came to security through networks. Between 2017 and 2020 I designed,
@@ -37,7 +36,7 @@ Open each role for the detail.
 <details>
 <summary>Information Security Engineer · Ascendi <span>Nov 2020 → present</span></summary>
 
-- **Context:** security of Ascendi's critical road infrastructure, in
+- **Context:** security of Ascendi's road infrastructure, in
   Portugal.
 - **Role:** designing, deploying and operating the information security
   architecture; handling requests and incidents in ITSM.
@@ -57,7 +56,7 @@ Open each role for the detail.
 <details>
 <summary>Cyber Security Engineer · Hardsecure <span>Feb 2020 → Sep 2020</span></summary>
 
-- **Context:** next-generation firewall deployments and internal penetration
+- **Context:** firewall deployments and internal penetration
   tests.
 - **Role:** installing, configuring and supporting NGFW.
 - **Technologies:** NGFW, network scanning and enumeration.
@@ -151,9 +150,9 @@ table says where each one comes into the work and at what depth.
 | Framework | Where it comes into the work | Depth |
 | --- | --- | --- |
 | ISO 27001 | Basis for the security policies and procedures, and for organising technical controls by domain. | Reference |
-| NIS2 | Regulatory context of the sector I work in, critical transport infrastructure. It shapes control and reporting priorities. | Context |
+| NIS2 | Regulatory context of the sector I work in, transport infrastructure. It shapes control and reporting priorities. | Context |
 | CIS Controls & Benchmarks | Basis for hardening systems and network equipment, and for checking configurations. | Applied |
-| CISA CPG | Point of comparison for prioritising baseline controls in critical infrastructure. | Reference |
+| CISA CPG | Point of comparison for prioritising baseline controls in infrastructure. | Reference |
 | OWASP Top 10 | Common vocabulary for classifying what vulnerability assessments and internal tests find, and for tuning WAF rules. | Applied |
 | MITRE ATT&CK | Mapping detection coverage and structuring incident analysis. The detail, technique by technique, is in the [heatmap](/en/attack/). | Applied |
 
