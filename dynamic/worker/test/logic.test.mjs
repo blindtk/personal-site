@@ -1463,7 +1463,7 @@ test('scheduled: o cron aquece as caches mesmo com o orçamento dos pedidos esgo
   const now = Date.now();
   kv.store.set(`cachecap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 80, windowStart: now }));
   await runScheduled(env);
-  assert.ok(kv.store.has('cache:threatintel'), 'o cron não passa pelo orçamento dos pedidos');
+  assert.ok(kv.store.has('cache:firewall7d'), 'o cron não passa pelo orçamento dos pedidos');
 });
 
 // ---------- ADR 0022: limpeza do que o honeypot interno deixou no KV ----------
@@ -1480,11 +1480,10 @@ test('scheduled: apaga iplist/recent/meta e a cache antiga de threat-intel (com 
   kv.store.set('cache:map', JSON.stringify({ data: {}, exp: Date.now() + 60_000 }));
   kv.store.set('cache:threatintel', JSON.stringify({ data: { ips: [{ ip: '203.0.113.9' }] }, exp: Date.now() + 3600_000 }));
   await runScheduled(env);
-  for (const key of ['iplist', 'recent', 'meta', 'cache:map']) assert.equal(kv.store.has(key), false, key);
-  // a cache foi reconstruída pelo próprio cron, já sem o campo `ips`
-  const ti = JSON.parse(kv.store.get('cache:threatintel'));
-  assert.equal('ips' in ti.data, false);
-  assert.ok(ti.data.firewall7d);
+  for (const key of ['iplist', 'recent', 'meta', 'cache:map', 'cache:threatintel']) {
+    assert.equal(kv.store.has(key), false, key);
+  }
+  assert.ok(JSON.parse(kv.store.get('cache:firewall7d')).data.firewall7d);
 });
 
 test('scheduled: sem nada antigo para apagar, a limpeza não apaga a cache nova nem escreve', async () => {
@@ -1494,10 +1493,25 @@ test('scheduled: sem nada antigo para apagar, a limpeza não apaga a cache nova 
   kv.delete = async (key) => { deletes.push(key); return origDelete(key); };
   const env = { KV: kv };
   const fresh = { data: { firewall7d: { byAction: [] } }, exp: Date.now() + 3600_000 };
-  kv.store.set('cache:threatintel', JSON.stringify(fresh));
+  kv.store.set('cache:firewall7d', JSON.stringify(fresh));
   await runScheduled(env);
   assert.deepEqual(deletes, []);
-  assert.deepEqual(JSON.parse(kv.store.get('cache:threatintel')), fresh);
+  assert.deepEqual(JSON.parse(kv.store.get('cache:firewall7d')), fresh);
+});
+
+// O 1.º pedido depois do deploy chega antes do cron: as caches antigas (KV e
+// Cache API), ainda dentro do TTL e com IPs, não podem ser servidas.
+test('/api/threat-intel: caches de antes do ADR 0022 (KV e Cache API) nunca são servidas', async () => {
+  await withEdgeCache(async (cache) => {
+    const env = { KV: fakeKV() };
+    const legacy = { ips: [{ ip: '203.0.113.9' }], firewall7d: {} };
+    env.KV.store.set('cache:threatintel', JSON.stringify({ data: legacy, exp: Date.now() + 3600_000 }));
+    const req = fakeRequest('/api/threat-intel');
+    cache.store.set(new URL('/api/__cache/threatintel', req.url).href, JSON.stringify(legacy));
+    const res = await runFetch(req, env);
+    assert.equal(res.status, 200);
+    assert.deepEqual(Object.keys(await res.json()), ['firewall7d']);
+  });
 });
 
 test('/api/threat-intel: só a firewall, nunca IPs', async () => {

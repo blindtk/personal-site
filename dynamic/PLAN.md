@@ -10,6 +10,13 @@
 
 ## Recorded decisions
 
+- **2026-10-02 — Remove three tools** (decision by the repo owner): the
+  passkey lab, the encoder/decoder and the password generator. They are
+  generic utilities that other tools do better (CyberChef, a password
+  manager); the seven that stay are the ones tied to security work. The
+  old URLs 301 to the tools index. `encoding.js` stays, because the Lab
+  terminal's `encode`/`decode` commands use it.
+
 - **2026-10-02 — Retire the internal honeypot** (decision by the repo
   owner; [ADR 0022](../docs/adr/0022-retire-internal-honeypot.md)). The
   decoy paths sat behind a Managed Challenge and saw little mass scanning,
@@ -397,7 +404,9 @@
     a hard guarantee that the IP never appears in the body. Rate limit
     30/min per client; per-request response (`no-store`).
 
-  - **Passkey Lab** (`/ferramentas/passkeys/`, **100% client-side**):
+  - **Passkey Lab** (`/ferramentas/passkeys/`, **100% client-side**) —
+    *removed 2026-10-02 with the encoder and the password generator, at the
+    owner's request (the tools that no longer fit the site)*:
     creates a real demo passkey (WebAuthn), dissects `authenticatorData`
     byte by byte (rpIdHash, UP/UV/BE/BS/ED flags, signCount, identified
     AAGUID, COSE public key via `getPublicKey`), and verifies the

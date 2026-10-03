@@ -56,25 +56,31 @@ async function getJSON(env, key, dflt = null) {
  * Chaves que o honeypot interno deixou no KV (ADR 0022). `iplist` tem IPs de
  * origem publicados (ADR 0020) — dados pessoais que deixam de ter razão para
  * existir; `recent`/`meta` não tinham TTL; as caches das rotas removidas
- * ficariam até ~1 dia em stale. Os buckets h:/d: e os contadores wcap: são
- * anónimos e expiram sozinhos em ≤ 9 dias.
+ * ficariam até ~1 dia em stale. `cache:threatintel` é a cache antiga de
+ * /api/threat-intel, que ainda trazia `ips` — a rota passou a usar outra
+ * chave (THREAT_INTEL_CACHE), por isso nunca a serve. Os buckets h:/d: e os
+ * contadores wcap: são anónimos e expiram sozinhos em ≤ 9 dias.
  *
  * Corre no cron: lê primeiro (leituras são baratas) e só apaga o que ainda
  * existe — depois da 1.ª limpeza, cada tick custa só estas leituras e
- * nenhuma escrita. `cache:threatintel` só é apagada se ainda tiver o formato
- * antigo (com `ips`), senão o cron apagava a cache nova a cada 30 min.
+ * nenhuma escrita.
  */
-const LEGACY_HONEYPOT_KEYS = ['iplist', 'recent', 'meta', 'cache:honeypot', 'cache:map', 'cache:ticker'];
+const LEGACY_HONEYPOT_KEYS = [
+  'iplist', 'recent', 'meta', 'cache:honeypot', 'cache:map', 'cache:ticker', 'cache:threatintel',
+];
 
 async function purgeLegacyHoneypotKeys(env) {
-  const [values, threatIntel] = await Promise.all([
-    Promise.all(LEGACY_HONEYPOT_KEYS.map((key) => env.KV.get(key))),
-    getJSON(env, 'cache:threatintel'),
-  ]);
+  const values = await Promise.all(LEGACY_HONEYPOT_KEYS.map((key) => env.KV.get(key)));
   const stale = LEGACY_HONEYPOT_KEYS.filter((_, i) => values[i] !== null);
-  if (threatIntel && threatIntel.data && 'ips' in threatIntel.data) stale.push('cache:threatintel');
   await Promise.all(stale.map((key) => env.KV.delete(key)));
 }
+
+// Chaves (KV e Cache API) de /api/threat-intel. Novas de propósito: as
+// antigas (`cache:threatintel`, `threatintel`) podem ter uma resposta de
+// antes do ADR 0022, com IPs, ainda dentro do TTL — com chaves novas, o
+// primeiro pedido depois do deploy já não a pode servir, sem esperar pelo
+// cron nem pela expiração da Cache API.
+const THREAT_INTEL_CACHE = { kv: 'cache:firewall7d', edge: 'firewall7d' };
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
 
@@ -499,8 +505,8 @@ export default {
       // páginas Cloudflare e Visão Geral continuam a lê-la por este nome.
       // Cache 6h no KV (aquecida no cron) e 5 min no data center.
       if (path === '/api/threat-intel') {
-        const data = await edgeCached(request, 'threatintel', 300, () =>
-          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => ({
+        const data = await edgeCached(request, THREAT_INTEL_CACHE.edge, 300, () =>
+          cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({
             firewall7d: await readFirewall7d(env, Date.now()),
           })),
         );
@@ -633,7 +639,7 @@ export default {
           }, { capped: false }).catch(() => {}),
           // Firewall 7d: aquece-se aqui para as visitas caírem sempre em
           // cache (TTL 6h, ver a rota /api/threat-intel).
-          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => ({
+          cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({
             firewall7d: await readFirewall7d(env, Date.now()),
           }), { capped: false }).catch(() => {}),
         ]);

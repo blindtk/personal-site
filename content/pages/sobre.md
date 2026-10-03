@@ -9,9 +9,8 @@ proteção de endpoints, gestão de identidades, threat intelligence e resposta
 a incidentes — o ciclo completo, do desenho do controlo à análise do evento.
 
 Cheguei à segurança pelo caminho das redes. Durante vários anos desenhei,
-instalei e comissionei redes IP para sistemas de metro e ferrovia
-em quatro países — o metro de Doha no Qatar, o VLT de Santos no Brasil e os
-metros ligeiros de Odense e Bergen, na Dinamarca e na Noruega. Em
+instalei e comissionei redes IP em projetos de metro e ferrovia — o metro de
+Doha, o VLT de Santos e os metros ligeiros de Odense e Bergen. Em
 infraestrutura de transporte, uma falha de rede não é um incómodo: é um
 sistema parado e milhares de pessoas em terra. Foi aí que aprendi a projetar
 para a redundância, a documentar para quem vem depois e a testar tudo em

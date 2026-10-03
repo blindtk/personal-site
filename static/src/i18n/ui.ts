@@ -31,9 +31,9 @@ export const ui = {
     // (ex.: home) usa SITE.description de config.ts. Projetos, posts e
     // ferramentas trazem a sua própria descrição.
     metaDesc: {
-      about: 'Percurso de Daniel Malaco: de redes de metro e ferrovia em 5 países à arquitetura de segurança de infraestrutura crítica rodoviária.',
-      projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot ligado ao MITRE ATT&CK, um homelab k3s e mais.',
-      tools: 'Ferramentas de rede e segurança: subnets, hashes, CSP, cabeçalhos de email, EXIF, passkeys e mais — a maioria corre só no browser.',
+      about: 'Percurso de Daniel Malaco: de projetos de redes de metro e ferrovia à arquitetura de segurança de infraestrutura crítica rodoviária.',
+      projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot com feed de threat intel, um homelab k3s e mais.',
+      tools: 'Ferramentas de rede e segurança: subnets, hashes, análise de CSP, cabeçalhos de email, EXIF e passwords comprometidas — a maioria corre só no browser.',
       links: 'Repositórios do GitHub organizados por categoria e as ferramentas externas de rede e segurança que uso no dia a dia.',
       contact: 'Como contactar Daniel Malaco — email, GitHub, LinkedIn e Credly — e a política de divulgação responsável (security.txt).',
       lab: 'Um ambiente de trabalho no browser: terminal e as ferramentas do site em janelas, para explorar sem sair da página.',
@@ -242,7 +242,7 @@ export const ui = {
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, encoder, passwords, cabeçalhos de email, EXIF, análise de CSP, laboratório de passkeys) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, espelho) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas client-side (subnets, hashes, cabeçalhos de email, EXIF, análise de CSP) processam tudo no teu browser — nenhum dado sai da máquina. As duas ferramentas que falam com o Worker (verificador de passwords, espelho) dizem-no explicitamente e estão identificadas com um badge no índice de ferramentas. A Cloudflare, como infraestrutura que serve o site, regista por omissão os logs de conexão padrão (IP, User-Agent) de qualquer pedido — não é algo que este site adicione, mas não o escondo: é a mesma exposição de qualquer site atrás de um CDN.',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -418,41 +418,27 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
-      statsLabel: 'em números',
       location: 'Porto, Portugal',
-      bio: 'Desenho e opero a arquitetura de segurança de infraestrutura crítica rodoviária. Em infraestrutura de transporte, uma falha de rede não é um incómodo: é um sistema parado e milhares de pessoas em terra. A maior parte do trabalho é privada — o que está aqui demonstra as práticas por trás dele.',
+      bio: 'Protejo infraestrutura crítica rodoviária — da firewall ao SIEM, do desenho do controlo à resposta ao incidente. Vim das redes de metro e ferrovia, onde aprendi que uma falha não é um alerta: é um sistema parado e milhares de pessoas em terra. Quase todo esse trabalho é confidencial; este site é onde mostro como o faço.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP'],
       // Nomeia em vez de contar — a credencial mais forte (CCDL2, com badge)
-      // vem primeiro; NIS2 como diferenciador de setor. Os CTFs vencidos e a
-      // contagem de certificações estão no painel `stats` ao lado.
+      // vem primeiro; NIS2 como diferenciador de setor.
       chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Nomes de vendors/plataformas — o payload de palavras-chave que um
       // recrutador pesquisa (Splunk, Entra ID, …), ausente dos chips acima.
       stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
-      // Números sobre mim — calculados no build (HomePage.astro) a partir de
-      // content/ e deste ficheiro, para nunca divergirem da página que os
-      // prova: {years} = ano atual − 2017 (primeira paragem do percurso,
-      // journey.items); {countries} = países distintos em journey.items;
-      // {certsVerified} = content/certs.json (verified !== false, o critério
-      // da página Certificações); {awards} = content/awards.json (galeria do
-      // Sobre). Os números do site vivem em Este site, não aqui.
-      stats: [
-        { key: 'years', n: '{years}+', d: 'anos em redes e segurança', tone: 'green' },
-        { key: 'countries', n: '{countries}', d: 'países · metro, ferrovia e rodovia', tone: 'green' },
-        { key: 'certs', n: '{certsVerified}', d: 'certificações verificáveis no Credly', tone: 'blue' },
-        { key: 'awards', n: '{awards}', d: 'CTFs vencidos · 1.º lugar', tone: 'amber' },
-      ],
-      statsNote: 'Cada número liga à página que o prova.',
-      // flag = código do SVG em public/flags/ (render consistente entre
-      // sistemas; o emoji nativo variava com o OS).
+      // Cada paragem é um projeto (ou a função atual), não um sítio onde
+      // vivi: `org` é quem o fez, e a bandeira identifica a rede, não uma
+      // morada. flag = código do SVG em public/flags/ (render consistente
+      // entre sistemas; o emoji nativo variava com o OS).
       journey: {
-        title: 'Percurso · redes & segurança em 5 países',
+        title: 'Percurso · de redes de transporte a segurança',
         items: [
-          { years: '2017–18', flag: 'qa', name: 'Metro de Doha', place: 'Doha, Qatar', note: 'Redes IP e WiFi móvel (BBRS) · Thales/Altran' },
-          { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brasil', note: 'Redes IP em ferrovia ligeira · Thales/Altran' },
-          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', place: 'Odense, Dinamarca', note: 'Redes e segurança em metro ligeiro · Efacec' },
-          { years: '2019–20', flag: 'no', name: 'Bergen D42', place: 'Bergen, Noruega', note: 'Redes e segurança em metro ligeiro · Efacec' },
-          { years: '2020–hoje', flag: 'pt', name: 'Ascendi', place: 'Porto, Portugal', note: 'Segurança de infraestruturas críticas rodoviárias' },
+          { years: '2017–18', flag: 'qa', name: 'Metro de Doha', org: 'Thales/Altran', note: 'Redes IP e WiFi móvel (BBRS)' },
+          { years: '2017–18', flag: 'br', name: 'VLT Santos', org: 'Thales/Altran', note: 'Redes IP em ferrovia ligeira' },
+          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', org: 'Efacec', note: 'Redes e segurança em metro ligeiro' },
+          { years: '2019–20', flag: 'no', name: 'Bergen D42', org: 'Efacec', note: 'Redes e segurança em metro ligeiro' },
+          { years: '2020–hoje', flag: 'pt', name: 'Ascendi', org: 'Information Security Engineer', note: 'Segurança de infraestruturas críticas rodoviárias' },
         ],
       },
       latestPosts: 'Últimos posts',
@@ -606,55 +592,6 @@ export const ui = {
         noteLabel: 'Porque importa',
         note: 'A combinação destes valores — sem cookies, sem login — chega para reidentificar a maioria dos browsers entre visitas. É assim que o tracking sobrevive ao "apagar cookies". A defesa não é esconder um campo, é reduzir a superfície: browsers com anti-fingerprinting, resistência a scripts de terceiros, e sites (como este) que não recolhem nada.',
       },
-      passkeys: {
-        name: 'Laboratório de passkeys',
-        desc: 'Cria uma passkey de demonstração real (WebAuthn) e vê, byte a byte, o que o autenticador devolve — e porque é que nada disto funcionaria num domínio-isco.',
-        rpName: 'Laboratório de Passkeys (demo)',
-        decoySuffix: 'login-seguro.xyz',
-        step1Title: 'criar a passkey',
-        step1Exp: 'O browser pede ao teu autenticador (Face ID, impressão digital, chave física) uma credencial para esta origem. A chave privada nunca sai do dispositivo.',
-        step1Btn: 'criar passkey de demonstração',
-        creating: 'a criar…',
-        stateDone: '✓ concluído',
-        stateActive: '▲ a correr…',
-        step2Title: 'abrir a resposta do autenticador',
-        step2Exp: 'Isto é o authenticatorData real que um servidor receberia — campo a campo:',
-        step2Wait: 'cria a passkey no passo 1 para veres a dissecação.',
-        step3Title: 'autenticar e verificar a assinatura',
-        step3Exp: 'Um "servidor" simulado nesta página emite um desafio; o autenticador assina; a assinatura é verificada com WebCrypto — as mesmas contas que um servidor real faria:',
-        step3Btn: 'autenticar e verificar',
-        verifying: 'a verificar…',
-        dRpid: 'rpIdHash',
-        dRpidNote: 'SHA-256 de {rp}: a credencial está presa a este domínio',
-        dFlags: 'flags',
-        dFlagsNote: 'presença, verificação e sincronização (chips abaixo)',
-        dSign: 'signCount',
-        dSignNote: 'contador de assinaturas — 0 é típico de passkeys sincronizadas',
-        dAaguid: 'AAGUID',
-        dAaguidNote: 'identifica o modelo de autenticador',
-        dPubkey: 'chave pública',
-        dPubkeyNote: 'é isto que o servidor guarda, e só isto',
-        chipUP: 'UP · utilizador presente',
-        chipUV: 'UV · identidade verificada',
-        chipBE: 'BE · elegível para backup',
-        chipBS: 'BS · sincronizada',
-        chipED: 'ED · extensões',
-        vChallenge: 'desafio emitido',
-        vOrigin: 'clientData.origin',
-        vMatch: '✓ corresponde',
-        vRpFlags: 'rpIdHash ✓ corresponde · flags UP+UV ✓',
-        vSigOk: '✓ assinatura válida — sessão aberta',
-        vSigBad: '✗ assinatura inválida',
-        vFake: 'repetir contra origem falsa "{fake}"',
-        vFakeRefused: '✗ o browser recusa: nem chega a haver assinatura',
-        vFakeUnexpected: '⚠ inesperado: o browser não recusou (reporta isto)',
-        whyLabel: 'Porque é que o phishing falha',
-        whyText: 'A passkey assina a origem que o browser viu, não a que o utilizador julga estar a ver. Num domínio-isco ({fake}) o browser procura credenciais desse domínio, não encontra nenhuma, e o ataque morre antes de existir uma password para roubar. Não há código de 6 dígitos para intercetar, nem hash para partir — a resistência a phishing não é uma promessa, é aritmética.',
-        cleanup: '▲ A passkey criada é real e fica no teu gestor. No fim, apaga-a nas definições de passwords do dispositivo/browser (procura por {rp}). Esta página não guarda nada — nem sequer tem onde.',
-        unsupported: 'Este browser não expõe a WebAuthn (ou não há autenticador disponível). A dissecação abaixo continua a explicar o formato, mas sem uma passkey real.',
-        createError: 'Criação cancelada ou falhada — nada foi guardado. Podes tentar de novo.',
-        getError: 'Autenticação cancelada ou falhada.',
-      },
       subnets: {
         name: 'Calculadora de subnets',
         desc: 'CIDR, máscaras, broadcast, hosts utilizáveis e representação binária.',
@@ -696,40 +633,6 @@ export const ui = {
         copy: 'copiar',
         copied: 'copiado ✓',
         mdWarning: 'MD5 e SHA-1 estão quebrados para fins criptográficos — usa-os só para checksums.',
-      },
-      encoder: {
-        name: 'Encoder / Decoder',
-        desc: 'Base64, URL e hexadecimal — nos dois sentidos, com suporte UTF-8.',
-        mode: 'Formato',
-        inputLabel: 'Entrada',
-        inputPlaceholder: 'olá, mundo',
-        outputLabel: 'Saída',
-        encode: 'Codificar →',
-        decode: '← Descodificar',
-        swap: 'trocar ⇅',
-        copy: 'copiar',
-        copied: 'copiado ✓',
-        error: 'Entrada inválida para este formato.',
-      },
-      passwords: {
-        name: 'Gerador de passwords',
-        desc: 'Passwords fortes geradas com crypto.getRandomValues, com medidor de entropia.',
-        length: 'Comprimento',
-        lower: 'minúsculas (a-z)',
-        upper: 'MAIÚSCULAS (A-Z)',
-        digits: 'dígitos (0-9)',
-        symbols: 'símbolos (!@#…)',
-        noAmbiguous: 'excluir ambíguos (l, 1, O, 0…)',
-        generate: 'Gerar',
-        copy: 'copiar',
-        copied: 'copiado ✓',
-        entropy: 'Entropia',
-        bits: 'bits',
-        weak: 'fraca',
-        ok: 'razoável',
-        strong: 'forte',
-        excellent: 'excelente',
-        needCharset: 'Seleciona pelo menos um conjunto de caracteres.',
       },
       'email-headers': {
         name: 'Analisador de cabeçalhos de email',
@@ -937,9 +840,9 @@ export const ui = {
     // (e.g. home) falls back to SITE.description in config.ts. Projects,
     // posts and tools carry their own description.
     metaDesc: {
-      about: 'Daniel Malaco’s path: from metro and rail networks in 5 countries to security architecture for critical road infrastructure.',
-      projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot mapped to MITRE ATT&CK, a k3s homelab and more.',
-      tools: 'Networking and security tools: subnets, hashes, CSP, email headers, EXIF, passkeys and more — most run entirely in your browser.',
+      about: 'Daniel Malaco’s path: from metro and rail network projects to security architecture for critical road infrastructure.',
+      projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot with a threat-intel feed, a k3s homelab and more.',
+      tools: 'Networking and security tools: subnets, hashes, CSP analysis, email headers, EXIF and breached-password checks — most run entirely in your browser.',
       links: 'GitHub repositories organised by category, and the external networking and security tools I use day to day.',
       contact: 'How to reach Daniel Malaco — email, GitHub, LinkedIn and Credly — and the responsible disclosure policy (security.txt).',
       lab: 'A desktop in the browser: a terminal and the site’s tools in windows, to explore without leaving the page.',
@@ -1133,7 +1036,7 @@ export const ui = {
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
       privacyBody:
-        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, encoder, passwords, email headers, EXIF, CSP analyser, passkey lab) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, mirror) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
+        'There are no cookies, no analytics, no third-party scripts. The client-side tools (subnets, hashes, email headers, EXIF, CSP analyser) process everything in your browser — no data leaves your machine. The two tools that talk to the Worker (password checker, mirror) say so explicitly and are flagged with a badge on the tools index. Cloudflare, as the infrastructure serving the site, logs standard connection data (IP, User-Agent) for every request by default — that is not something this site adds, but it is not hidden either: the same exposure as any site behind a CDN.',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -1297,41 +1200,27 @@ export const ui = {
     home: {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
-      statsLabel: 'in numbers',
       location: 'Porto, Portugal',
-      bio: 'Designing and operating the security architecture for critical road infrastructure. In transport infrastructure, a network failure isn’t an inconvenience — it’s a stopped system and thousands of people stranded. Most of the work is private; what’s here demonstrates the practices behind it.',
+      bio: 'I protect critical road infrastructure — from the firewall to the SIEM, from designing the control to responding to the incident. I came up through metro and rail networks, where I learned that a failure isn’t an alert: it’s a stopped system and thousands of people stranded. Almost all of that work is confidential; this site is where I show how I do it.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP'],
       // Names instead of counts — the strongest credential (CCDL2,
-      // badge-verified) leads; NIS2 as the sector differentiator. CTFs won and
-      // the certification count live in the `stats` panel next to it.
+      // badge-verified) leads; NIS2 as the sector differentiator.
       chips: ['Certified CyberDefender L2', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Vendor/platform names — the keyword payload a recruiter searches
       // for (Splunk, Entra ID, …), missing from the chips above.
       stack: 'Fortinet · Palo Alto Networks · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
-      // Numbers about me — computed at build (HomePage.astro) from content/
-      // and this file, so they never drift from the page that proves them:
-      // {years} = current year − 2017 (first stop of journey.items);
-      // {countries} = distinct countries in journey.items; {certsVerified} =
-      // content/certs.json (verified !== false, the Certifications page's
-      // rule); {awards} = content/awards.json (About page gallery). Site
-      // numbers live on This site, not here.
-      stats: [
-        { key: 'years', n: '{years}+', d: 'years in networking & security', tone: 'green' },
-        { key: 'countries', n: '{countries}', d: 'countries · metro, rail and road', tone: 'green' },
-        { key: 'certs', n: '{certsVerified}', d: 'verifiable certifications on Credly', tone: 'blue' },
-        { key: 'awards', n: '{awards}', d: 'CTFs won · 1st place', tone: 'amber' },
-      ],
-      statsNote: 'Each number links to the page that proves it.',
-      // flag = code of the SVG in public/flags/ (consistent rendering across
-      // systems; native emoji varied with the OS).
+      // Each stop is a project (or the current role), not a place I lived:
+      // `org` is who delivered it, and the flag identifies the network, not
+      // an address. flag = code of the SVG in public/flags/ (consistent
+      // rendering across systems; native emoji varied with the OS).
       journey: {
-        title: 'Journey · networking & security across 5 countries',
+        title: 'Journey · from transport networks to security',
         items: [
-          { years: '2017–18', flag: 'qa', name: 'Doha Metro', place: 'Doha, Qatar', note: 'IP networks & mobile WiFi (BBRS) · Thales/Altran' },
-          { years: '2017–18', flag: 'br', name: 'VLT Santos', place: 'Santos, Brazil', note: 'IP networks in light rail · Thales/Altran' },
-          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', place: 'Odense, Denmark', note: 'Light-metro networks & security · Efacec' },
-          { years: '2019–20', flag: 'no', name: 'Bergen D42', place: 'Bergen, Norway', note: 'Light-metro networks & security · Efacec' },
-          { years: '2020–now', flag: 'pt', name: 'Ascendi', place: 'Porto, Portugal', note: 'Critical road-infrastructure security' },
+          { years: '2017–18', flag: 'qa', name: 'Doha Metro', org: 'Thales/Altran', note: 'IP networks & mobile WiFi (BBRS)' },
+          { years: '2017–18', flag: 'br', name: 'VLT Santos', org: 'Thales/Altran', note: 'IP networks in light rail' },
+          { years: '2019–20', flag: 'dk', name: 'Odense Letbane', org: 'Efacec', note: 'Light-metro networks & security' },
+          { years: '2019–20', flag: 'no', name: 'Bergen D42', org: 'Efacec', note: 'Light-metro networks & security' },
+          { years: '2020–now', flag: 'pt', name: 'Ascendi', org: 'Information Security Engineer', note: 'Critical road-infrastructure security' },
         ],
       },
       latestPosts: 'Latest posts',
@@ -1485,55 +1374,6 @@ export const ui = {
         noteLabel: 'Why it matters',
         note: 'The combination of these values — no cookies, no login — is enough to re-identify most browsers across visits. This is how tracking survives "clearing cookies". The defense is not hiding one field, it is shrinking the surface: browsers with anti-fingerprinting, resistance to third-party scripts, and sites (like this one) that collect nothing.',
       },
-      passkeys: {
-        name: 'Passkey lab',
-        desc: 'Create a real demo passkey (WebAuthn) and see, byte by byte, what the authenticator returns — and why none of it would work on a lookalike domain.',
-        rpName: 'Passkey Lab (demo)',
-        decoySuffix: 'secure-login.xyz',
-        step1Title: 'create the passkey',
-        step1Exp: 'The browser asks your authenticator (Face ID, fingerprint, security key) for a credential bound to this origin. The private key never leaves the device.',
-        step1Btn: 'create demo passkey',
-        creating: 'creating…',
-        stateDone: '✓ done',
-        stateActive: '▲ running…',
-        step2Title: 'open the authenticator response',
-        step2Exp: 'This is the real authenticatorData a server would receive — field by field:',
-        step2Wait: 'create the passkey in step 1 to see the dissection.',
-        step3Title: 'authenticate and verify the signature',
-        step3Exp: 'A simulated "server" on this page issues a challenge; the authenticator signs; the signature is verified with WebCrypto — the same math a real server would do:',
-        step3Btn: 'authenticate and verify',
-        verifying: 'verifying…',
-        dRpid: 'rpIdHash',
-        dRpidNote: 'SHA-256 of {rp}: the credential is bound to this domain',
-        dFlags: 'flags',
-        dFlagsNote: 'presence, verification and sync (chips below)',
-        dSign: 'signCount',
-        dSignNote: 'signature counter — 0 is typical of synced passkeys',
-        dAaguid: 'AAGUID',
-        dAaguidNote: 'identifies the authenticator model',
-        dPubkey: 'public key',
-        dPubkeyNote: 'this is what the server stores, and only this',
-        chipUP: 'UP · user present',
-        chipUV: 'UV · identity verified',
-        chipBE: 'BE · backup eligible',
-        chipBS: 'BS · synced',
-        chipED: 'ED · extensions',
-        vChallenge: 'challenge issued',
-        vOrigin: 'clientData.origin',
-        vMatch: '✓ matches',
-        vRpFlags: 'rpIdHash ✓ matches · flags UP+UV ✓',
-        vSigOk: '✓ valid signature — session opened',
-        vSigBad: '✗ invalid signature',
-        vFake: 'retry against fake origin "{fake}"',
-        vFakeRefused: '✗ the browser refuses: there is not even a signature',
-        vFakeUnexpected: '⚠ unexpected: the browser did not refuse (please report this)',
-        whyLabel: 'Why phishing fails',
-        whyText: 'The passkey signs the origin the browser saw, not the one the user thinks they are on. On a lookalike domain ({fake}) the browser looks for credentials for that domain, finds none, and the attack dies before there is a password to steal. There is no 6-digit code to intercept and no hash to crack — phishing resistance is not a promise, it is arithmetic.',
-        cleanup: '▲ The passkey you create is real and stays in your manager. When done, delete it in your device/browser password settings (look for {rp}). This page stores nothing — it has nowhere to.',
-        unsupported: 'This browser does not expose WebAuthn (or no authenticator is available). The dissection below still explains the format, but without a real passkey.',
-        createError: 'Creation cancelled or failed — nothing was stored. You can try again.',
-        getError: 'Authentication cancelled or failed.',
-      },
       subnets: {
         name: 'Subnet calculator',
         desc: 'CIDR, masks, broadcast, usable hosts, and binary representation.',
@@ -1575,40 +1415,6 @@ export const ui = {
         copy: 'copy',
         copied: 'copied ✓',
         mdWarning: 'MD5 and SHA-1 are broken for cryptographic purposes — use them for checksums only.',
-      },
-      encoder: {
-        name: 'Encoder / Decoder',
-        desc: 'Base64, URL, and hex — both directions, UTF-8 aware.',
-        mode: 'Format',
-        inputLabel: 'Input',
-        inputPlaceholder: 'hello, world',
-        outputLabel: 'Output',
-        encode: 'Encode →',
-        decode: '← Decode',
-        swap: 'swap ⇅',
-        copy: 'copy',
-        copied: 'copied ✓',
-        error: 'Invalid input for this format.',
-      },
-      passwords: {
-        name: 'Password generator',
-        desc: 'Strong passwords generated with crypto.getRandomValues, with an entropy meter.',
-        length: 'Length',
-        lower: 'lowercase (a-z)',
-        upper: 'UPPERCASE (A-Z)',
-        digits: 'digits (0-9)',
-        symbols: 'symbols (!@#…)',
-        noAmbiguous: 'exclude ambiguous (l, 1, O, 0…)',
-        generate: 'Generate',
-        copy: 'copy',
-        copied: 'copied ✓',
-        entropy: 'Entropy',
-        bits: 'bits',
-        weak: 'weak',
-        ok: 'fair',
-        strong: 'strong',
-        excellent: 'excellent',
-        needCharset: 'Select at least one character set.',
       },
       'email-headers': {
         name: 'Email header analyzer',

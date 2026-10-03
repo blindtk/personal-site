@@ -10,9 +10,8 @@ incident response — the full cycle, from designing the control to analysing
 the event.
 
 I came to security through networks. For several years I
-designed, installed and commissioned IP networks for metro and rail systems
-across four countries — the Doha Metro in Qatar, the Santos VLT in Brazil,
-and the Odense and Bergen light metros in Denmark and Norway. In transport
+designed, installed and commissioned IP networks on metro and rail projects —
+the Doha Metro, the Santos VLT, and the Odense and Bergen light metros. In transport
 infrastructure a network failure is not an inconvenience: it is a stopped
 system and thousands of people going nowhere. That is where I learned to
 design for redundancy, document for whoever comes next, and test everything

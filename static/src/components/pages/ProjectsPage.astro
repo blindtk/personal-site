@@ -36,19 +36,19 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
             {/* Sinal visual de que este-site faz parte da teia de cross-links
                "por camadas" (SiteLayers) com Segurança/Provas/Cloudflare/
                Performance — distingue-o, sem precisar de clicar, dos projetos
-               independentes (Honeypot, Homelab, star-organizer). */}
+               independentes (Threat Intel, Homelab, star-organizer). */}
             {slug === 'este-site' && (
               <span class="badge amber">{dict.projects.systemBadge}</span>
             )}
           </div>
           {/* Uma linha de ações igual em todos os cartões: abrir o projeto e,
-             só onde existe, o código, o painel público do Honeypot (outro
+             só onde existe, o código, o painel público do Threat Intel (outro
              domínio — intel.danielmala.co, o relatório do sensor externo) e
              o gancho de "Este site" para a teia de páginas de segurança. */}
           <div class="card-links mono">
             <a href={projectUrl(lang, slug)}>[{dict.projects.open}]</a>
             {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
-            {slug === 'honeypot' && <a href={SITE.honeypotIntel} rel="noopener">[{dict.projects.live}]</a>}
+            {slug === 'threat-intel' && <a href={SITE.honeypotIntel} rel="noopener">[{dict.projects.live}]</a>}
             {slug === 'este-site' && <a href={routes.security[lang]}>[{dict.projects.systemCta}]</a>}
           </div>
         </div>

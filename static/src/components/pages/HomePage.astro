@@ -5,9 +5,6 @@ import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
-// content/ é a fonte de verdade dos números do painel "em números".
-import certs from '../../../../content/certs.json';
-import awards from '../../../../content/awards.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -21,50 +18,18 @@ const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) &&
 const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order);
 
-// Seleção de 6 ferramentas para a Home — "em destaque"; a lista completa
-// vive em Ferramentas.
+// Seleção de ferramentas para a Home — "em destaque", só as que correm no
+// browser; a lista completa (com as que precisam de servidor) vive em
+// Ferramentas.
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
   { slug: 'hashes', ...dict.tools.hashes },
-  { slug: 'encoder', ...dict.tools.encoder },
-  { slug: 'passwords', ...dict.tools.passwords },
+  { slug: 'csp', ...dict.tools.csp },
   { slug: 'email-headers', ...dict.tools['email-headers'] },
   { slug: 'exif', ...dict.tools.exif },
 ];
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
-
-// Números sobre mim (painel ao lado da identidade): todos calculados aqui a
-// partir de content/ e de ui.ts, para nunca divergirem da página que os prova.
-// Certificações: mesmo critério (verified !== false) da página Certificações.
-const certItems = certs.items as { verified?: boolean }[];
-const verifiedBadges = certItems.filter((item) => item.verified !== false).length;
-// Anos: desde a primeira paragem do percurso (2017, journey.items[0]). Ano
-// do build — o site é reconstruído a cada push, por isso não fica para trás.
-const CAREER_START = 2017;
-const years = new Date().getFullYear() - CAREER_START;
-// Países: distintos no percurso (a bandeira é o código do país).
-const countries = new Set(dict.home.journey.items.map((stop) => stop.flag)).size;
-const statValues: Record<string, string> = {
-  years: String(years),
-  countries: String(countries),
-  certsVerified: String(verifiedBadges),
-  // Mesmo comprimento de content/awards.json usado na galeria do Sobre.
-  awards: String(awards.items.length),
-};
-const fill = (text: string) => text.replace(/\{(\w+)\}/g, (_, key: string) => statValues[key] ?? `{${key}}`);
-const stats = dict.home.stats.map((stat) => ({ ...stat, n: fill(stat.n), d: fill(stat.d) }));
-
-// Cada tile liga à página que prova o número — "não acredites, verifica".
-const statLinks: Record<string, string> = {
-  years: routes.about[lang],
-  countries: '#h-journey',
-  certs: routes.certifications[lang],
-  awards: `${routes.about[lang]}#h-awards`,
-};
-const statLink = (key: string) => statLinks[key] ?? routes.about[lang];
-
-const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
 
 <BaseLayout
@@ -72,42 +37,22 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
   title={dict.home.metaTitle}
   altUrl={routes.home[other]}
 >
-  <div class="top-grid">
-    <section class="panel identity" aria-label={dict.home.identity}>
-      <NetworkTopology />
-      <div class="phead">
-        <span>{dict.home.location}</span>
-      </div>
-      <h1>{SITE.name}</h1>
-      <p class="role">{SITE.role[lang]}</p>
-      <p class="sum">{dict.home.bio}</p>
-      <div class="meta-row">
-        {dict.home.meta.map((item) => <span>{item}</span>)}
-      </div>
-      <div class="chip-row">
-        {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
-      </div>
-      <p class="stack-line">{dict.home.stack}</p>
-    </section>
-
-    <section class="panel" aria-label={dict.home.statsLabel}>
-      <div class="phead">
-        <span>&#47;&#47; {dict.home.statsLabel}</span>
-      </div>
-      <div class="stats-grid">
-        {stats.map((stat) => {
-          const cls = `stat ${toneClass[stat.tone] ?? ''}`.trim();
-          return (
-            <a class={`${cls} stat-link`} href={statLink(stat.key)}>
-              <div class="n">{stat.n}</div>
-              <div class="l">{stat.d}</div>
-            </a>
-          );
-        })}
-      </div>
-      <p class="note">{dict.home.statsNote}</p>
-    </section>
-  </div>
+  <section class="panel identity" aria-label={dict.home.identity}>
+    <NetworkTopology />
+    <div class="phead">
+      <span>{dict.home.location}</span>
+    </div>
+    <h1>{SITE.name}</h1>
+    <p class="role">{SITE.role[lang]}</p>
+    <p class="sum">{dict.home.bio}</p>
+    <div class="meta-row">
+      {dict.home.meta.map((item) => <span>{item}</span>)}
+    </div>
+    <div class="chip-row">
+      {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
+    </div>
+    <p class="stack-line">{dict.home.stack}</p>
+  </section>
 
   <section aria-labelledby="h-journey">
     <div class="section-title">
@@ -122,7 +67,7 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
             <img class="flag" src={`/flags/${stop.flag}.svg`} alt="" width="20" height="15" decoding="async" />
             {stop.name}
           </span>
-          <span class="place">{stop.place}</span>
+          <span class="org">{stop.org}</span>
           <span class="note">{stop.note}</span>
         </li>
       ))}

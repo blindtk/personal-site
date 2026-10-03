@@ -14,7 +14,7 @@ import { codecs } from './encoding.js';
 // Flag de CTF: não aparece no help; descobre-se com `ls -la` + `cat .flag`.
 const FLAG = 'flag{wh04m1_l4b_pwn3d}';
 
-const APPS = ['subnets', 'hashes', 'encoder', 'passwords', 'email-headers', 'sobre', 'roadmap'];
+const APPS = ['subnets', 'hashes', 'email-headers', 'sobre', 'roadmap'];
 
 async function sha(alg, text) {
   const bytes = new TextEncoder().encode(text);
@@ -49,7 +49,7 @@ export function createTerminal(ctx) {
       '  stars [categoria]          ' + (pt ? '— catálogo de estrelas do GitHub' : '— GitHub stars catalog'),
       '  attack [--list]            ' + (pt ? '— cobertura MITRE ATT&CK' : '— MITRE ATT&CK coverage'),
       '  projetos                   ' + (pt ? '— listar projetos do site' : '— list the site projects'),
-      '  honeypot                   ' + (pt ? '— o que o honeypot apanha' : '— what the honeypot catches'),
+      '  intel                      ' + (pt ? '— o honeypot e o feed de threat intel' : '— the honeypot and the threat-intel feed'),
       '  provas                     ' + (pt ? '— transparência verificável' : '— verifiable transparency'),
       `  open <${APPS.join('|')}>`,
       '  clear · help',
@@ -188,20 +188,21 @@ export function createTerminal(ctx) {
         };
       }
 
+      case 'intel':
       case 'honeypot': {
         return {
           lines: pt
             ? [
-                'honeypot — sensor numa VPS à parte: acesso SSH emulado, um',
+                'threat intel — sensor numa VPS à parte: acesso SSH emulado, um',
                 'labirinto HTTP e tarpits. o que apanha é enriquecido, mapeado',
                 'para MITRE ATT&CK e publicado em intel.danielmala.co.',
-                'detalhes em /projetos/honeypot',
+                'detalhes em /projetos/threat-intel',
               ]
             : [
-                'honeypot — a sensor on its own VPS: an emulated SSH access, an',
+                'threat intel — a sensor on its own VPS: an emulated SSH access, an',
                 'HTTP maze and tarpits. what it catches is enriched, mapped to',
                 'MITRE ATT&CK and published at intel.danielmala.co.',
-                'details at /en/projects/honeypot',
+                'details at /en/projects/threat-intel',
               ],
         };
       }

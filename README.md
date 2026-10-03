@@ -155,10 +155,9 @@ Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 
 ### Interactive tools
 
-`/ferramentas/` (`/en/tools/`) has **10 tools**. 8 run entirely client-side —
-subnet calculator, hash functions, encoder/decoder, password strength,
-email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
-no network calls, no backend dependency. The other 2 talk to the Worker
+`/ferramentas/` (`/en/tools/`) has **7 tools**. 5 run entirely client-side —
+subnet calculator, hash functions, email-header analyzer, EXIF viewer, CSP
+analyser — no network calls, no backend dependency. The other 2 talk to the Worker
 because the check genuinely can't run in a browser: `pwned` (k-anonymity
 breach check) and `mirror` (what the server sees about you). The two
 server-backed ones are marked with a "requires server" badge on the tools
@@ -173,7 +172,7 @@ The site also runs several live cybersecurity showcases:
 | **MITRE ATT&CK heatmap** | `/attack` | No — 100% static (`content/attack.json`) |
 | **Cloudflare** (zone threats, firewall by action/source/country/network, mitigation per day) | `/este-site/cloudflare/` (`/en/this-site/cloudflare/`) | Yes — `/api/cf-stats`, `/api/threat-intel` |
 | **Certificate Transparency watch** | `/este-site/provas/` (`/en/this-site/evidence/`) | Yes — `/api/ct` |
-| **Honeypot** (Cowrie + HTTP maze, external) | [`intel.danielmala.co`](https://intel.danielmala.co/), described on `/projetos/honeypot/` | No — a separate VPS (`honeypot-vps-infra`), not this Worker |
+| **Threat Intel** (honeypot + public feed, external) | [`intel.danielmala.co`](https://intel.danielmala.co/), described on `/projetos/threat-intel/` | No — a separate VPS (`honeypot-vps-infra`), not this Worker |
 
 The Worker-backed features degrade gracefully when it isn't reachable (they
 show a fallback note instead of breaking). The backend, its endpoints, its

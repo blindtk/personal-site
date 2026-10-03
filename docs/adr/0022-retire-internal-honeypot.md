@@ -35,7 +35,7 @@ Three things made it no longer worth its cost:
 ## Decision
 
 Remove the internal honeypot. The site's "Honeypot" is the external
-sensor, presented as a project (`/projetos/honeypot/`), not as a layer of
+sensor, presented as a project (`/projetos/threat-intel/`, "Threat Intel"), not as a layer of
 this site.
 
 - **Worker:** decoy routes (also removed from `wrangler.toml`),
@@ -46,11 +46,14 @@ this site.
   (`lib/firewall.js`, formerly `aggregate.js`) — the route name is kept so
   the Cloudflare and overview pages need no change.
 - **KV cleanup:** the cron runs `purgeLegacyHoneypotKeys`, which reads
-  `iplist`, `recent`, `meta` and the removed routes' caches and deletes
-  the ones still present (and `cache:threatintel` only while it still has
-  the old `ips` field). Reads are cheap; after the first clean-up each tick
-  costs no writes. Anonymous hourly/daily buckets expire on their own in
-  ≤ 9 days.
+  `iplist`, `recent`, `meta` and the removed routes' caches (the old
+  `cache:threatintel` included) and deletes the ones still present. Reads
+  are cheap; after the first clean-up each tick costs no writes. Anonymous
+  hourly/daily buckets expire on their own in ≤ 9 days.
+- **New cache keys for `/api/threat-intel`** (`cache:firewall7d` in KV,
+  `firewall7d` in the Cache API): an old entry, still within its TTL and
+  carrying IPs, can never be served by the first request after the deploy,
+  before the cron has run.
 - **Site:** the Honeypot page, map and ticker are removed; the old URLs
   301 to the project page. The "This site" nav group, footer and layers
   block lose the layer; the overview keeps the three zone numbers and
