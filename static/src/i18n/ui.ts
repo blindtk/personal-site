@@ -452,7 +452,7 @@ export const ui = {
             years: '2020',
             name: 'Hardsecure',
             role: 'Cyber Security Engineer',
-            note: 'Firewalls e offensive hacking',
+            note: 'Firewalls e segurança ofensiva',
             projects: [],
           },
           {
@@ -1256,7 +1256,7 @@ export const ui = {
             years: '2020',
             name: 'Hardsecure',
             role: 'Cyber Security Engineer',
-            note: 'Firewalls and offensive hacking',
+            note: 'Firewalls and offensive security',
             projects: [],
           },
           {

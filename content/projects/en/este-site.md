@@ -1,6 +1,6 @@
 ---
 title: 'This site'
-description: 'A static personal site on Cloudflare Pages, secure by design: strict CSP, no trackers and verifiable evidence.'
+description: 'Static site on Cloudflare Pages, secure by design: strict CSP and no trackers.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
