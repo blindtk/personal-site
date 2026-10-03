@@ -412,7 +412,7 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
       location: 'Porto, Portugal',
-      bio: 'Desenho e defendo a segurança de infraestruturas rodoviárias, da rede ao endpoint e da prevenção à resposta a incidentes. Comecei nas redes de metro e ferrovia, onde aprendi que uma falha não é um simples alerta: é um sistema parado e milhares de pessoas à espera. Este site é onde mostro como trabalho.',
+      bio: 'Desenho e defendo a segurança de infraestruturas rodoviárias, da rede ao endpoint e da prevenção à resposta a incidentes. Comecei nas redes de metro e ferrovia, onde aprendi que uma falha não é um simples alerta: é um sistema parado e milhares de pessoas à espera.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP'],
       // Nomeia em vez de contar — a credencial mais forte (CCDL2, com badge)
       // vem primeiro; NIS2 como diferenciador de setor.
@@ -1216,7 +1216,7 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
       location: 'Porto, Portugal',
-      bio: 'I design and defend the security of road infrastructure, from the network to the endpoint and from prevention to incident response. I started in metro and rail networks, where I learned that a failure isn’t just an alert: it’s a stopped system and thousands of people left waiting. This site is where I show how I work.',
+      bio: 'I design and defend the security of road infrastructure, from the network to the endpoint and from prevention to incident response. I started in metro and rail networks, where I learned that a failure isn’t just an alert: it’s a stopped system and thousands of people left waiting.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP'],
       // Names instead of counts — the strongest credential (CCDL2,
       // badge-verified) leads; NIS2 as the sector differentiator.
