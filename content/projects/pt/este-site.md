@@ -1,6 +1,6 @@
 ---
 title: 'Este site'
-description: 'Site pessoal gerido como sistema de produção: CSP estrita e provas verificáveis.'
+description: 'Site pessoal estático no Cloudflare Pages, com segurança by design: CSP estrita, sem trackers e provas verificáveis.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
