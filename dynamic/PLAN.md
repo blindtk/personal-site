@@ -10,12 +10,12 @@
 
 ## Recorded decisions
 
-- **2026-10-02 — Remove three tools** (decision by the repo owner): the
-  passkey lab, the encoder/decoder and the password generator. They are
-  generic utilities that other tools do better (CyberChef, a password
-  manager); the seven that stay are the ones tied to security work. The
-  old URLs 301 to the tools index. `encoding.js` stays, because the Lab
-  terminal's `encode`/`decode` commands use it.
+- **2026-10-02 — Remove two tools** (decision by the repo owner): the
+  passkey lab and the encoder/decoder. They are generic utilities that
+  other tools do better (CyberChef, for one). The password generator was
+  removed in the same pass and restored on 2026-10-03 at the owner's
+  request. The old URLs 301 to the tools index. `encoding.js` stays,
+  because the Lab terminal's `encode`/`decode` commands use it.
 
 - **2026-10-02 — Retire the internal honeypot** (decision by the repo
   owner; [ADR 0022](../docs/adr/0022-retire-internal-honeypot.md)). The

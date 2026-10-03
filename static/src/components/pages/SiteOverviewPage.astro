@@ -2,9 +2,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Widget from '../site/Widget.astro';
 import StatusBadge from '../site/StatusBadge.astro';
+import SiteLayers from '../SiteLayers.astro';
+import { getEntry, render } from 'astro:content';
 import { API_BASE, INFRA, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes, projectUrl } from '../../i18n/routes';
+import { routes, SITE_PROJECT_SLUG } from '../../i18n/routes';
 import { BUILD_INFO } from '../../lib/build-info';
 
 interface Props { lang: Lang }
@@ -12,6 +14,21 @@ const { lang } = Astro.props;
 const dict = t(lang);
 const s = dict.site;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// "Porque foi feito assim": as decisões vivem em content/ (o mesmo ficheiro
+// que dá o cartão "Este site" em Projetos), não em ui.ts, por serem prosa.
+const siteProject = await getEntry('projects', `${lang}/${SITE_PROJECT_SLUG}`);
+if (!siteProject) throw new Error(`content/projects/${lang}/${SITE_PROJECT_SLUG}.md em falta`);
+const { Content: Decisions } = await render(siteProject);
+
+// O índice da secção: cada página com uma linha a dizer o que lá está. É o
+// único sítio onde essa descrição aparece.
+const sectionPages = [
+  { href: routes.security[lang], label: dict.layers.security, desc: s.sectionSecurity },
+  { href: routes.cloudflare[lang], label: dict.layers.cloudflare, desc: s.sectionCloudflare },
+  { href: routes.evidence[lang], label: dict.layers.evidence, desc: s.sectionEvidence },
+  { href: routes.performance[lang], label: dict.layers.performance, desc: s.sectionPerformance },
+];
 
 // Stack: etiqueta traduzida → valor (proper noun, de INFRA). Só ligação de
 // dados, sem lógica — a fonte dos valores é config.ts (regra 5 do CLAUDE.md).
@@ -29,9 +46,8 @@ const stack: { label: string; value: string }[] = [
 // tempo relativo a partir de builtAt.
 const builtAbs = new Date(BUILD_INFO.builtAt).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
-// Strings que o ilhéu de estado precisa (tempo relativo + verificação ao vivo
-// + a secção "Este site, em números", os três números da zona que resumem
-// a página Cloudflare).
+// Strings que o ilhéu de estado precisa (tempo relativo e verificação ao
+// vivo do Worker).
 const jsStrings = {
   ago: s.agoPrefix,
   units: {
@@ -42,56 +58,26 @@ const jsStrings = {
   stateDegraded: s.stateDegraded,
   stateDown: s.stateDown,
   lastCheck: s.lastCheck,
-  chainThreats: s.chainThreats,
 };
 ---
 
 <BaseLayout lang={lang} title={s.overviewMetaTitle} altUrl={routes.siteOverview[other]} active="siteOverview">
+  <SiteLayers lang={lang} current="overview" />
   <div class="page-head">
     <h1>{s.overviewTitle}</h1>
     <p class="intro">{s.overviewIntro}</p>
   </div>
 
   <section aria-labelledby="h-map">
-    <div class="section-title"><h2 id="h-map">{s.hubTitle}</h2></div>
-    <p class="intro">{dict.layers.intro}</p>
-    <ul class="sec-links mono">
-      <li><a href={routes.security[lang]}>{dict.layers.security}</a></li>
-      <li><a href={routes.cloudflare[lang]}>{dict.layers.cloudflare}</a></li>
-      <li><a href={routes.evidence[lang]}>{dict.layers.evidence}</a></li>
-      <li><a href={routes.performance[lang]}>{dict.layers.performance}</a></li>
-    </ul>
-  </section>
-
-  {/* Este site, em números: os três números da zona inteira; o detalhe por
-     país, rede e regra vive na página Cloudflare. */}
-  <section aria-labelledby="h-numbers" id="numbers-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
-    <div class="section-title"><h2 id="h-numbers">{s.chainTitle}</h2></div>
-    <div class="chain-grid">
-      <div class="stat">
-        <div class="n" id="chain-requests">—</div>
-        <div class="l">{s.chainRequests}</div>
-        <div class="chain-src">{s.chainSrcZone}</div>
-      </div>
-      <div class="stat amber">
-        <div class="n" id="chain-threats">—</div>
-        <div class="l" id="chain-threats-l">{s.chainThreats}</div>
-        <div class="chain-src">{s.chainSrcZone}</div>
-      </div>
-      <div class="stat red">
-        <div class="n" id="chain-mitigated">—</div>
-        <div class="l">{s.chainMitigated}</div>
-        <div class="chain-src">{s.chainSrcFirewall}</div>
-      </div>
-    </div>
-    <p class="note">{s.chainNote} <a href={routes.cloudflare[lang]}>{dict.nav.cloudflare} →</a></p>
-    <p class="hp-fallback" id="numbers-fallback" hidden>{s.unavailable}</p>
-  </section>
-
-  <section aria-labelledby="h-arch">
-    <div class="section-title"><h2 id="h-arch">{s.archTitle}</h2></div>
-    <p class="intro">{s.archBody}</p>
-    <p class="note">📐 {s.overviewProjectBody} <a href={projectUrl(lang, 'este-site')}>{s.overviewProjectCta}</a></p>
+    <div class="section-title"><h2 id="h-map">{s.sectionTitle}</h2></div>
+    <dl class="sec-map">
+      {sectionPages.map((page) => (
+        <>
+          <dt class="mono"><a href={page.href}>{page.label}</a></dt>
+          <dd>{page.desc}</dd>
+        </>
+      ))}
+    </dl>
   </section>
 
   <section aria-labelledby="h-status" class="overview-grid">
@@ -121,9 +107,9 @@ const jsStrings = {
     </Widget>
   </section>
 
-  <section aria-labelledby="h-stack">
-    <div class="section-title"><h2 id="h-stack">{s.stackTitle}</h2></div>
-    <p class="intro">{s.stackIntro}</p>
+  <section aria-labelledby="h-arch">
+    <div class="section-title"><h2 id="h-arch">{s.archTitle}</h2></div>
+    <p class="arch-body">{s.archBody}</p>
     <dl class="kv-list stack-list">
       {stack.map((row) => (
         <>
@@ -133,10 +119,17 @@ const jsStrings = {
       ))}
     </dl>
   </section>
+
+  <section aria-labelledby="h-why">
+    <div class="section-title"><h2 id="h-why">{s.decisionsTitle}</h2></div>
+    <div class="prose decisions">
+      <Decisions />
+    </div>
+  </section>
 </BaseLayout>
 
 <script>
-  import { relativeTime, formatNumber, formatPercent, threatRate, sumByActionClass } from '../../scripts/observability.js';
+  import { relativeTime } from '../../scripts/observability.js';
 
   const data = document.getElementById('ss-data');
   const S = JSON.parse(data?.dataset.strings ?? '{}');
@@ -175,64 +168,28 @@ const jsStrings = {
   }
 
   checkWorker();
-
-  // ---------- Este site, em números (zona Cloudflare) ----------
-  const numbersRoot = document.getElementById('numbers-root');
-  const NS = JSON.parse(numbersRoot?.getAttribute('data-strings') ?? '{}');
-  const nBase = numbersRoot?.getAttribute('data-api') ?? '';
-  const nLocale = numbersRoot?.getAttribute('data-lang') === 'pt' ? 'pt-PT' : 'en-GB';
-
-  const setNText = (id: string, value: string) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-  };
-
-  async function loadNumbers() {
-    try {
-      const [cfRes, tiRes] = await Promise.all([
-        fetch(`${nBase}/api/cf-stats`, { headers: { accept: 'application/json' } }),
-        fetch(`${nBase}/api/threat-intel`, { headers: { accept: 'application/json' } }),
-      ]);
-      const cfCtype = cfRes.headers.get('content-type') ?? '';
-      const tiCtype = tiRes.headers.get('content-type') ?? '';
-      if (!cfRes.ok || !cfCtype.includes('application/json')) throw new Error('no cf-stats');
-      if (!tiRes.ok || !tiCtype.includes('application/json')) throw new Error('no threat-intel');
-      const zone = (await cfRes.json()).zone ?? {};
-      const ti = await tiRes.json();
-      const fw = ti.firewall7d ?? {};
-
-      const requests = Number(zone.requests) || 0;
-      const threats = Number(zone.threats) || 0;
-      setNText('chain-requests', formatNumber(requests, nLocale));
-      setNText('chain-threats', formatNumber(threats, nLocale));
-      setNText('chain-threats-l', `${NS.chainThreats} (${formatPercent(threatRate(threats, requests))})`);
-      setNText('chain-mitigated', formatNumber(sumByActionClass(fw.byAction ?? [], ['blocked', 'challenged']), nLocale));
-    } catch {
-      // Sem Worker/dados: os números ficam com o travessão já pintado e o
-      // aviso diz porquê, como nas outras páginas ao vivo.
-      const fallback = document.getElementById('numbers-fallback');
-      if (fallback) fallback.hidden = false;
-    }
-  }
-
-  loadNumbers();
 </script>
 
 <style>
-  .sec-links {
-    list-style: none;
-    padding: 0;
+  .sec-map {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem 1.4rem;
     margin: 0.6rem 0 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    max-width: 46rem;
   }
-  .sec-links a {
-    color: var(--accent);
-    text-decoration: none;
+  @media (min-width: 640px) {
+    .sec-map { grid-template-columns: 9rem minmax(0, 1fr); }
   }
-  .sec-links a:hover {
-    text-decoration: underline;
+  .sec-map dt { font-size: 0.9rem; }
+  .sec-map dt a { color: var(--accent); }
+  .sec-map dd {
+    margin: 0 0 0.7rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  @media (min-width: 640px) {
+    .sec-map dd { margin-bottom: 0.4rem; }
   }
   .overview-grid {
     display: grid;
@@ -258,21 +215,8 @@ const jsStrings = {
   .stack-list dd {
     text-align: right;
   }
-  .an-mt { margin-top: 0.9rem; }
-  .wide-widget { grid-column: 1 / -1; }
-  /* ---------- Este site, em números (D1) ---------- */
-  .chain-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-    gap: 0.7rem;
-    margin-top: 0.8rem;
-  }
-  .chain-src {
-    font-family: var(--mono);
-    font-size: 0.62rem;
-    color: var(--muted);
-    margin-top: 0.5rem;
-    padding-top: 0.4rem;
-    border-top: 1px dashed var(--border-strong);
+  .decisions,
+  .arch-body {
+    max-width: 46rem;
   }
 </style>

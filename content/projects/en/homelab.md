@@ -1,12 +1,12 @@
 ---
 title: 'Homelab'
-description: 'A k3s cluster on Raspberry Pi at home — where I test everything before production.'
+description: 'A k3s cluster on Raspberry Pi at home, where I test everything before production.'
 tags: ['kubernetes', 'k3s', 'raspberry-pi', 'homelab']
 order: 4
 ---
 
-At home I run a [k3s](https://k3s.io/) cluster — the lightweight Kubernetes
-distribution, built for modest hardware and ARM — on Raspberry Pi. It's the
+At home I run a [k3s](https://k3s.io/) cluster on Raspberry Pi. k3s is the
+lightweight Kubernetes distribution, built for modest hardware and ARM. It's the
 same homelab I already mentioned on the [About](/en/about/) page: the guinea
 pig for anything I want to try before it gets anywhere near production.
 
@@ -36,13 +36,13 @@ pig for anything I want to try before it gets anywhere near production.
   <text class="diagram-caption" x="432" y="110" text-anchor="middle">test first</text>
 </svg>
 
-*Simplified, illustrative topology — the actual node count varies; what
+*Simplified, illustrative topology. The actual node count varies; what
 matters here is the relationship between the cluster and production, not an
 inventory.*
 
 ## What runs there
 
-There's no fixed list — that's the nature of a testing ground: this site's
+There's no fixed list, because it is a testing ground. This site's
 tools pass through before they reach someone else's browser, configs I want
 to validate before taking them to work, and attack-infrastructure setups for
 lab and CTF practice (the [ATT&CK heatmap](/en/attack/) maps that practice
@@ -52,22 +52,22 @@ touches production without going through here first.
 
 ## Why k3s
 
-A Raspberry Pi doesn't have the footprint for a "full" Kubernetes — k3s
-exists exactly for this: the same Kubernetes API, with etcd, legacy
+A Raspberry Pi doesn't have the resources for a "full" Kubernetes, and k3s
+exists exactly for that: the same Kubernetes API, with etcd, legacy
 controllers, and unnecessary dependencies stripped out to fit low-power ARM
-hardware. I get practice with the patterns that matter in production —
-multi-node, scheduling, tolerating a lost node — in an environment cheap
+hardware. I get practice with the patterns that matter in production
+(multi-node, scheduling, tolerating a lost node) in an environment cheap
 enough to break for free.
 
 ## Technical decisions
 
 - **A cluster, not a standalone Pi.** A single node only tests "does the
-  container run"; several nodes test what actually fails in production —
+  container run"; several nodes test what actually fails in production:
   losing a node, scheduling under resource pressure, tolerating restarts.
 - **Deliberate isolation from production.** The homelab has no access to
   anything that matters outside it; it's disposable by construction, so it
   can be torn down and rebuilt without ceremony.
 - **No fixed public exposure.** There's no subdomain pointing at the homelab
-  yet (see `docs/dns-tls.md` in this repo) — whether and when that makes
+  yet (see `docs/dns-tls.md` in this repo). Whether and when that makes
   sense gets decided without compromising the main domain's HSTS preload
   policy in the meantime.

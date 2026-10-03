@@ -9,19 +9,19 @@ A real sensor, exposed to the Internet with no proxy in front, on a machine
 that has nothing to do with this site: an Oracle Cloud VPS on Always Free
 resources, configured entirely as code in the `honeypot-vps-infra`
 repository. What it catches is processed, enriched and published at
-[intel.danielmala.co](https://intel.danielmala.co/) — a report, dossiers, a
+[intel.danielmala.co](https://intel.danielmala.co/): a report, dossiers, a
 page per address and per artifact, and a machine-readable feed.
 
 ## What runs on the VPS
 
-- **SSH access** on port 22: a fully emulated shell — never a real one.
+- **SSH access** on port 22: a fully emulated shell, never a real one.
   Login only succeeds after 2 to 5 different credentials, and the one
   that "worked" keeps working, like a genuinely compromised box; accepting
   anything on the first try would be the easiest tell that it's a
   honeypot. The fake filesystem holds bait credentials (AWS, `.env`, bash
   history) generated at each install, never stored in the repository.
 - **An HTTP maze** on ports 80/443: endless generated text with links that
-  only lead to more text, to trap crawlers and scanners — capped on
+  only lead to more text, to trap crawlers and scanners. It is capped on
   connections, bytes and time, so the VPS isn't the one that runs out
   first.
 - **portlogger and endlessh**: logging and tarpitting on the ports cloud
@@ -38,21 +38,21 @@ the HTML report. Along the way:
 - **ATT&CK by command, not by loose keyword**: the SSH access captures
   what the attacker types, so each pattern (`curl … | sh`, `chmod +x`, `crontab`,
   miners, reading `.ssh/id_rsa`…) maps to the technique it stands for. No
-  clear pattern, no technique — never a guess.
+  clear pattern, no technique: never a guess.
 - **Enrichment with explicit rules**: ten sources (RDAP, AbuseIPDB,
   GreyNoise, ThreatFox, OTX, Shodan, ANY.RUN…), each with what it may and
-  may not conclude — Shodan, for instance, never decides whether an IP is
+  may not conclude. Shodan, for instance, never decides whether an IP is
   malicious. A disagreement is settled by each source's reliability, and
   missing data says it is missing.
 - **Malware**: files attackers try to download are held under size and
   rate limits, and the hash is looked up with analysis services
-  (MalwareBazaar, VirusTotal…) — submitting the sample itself is opt-in and
+  (MalwareBazaar, VirusTotal…). Submitting the sample itself is opt-in and
   tightly gated. The artifact page shows the hash and the verdict, never
   the sample.
 - **Dossiers that group behaviour, not people**: addresses linked by the
   same hashes (a reused SSH key, the same artifacts) are grouped and
-  published as an inference the reader can reject — no campaign or actor
-  names.
+  published as an inference the reader can reject, with no campaign or
+  actor names.
 
 ## Privacy and retention
 
@@ -62,7 +62,7 @@ with safeguards: an address leaves publication after 75 days without a new
 sighting and the database after 365; private and reserved ranges never get
 in; an IP seen only once, passively, is not published. Username/password
 pairs are only published when they come from at least 5 different ASNs
-**and** 5 different /24 networks, over at least 3 days — without ASN data
+**and** 5 different /24 networks, over at least 3 days. Without ASN data
 it fails closed and publishes nothing.
 
 ## Operations

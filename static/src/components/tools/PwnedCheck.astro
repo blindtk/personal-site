@@ -138,7 +138,7 @@ const jsStrings = {
 
     const count = matchCount(suffixes, suffix);
     if (count > 0) {
-      verdict(`${S.pwned} — ${fmt(count)} ${S.occurrences}`, 'bad');
+      verdict(`${S.pwned}: ${fmt(count)} ${S.occurrences}`, 'bad');
     } else {
       verdict(S.safe, 'good');
     }

@@ -24,6 +24,7 @@ const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
   { slug: 'hashes', ...dict.tools.hashes },
+  { slug: 'passwords', ...dict.tools.passwords },
   { slug: 'csp', ...dict.tools.csp },
   { slug: 'email-headers', ...dict.tools['email-headers'] },
   { slug: 'exif', ...dict.tools.exif },

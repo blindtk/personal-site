@@ -44,7 +44,7 @@ const items = (awards.items as Award[]).slice().sort((x, y) => y.year - x.year);
             height={item.height}
             loading="lazy"
             decoding="async"
-            alt={`${item.event} — ${item.org} ${item.year}`}
+            alt={`${item.event}, ${item.org} ${item.year}`}
           />
           <figcaption>
             <span class="badge">{a.firstPlace} · {item.year}</span>

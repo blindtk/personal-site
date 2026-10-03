@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import { SITE, SITE_URL, type Lang } from '../config';
 import { t } from '../i18n/ui';
-import { routes, projectUrl, type RouteKey } from '../i18n/routes';
+import { routes, type RouteKey } from '../i18n/routes';
 import '../styles/global.css';
 
 interface Props {
@@ -48,29 +48,19 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
 
 const currentPath = Astro.url.pathname;
 
-// "Este Site" agrupa na nav as seis camadas do mesmo sistema — a mesma
-// lista e ordem do bloco de cross-links no fundo de cada uma delas (ver
-// SiteLayers.astro, que é a fonte de verdade desta ordem): Visão Geral,
-// Segurança, Cloudflare (ameaças à zona + firewall + mitigação), Provas,
-// Performance (tráfego + Core Web Vitals) e o projeto «Este site»
-// (arquitetura e decisões). Cloudflare (ataque ao vivo) vem antes de Provas
-// (o audit trail — commit, cabeçalhos, CI) de propósito: mostra primeiro o
-// que está a acontecer, só depois o "não acredites, verifica".
-// `href` explícito, não RouteKey: o projeto «Este site» vive nos posts de
-// /projetos/ (projectUrl), não é uma rota estática de routes.ts — e usar
-// href também para as outras cinco simplifica o aria-current para uma só
-// comparação (currentPath === item.href) que funciona para as seis.
-// ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
-// são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
-// "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
-// que já as linka em prosa; continuam também acessíveis pelo rodapé.
+// "Este site" agrupa na nav as cinco páginas da secção, pela mesma ordem
+// dos separadores no topo de cada uma (SiteLayers.astro). Cloudflare (o que
+// acontece ao vivo) vem antes de Provas (commit, cabeçalhos, CI): primeiro o
+// que está a acontecer, depois o "não acredites, verifica".
+// ATT&CK e Certificações ficam de fora de propósito: não são sobre o site,
+// são sobre credenciais e percurso pessoais. O sítio natural para as duas é
+// o Sobre, que já as liga em prosa; continuam também acessíveis pelo rodapé.
 const siteGroup: { href: string; label: string }[] = [
   { href: routes.siteOverview[lang], label: dict.nav.overview },
   { href: routes.security[lang], label: dict.nav.security },
   { href: routes.cloudflare[lang], label: dict.nav.cloudflare },
   { href: routes.evidence[lang], label: dict.footer.evidence },
   { href: routes.performance[lang], label: dict.nav.performance },
-  { href: projectUrl(lang, 'este-site'), label: dict.nav.projectThisSite },
 ];
 const siteActive = siteGroup.some((item) => item.href === currentPath);
 

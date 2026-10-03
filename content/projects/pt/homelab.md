@@ -1,12 +1,12 @@
 ---
 title: 'Homelab'
-description: 'Cluster k3s em Raspberry Pi, em casa — onde testo tudo antes de chegar a produção.'
+description: 'Cluster k3s em Raspberry Pi, em casa, onde testo tudo antes de chegar a produção.'
 tags: ['kubernetes', 'k3s', 'raspberry-pi', 'homelab']
 order: 4
 ---
 
-Em casa mantenho um cluster [k3s](https://k3s.io/) — a distribuição leve do
-Kubernetes, pensada para hardware modesto e ARM — a correr em Raspberry Pi.
+Em casa mantenho um cluster [k3s](https://k3s.io/) a correr em Raspberry Pi.
+O k3s é a distribuição leve do Kubernetes, pensada para hardware modesto e ARM.
 É o mesmo homelab que já mencionei no [Sobre](/sobre/): a cobaia para tudo o
 que quero experimentar antes de chegar perto de produção.
 
@@ -36,12 +36,12 @@ que quero experimentar antes de chegar perto de produção.
   <text class="diagram-caption" x="432" y="110" text-anchor="middle">testar primeiro</text>
 </svg>
 
-*Topologia simplificada e ilustrativa — o número real de nós varia; o que
+*Topologia simplificada e ilustrativa. O número real de nós varia; o que
 interessa aqui é a relação entre o cluster e a produção, não um inventário.*
 
 ## O que corre lá
 
-Não há uma lista fixa — é essa a natureza de um terreno de testes: passam por
+Não há uma lista fixa, porque é um terreno de testes. Passam por
 lá as ferramentas deste site antes de irem para o browser de outra pessoa,
 configurações que quero validar antes de as levar para o trabalho, e
 montagens de infraestrutura ofensiva para lab e CTFs (o
@@ -51,22 +51,22 @@ sempre o mesmo: nada toca produção sem primeiro passar por aqui.
 
 ## Porquê k3s
 
-Um Raspberry Pi não tem o footprint para um Kubernetes "a sério" — o k3s
-existe exatamente para isto: a mesma API do Kubernetes, com o etcd, os
+Um Raspberry Pi não tem recursos para um Kubernetes "a sério", e o k3s
+existe exatamente para isso: a mesma API do Kubernetes, com o etcd, os
 controllers legacy e as dependências desnecessárias cortadas para caber em
-hardware ARM de baixo consumo. Ganho a prática dos padrões que interessam em
-produção — multi-nó, scheduling, resiliência a perder um nó — num ambiente
+hardware ARM de baixo consumo. Ganho prática com os padrões que interessam em
+produção (multi-nó, scheduling, resiliência à perda de um nó) num ambiente
 barato o suficiente para partir sem custar nada.
 
 ## Decisões técnicas
 
 - **Cluster, não um Pi isolado.** Um único nó testa "corre o container";
-  vários nós testam o que falha de verdade em produção — perder um nó,
-  agendar em falta de recursos, tolerar reinícios.
+  vários nós testam o que falha de verdade em produção: perder um nó,
+  agendar com poucos recursos, tolerar reinícios.
 - **Isolamento deliberado da produção.** O homelab não tem acesso a nada que
   importe fora dele; é um ambiente descartável por construção, para poder
   ser destruído e reconstruído sem cerimónia.
 - **Sem exposição pública fixa.** Ainda não há um subdomínio a apontar para
-  o homelab (ver `docs/dns-tls.md` neste repo) — decide-se se e quando fizer
+  o homelab (ver `docs/dns-tls.md` neste repo). Decide-se se e quando fizer
   sentido, sem comprometer entretanto a política de HSTS preload do domínio
   principal.

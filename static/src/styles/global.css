@@ -1000,6 +1000,19 @@ input[type='file']::file-selector-button:hover {
   color: var(--accent);
 }
 
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  /* min-height 44px (alvo de toque) em vez de confiar só no checkbox de
+     1rem; o padding substitui a margem-bottom anterior como respiro. */
+  min-height: 44px;
+  padding: 0.3rem 0;
+  font-family: var(--mono);
+}
+
 .btn {
   /* inline-flex + min-height: alvo de toque de 44px — o padding sozinho
      ficava a ~43px, marginalmente abaixo e, depois da ronda anterior,
@@ -1247,6 +1260,16 @@ input[type='file']::file-selector-button:hover {
 .emailh-flags li[data-level='ok']::before { content: '✓'; color: var(--accent); }
 
 /* Medidor de entropia */
+.password-out {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0.7rem 0.8rem;
+  word-break: break-all;
+  min-height: 2.9rem;
+}
 .meter {
   height: 8px;
   background: var(--bg);

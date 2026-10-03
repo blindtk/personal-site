@@ -1,3 +1,5 @@
+/projetos/este-site/ /este-site/ 301
+/en/projects/este-site/ /en/this-site/ 301
 /projetos/honeypot/ /projetos/threat-intel/ 301
 /en/projects/honeypot/ /en/projects/threat-intel/ 301
 /honeypot/ /projetos/threat-intel/ 301
@@ -16,7 +18,5 @@
 /en/evidence/ /en/this-site/evidence/ 301
 /ferramentas/encoder/ /ferramentas/ 301
 /en/tools/encoder/ /en/tools/ 301
-/ferramentas/passwords/ /ferramentas/ 301
-/en/tools/passwords/ /en/tools/ 301
 /ferramentas/passkeys/ /ferramentas/ 301
 /en/tools/passkeys/ /en/tools/ 301

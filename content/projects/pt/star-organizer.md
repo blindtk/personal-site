@@ -1,6 +1,6 @@
 ---
 title: 'star-organizer'
-description: 'As estrelas do GitHub numa base de conhecimento por categorias — Markdown e JSON, atualizada todas as semanas.'
+description: 'As estrelas do GitHub numa base de conhecimento por categorias, em Markdown e JSON, atualizada todas as semanas.'
 tags: ['python', 'github-actions', 'automação', 'curadoria']
 order: 3
 ---
@@ -16,8 +16,8 @@ muda o `--user` e as regras e serve para outra conta.
 ## Como decide a categoria
 
 As regras vivem num ficheiro editável, `categories.yaml`. Para cada
-repositório, cada categoria ganha pontos — 3 por *topic* que corresponda, 2
-por palavra-chave no nome, descrição ou *topics*, 1 pela linguagem — e só
+repositório, cada categoria ganha pontos: 3 por *topic* que corresponda, 2
+por palavra-chave no nome, descrição ou *topics* e 1 pela linguagem. Só
 reclama o repositório a partir de 2 pontos, para que a linguagem sozinha
 nunca chegue (senão todo o Python acabava no mesmo sítio). A categoria com
 mais pontos fica como principal; as outras que passem o limiar viram
@@ -31,12 +31,12 @@ mais pontos fica como principal; as outras que passem o limiar viram
   vai para uma categoria de recurso ("Misc & Other") em vez de uma pilha de
   "por classificar".
 - **Overrides** fixam à mão os repositórios sem descrição ou com *topics*
-  enganadores — cada grupo comentado no próprio ficheiro.
+  enganadores, com cada grupo comentado no próprio ficheiro.
 
 As regras são revistas contra os dados reais: na revisão de setembro de
 2026 todos os repositórios foram verificados à mão, não só os novos. O
-método — reconstruir a colocação de tudo e comparar categoria *e*
-subcategoria com a execução anterior antes de publicar — mostra exatamente
+método é reconstruir a colocação de tudo e comparar categoria *e*
+subcategoria com a execução anterior antes de publicar. Assim fica claro
 que repositórios cada alteração de regra move.
 
 ## Automação
@@ -52,7 +52,7 @@ passa por testes unitários, `ruff`, `bandit` e `pip-audit`, e por
 
 O repositório `github-stars` é **privado**, e o
 `raw.githubusercontent.com` não serve ficheiros de repositórios privados
-sem autenticação — devolve 404, indistinguível de "o ficheiro não existe".
+sem autenticação: devolve 404, indistinguível de "o ficheiro não existe".
 Por isso o `catalog.json` gerado é copiado à mão para `content/catalog.json`
 neste repositório, e `static/src/lib/catalog.ts` importa-o de forma
 estática, sem pedido de rede. Um ficheiro em falta ou com schema inválido

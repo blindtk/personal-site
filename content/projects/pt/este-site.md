@@ -1,52 +1,35 @@
 ---
 title: 'Este site'
-description: 'Um site pessoal gerido como sistema de produção: threat model, CSP estrita, provas verificáveis.'
+description: 'Um site pessoal gerido como sistema de produção: modelo de ameaça, CSP estrita e provas que podes verificar.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
 
-Como foi feito este site, e porquê. O sistema a funcionar — o que está em
-vigor, o que acontece ao vivo e as provas — está na secção
-[Este site](/este-site/); aqui ficam as decisões por trás dele.
+### Astro, sem framework no browser
 
-## O que é
+As páginas são geradas no build e chegam ao browser sem JavaScript. As partes
+interativas (as ferramentas e o Lab) usam scripts pequenos, sem React, Vue ou
+outro runtime de hidratação.
 
-Um site pessoal bilingue (PT/EN), estático, com ferramentas de rede e
-segurança que correm no browser. O pouco que precisa mesmo de servidor — o
-verificador de passwords, o espelho, o vigia de certificados e os painéis
-de Cloudflare e Performance — vive num Cloudflare Worker isolado, à parte
-do site.
+Não foi só por performance. Sem um framework a injetar estilos ou scripts
+inline, a Content-Security-Policy pode ficar em `script-src 'self'` e
+`style-src 'self'`, sem `'unsafe-inline'` e sem uma única hash. Experimentei
+primeiro o contrário, com uma hash SHA-256 por cada script e estilo inline,
+mas o número de hashes crescia com o número de páginas e ao fim de umas
+dezenas a CSP já passava dos 2000 caracteres que o Cloudflare Pages aceita por
+linha de cabeçalho. Tirar o código inline resolveu o problema na origem.
 
-O conteúdo (markdown/JSON) vive separado do código e alimenta as duas
-línguas a partir das mesmas componentes, sem duplicar lógica entre PT e EN.
+### Um Worker à parte para o que precisa de servidor
 
-A segurança moldou o desenho desde o início: Content-Security-Policy
-estrita sem `'unsafe-inline'`, cabeçalhos de segurança e uma política de
-divulgação responsável publicada. O que está em vigor e porquê está em
-[Segurança](/este-site/seguranca/); o que se pode verificar — commit,
-cabeçalhos ao vivo, workflows — está em [Provas](/este-site/provas/).
+O site não tem backend, base de dados nem input de visitantes que chegue a um
+servidor, o que deixa o modelo de ameaça muito simples. As poucas funções que
+precisam mesmo de servidor vivem num Cloudflare Worker publicado
+separadamente, que não guarda dados pessoais. Se o Worker estiver em baixo, o
+site continua a funcionar e cada painel que depende dele diz que está
+indisponível, em vez de partir a página.
 
-## Decisões de arquitetura
+### Conteúdo separado do código, nas duas línguas
 
-**Porquê Astro sem framework no browser.** Zero React/Vue/Svelte por
-omissão — as páginas nascem sem JavaScript, e as partes que precisam de
-interatividade (as ferramentas, o Lab) não carregam runtime de hidratação
-nenhum. Não é só uma escolha de performance: torna a CSP estrita sem
-`'unsafe-inline'` fácil de manter, porque não há um framework a injetar
-estilo ou script inline em tempo de execução — e, como os meus próprios
-`<script>` são ficheiros externos, nunca inline, `script-src 'self'` e
-`style-src 'self'` chegam sem uma única hash. (Tentei primeiro o caminho
-inverso — uma hash SHA-256 por script/estilo inline —, mas o número de
-hashes cresce com o número de páginas, e ao fim de umas dezenas a CSP passa
-dos 2000 caracteres que o Cloudflare Pages aceita por linha de cabeçalho.
-Eliminar o inline em vez de o catalogar resolve na raiz.)
-
-**Porquê o Worker à parte do site estático.** O site em si fica sem
-backend, sem base de dados e sem input de visitantes que chegue a um
-servidor — o modelo de ameaça descrito em [Segurança](/este-site/seguranca/)
-mantém-se o mais simples possível. O que precisa mesmo de servidor vive
-isolado no Worker, publicado à parte, e não guarda dados pessoais. Se o
-Worker estiver em baixo, o site continua a funcionar: as partes que
-dependem dele dizem que estão indisponíveis em vez de partir o resto. O
-resultado ao vivo está em [Cloudflare](/este-site/cloudflare/) e
-[Performance](/este-site/performance/).
+Os textos vivem em Markdown e JSON, fora do código, e as páginas em português
+e em inglês saem dos mesmos componentes. Assim nenhuma lógica é escrita duas
+vezes, e uma página nunca existe só numa das línguas.

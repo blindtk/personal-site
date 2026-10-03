@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import SiteLayers from '../SiteLayers.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes, projectUrl } from '../../i18n/routes';
+import { routes } from '../../i18n/routes';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -13,6 +13,7 @@ const sec = dict.security;
 ---
 
 <BaseLayout lang={lang} title={sec.metaTitle} altUrl={routes.security[other]} active="security">
+  <SiteLayers lang={lang} current="security" />
   <div class="page-head">
     <h1>{sec.title}</h1>
     <p class="intro">{sec.intro}</p>
@@ -23,12 +24,6 @@ const sec = dict.security;
       <h2 id="h-threat">{sec.threatTitle}</h2>
     </div>
     <p>{sec.threatBody}</p>
-    <p class="intro">{sec.perimeterBody}</p>
-    <p class="intro">{sec.projectBody}</p>
-    <ul class="sec-links mono">
-      <li><a href={`${routes.siteOverview[lang]}#h-numbers`}>{sec.perimeterCta}</a></li>
-      <li><a href={projectUrl(lang, 'este-site')}>{sec.projectCta}</a></li>
-    </ul>
   </section>
 
   <section aria-labelledby="h-headers">
@@ -76,18 +71,6 @@ const sec = dict.security;
       <li><a href="/.well-known/security.txt" rel="noopener">→ {sec.securityTxtLabel}</a></li>
     </ul>
   </section>
-
-  <section aria-labelledby="h-evidence">
-    <div class="section-title">
-      <h2 id="h-evidence">{sec.evidenceTitle}</h2>
-    </div>
-    <p>{sec.evidenceBody}</p>
-    <ul class="sec-links mono">
-      <li><a href={routes.evidence[lang]}>{sec.evidenceCta}</a></li>
-    </ul>
-  </section>
-
-  <SiteLayers lang={lang} current="security" />
 </BaseLayout>
 
 <style>

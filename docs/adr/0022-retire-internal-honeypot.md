@@ -55,10 +55,9 @@ this site.
   carrying IPs, can never be served by the first request after the deploy,
   before the cron has run.
 - **Site:** the Honeypot page, map and ticker are removed; the old URLs
-  301 to the project page. The "This site" nav group, footer and layers
-  block lose the layer; the overview keeps the three zone numbers and
-  drops the honeypot + firewall tables (the firewall detail lives on the
-  Cloudflare page).
+  301 to the project page. The "This site" nav group, footer and section
+  tabs lose the layer, and the overview drops the honeypot and firewall
+  tables (the firewall detail lives on the Cloudflare page).
 
 ## Consequences
 

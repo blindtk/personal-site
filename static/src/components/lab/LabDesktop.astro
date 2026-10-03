@@ -7,6 +7,7 @@ import { routes, projectUrl } from '../../i18n/routes';
 import { getCatalog } from '../../lib/catalog';
 import SubnetCalc from '../tools/SubnetCalc.astro';
 import HashTool from '../tools/HashTool.astro';
+import PasswordGen from '../tools/PasswordGen.astro';
 import EmailHeaderTool from '../tools/EmailHeaderTool.astro';
 import { SITE } from '../../config';
 // content/ é a fonte de verdade; JSON importado diretamente (ver CLAUDE.md).
@@ -70,7 +71,7 @@ try {
 const termCtx = {
   lang,
   bio: [
-    `${SITE.name} — ${SITE.role[lang]}`,
+    `${SITE.name} · ${SITE.role[lang]}`,
     dict.home.bio,
     `${dict.home.location} · ${SITE.github}`,
   ],
@@ -86,6 +87,7 @@ const windows = [
   { id: 'terminal', title: 'terminal', icon: '>_' },
   { id: 'subnets', title: dict.tools.subnets.name, icon: '⌗' },
   { id: 'hashes', title: dict.tools.hashes.name, icon: '#' },
+  { id: 'passwords', title: dict.tools.passwords.name, icon: '⚿' },
   { id: 'email-headers', title: dict.tools['email-headers'].name, icon: '@' },
   { id: 'sobre', title: lab.windowAbout, icon: '☰' },
   { id: 'roadmap', title: lab.windowRoadmap, icon: '⚑' },
@@ -149,6 +151,14 @@ const windows = [
         <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
       </div>
       <div class="win-body"><HashTool lang={lang} /></div>
+      <div class="win-resize" aria-hidden="true"></div>
+    </div>
+
+    <div class="win closed" data-win="passwords">
+      <div class="win-bar"><span class="wt">⚿ {dict.tools.passwords.name}</span>
+        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
+      </div>
+      <div class="win-body"><PasswordGen lang={lang} /></div>
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
@@ -291,6 +301,7 @@ const windows = [
   .win[data-win="terminal"]  { width: 660px; height: 420px; left: 220px; top: 24px; }
   .win[data-win="subnets"]   { width: 560px; height: 520px; left: 120px; top: 48px; }
   .win[data-win="hashes"]    { width: 600px; height: 560px; left: 160px; top: 72px; }
+  .win[data-win="passwords"] { width: 520px; height: 560px; left: 240px; top: 120px; }
   .win[data-win="email-headers"] { width: 680px; height: 620px; left: 160px; top: 40px; }
   .win[data-win="sobre"]     { width: 640px; height: 540px; left: 280px; top: 40px; }
   .win[data-win="roadmap"]   { width: 520px; height: 320px; left: 320px; top: 140px; }

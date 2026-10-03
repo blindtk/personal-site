@@ -6,6 +6,7 @@
 export const TOOLS = [
   { slug: 'subnets', kind: 'client' },
   { slug: 'hashes', kind: 'client' },
+  { slug: 'passwords', kind: 'client' },
   { slug: 'email-headers', kind: 'client' },
   { slug: 'exif', kind: 'client' },
   { slug: 'csp', kind: 'client' },

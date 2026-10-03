@@ -103,9 +103,9 @@ test('createTerminal (pt): comandos-espelho do site (attack/projetos/intel/prova
   const { exec } = createTerminal(ctxPt);
   assert.deepEqual(await exec('attack'), {
     lines: [
-      'cobertura MITRE ATT&CK — 3 em produção, 2 em lab (5 técnicas):',
+      'cobertura MITRE ATT&CK: 3 em produção, 2 em lab (5 técnicas):',
       '  ● T1110   Brute Force  [Credential Access]',
-      '● produção · ○ lab — heatmap completo em /attack',
+      '● produção · ○ lab · heatmap completo em /attack',
     ],
   });
   assert.deepEqual(await exec('projetos'), { lines: ['1 projetos:', '  Este Site  →  /projetos/este-site/'] });
@@ -120,7 +120,7 @@ test('createTerminal (pt): open válido devolve { open }, inválido dá uso; sud
   const { exec } = createTerminal(ctxPt);
   assert.deepEqual(await exec('open subnets'), { open: 'subnets', lines: ['a abrir subnets…'] });
   assert.deepEqual(await exec('open bogus'), {
-    lines: ['uso: open <subnets|hashes|email-headers|sobre|roadmap>'],
+    lines: ['uso: open <subnets|hashes|passwords|email-headers|sobre|roadmap>'],
   });
   assert.deepEqual(await exec('sudo'), {
     lines: ['daniel is not in the sudoers file. This incident will be reported. 🙃'],

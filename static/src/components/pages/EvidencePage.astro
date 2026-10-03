@@ -59,10 +59,10 @@ const scanners = [
 ---
 
 <BaseLayout lang={lang} title={ev.metaTitle} altUrl={routes.evidence[other]} active="evidence">
+  <SiteLayers lang={lang} current="evidence" />
   <div class="page-head">
     <h1>{ev.title}</h1>
     <p class="intro">{ev.intro}</p>
-    <p class="note">🔐 {ev.securityBody} <a href={routes.security[lang]}>{ev.securityCta}</a></p>
   </div>
 
   <section aria-labelledby="h-commit">
@@ -176,7 +176,6 @@ const scanners = [
     </ul>
   </section>
 
-  <SiteLayers lang={lang} current="evidence" />
 </BaseLayout>
 
 <style>

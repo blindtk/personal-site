@@ -1,6 +1,6 @@
 ---
 title: 'star-organizer'
-description: 'GitHub stars as a knowledge base by category — Markdown and JSON, refreshed every week.'
+description: 'GitHub stars as a knowledge base by category, in Markdown and JSON, refreshed every week.'
 tags: ['python', 'github-actions', 'automation', 'curation']
 order: 3
 ---
@@ -16,8 +16,8 @@ it works for another account.
 ## How it picks a category
 
 The rules live in an editable file, `categories.yaml`. For each
-repository, every category earns points — 3 per matching topic, 2 per
-keyword in the name, description or topics, 1 for the language — and only
+repository, every category earns points: 3 per matching topic, 2 per
+keyword in the name, description or topics, and 1 for the language. It only
 claims the repository from 2 points up, so language alone is never enough
 (otherwise every Python repo would land in the same place). The
 highest-scoring category becomes the primary one; any other that clears
@@ -30,12 +30,12 @@ Around that, three mechanisms close the hard cases:
 - **No repo left behind**: anything no rule matches goes to a fallback
   category ("Misc & Other") instead of an "unsorted" pile.
 - **Overrides** pin by hand the repositories with no description or
-  misleading topics — each group commented in the file itself.
+  misleading topics, with each group commented in the file itself.
 
 The rules are checked against real data: in the September 2026 re-tune
-every repository was reviewed by hand, not just the new ones. The method —
+every repository was reviewed by hand, not just the new ones. The method is to
 rebuild every placement and diff category *and* subcategory against the
-previous run before publishing — shows exactly which repositories each
+previous run before publishing, which shows exactly which repositories each
 rule change moves.
 
 ## Automation
@@ -51,7 +51,7 @@ Every PR runs unit tests, `ruff`, `bandit` and `pip-audit`, plus
 
 The `github-stars` repository is **private**, and
 `raw.githubusercontent.com` won't serve files from private repositories
-without authentication — it returns a 404, indistinguishable from "the
+without authentication: it returns a 404, indistinguishable from "the
 file doesn't exist". So the generated `catalog.json` is copied by hand into
 `content/catalog.json` in this repository, and `static/src/lib/catalog.ts`
 imports it statically, with no network request. A missing or

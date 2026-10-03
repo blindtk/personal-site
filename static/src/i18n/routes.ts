@@ -30,6 +30,13 @@ export function blogPostUrl(lang: Lang, slug: string): string {
   return `${routes.blog[lang]}${slug}/`;
 }
 
+// O projeto «Este site» não tem página própria em /projetos/: a secção
+// Este site (Visão geral) já conta o que é e porque foi feito assim, e duas
+// páginas sobre a mesma coisa eram a principal fonte de confusão. O cartão
+// em Projetos liga diretamente à secção; a URL antiga redireciona (301).
+export const SITE_PROJECT_SLUG = 'este-site';
+
 export function projectUrl(lang: Lang, slug: string): string {
+  if (slug === SITE_PROJECT_SLUG) return routes.siteOverview[lang];
   return `${routes.projects[lang]}${slug}/`;
 }
