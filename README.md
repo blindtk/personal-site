@@ -208,6 +208,7 @@ as-is, even if the logic is correct.
 - [`dynamic/worker/README.md`](dynamic/worker/README.md) — backend endpoints and privacy stance
 - [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
 - [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
+- [`docs/catalog-sync.md`](docs/catalog-sync.md) — how the links catalog gets here (bot PR)
 - [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
 
 ## Contributing

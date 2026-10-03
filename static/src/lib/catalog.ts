@@ -1,23 +1,16 @@
 /**
- * Catálogo de estrelas do GitHub (repo blindtk/github-stars).
+ * Catálogo de estrelas do GitHub.
  *
- * TEMPORÁRIO: github-stars é um repo privado, e raw.githubusercontent.com
- * não serve ficheiros de repos privados sem autenticação — por isso, em vez
- * de um fetch em build time, o catálogo vive vendorizado em
- * content/catalog.json (copiado à mão do output do star-organizer, sem
- * sincronização automática ainda). O schema é o que a interface `Catalog`
- * abaixo descreve; `assertCatalogShape` valida-o em runtime.
+ * O catálogo é gerado fora deste repo (a partir de um repo privado), por isso,
+ * em vez de um fetch em build time, vive vendorizado em content/catalog.json
+ * (output do star-organizer). O schema é o que a
+ * interface `Catalog` abaixo descreve; `assertCatalogShape` valida-o em
+ * runtime.
  *
- * Para atualizar: copia o `catalog/catalog.json` gerado pela Action semanal
- * do github-stars para `content/catalog.json` neste repo e faz commit — o
- * `npm run build` falha com um erro claro se o schema tiver mudado do outro
- * lado.
- *
- * Próximo passo (roadmap do Lab, `cat roadmap.txt` em `/lab/`): ler
- * `catalog.json` via API do GitHub autenticada
- * (`api.github.com/repos/blindtk/github-stars/contents/...` com um token
- * guardado como secret no Cloudflare Pages), para manter github-stars
- * privado e fechar o ciclo sem intervenção manual.
+ * Sincronização: o catálogo chega aqui como PR aberto por uma GitHub App
+ * (só `content/catalog.json`) — ver docs/catalog-sync.md. Para atualizar à
+ * mão, substitui o ficheiro e abre um PR; o `npm run build` falha com um
+ * erro claro se o schema estiver errado.
  *
  * Por ser um import estático, um content/catalog.json em falta ou malformado
  * falha o build de imediato — nunca mostramos dados de exemplo como reais.
