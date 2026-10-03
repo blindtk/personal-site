@@ -432,7 +432,7 @@ export const ui = {
             years: '2017–18',
             name: 'Thales',
             role: 'Network Engineer',
-            note: 'Redes IP em metro e ferrovia',
+            note: 'Redes em metro e ferrovia',
             projects: [
               { flag: 'qa', name: 'Metro de Doha' },
               { flag: 'br', name: 'VLT Santos' },
@@ -1236,7 +1236,7 @@ export const ui = {
             years: '2017–18',
             name: 'Thales',
             role: 'Network Engineer',
-            note: 'IP networks in metro and rail',
+            note: 'Networks in metro and rail',
             projects: [
               { flag: 'qa', name: 'Doha Metro' },
               { flag: 'br', name: 'VLT Santos' },
