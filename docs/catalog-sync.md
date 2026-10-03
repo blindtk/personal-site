@@ -39,8 +39,9 @@ records each catalog update.
    `.github/workflows/update-catalog.yml` and runs after the `catalog`
    job. It validates the shape (mirrors `assertCatalogShape()` in
    `static/src/lib/catalog.ts` — keep the two in step), clones this repo
-   over the deploy key with GitHub's SSH host key pinned, copies the one
-   file, and pushes to `main` only if it changed. It runs on the same
+   over HTTPS, copies the one file and **runs `npm run build` with it**.
+   Only if that passes, and the file changed, does it push to `main` over
+   the deploy key (GitHub's SSH host key pinned). It runs on the same
    self-hosted runner, with the key in a job-private directory removed on
    exit.
 
@@ -49,6 +50,6 @@ records each catalog update.
 | What breaks | What happens |
 | --- | --- |
 | Generator changes the schema | The shape check fails in `github-stars`; nothing is pushed, `main` is untouched. |
-| The shape check passes but a nested field is wrong | Pages build fails on `main`; the previous deployment stays live. Fix forward in `github-stars` or revert the commit. |
+| The shape check passes but a nested field breaks the site | The build step fails in `github-stars`; nothing is pushed, `main` is untouched. |
 | Deploy key missing from the ruleset bypass | Push is rejected; the workflow fails visibly. |
 | Key leaked | It can write to this repo only: delete it in Deploy keys and rotate the secret. |
