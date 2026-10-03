@@ -486,7 +486,6 @@ export const ui = {
       demo: 'demo',
       live: 'painel ao vivo',
       open: 'ver projeto',
-      systemBadge: 'sistema',
       back: '← Voltar aos projetos',
     },
     awards: {
@@ -1291,7 +1290,6 @@ export const ui = {
       demo: 'demo',
       live: 'live panel',
       open: 'view project',
-      systemBadge: 'system',
       back: '← Back to projects',
     },
     awards: {
