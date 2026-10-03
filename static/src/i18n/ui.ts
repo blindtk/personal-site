@@ -412,21 +412,21 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identidade',
       location: 'Porto, Portugal',
-      bio: 'Protejo infraestrutura crítica rodoviária, da firewall ao SIEM e do desenho do controlo à resposta ao incidente. Vim das redes de metro e ferrovia, onde aprendi que uma falha não é um alerta: é um sistema parado e milhares de pessoas à espera. Quase todo esse trabalho é confidencial, por isso é aqui que mostro como o faço.',
+      bio: 'Desenho e defendo a segurança de infraestruturas rodoviárias, da rede ao endpoint e da prevenção à resposta a incidentes. Comecei nas redes de metro e ferrovia, onde aprendi que uma falha não é um simples alerta: é um sistema parado e milhares de pessoas à espera. Este site é onde mostro como trabalho.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP'],
       // Nomeia em vez de contar — a credencial mais forte (CCDL2, com badge)
       // vem primeiro; NIS2 como diferenciador de setor.
       chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Nomes de vendors/plataformas — o payload de palavras-chave que um
       // recrutador pesquisa (Splunk, Entra ID, …), ausente dos chips acima.
-      stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
+      stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure',
       // Cada paragem é uma empresa e, dentro dela, os projetos em que
       // trabalhei. A bandeira identifica a rede do projeto, não uma morada,
       // por isso só os projetos a levam. flag = código do SVG em
       // public/flags/ (render consistente entre sistemas; o emoji nativo
       // variava com o OS).
       journey: {
-        title: 'Percurso · de redes de transporte a segurança',
+        title: 'Percurso',
         items: [
           {
             years: '2017–18',
@@ -452,14 +452,14 @@ export const ui = {
             years: '2020',
             name: 'Hardsecure',
             role: 'Cyber Security Engineer',
-            note: 'Firewalls de nova geração e testes de intrusão internos',
+            note: 'Firewalls e offensive hacking',
             projects: [],
           },
           {
             years: '2020–hoje',
             name: 'Ascendi',
             role: 'Information Security Engineer',
-            note: 'Segurança de infraestruturas críticas rodoviárias',
+            note: 'Segurança de infraestruturas rodoviárias',
             projects: [],
           },
         ] as JourneyStop[],
@@ -1216,21 +1216,21 @@ export const ui = {
       metaTitle: 'Information Security Engineer',
       identity: 'identity',
       location: 'Porto, Portugal',
-      bio: 'I protect critical road infrastructure, from the firewall to the SIEM and from designing the control to responding to the incident. I came up through metro and rail networks, where I learned that a failure isn’t an alert: it’s a stopped system and thousands of people left waiting. Almost all of that work is confidential, so this is where I show how I do it.',
+      bio: 'I design and defend the security of road infrastructure, from the network to the endpoint and from prevention to incident response. I started in metro and rail networks, where I learned that a failure isn’t just an alert: it’s a stopped system and thousands of people left waiting. This site is where I show how I work.',
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP'],
       // Names instead of counts — the strongest credential (CCDL2,
       // badge-verified) leads; NIS2 as the sector differentiator.
       chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
       // Vendor/platform names — the keyword payload a recruiter searches
       // for (Splunk, Entra ID, …), missing from the chips above.
-      stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure · Kubernetes',
+      stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure',
       // Each stop is a company and, inside it, the projects I worked on. The
       // flag identifies the project's network, not an address, so only the
       // projects carry it. flag = code of the SVG in public/flags/
       // (consistent rendering across systems; native emoji varied with the
       // OS).
       journey: {
-        title: 'Journey · from transport networks to security',
+        title: 'Journey',
         items: [
           {
             years: '2017–18',
@@ -1256,14 +1256,14 @@ export const ui = {
             years: '2020',
             name: 'Hardsecure',
             role: 'Cyber Security Engineer',
-            note: 'Next-generation firewalls and internal penetration tests',
+            note: 'Firewalls and offensive hacking',
             projects: [],
           },
           {
             years: '2020–now',
             name: 'Ascendi',
             role: 'Information Security Engineer',
-            note: 'Critical road-infrastructure security',
+            note: 'Road-infrastructure security',
             projects: [],
           },
         ] as JourneyStop[],

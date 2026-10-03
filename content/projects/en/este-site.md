@@ -1,6 +1,6 @@
 ---
 title: 'This site'
-description: 'A personal site run like a production system: strict CSP and verifiable evidence.'
+description: 'A static personal site on Cloudflare Pages, secure by design: strict CSP, no trackers and verifiable evidence.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
