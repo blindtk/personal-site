@@ -5,16 +5,17 @@ import type { Lang } from '../config';
  * O conteúdo longo (posts, sobre, projetos) vive em /content — isto é só UI.
  */
 /**
- * Uma paragem do percurso da Home: a empresa (ou a função atual) e, dentro
- * dela, os projetos em que trabalhei. A bandeira identifica a rede do
- * projeto, não onde vivi; só os projetos a levam.
+ * Uma paragem do percurso da Home: a empresa (ou a função atual), uma linha
+ * sobre o trabalho e, dentro dela, os projetos em que trabalhei. A bandeira
+ * identifica a rede do projeto, não onde vivi; só os projetos a levam, e não
+ * têm descrição própria porque é a mesma para todos os da empresa.
  */
 export interface JourneyStop {
   years: string;
   name: string;
   role: string;
   note?: string;
-  projects: { flag: string; name: string; note: string }[];
+  projects: { flag: string; name: string }[];
 }
 
 export const ui = {
@@ -429,21 +430,30 @@ export const ui = {
         items: [
           {
             years: '2017–18',
-            name: 'Thales / Altran',
+            name: 'Thales',
             role: 'Network Engineer',
+            note: 'Redes IP em metro e ferrovia',
             projects: [
-              { flag: 'qa', name: 'Metro de Doha', note: 'Redes IP e WiFi móvel (BBRS)' },
-              { flag: 'br', name: 'VLT Santos', note: 'Redes IP em ferrovia ligeira' },
+              { flag: 'qa', name: 'Metro de Doha' },
+              { flag: 'br', name: 'VLT Santos' },
             ],
           },
           {
             years: '2019–20',
             name: 'Efacec',
             role: 'Systems Engineer',
+            note: 'Redes e segurança em metro ligeiro',
             projects: [
-              { flag: 'dk', name: 'Odense Letbane', note: 'Redes e segurança em metro ligeiro' },
-              { flag: 'no', name: 'Bergen D42', note: 'Redes e segurança em metro ligeiro' },
+              { flag: 'dk', name: 'Odense Letbane' },
+              { flag: 'no', name: 'Bergen D42' },
             ],
+          },
+          {
+            years: '2020',
+            name: 'Hardsecure',
+            role: 'Cyber Security Engineer',
+            note: 'Firewalls de nova geração e testes de intrusão internos',
+            projects: [],
           },
           {
             years: '2020–hoje',
@@ -1229,21 +1239,30 @@ export const ui = {
         items: [
           {
             years: '2017–18',
-            name: 'Thales / Altran',
+            name: 'Thales',
             role: 'Network Engineer',
+            note: 'IP networks in metro and rail',
             projects: [
-              { flag: 'qa', name: 'Doha Metro', note: 'IP networks & mobile WiFi (BBRS)' },
-              { flag: 'br', name: 'VLT Santos', note: 'IP networks in light rail' },
+              { flag: 'qa', name: 'Doha Metro' },
+              { flag: 'br', name: 'VLT Santos' },
             ],
           },
           {
             years: '2019–20',
             name: 'Efacec',
             role: 'Systems Engineer',
+            note: 'Networks and security in light metro',
             projects: [
-              { flag: 'dk', name: 'Odense Letbane', note: 'Light-metro networks & security' },
-              { flag: 'no', name: 'Bergen D42', note: 'Light-metro networks & security' },
+              { flag: 'dk', name: 'Odense Letbane' },
+              { flag: 'no', name: 'Bergen D42' },
             ],
+          },
+          {
+            years: '2020',
+            name: 'Hardsecure',
+            role: 'Cyber Security Engineer',
+            note: 'Next-generation firewalls and internal penetration tests',
+            projects: [],
           },
           {
             years: '2020–now',
