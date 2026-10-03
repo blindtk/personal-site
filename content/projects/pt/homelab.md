@@ -11,24 +11,24 @@ ponto pequeno, o que faço no trabalho: segmentação de rede, acesso remoto
 controlado, automação e verificação. O desenho e as decisões estão
 documentados num repositório próprio.
 
-<svg class="diagram-homelab" viewBox="0 0 640 214" role="img" aria-label="Esquema simplificado do homelab: uma firewall que liga quatro segmentos (dados, cópias, experiências e administração) e bloqueia tudo por omissão">
+<svg class="diagram-homelab" viewBox="0 0 640 214" role="img" aria-label="Esquema simplificado do homelab: uma firewall que liga quatro segmentos (vault, archive, workshop e bench) e bloqueia tudo por omissão">
   <rect class="diagram-node" x="40" y="20" width="560" height="44" rx="6"></rect>
   <text class="diagram-node-title" x="320" y="47" text-anchor="middle">firewall · deny all por omissão</text>
   <path class="diagram-edge" d="M80,64 L80,110"></path>
   <rect class="diagram-node" x="12" y="110" width="136" height="84" rx="6"></rect>
-  <text class="diagram-node-title" x="80" y="146" text-anchor="middle">dados</text>
-  <text class="diagram-node-sub" x="80" y="164" text-anchor="middle">o que não pode perder-se</text>
+  <text class="diagram-node-title" x="80" y="146" text-anchor="middle">vault</text>
+  <text class="diagram-node-sub" x="80" y="164" text-anchor="middle">o que não se perde</text>
   <path class="diagram-edge" d="M240,64 L240,110"></path>
   <rect class="diagram-node" x="172" y="110" width="136" height="84" rx="6"></rect>
-  <text class="diagram-node-title" x="240" y="146" text-anchor="middle">cópias</text>
+  <text class="diagram-node-title" x="240" y="146" text-anchor="middle">archive</text>
   <text class="diagram-node-sub" x="240" y="164" text-anchor="middle">cópia do que importa</text>
   <path class="diagram-edge" d="M400,64 L400,110"></path>
   <rect class="diagram-node" x="332" y="110" width="136" height="84" rx="6"></rect>
-  <text class="diagram-node-title" x="400" y="146" text-anchor="middle">experiências</text>
-  <text class="diagram-node-sub" x="400" y="164" text-anchor="middle">onde se testa e se parte</text>
+  <text class="diagram-node-title" x="400" y="146" text-anchor="middle">workshop</text>
+  <text class="diagram-node-sub" x="400" y="164" text-anchor="middle">para testar e partir</text>
   <path class="diagram-edge" d="M560,64 L560,110"></path>
   <rect class="diagram-node diagram-node--prod" x="492" y="110" width="136" height="84" rx="6"></rect>
-  <text class="diagram-node-title" x="560" y="146" text-anchor="middle">administração</text>
+  <text class="diagram-node-title" x="560" y="146" text-anchor="middle">bench</text>
   <text class="diagram-node-sub" x="560" y="164" text-anchor="middle">de onde giro tudo</text>
 </svg>
 
@@ -39,7 +39,8 @@ documentados num repositório próprio.
 Nenhuma máquina confia noutra só por estar na mesma rede. A firewall nega
 todo o tráfego entre segmentos por omissão (deny all) e só abre o que cada
 função precisa, com uma regra explícita. Cada Raspberry Pi tem um
-papel e vive no seu segmento, e os portáteis são a administração.
+papel (vault, archive ou workshop) e vive no seu segmento, e os portáteis
+formam o bench, de onde administro.
 
 ## O que usa
 
@@ -49,14 +50,14 @@ papel e vive no seu segmento, e os portáteis são a administração.
   definidas por ACL.
 - **Docker.** Os serviços correm em contentores, geridos com Compose, cada um
   com o seu utilizador.
-- **Vaultwarden.** O gestor de credenciais, auto-alojado e num segmento só
-  dele.
+- **Vaultwarden.** O gestor de credenciais, auto-alojado e a viver no
+  vault.
 - **Runners do GitHub Actions.** O CI próprio, que também aplica as
   configurações nas máquinas. Executa código de terceiros, como as
-  dependências dos workflows, por isso fica no segmento que posso partir sem
+  dependências dos workflows, por isso fica no workshop, que posso partir sem
   perder nada.
-- **k3s.** Um Kubernetes leve para aprender e testar, longe do que é
-  insubstituível.
+- **k3s.** Um Kubernetes leve para aprender e testar, no workshop e
+  longe do que é insubstituível.
 
 ## Como o mantenho
 
