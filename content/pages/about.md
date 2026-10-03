@@ -150,9 +150,9 @@ table says where each one comes into the work and at what depth.
 | Framework | Where it comes into the work | Depth |
 | --- | --- | --- |
 | ISO 27001 | Basis for the security policies and procedures, and for organising technical controls by domain. | Reference |
-| NIS2 | Regulatory context of the sector I work in, transport infrastructure. It shapes control and reporting priorities. | Context |
+| NIS2 | Regulatory context of the sector I work in, critical transport infrastructure. It shapes control and reporting priorities. | Context |
 | CIS Controls & Benchmarks | Basis for hardening systems and network equipment, and for checking configurations. | Applied |
-| CISA CPG | Point of comparison for prioritising baseline controls in infrastructure. | Reference |
+| CISA CPG | Point of comparison for prioritising baseline controls in critical infrastructure. | Reference |
 | OWASP Top 10 | Common vocabulary for classifying what vulnerability assessments and internal tests find, and for tuning WAF rules. | Applied |
 | MITRE ATT&CK | Mapping detection coverage and structuring incident analysis. The detail, technique by technique, is in the [heatmap](/en/attack/). | Applied |
 

@@ -151,9 +151,9 @@ profundidade.
 | Referencial | Onde entra no trabalho | Profundidade |
 | --- | --- | --- |
 | ISO 27001 | Base para as políticas e procedimentos de segurança e para organizar os controlos técnicos por domínio. | Referência |
-| NIS2 | Enquadramento regulatório do setor em que trabalho, a infraestrutura de transportes. Orienta as prioridades de controlo e de reporte. | Enquadramento |
+| NIS2 | Enquadramento regulatório do setor em que trabalho, a infraestrutura crítica de transportes. Orienta as prioridades de controlo e de reporte. | Enquadramento |
 | CIS Controls & Benchmarks | Base para o hardening de sistemas e equipamentos de rede, e para verificar configurações. | Aplicado |
-| CISA CPG | Termo de comparação para priorizar os controlos de base em infraestrutura. | Referência |
+| CISA CPG | Termo de comparação para priorizar os controlos de base em infraestrutura crítica. | Referência |
 | OWASP Top 10 | Vocabulário comum para classificar o que a análise de vulnerabilidades e os testes internos encontram, e para afinar regras de WAF. | Aplicado |
 | MITRE ATT&CK | Mapear a cobertura de deteção e estruturar a análise de incidentes. O detalhe, técnica a técnica, está no [heatmap](/attack/). | Aplicado |
 
