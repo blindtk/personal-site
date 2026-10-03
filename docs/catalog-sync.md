@@ -35,86 +35,20 @@ records each catalog update.
    `main` ruleset, add **Deploy keys** to the bypass list (mode: always).
    A bypass actor can push anything, so the only guard on scope is the
    workflow itself, which stages `content/catalog.json` and nothing else.
-3. Add the workflow below to `github-stars`.
-
-## Workflow for `github-stars`
-
-Name per ADR 0021: `.github/workflows/update-personal-site-catalog.yml`.
-Pin every action to a SHA like the rest of the repos (checkout shown
-unpinned for readability). Trigger it from the end of the existing weekly
-job, or with `workflow_run` on it. Run it after the catalog is committed.
-
-```yaml
-name: update-personal-site-catalog
-
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: [update-catalog] # the weekly job's name
-    types: [completed]
-
-permissions: {}
-
-concurrency:
-  group: update-personal-site-catalog
-  cancel-in-progress: false
-
-jobs:
-  push-catalog:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@<sha> # github-stars (catalog source)
-        with:
-          persist-credentials: false
-
-      - name: Validate catalog shape
-        # Mirrors assertCatalogShape() in static/src/lib/catalog.ts. A bad
-        # file on main would fail the Pages build, so refuse to push it.
-        run: |
-          jq -e '
-            (.generatedAt | type == "string") and
-            (.user | type == "string") and
-            (.totalRepos | type == "number") and
-            (.categories | type == "array" and length > 0)
-          ' catalog/catalog.json >/dev/null
-
-      - name: Push to personal-site
-        env:
-          DEPLOY_KEY: ${{ secrets.PERSONAL_SITE_DEPLOY_KEY }}
-        run: |
-          set -euo pipefail
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-          git clone --depth 1 git@github.com:blindtk/personal-site.git "$RUNNER_TEMP/site"
-          cp catalog/catalog.json "$RUNNER_TEMP/site/content/catalog.json"
-
-          cd "$RUNNER_TEMP/site"
-          if git diff --quiet -- content/catalog.json; then
-            echo "Catalog unchanged; nothing to push."
-            exit 0
-          fi
-          git config user.name  "github-stars[bot]"
-          git config user.email "github-stars@users.noreply.github.com"
-          git add -- content/catalog.json
-          git commit -m "content: update GitHub stars catalog"
-          git push origin HEAD:main
-```
-
-`generatedAt` changes on every run, so the diff is never empty while the
-generator stamps a fresh timestamp. If that becomes noisy, make the
-generator keep the old timestamp when the repos are identical.
+3. The `push-to-site` job lives in `github-stars`'s
+   `.github/workflows/update-catalog.yml` and runs after the `catalog`
+   job. It validates the shape (mirrors `assertCatalogShape()` in
+   `static/src/lib/catalog.ts` — keep the two in step), clones this repo
+   over the deploy key with GitHub's SSH host key pinned, copies the one
+   file, and pushes to `main` only if it changed. It runs on the same
+   self-hosted runner, with the key in a job-private directory removed on
+   exit.
 
 ## Failure modes
 
 | What breaks | What happens |
 | --- | --- |
-| Generator changes the schema | `jq` step fails in `github-stars`; nothing is pushed, `main` is untouched. |
-| `jq` check passes but a nested field is wrong | Pages build fails on `main`; the previous deployment stays live. Fix forward in `github-stars` or revert the commit. |
+| Generator changes the schema | The shape check fails in `github-stars`; nothing is pushed, `main` is untouched. |
+| The shape check passes but a nested field is wrong | Pages build fails on `main`; the previous deployment stays live. Fix forward in `github-stars` or revert the commit. |
 | Deploy key missing from the ruleset bypass | Push is rejected; the workflow fails visibly. |
 | Key leaked | It can write to this repo only: delete it in Deploy keys and rotate the secret. |
