@@ -1,7 +1,7 @@
 ---
 title: 'This site'
 description: 'A personal site run like a production system: strict CSP and verifiable evidence.'
-tags: ['astro', 'cloudflare']
+tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
 

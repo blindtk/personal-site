@@ -1,7 +1,7 @@
 ---
 title: 'Este site'
 description: 'Site pessoal gerido como sistema de produção: CSP estrita e provas verificáveis.'
-tags: ['astro', 'cloudflare']
+tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
 

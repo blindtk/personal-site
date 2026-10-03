@@ -1,7 +1,7 @@
 ---
 title: 'Threat Intel'
 description: 'Honeypot SSH/HTTP numa VPS própria e o feed público de ameaças que produz.'
-tags: ['honeypot', 'mitre-attack']
+tags: ['python', 'cowrie', 'stix']
 order: 2
 ---
 
