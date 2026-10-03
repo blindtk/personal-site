@@ -47,4 +47,4 @@ an experiment rather than a recurring control.
 - `content/**` excluded from review (`path_filters`) — it's editorial
   content, not code, per the CLAUDE.md rule.
 - Full reasoning behind the three-way comparison in
-  [`docs/security-review-2026-07-29.md`](../security-review-2026-07-29.md) §5.
+  §5 of the 2026-07-29 security review (not published).

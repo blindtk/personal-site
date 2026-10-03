@@ -99,18 +99,18 @@ test('createTerminal (pt): stars — resumo por categoria, filtro por substring,
   assert.deepEqual(await exec('stars nope'), { lines: ['categoria não encontrada: nope'] });
 });
 
-test('createTerminal (pt): comandos-espelho do site (attack/projetos/honeypot/provas)', async () => {
+test('createTerminal (pt): comandos-espelho do site (attack/projetos/intel/provas)', async () => {
   const { exec } = createTerminal(ctxPt);
   assert.deepEqual(await exec('attack'), {
     lines: [
-      'cobertura MITRE ATT&CK — 3 em produção, 2 em lab (5 técnicas):',
+      'cobertura MITRE ATT&CK: 3 em produção, 2 em lab (5 técnicas):',
       '  ● T1110   Brute Force  [Credential Access]',
-      '● produção · ○ lab — heatmap completo em /attack',
+      '● produção · ○ lab · heatmap completo em /attack',
     ],
   });
   assert.deepEqual(await exec('projetos'), { lines: ['1 projetos:', '  Este Site  →  /projetos/este-site/'] });
-  const hp = await exec('honeypot');
-  assert.ok(hp.lines.some((l) => l.includes('/perimetro')));
+  const hp = await exec('intel');
+  assert.ok(hp.lines.some((l) => l.includes('/projetos/threat-intel')));
   assert.deepEqual(await exec('provas'), {
     lines: ['último commit: abc1234', 'scan aos cabeçalhos ao vivo e workflows em /provas'],
   });
@@ -120,7 +120,7 @@ test('createTerminal (pt): open válido devolve { open }, inválido dá uso; sud
   const { exec } = createTerminal(ctxPt);
   assert.deepEqual(await exec('open subnets'), { open: 'subnets', lines: ['a abrir subnets…'] });
   assert.deepEqual(await exec('open bogus'), {
-    lines: ['uso: open <subnets|hashes|encoder|passwords|email-headers|sobre|roadmap>'],
+    lines: ['uso: open <subnets|hashes|passwords|email-headers|sobre|roadmap>'],
   });
   assert.deepEqual(await exec('sudo'), {
     lines: ['daniel is not in the sudoers file. This incident will be reported. 🙃'],

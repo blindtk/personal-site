@@ -17,8 +17,8 @@ export const SITE = {
     en: 'Information Security Engineer',
   },
   description: {
-    pt: 'Site pessoal de Daniel Malaco — Information Security Engineer. Blog, projetos e ferramentas de rede e segurança.',
-    en: 'Personal site of Daniel Malaco — Information Security Engineer. Blog, projects, and networking/security tools.',
+    pt: 'Site pessoal de Daniel Malaco, Information Security Engineer. Blog, projetos e ferramentas de rede e segurança.',
+    en: 'Personal site of Daniel Malaco, Information Security Engineer. Blog, projects, and networking/security tools.',
   },
   /** Contactos e redes. Deixa vazio ('') para esconder. */
   email: 'me@danielmala.co',
@@ -30,11 +30,14 @@ export const SITE = {
   /** Perfil Credly — usado na página Certificações e nos Contactos para
    *  verificação independente dos badges. Deixa '' para esconder. */
   credly: 'https://www.credly.com/users/daniel-malaco/badges/credly',
+  /** Painel público do honeypot externo (repo honeypot-vps-infra): feed,
+   *  relatório e dossiês. Linkado a partir do projeto Honeypot. */
+  honeypotIntel: 'https://intel.danielmala.co/',
   /** Página de contactos: estado atual e chave PGP. */
   contact: {
     availability: {
-      pt: 'Aberto a conversas sobre segurança — oportunidades, projetos ou troca de ideias.',
-      en: 'Open to conversations about security — opportunities, projects, or trading notes.',
+      pt: 'Aberto a conversas sobre segurança: oportunidades, projetos ou troca de ideias.',
+      en: 'Open to conversations about security: opportunities, projects or trading notes.',
     },
     responseTime: {
       pt: 'normalmente 24–48 h, em dias úteis',

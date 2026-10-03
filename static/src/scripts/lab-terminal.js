@@ -14,7 +14,7 @@ import { codecs } from './encoding.js';
 // Flag de CTF: não aparece no help; descobre-se com `ls -la` + `cat .flag`.
 const FLAG = 'flag{wh04m1_l4b_pwn3d}';
 
-const APPS = ['subnets', 'hashes', 'encoder', 'passwords', 'email-headers', 'sobre', 'roadmap'];
+const APPS = ['subnets', 'hashes', 'passwords', 'email-headers', 'sobre', 'roadmap'];
 
 async function sha(alg, text) {
   const bytes = new TextEncoder().encode(text);
@@ -39,18 +39,18 @@ export function createTerminal(ctx) {
     sudo: 'daniel is not in the sudoers file. This incident will be reported. 🙃',
     help: [
       pt ? 'comandos disponíveis:' : 'available commands:',
-      '  whoami                     ' + (pt ? '— quem sou' : '— who I am'),
-      '  ls [-la]                   ' + (pt ? '— listar ficheiros' : '— list files'),
-      `  cat <${pt ? 'ficheiro' : 'file'}>              ` + (pt ? '— mostrar um ficheiro' : '— print a file'),
-      '  subnet <ip/cidr>           ' + (pt ? '— calcular subnet (ex: subnet 10.0.0.1/20)' : '— subnet math (e.g. subnet 10.0.0.1/20)'),
-      '  hash <alg> <texto>         — md5 | sha1 | sha256 | sha512',
-      '  encode <fmt> <texto>       — base64 | url | hex',
-      '  decode <fmt> <texto>       — base64 | url | hex',
-      '  stars [categoria]          ' + (pt ? '— catálogo de estrelas do GitHub' : '— GitHub stars catalog'),
-      '  attack [--list]            ' + (pt ? '— cobertura MITRE ATT&CK' : '— MITRE ATT&CK coverage'),
-      '  projetos                   ' + (pt ? '— listar projetos do site' : '— list the site projects'),
-      '  honeypot                   ' + (pt ? '— o que o honeypot apanha' : '— what the honeypot catches'),
-      '  provas                     ' + (pt ? '— transparência verificável' : '— verifiable transparency'),
+      '  whoami                     ' + (pt ? 'quem sou' : 'who I am'),
+      '  ls [-la]                   ' + (pt ? 'listar ficheiros' : 'list files'),
+      `  cat <${pt ? 'ficheiro' : 'file'}>              ` + (pt ? 'mostrar um ficheiro' : 'print a file'),
+      '  subnet <ip/cidr>           ' + (pt ? 'calcular subnet (ex: subnet 10.0.0.1/20)' : 'subnet math (e.g. subnet 10.0.0.1/20)'),
+      '  hash <alg> <texto>         md5 | sha1 | sha256 | sha512',
+      '  encode <fmt> <texto>       base64 | url | hex',
+      '  decode <fmt> <texto>       base64 | url | hex',
+      '  stars [categoria]          ' + (pt ? 'catálogo de estrelas do GitHub' : 'GitHub stars catalog'),
+      '  attack [--list]            ' + (pt ? 'cobertura MITRE ATT&CK' : 'MITRE ATT&CK coverage'),
+      '  projetos                   ' + (pt ? 'listar projetos do site' : 'list the site projects'),
+      '  intel                      ' + (pt ? 'o honeypot e o feed de threat intel' : 'the honeypot and the threat-intel feed'),
+      '  provas                     ' + (pt ? 'transparência verificável' : 'verifiable transparency'),
       `  open <${APPS.join('|')}>`,
       '  clear · help',
     ],
@@ -170,12 +170,12 @@ export function createTerminal(ctx) {
         const a = ctx.attack;
         if (!a || !a.techniques?.length) return { lines: [pt ? 'sem dados ATT&CK.' : 'no ATT&CK data.'] };
         const head = pt
-          ? `cobertura MITRE ATT&CK — ${a.prod} em produção, ${a.exp} em lab (${a.total} técnicas):`
-          : `MITRE ATT&CK coverage — ${a.prod} in production, ${a.exp} in lab (${a.total} techniques):`;
+          ? `cobertura MITRE ATT&CK: ${a.prod} em produção, ${a.exp} em lab (${a.total} técnicas):`
+          : `MITRE ATT&CK coverage: ${a.prod} in production, ${a.exp} in lab (${a.total} techniques):`;
         const rows = a.techniques.map(
           (te) => `  ${te.level === 'prod' ? '●' : '○'} ${te.id.padEnd(7)} ${te.name}  [${te.tactic}]`,
         );
-        return { lines: [head, ...rows, pt ? '● produção · ○ lab — heatmap completo em /attack' : '● production · ○ lab — full heatmap at /attack'] };
+        return { lines: [head, ...rows, pt ? '● produção · ○ lab · heatmap completo em /attack' : '● production · ○ lab · full heatmap at /attack'] };
       }
 
       case 'projetos':
@@ -188,22 +188,21 @@ export function createTerminal(ctx) {
         };
       }
 
+      case 'intel':
       case 'honeypot': {
         return {
           lines: pt
             ? [
-                'honeypot — endpoints-isco que registam scan automático (só metadados:',
-                'país, ASN e path; nenhum IP é armazenado).',
-                'o painel ao vivo (honeypot + estado da Cloudflare) precisa do Worker',
-                'publicado. a garantia de privacidade está coberta por testes.',
-                'detalhes em /perimetro',
+                'threat intel: sensor numa VPS à parte: acesso SSH emulado, um',
+                'labirinto HTTP e tarpits. o que apanha é enriquecido, mapeado',
+                'para MITRE ATT&CK e publicado em intel.danielmala.co.',
+                'detalhes em /projetos/threat-intel',
               ]
             : [
-                'honeypot — decoy endpoints that log automated scanning (metadata',
-                'only: country, ASN and path; no IP is ever stored).',
-                'the live panel (honeypot + Cloudflare status) needs the Worker',
-                'published. the privacy guarantee is covered by tests.',
-                'details at /perimeter',
+                'threat intel: a sensor on its own VPS: an emulated SSH access, an',
+                'HTTP maze and tarpits. what it catches is enriched, mapped to',
+                'MITRE ATT&CK and published at intel.danielmala.co.',
+                'details at /en/projects/threat-intel',
               ],
         };
       }

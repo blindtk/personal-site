@@ -21,18 +21,16 @@ flowchart TB
 
     subgraph upstream["External APIs (read-only)"]
         hibp["HIBP range API\n(k-anonymity)"]
-        feeds["CISA KEV / NVD"]
         crtsh["crt.sh (CT logs)"]
         cfgraphql["Cloudflare GraphQL\nAnalytics API"]
     end
 
     visitor -->|HTTPS| waf
-    scanner -->|decoy paths, /api/*| waf
+    scanner -->|probes, /api/*| waf
     waf --> pages
-    waf -->|"/api/*, decoy paths"| worker
+    waf -->|"/api/*"| worker
     worker <--> kv
     worker --> hibp
-    worker --> feeds
     worker --> crtsh
     worker -->|"CF_API_TOKEN (read-only)"| cfgraphql
 
@@ -47,6 +45,12 @@ flowchart TB
     gh -.->|"Workers Builds: automatic\ndeploy on push to main"| worker
     gh -.->|"Pages: automatic deploy\non push to main"| pages
 ```
+
+The honeypot is not in this diagram on purpose: since
+[ADR 0022](adr/0022-retire-internal-honeypot.md) it is a separate system
+(`honeypot-vps-infra` — its own VPS, domain `intel.danielmala.co` and
+privacy policy) with no code, data or credential shared with this one. The
+site only links to it.
 
 ## Trust boundaries
 

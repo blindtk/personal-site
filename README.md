@@ -32,7 +32,7 @@ not accidental — see
 | --- | --- | --- |
 | `content/` | All editorial content in markdown/JSON (posts, about, projects, links, ATT&CK/detection data) — **the single source of truth** | ✅ active |
 | `static/` | The static site (Astro): blog, 10 security tools, all pages | ✅ active |
-| `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): honeypot, hostile-traffic map, CT watch, SOC ticker | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
+| `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): Cloudflare/firewall panels, CT watch, Web Vitals, the password-check relay and the mirror | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
 ## Architecture, threat model, and the four decisions worth reading
 
@@ -57,23 +57,24 @@ these four say the most about how this repository actually thinks:
    provenance between the commit CI tested and what's actually running — is
    tracked as an open item in [`docs/threat-model.md`](docs/threat-model.md),
    not hidden.
-2. **[ADR 0004](docs/adr/0004-zero-pii-honeypot.md) / [ADR 0020](docs/adr/0020-honeypot-public-ip.md) — a privacy decision revisited on purpose, not forgotten.**
-   The Cloudflare Status/firewall panel still never stores a visitor's
-   IP (ADR 0004, unchanged) — that data wasn't needed for the aggregates
-   the dashboards show. The honeypot's own decoy-path events are
-   different: they now record and publish the source IP (ADR 0020), so a
-   separate external Cowrie honeypot project can correlate hits between
-   the two sensors. Same rigor either way — a retention window shorter
-   than that sibling project's, because HTTP-scanning botnets are more
-   likely to run on compromised home devices than SSH ones are.
+2. **[ADR 0020](docs/adr/0020-honeypot-public-ip.md) → [ADR 0022](docs/adr/0022-retire-internal-honeypot.md) — personal data kept only while it has a use.**
+   The Cloudflare Status/firewall panel never stores a visitor's IP
+   ([ADR 0004](docs/adr/0004-zero-pii-honeypot.md)). For a while the
+   site's own decoy paths did: ADR 0020 published their source IPs so they
+   could be correlated with the external Cowrie honeypot. That correlation
+   was never built on either side, so ADR 0022 retired the internal
+   honeypot, had the Worker delete the stored list, and left the job to
+   the external sensor (`honeypot-vps-infra`), which runs on its own
+   machine and domain under its own privacy policy. The Worker now keeps
+   no IP address at all.
 3. **[ADR 0001 — CSP without inline, by elimination, not cataloguing](docs/adr/0001-csp-sem-inline.md).**
    Rather than hash every inline `<script>`/`<style>` Astro emits, the site
    eliminates inline output entirely, so the CSP is one static line with no
    `unsafe-inline` and no hash list to keep in sync as pages change.
 4. **[ADR 0003 — rate limiting in KV, with fail-closed, as a deliberate stopgap](docs/adr/0003-rate-limit-kv-vs-nativo.md).**
    A hand-rolled rate limiter with a documented migration path to a native
-   Cloudflare rule, plus the incident that shaped it: the honeypot came close
-   to the Workers KV free-tier daily write ceiling before launch, diagnosed
+   Cloudflare rule, plus the incident that shaped it: the (since retired)
+   honeypot came close to the Workers KV free-tier daily write ceiling before launch, diagnosed
    and fixed by aligning cache TTLs to the cron interval rather than by
    reaching for a bigger plan.
 
@@ -84,11 +85,7 @@ set of ADRs are disproportionate for what a personal site does — unless the
 disproportion *is* the point. It is: this repository exists to demonstrate
 security-engineering practice at a scale where the controls become
 meaningful, not to serve a blog efficiently.
-The honeypot's decoy paths (`/wp-login.php`, `/.env`, `/admin`,
-`/phpmyadmin/`, `/.git/config`) are published on purpose, not despite being a
-honeypot — they're the standard paths every commodity scanner already probes
-blindly, so explaining them costs nothing and demonstrates the technique
-instead of hiding it. If any of the above sounds interesting to talk through,
+If any of the above sounds interesting to talk through,
 that's the intent — every decision here is meant to survive being asked about.
 
 ## Run it locally
@@ -158,10 +155,10 @@ Mozilla Observatory, Hardenize, DNSViz, ImmuniWeb, and more — are in
 
 ### Interactive tools
 
-`/ferramentas/` (`/en/tools/`) has **10 tools**. 8 run entirely client-side —
-subnet calculator, hash functions, encoder/decoder, password strength,
-email-header analyzer, EXIF viewer, CSP builder, passkey/WebAuthn inspector —
-no network calls, no backend dependency. The other 2 talk to the Worker
+`/ferramentas/` (`/en/tools/`) has **8 tools**. 6 run entirely client-side
+(subnet calculator, hash functions, password generator, email-header
+analyzer, EXIF viewer, CSP analyser), with no network calls and no backend
+dependency. The other 2 talk to the Worker
 because the check genuinely can't run in a browser: `pwned` (k-anonymity
 breach check) and `mirror` (what the server sees about you). The two
 server-backed ones are marked with a "requires server" badge on the tools
@@ -174,21 +171,16 @@ The site also runs several live cybersecurity showcases:
 | Feature | Where | Needs the Worker? |
 | --- | --- | --- |
 | **MITRE ATT&CK heatmap** | `/attack` | No — 100% static (`content/attack.json`) |
-| **Perimeter** (honeypot panel, hostile-traffic map, detection rules, Cloudflare stats, trends, logs) | `/perimetro/` (`/en/perimeter/`) | Yes — `/api/honeypot`, `/api/map`, `/api/cf-stats`, `/api/threat-intel`, `/api/ct` |
-| **SOC ticker** (CISA KEV + NVD) | top of Security page | Yes — `/api/ticker` |
+| **Cloudflare** (zone threats, firewall by action/source/country/network, mitigation per day) | `/este-site/cloudflare/` (`/en/this-site/cloudflare/`) | Yes — `/api/cf-stats`, `/api/threat-intel` |
+| **Certificate Transparency watch** | `/este-site/provas/` (`/en/this-site/evidence/`) | Yes — `/api/ct` |
+| **Threat Intel** (honeypot + public feed, external) | [`intel.danielmala.co`](https://intel.danielmala.co/), described on `/projetos/threat-intel/` | No — a separate VPS (`honeypot-vps-infra`), not this Worker |
 
 The Worker-backed features degrade gracefully when it isn't reachable (they
 show a fallback note instead of breaking). The backend, its endpoints, its
-privacy stance — no IP ever stored for the Cloudflare Status/firewall
-panel (ADR 0004); the honeypot's own decoy-path events are the deliberate
-exception, publishing the source IP for cross-honeypot correlation
-(ADR 0020) — and its deploy are documented in
+privacy stance — no IP address stored anywhere (ADR 0004, ADR 0022) — and
+its deploy are documented in
 [`dynamic/worker/README.md`](dynamic/worker/README.md). The ATT&CK heatmap
 always works, since it's fully static.
-
-**Note on the honeypot's decoys being public:** see
-["Why so much for a personal site?"](#why-so-much-for-a-personal-site) above —
-this is a deliberate stance, not an oversight.
 
 ## AI-assisted development
 
@@ -217,7 +209,6 @@ as-is, even if the logic is correct.
 - [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
 - [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
 - [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
-- [`docs/security-review-2026-07-29.md`](docs/security-review-2026-07-29.md) — the review that seeded the threat model
 
 ## Contributing
 

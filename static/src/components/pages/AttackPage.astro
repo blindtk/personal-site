@@ -54,14 +54,14 @@ const anchorFor = (id: string): string | undefined => {
                 id={anchorFor(tech.id)}
                 class={`atk-cell ${tech.level}`}
                 tabindex="0"
-                aria-label={`${tech.id} ${tech.name} — ${a.coveredBy}: ${tech.by[lang]}`}
+                aria-label={`${tech.id} ${tech.name}. ${a.coveredBy}: ${tech.by[lang]}`}
               >
                 <span class="atk-tid mono">{tech.id}</span>
                 <span class="atk-tname">{tech.name}</span>
                 <span class="atk-tip" role="tooltip">{a.coveredBy}: {tech.by[lang]}</span>
               </div>
             ) : (
-              <div id={anchorFor(tech.id)} class="atk-cell off" aria-label={`${tech.id} ${tech.name} — ${a.notCovered}`}>
+              <div id={anchorFor(tech.id)} class="atk-cell off" aria-label={`${tech.id} ${tech.name}. ${a.notCovered}`}>
                 <span class="atk-tid mono">{tech.id}</span>
                 <span class="atk-tname">{tech.name}</span>
               </div>

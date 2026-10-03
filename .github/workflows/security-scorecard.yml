@@ -6,7 +6,7 @@
 #
 # Resultado em Security → Code scanning (SARIF) e no dashboard público
 # securityscorecards.dev (publish_results). Ambos só possíveis com o
-# repositório público — ver docs/security-review-2026-07-29.md §4
+# repositório público — ver a revisão de segurança de 2026-07-29 (não publicada), §4
 # "OpenSSF Scorecard".
 name: security-scorecard
 

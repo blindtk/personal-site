@@ -39,6 +39,7 @@ const jsStrings = {
 ---
 
 <BaseLayout lang={lang} title={s.perfMetaTitle} altUrl={routes.performance[other]} active="performance" wide>
+  <SiteLayers lang={lang} current="performance" />
   <div class="page-head">
     <h1>{s.perfTitle}</h1>
     <p class="intro">{s.perfIntro}</p>
@@ -95,7 +96,6 @@ const jsStrings = {
     </Tabs>
   </div>
 
-  <SiteLayers lang={lang} current="performance" />
 </BaseLayout>
 
 <script>

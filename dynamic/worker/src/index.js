@@ -1,83 +1,39 @@
 // Cloudflare Worker — backend das features de segurança do site (Bloco 3).
 // Um só Worker, um só namespace KV (chaves com prefixo). Serve:
-//   · endpoints-isco do honeypot (404 + metadados; o IP de origem entra
-//     numa lista separada e é publicado — ADR 0020, ver comentário em
-//     recordHoneypot mais abaixo. Os buckets/eventos "normais" continuam
-//     sem IP, exatamente como sempre.)
-//   · /api/honeypot, /api/map  — painel + mapa de tráfego hostil
 //   · /api/pwned-range         — relay k-anónimo do HIBP (cache 24h por prefixo)
-//   · /api/ticker              — CISA KEV + NVD (cache 1h, sanitizado)
 //   · /api/ct                  — vigia CT: emissões de certificados p/ o domínio (cache 6h)
 //   · /api/cf-stats            — estado da zona Cloudflare: pedidos/cache/Worker (cache 6h)
-//   · /api/threat-intel        — dashboards de threat intel do honeypot + firewall 7d (cache 6h)
+//   · /api/threat-intel        — repartição da firewall da zona acumulada a 7d (cache 6h)
 //   · /api/vitals (GET)        — Core Web Vitals p75 (RUM, 7d)
 //   · /api/vitals (POST)       — beacon RUM first-party (agregados, sem PII)
+//   · /api/mirror              — o que o servidor vê deste pedido (sem guardar nada)
 //   · /api/health
-// Ver README.md para deploy (routes no domínio vs. workers.dev) e secrets.
+// O honeypot (paths-isco, lista de IPs, mapa e ticker SOC) saiu deste
+// Worker — ADR 0022: o sensor é agora só o honeypot externo
+// (honeypot-vps-infra). `purgeLegacyHoneypotKeys` apaga do KV o que ele
+// deixou. Ver README.md para deploy (routes no domínio) e secrets.
 
-import {
-  emptyBucket, addEvent, honeypotStats, mapData, threatIntel, THREAT_INTEL_HOURS, mergeFirewall7d,
-} from './lib/aggregate.js';
+import { mergeFirewall7d } from './lib/firewall.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, vitalsStats,
 } from './lib/vitals.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
-import { fetchTicker } from './lib/feeds.js';
 import { normalizePrefix, fetchRange } from './lib/pwned.js';
 import { fetchCtWatch } from './lib/ct.js';
 import { fetchCfStats } from './lib/cf-analytics.js';
 import { serverView } from './lib/mirror.js';
-import { clampInt, normalizeCountry, normalizeAsn, floorToWindow } from './lib/sanitize.js';
-import { techniqueForPath } from './lib/attack-map.js';
-import { renderNotFoundHtml, NOT_FOUND_CSP } from './lib/notfound.js';
-import { isDecoy, boundDecoyPath } from './lib/decoys.js';
 import { edgeCache, edgeKey, edgeGetJSON, edgePutJSON } from './lib/edgecache.js';
-import { isPublicIp } from './lib/ipguard.js';
-import {
-  emptyIpList, recordIpSighting, pruneExpiredIps, ipThreatList,
-} from './lib/ipthreat.js';
 
 const HOUR_MS = 3600_000;
 const DAY_MS = 86400_000;
-
-// Anonimização: os eventos do honeypot guardam o timestamp arredondado a
-// esta janela (5 min), para não permitir correlação por instante preciso.
-const ANON_WINDOW_MS = 5 * 60_000;
-
-// Cap global de escritas do honeypot por DIA (não por hora): limita
-// custo/abuso se alguém martelar os paths-isco. Ver lib/kvcap.js. O plano
-// Free tem um teto de ~1.000 escritas/dia PARA A CONTA INTEIRA, partilhado
-// com rate-limit/vitals/cron — um cap por HORA generoso (o valor antigo,
-// 500/h) deixava um único burst de scanners consumir sozinho vários dias de
-// quota (500 eventos × 4-5 escritas = até 2.500 escritas numa hora, mais do
-// que o teto diário inteiro). Por isso o cap passou a ser diário e mais
-// apertado: 60 eventos/dia × 5 escritas (4 dos buckets anónimos + 1 da
-// lista de IPs, ADR 0020) ≈ 300/dia, uma fatia do orçamento que deixa
-// espaço para o resto. Trade-off consciente: sob scanning pesado
-// sustentado, eventos a mais no mesmo dia são descartados (o 404 continua a
-// sair) — perde-se granularidade no Threat Intel, não a proteção do core.
-//
-// `max` em ESCRITAS, não eventos (auditoria de segurança 2026-09-25 — ver
-// lib/kvcap.js): cada evento gasta o seu custo real (4 puts, +1 com iplist),
-// o que dá os mesmos ~60 eventos/dia de antes, mas agora com a soma dos caps
-// a bater certo com o orçamento.
-const HONEYPOT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
-
-// ADR 0020 (docs/adr/0020-honeypot-public-ip.md): retenção da lista de
-// IPs, mais curta que a do projeto irmão (VPS externa, 60-90 dias — ver
-// docs/external-honeypot-vps.md §3). Scanners HTTP (o que este honeypot
-// apanha) têm mais chance de correr em IoT/routers domésticos
-// comprometidos do que os de força bruta SSH da VPS — janela mais curta
-// é a postura mais conservadora das duas, de propósito.
-const IP_RETENTION_MS = 30 * DAY_MS;
 
 // Timeout para fetches a montante (relay do HIBP em /api/pwned-range) — não
 // deixar um alvo lento pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
 
 // RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas POR
-// DIA (mesmo padrão do honeypot — ver comentário acima). Só agregados; ver
+// DIA (o plano Free tem ~1.000 escritas/dia para a conta inteira). Só agregados; ver
 // lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
 // (5.000/hora) media a resiliência a abuso, não o orçamento real do plano
 // Free — tráfego orgânico normal já bastava para estourar o teto diário
@@ -90,127 +46,41 @@ const VITALS_WRITE_COST = 2;
 
 // ---------- helpers de tempo/KV ----------
 
-const hourKey = (ms) => `h:${new Date(ms).toISOString().slice(0, 13)}`; // h:2026-07-15T17
 const dayKey = (ms) => `d:${new Date(ms).toISOString().slice(0, 10)}`; // d:2026-07-15
 
 async function getJSON(env, key, dflt = null) {
   return (await env.KV.get(key, 'json')) ?? dflt;
 }
 
-/** Lê os buckets partilhados por /honeypot e /map de uma vez. */
-async function readBuckets(env, now) {
-  const hourKeys = Array.from({ length: 24 }, (_, i) => hourKey(now - i * HOUR_MS));
-  const dayKeys = Array.from({ length: 7 }, (_, i) => dayKey(now - i * DAY_MS));
-  const [hourly, days, recent, meta] = await Promise.all([
-    Promise.all(hourKeys.map((k) => getJSON(env, k))),
-    Promise.all(dayKeys.map((k) => getJSON(env, k))),
-    getJSON(env, 'recent', []),
-    getJSON(env, 'meta', {}),
-  ]);
-  return { hourly, days, recent, meta };
-}
-
-// ---------- honeypot: escrita ----------
-
-async function recordHoneypot(env, request, path, now) {
-  // Os buckets anónimos (aggregate.js) continuam exatamente como sempre:
-  // NUNCA o IP, timestamp arredondado a ANON_WINDOW_MS. O IP de origem só
-  // entra na lista separada `iplist` (lib/ipthreat.js) — decisão explícita
-  // do dono do repo (ADR 0020, docs/adr/0020-honeypot-public-ip.md), não
-  // um relaxamento silencioso desta função. As duas fontes nunca se
-  // misturam: `event` (abaixo) nunca ganha um campo `ip`.
-  const country = normalizeCountry(request.headers.get('cf-ipcountry') || request.cf?.country);
-  const asn = normalizeAsn(request.cf?.asn);
-  const ts = floorToWindow(now, ANON_WINDOW_MS);
-  // Lookup local (sem rede): anexa a técnica ATT&CK do path-isco ao evento,
-  // para que o registo em KV já conte a que classe de ataque corresponde.
-  // A técnica vem do path completo; o que se GUARDA é o path limitado
-  // (boundDecoyPath, lib/decoys.js — o sufixo de /phpmyadmin/* é escolhido
-  // por quem pede e não tinha limite de tamanho).
-  const technique = techniqueForPath(path);
-  const event = { ts, country, asn, path: boundDecoyPath(path), technique };
-
-  // IP: só entra na lista se for público e válido (lib/ipguard.js) —
-  // gamas privadas/reservadas nunca deviam chegar aqui vindas da
-  // Cloudflare, mas valida-se na mesma (defesa em profundidade).
-  const ip = request.headers.get('cf-connecting-ip');
-  const ipValid = isPublicIp(ip);
-
-  // Cap de escritas por janela, verificado ANTES de ler o resto: passado o
-  // teto, descarta o evento (o pedido já devolveu 404 na mesma) sem pagar as
-  // 4-5 leituras dos buckets. O custo é o nº real de puts deste evento
-  // (recent + bucket hora + bucket dia + contador, +1 com iplist); a escrita
-  // única do `meta` (só no 1.º evento de sempre) fica de fora.
-  const capKey = `wcap:${dayKey(now)}`;
-  const cost = 4 + (ipValid ? 1 : 0);
-  const { allowed, state: capState } = underCap(await getJSON(env, capKey), { now, cost, ...HONEYPOT_WRITE_CAP });
-  if (!allowed) return;
-
-  const [recent, hBucket, dBucket, meta, ipList] = await Promise.all([
-    getJSON(env, 'recent', []),
-    getJSON(env, hourKey(now), emptyBucket()),
-    getJSON(env, dayKey(now), emptyBucket()),
-    getJSON(env, 'meta', {}),
-    ipValid ? getJSON(env, 'iplist', emptyIpList()) : null,
-  ]);
-
-  // 200 (não 30): a tabela de Registo da Threat Intelligence pagina/pesquisa
-  // sobre esta lista. Continua a ser só metadados por evento — nunca o IP,
-  // mesmo depois do ADR 0020 (que só toca `iplist`, abaixo). Os eventos já
-  // guardados também passam pelo limite: um `recent` inchado de antes desta
-  // correção encolhe no 1.º evento seguinte, em vez de esperar 200 eventos.
-  const nextRecent = [event, ...recent.slice(0, 199).map((e) => ({ ...e, path: boundDecoyPath(e?.path) }))];
-  addEvent(hBucket, event);
-  addEvent(dBucket, event);
-
-  // deployTs vem de var no deploy; firstScanTs = 1.ª tentativa alguma vez vista.
-  const deployTs = meta.deployTs ?? clampInt(env.DEPLOY_TS, 0, Number.MAX_SAFE_INTEGER, ts);
-  const nextMeta = { deployTs, firstScanTs: meta.firstScanTs ?? ts };
-  // meta só muda mesmo na 1.ª vez (deployTs/firstScanTs, uma vez definidos,
-  // nunca voltam a mudar) — poupa 1 escrita/evento em todos os seguintes.
-  const metaChanged = meta.deployTs !== nextMeta.deployTs || meta.firstScanTs !== nextMeta.firstScanTs;
-
-  const writes = [
-    env.KV.put('recent', JSON.stringify(nextRecent)),
-    env.KV.put(hourKey(now), JSON.stringify(hBucket), { expirationTtl: 8 * 86400 }),
-    env.KV.put(dayKey(now), JSON.stringify(dBucket), { expirationTtl: 9 * 86400 }),
-    env.KV.put(capKey, JSON.stringify(capState), { expirationTtl: Math.ceil(HONEYPOT_WRITE_CAP.windowMs / 1000) + 60 }),
-  ];
-  if (metaChanged) writes.push(env.KV.put('meta', JSON.stringify(nextMeta)));
-  if (ipValid) {
-    recordIpSighting(ipList, { ip, now, country, asn, technique });
-    // TTL generoso como rede de segurança (a poda real é por entrada, no
-    // cron — ver pruneIpList/scheduled() abaixo): se o Worker ficar sem
-    // tráfego de todo por mais tempo que isto, a chave inteira cai sozinha
-    // em vez de crescer para sempre num site esquecido.
-    writes.push(
-      env.KV.put('iplist', JSON.stringify(ipList), { expirationTtl: Math.ceil((IP_RETENTION_MS * 2) / 1000) }),
-    );
-  }
-  await Promise.all(writes);
-}
-
 /**
- * Poda entradas de `iplist` sem nova deteção há mais de IP_RETENTION_MS
- * (ADR 0020). Só escreve no KV quando algo foi mesmo removido — mesmo
- * princípio de `snapshotFirewall`/`cached()`: não reescrever o que não
- * mudou. Quando remove alguma coisa, invalida também `cache:threatintel`
- * (guarda `ips` por 6h) — sem isto, um IP podado continuava a ser servido
- * pela cache até 6h a mais do que a retenção promete (achado de revisão).
- * `env.KV.delete` é idempotente sobre uma chave já ausente, por isso não
- * precisa de verificar se a cache existe primeiro.
+ * Chaves que o honeypot interno deixou no KV (ADR 0022). `iplist` tem IPs de
+ * origem publicados (ADR 0020) — dados pessoais que deixam de ter razão para
+ * existir; `recent`/`meta` não tinham TTL; as caches das rotas removidas
+ * ficariam até ~1 dia em stale. `cache:threatintel` é a cache antiga de
+ * /api/threat-intel, que ainda trazia `ips` — a rota passou a usar outra
+ * chave (THREAT_INTEL_CACHE), por isso nunca a serve. Os buckets h:/d: e os
+ * contadores wcap: são anónimos e expiram sozinhos em ≤ 9 dias.
+ *
+ * Corre no cron: lê primeiro (leituras são baratas) e só apaga o que ainda
+ * existe — depois da 1.ª limpeza, cada tick custa só estas leituras e
+ * nenhuma escrita.
  */
-async function pruneIpList(env, now) {
-  const ipList = await getJSON(env, 'iplist', emptyIpList());
-  const { list, prunedCount } = pruneExpiredIps(ipList, { now, maxAgeMs: IP_RETENTION_MS });
-  if (prunedCount === 0) return;
-  await Promise.all([
-    env.KV.put('iplist', JSON.stringify(list), {
-      expirationTtl: Math.ceil((IP_RETENTION_MS * 2) / 1000),
-    }),
-    env.KV.delete('cache:threatintel'),
-  ]);
+const LEGACY_HONEYPOT_KEYS = [
+  'iplist', 'recent', 'meta', 'cache:honeypot', 'cache:map', 'cache:ticker', 'cache:threatintel',
+];
+
+async function purgeLegacyHoneypotKeys(env) {
+  const values = await Promise.all(LEGACY_HONEYPOT_KEYS.map((key) => env.KV.get(key)));
+  const stale = LEGACY_HONEYPOT_KEYS.filter((_, i) => values[i] !== null);
+  await Promise.all(stale.map((key) => env.KV.delete(key)));
 }
+
+// Chaves (KV e Cache API) de /api/threat-intel. Novas de propósito: as
+// antigas (`cache:threatintel`, `threatintel`) podem ter uma resposta de
+// antes do ADR 0022, com IPs, ainda dentro do TTL — com chaves novas, o
+// primeiro pedido depois do deploy já não a pode servir, sem esperar pelo
+// cron nem pela expiração da Cache API.
+const THREAT_INTEL_CACHE = { kv: 'cache:firewall7d', edge: 'firewall7d' };
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
 
@@ -219,7 +89,7 @@ const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; /
 /**
  * Acumula uma amostra de Web Vitals já normalizada no histograma diário. Só
  * agregados — nenhum valor individual, IP ou UA é persistido. Cap global de
- * escritas por janela, como o honeypot.
+ * escritas por janela.
  */
 async function recordVitals(env, sample, now) {
   const capKey = `vitcap:${dayKey(now)}`;
@@ -241,26 +111,6 @@ async function recordVitals(env, sample, now) {
 async function readVitalsBuckets(env, now) {
   const keys = Array.from({ length: 7 }, (_, i) => vitalsDayKey(now - i * DAY_MS));
   return Promise.all(keys.map((k) => getJSON(env, k)));
-}
-
-// ---------- Threat Intelligence: leitura dos buckets acumulados ----------
-
-/**
- * Lê os buckets horários (THREAT_INTEL_HOURS = 7d, para o heatmap/hora-do-dia)
- * + diários (7d, para os tops por país/ASN/técnica/path) + os eventos
- * recentes (Logs). Cada bucket horário vai com o `ms` do início da hora, para
- * a agregação o poder posicionar no heatmap.
- */
-async function readThreatBuckets(env, now) {
-  const hourStamps = Array.from({ length: THREAT_INTEL_HOURS }, (_, i) => now - i * HOUR_MS);
-  const dayKeys = Array.from({ length: 7 }, (_, i) => dayKey(now - i * DAY_MS));
-  const [hourlyBuckets, days, recent] = await Promise.all([
-    Promise.all(hourStamps.map((ms) => getJSON(env, hourKey(ms)))),
-    Promise.all(dayKeys.map((k) => getJSON(env, k))),
-    getJSON(env, 'recent', []),
-  ]);
-  const hourlySeries = hourStamps.map((ms, i) => ({ ms, bucket: hourlyBuckets[i] }));
-  return { hourlySeries, days, recent };
 }
 
 // ---------- Firewall Cloudflare: acumulação diária (24h → 7d) ----------
@@ -301,7 +151,7 @@ async function snapshotFirewall(env, stats, now) {
 
 /**
  * Lê os snapshots de firewall dos últimos 7 dias e funde-os (`mergeFirewall7d`,
- * lib/aggregate.js — pura e testável) em tops por ação/origem/rede/país MAIS
+ * lib/firewall.js — pura e testável) em tops por ação/origem/rede/país MAIS
  * a série diária crua que alimenta o dashboard "Mitigação por dia".
  */
 async function readFirewall7d(env, now) {
@@ -318,9 +168,9 @@ async function readFirewall7d(env, now) {
 // (NVD/KEV têm rate limit) quando a cache expira com tráfego.
 //
 // Cada refresh é uma ESCRITA no KV — e as rotas públicas sem rate limit
-// (/api/honeypot, /api/map com TTL de 60s, /api/vitals com 120s) deixavam o
-// ritmo dessas escritas nas mãos de qualquer visitante anónimo: 3 pedidos
-// por minuto chegavam para ~3.500 puts/dia, muito acima do teto de ~1.000/dia
+// (na altura /api/honeypot e /api/map com TTL de 60s, hoje /api/vitals com
+// 120s) deixavam o ritmo dessas escritas nas mãos de qualquer visitante
+// anónimo: 3 pedidos por minuto chegavam para ~3.500 puts/dia, muito acima do teto de ~1.000/dia
 // da conta (auditoria de segurança 2026-09-25, achado de severidade média).
 // Por isso os refresh vindos de pedidos passam pelo orçamento diário
 // CACHE_WRITE_CAP; esgotado, serve-se o valor stale (sem recalcular) ou, sem
@@ -332,9 +182,9 @@ const STALE_GRACE_SEC = 86400;
 
 // Orçamento diário (em escritas) dos refresh de cache vindos de pedidos. Cada
 // refresh aceite custa 2 (valor + contador). Soma dos orçamentos diários do
-// Worker: honeypot 300 + vitals 300 + cache 80 + refresh manual 40 + cron
-// (~90: ticker 24, ct/cfstats/fw/threatintel ~16, poda de iplist ≤ 48) ≈ 810
-// — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
+// Worker: vitals 300 + cache 80 + refresh manual 40 + cron (~16:
+// ct/cfstats/fw/threatintel; a limpeza do honeypot antigo só escreve uma
+// vez) ≈ 440 — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
 // pedidos concorrentes conseguem (underCap não é atómico, ver lib/kvcap.js).
 // O rate limiter já não entra nesta conta: vive na Cache API (ver rateLimit).
 const CACHE_WRITE_CAP = { windowMs: DAY_MS, max: 80 };
@@ -379,7 +229,7 @@ async function cached(env, ctx, key, ttlSec, producer, { capped = true } = {}) {
 // ---------- rate limiting ----------
 
 // Onde vive o estado por-cliente do rate limiter (auditoria de segurança
-// 2026-09-25, docs/security-audit-2026-09-25/, achado de severidade baixa):
+// 2026-09-25, não publicada, achado de severidade baixa):
 //
 // No KV, cada pedido aceite custava 2 escritas (estado + contador global) e
 // o teto global contava 1 — as 300 "escritas"/dia de RATE_LIMIT_WRITE_CAP
@@ -396,7 +246,7 @@ async function cached(env, ctx, key, ttlSec, producer, { capped = true } = {}) {
 // O KV continua como recurso (runtime sem Cache API — Node nos testes, ou um
 // Worker com Cloudflare Access à frente, onde a Cache API não existe), com
 // o teto global em ESCRITAS (2 por pedido aceite) e a falha FECHADA do achado
-// A1 da revisão de 2026-07-29 (docs/security-review-2026-07-29.md): com o
+// A1 da revisão de segurança de 2026-07-29, não publicada: com o
 // orçamento esgotado a rota devolve 429 a todos, sem escrever nada, em vez
 // de deixar tudo passar com a janela congelada.
 const RATE_LIMIT_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
@@ -503,8 +353,8 @@ async function edgeCached(request, key, ttlSec, compute) {
 // ---------- respostas ----------
 
 // Cabeçalhos de segurança de TODAS as respostas do Worker. O _headers do
-// Pages só cobre o conteúdo estático — as rotas servidas pelo Worker (API e
-// paths-isco) respondem por si e, sem isto, saíam sem nosniff nem CSP (e o
+// Pages só cobre o conteúdo estático — as rotas servidas pelo Worker (API)
+// respondem por si e, sem isto, saíam sem nosniff nem CSP (e o
 // workflow Headers, que verifica a raiz do site, nunca o apanharia). A CSP
 // 'none' é a prática padrão para endpoints JSON: mesmo com tudo sanitizado,
 // garante que nada executa se um browser renderizar a resposta diretamente.
@@ -512,7 +362,7 @@ const RESPONSE_SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'content-security-policy': "default-src 'none'",
   // O _headers do Pages cobre o conteúdo estático; sem isto, as respostas
-  // do Worker (API + 404 dos iscos) saíam sem HSTS — inofensivo hoje (a
+  // da API do Worker saíam sem HSTS — inofensivo hoje (a
   // zona já força HTTPS), mas um scanner externo assinala a ausência, e
   // este é literalmente um site sobre cabeçalhos de segurança. Mesmo
   // max-age do _headers (2 anos), sem "preload" pelo mesmo motivo (ver lá).
@@ -550,33 +400,7 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // endpoints-isco: registar (em background) e devolver um 404 visualmente
-    // igual ao 404 real do site (lib/notfound.js) — texto simples era um
-    // "tell" mais fácil de distinguir do resto do site, não mais difícil.
-    if (isDecoy(path)) {
-      ctx.waitUntil(
-        // Falha de escrita loga-se server-side (sem IP: recordHoneypot não o
-        // vê) e nunca chega ao cliente — a resposta é sempre o mesmo 404.
-        recordHoneypot(env, request, path, Date.now()).catch((err) =>
-          console.error('honeypot_write_failed', path, err?.message ?? String(err)),
-        ),
-      );
-      return new Response(renderNotFoundHtml(), {
-        status: 404,
-        headers: {
-          'content-type': 'text/html; charset=utf-8',
-          'x-content-type-options': 'nosniff',
-          'content-security-policy': NOT_FOUND_CSP,
-          'strict-transport-security': RESPONSE_SECURITY_HEADERS['strict-transport-security'],
-          'cache-control': 'no-store',
-        },
-      });
-    }
-
-    // Preflight CORS — depois dos iscos (auditoria de segurança 2026-09-25):
-    // antes vinha primeiro, e um OPTIONS a um path-isco recebia um 204 da API
-    // em vez do mesmo 404 de qualquer outro método — um "tell" de que ali
-    // havia um Worker, não o site.
+    // Preflight CORS.
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         status: 204,
@@ -645,24 +469,6 @@ export default {
         return json({ ok: true, ts: Date.now() }, request, env);
       }
 
-      if (path === '/api/honeypot') {
-        const data = await edgeCached(request, 'honeypot', 60, () =>
-          cached(env, ctx, 'cache:honeypot', 60, async () =>
-            honeypotStats(await readBuckets(env, Date.now())),
-          ),
-        );
-        return json(data, request, env, { maxAge: 60 });
-      }
-
-      if (path === '/api/map') {
-        const data = await edgeCached(request, 'map', 60, () =>
-          cached(env, ctx, 'cache:map', 60, async () =>
-            mapData(await readBuckets(env, Date.now())),
-          ),
-        );
-        return json(data, request, env, { maxAge: 60 });
-      }
-
       // Relay k-anónimo do HIBP: o cliente só manda os 5 primeiros hex do
       // SHA-1 (a password nunca chega cá). Prefixo validado a ferro (5 hex) —
       // não é reutilizável para pedir mais nada. Rate limit por cliente (é
@@ -693,30 +499,16 @@ export default {
         return json(data, request, env, { maxAge: 3600 });
       }
 
-      // Threat Intelligence: dashboards próprios a partir dos buckets
-      // acumulados do honeypot (heatmap, hora-do-dia, top país/ASN/técnica/
-      // path, eventos p/ os Logs) + a repartição de firewall acumulada a 7d
-      // + a lista de IPs vistos (ADR 0020 — só aqui o IP aparece; o resto
-      // desta rota continua zero-IP). Cache 6h (aquecida no cron) — TTL a
-      // 5 min dava sempre "stale" quando o cron (30 min) batia, obrigando a
-      // reconstruir o fan-out de THREAT_INTEL_HOURS+7+1 leituras a cada
-      // tick (~183 GETs × 48/dia). Alinhado com scan/ct/cf-stats (mesmo
-      // padrão de cache já usado nesta rota) para não estourar o teto
-      // diário do KV no plano Free — ver dynamic/PLAN.md.
+      // Repartição da firewall da zona, acumulada a 7 dias a partir dos
+      // snapshots diários do cron (fw:<dia>) — nunca IP. O nome da rota vem
+      // de quando também servia os dashboards do honeypot (ADR 0022); as
+      // páginas Cloudflare e Visão Geral continuam a lê-la por este nome.
+      // Cache 6h no KV (aquecida no cron) e 5 min no data center.
       if (path === '/api/threat-intel') {
-        // Cache do data center com o mesmo TTL da resposta (5 min), não as 6h
-        // do KV: a poda de `iplist` apaga cache:threatintel para um IP
-        // expirado sair logo (ADR 0020), e uma cópia de 6h aqui adiava isso.
-        const data = await edgeCached(request, 'threatintel', 300, () =>
-          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
-            const now = Date.now();
-            const [buckets, firewall7d, ipList] = await Promise.all([
-              readThreatBuckets(env, now),
-              readFirewall7d(env, now),
-              getJSON(env, 'iplist', {}),
-            ]);
-            return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
-          }),
+        const data = await edgeCached(request, THREAT_INTEL_CACHE.edge, 300, () =>
+          cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({
+            firewall7d: await readFirewall7d(env, Date.now()),
+          })),
         );
         return json(data, request, env, { maxAge: 300 });
       }
@@ -790,13 +582,6 @@ export default {
         return json(data, request, env, { maxAge: 1800 });
       }
 
-      if (path === '/api/ticker') {
-        const data = await edgeCached(request, 'ticker', 1800, () =>
-          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env)),
-        );
-        return json(data, request, env, { maxAge: 1800 });
-      }
-
       // Espelho: a "vista do servidor" deste mesmo pedido. Sem input de
       // visitante (não é proxy) e sem qualquer escrita de estado — só se lê
       // o que o pedido já trouxe. O IP é visível ao Worker mas nunca é
@@ -828,27 +613,17 @@ export default {
     return json({ error: 'not_found' }, request, env, { status: 404 });
   },
 
-  // Cron opcional (ver wrangler.toml): aquece as caches para que a 1.ª
-  // visita após expirar não pague a latência do upstream. A agregação do
-  // honeypot é on-read, por isso não precisa de cron.
+  // Cron (ver wrangler.toml): aquece as caches para que a 1.ª visita após
+  // expirar não pague a latência do upstream, e limpa o que o honeypot
+  // interno deixou no KV (ADR 0022 — só escreve enquanto houver o que apagar).
   async scheduled(event, env, ctx) {
     ctx.waitUntil(
       (async () => {
-        // Poda da lista de IPs do honeypot (ADR 0020) — retenção de
-        // IP_RETENTION_MS, aplicada aqui e não no caminho de escrita
-        // (recordHoneypot) para não pagar essa leitura/escrita extra em
-        // cada evento; o cron já corre a cada 30 min de qualquer forma.
-        // AGUARDADA antes do resto (não dentro do Promise.all abaixo): a
-        // cache de threat-intel guarda `ips` por 6h, e se corresse em
-        // paralelo com o aquecimento dessa cache, uma poda que remove
-        // entradas podia perder a corrida contra um refresh que ainda lê
-        // o `iplist` de antes da poda — um IP expirado ficava a ser
-        // servido pela cache até 6h a mais do que a retenção promete.
-        // Sequenciar as duas fecha essa janela.
-        await pruneIpList(env, Date.now()).catch(() => {});
+        await purgeLegacyHoneypotKeys(env).catch((err) =>
+          console.error('legacy_honeypot_purge_failed', err?.message ?? String(err)),
+        );
 
         await Promise.all([
-          cached(env, ctx, 'cache:ticker', 3600, () => fetchTicker(env), { capped: false }).catch(() => {}),
           cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env), { capped: false }).catch(() => {}),
           // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
           // O snapshot vive dentro do producer do `cached()` — corre só
@@ -862,19 +637,11 @@ export default {
             await snapshotFirewall(env, stats, Date.now()).catch(() => {});
             return stats;
           }, { capped: false }).catch(() => {}),
-          // Threat Intel é caro de ler (168 buckets horários) — aquece-se
-          // aqui para as visitas caírem sempre em cache. TTL 6h (ver
-          // comentário na rota /api/threat-intel) para não repetir o
-          // fan-out em todos os ticks do cron.
-          cached(env, ctx, 'cache:threatintel', 6 * 3600, async () => {
-            const now = Date.now();
-            const [buckets, firewall7d, ipList] = await Promise.all([
-              readThreatBuckets(env, now),
-              readFirewall7d(env, now),
-              getJSON(env, 'iplist', {}),
-            ]);
-            return { ...threatIntel(buckets), firewall7d, ips: ipThreatList(ipList) };
-          }, { capped: false }).catch(() => {}),
+          // Firewall 7d: aquece-se aqui para as visitas caírem sempre em
+          // cache (TTL 6h, ver a rota /api/threat-intel).
+          cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({
+            firewall7d: await readFirewall7d(env, Date.now()),
+          }), { capped: false }).catch(() => {}),
         ]);
       })(),
     );

@@ -45,7 +45,7 @@ jobs:
           # User-Agent, que era uma string pública e spoofable.
           #
           # Fora das execuções deployment_status (auditoria de segurança
-          # 2026-09-25, docs/security-audit-2026-09-25/): nesse evento o
+          # 2026-09-25, não publicada): nesse evento o
           # código que corre (workflow + script) é o do commit do deploy, não
           # o da main, e o alvo é o URL do deploy em *.pages.dev — fora da
           # zona, onde o token não serve para nada. O token só é preciso no

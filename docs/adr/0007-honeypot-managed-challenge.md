@@ -1,6 +1,6 @@
 # ADR 0007 — Honeypot decoy paths behind Managed Challenge: protection over full observability
 
-**Status:** accepted and in production (rule 3, WAF on the `danielmala.co` zone).
+**Status:** superseded by [ADR 0022](0022-retire-internal-honeypot.md) (2026-10-02) — the decoy paths no longer exist; the WAF rule 3 that challenged them can be deleted. Kept as the record of the trade-off, which ADR 0022 cites as one reason for retiring the honeypot.
 
 ## Context
 
@@ -31,6 +31,6 @@ though they're just a sensor returning a 404.
 - A deliberate trade of dataset breadth for a security guarantee that's
   easier to justify ("no visitor reaches a decoy path with zero barrier")
   than for maximizing signal for a panel.
-- See [`docs/backlog.md`](../backlog.md) for honeypot-evolution ideas
-  that reconsider this trade-off (protection vs. observability); none
-  approved for implementation to date.
+- Honeypot-evolution ideas that reconsidered this trade-off (protection
+  vs. observability) were never approved; ADR 0022 retired the honeypot
+  instead.

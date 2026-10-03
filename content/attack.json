@@ -14,7 +14,7 @@
       "id": "TA0042",
       "name": "Resource Development",
       "techniques": [
-        { "id": "T1583", "name": "Acquire Infrastructure", "level": "exp", "by": { "pt": "Montagem de infra de ataque em lab · homelab k3s", "en": "Standing up attack infra in lab · k3s homelab" } },
+        { "id": "T1583", "name": "Acquire Infrastructure", "level": "exp", "by": { "pt": "Montagem de infra de ataque em lab · homelab", "en": "Standing up attack infra in lab · homelab" } },
         { "id": "T1587", "name": "Develop Capabilities", "level": "exp", "by": { "pt": "Ferramentas próprias de scanning/scripting · Python/Go", "en": "Own scanning/scripting tooling · Python/Go" } }
       ]
     },

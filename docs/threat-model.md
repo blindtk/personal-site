@@ -3,7 +3,7 @@
 Living document — review every quarter or whenever a relevant architecture
 decision is made (record the review date at the bottom of this file).
 Origin: initial analysis in
-[`docs/security-review-2026-07-29.md`](security-review-2026-07-29.md) §8.
+§8 of the 2026-07-29 security review (not published).
 
 ## Assets
 
@@ -13,8 +13,9 @@ Origin: initial analysis in
 2. **The GitHub repository and its Actions secrets.**
 3. **Domain and published-content reputation/integrity.**
 4. **Visitor privacy** — the site explicitly promises zero-PII (see
-   [ADR 0004](adr/0004-zero-pii-honeypot.md)); it's a breakable
-   reputational asset.
+   [ADR 0004](adr/0004-zero-pii-honeypot.md); since
+   [ADR 0022](adr/0022-retire-internal-honeypot.md) the Worker stores no IP
+   address at all); it's a breakable reputational asset.
 5. **The Free-plan quota budget** (KV writes/day, Worker invocations) —
    unusually, a *budget* is an asset here: exhausting it degrades real
    protections (see Attack A1 below).
@@ -28,13 +29,13 @@ Internet → Cloudflare edge (WAF/Access) → Worker → upstream KV/APIs.
 Developer laptop → GitHub → Cloudflare Workers Builds (automatic deploy,
 no verifiable provenance nor reviewer gate — *real gap, see H3*) →
 production (see `docs/architecture.md`). npm registry → lockfile → build →
-deployed artifact. Upstream feeds (NVD, CISA KEV, crt.sh, HIBP) → Worker →
-browser DOM. Browser → POST endpoint → KV.
+deployed artifact. Upstream APIs (crt.sh, HIBP, Cloudflare GraphQL) →
+Worker → browser DOM. Browser → POST endpoint → KV.
 
 ## Attack surfaces
 
-10 GET endpoints (most with no input); 1 unauthenticated POST endpoint
-(`/api/vitals`); 5 decoy routes; the static site; the
+7 GET endpoints (most with no input); 1 unauthenticated POST endpoint
+(`/api/vitals`); the static site; the
 client-side tools (all local except `pwned`, `mirror`); the
 GitHub Actions supply chain; the npm dependency tree; the Cloudflare
 dashboard/API credentials.
@@ -50,7 +51,8 @@ midnight UTC. Fixed to fail closed; migration to a native Cloudflare Rate
 Limiting rule remains pending (manual dashboard decision).
 
 ### A2 — Honeypot dashboard poisoning
-**Status: accepted residual risk.** The honeypot's 60-events/day cap means
+**Status: retired on 2026-10-02 with the internal honeypot
+([ADR 0022](adr/0022-retire-internal-honeypot.md)).** Kept as the record: The honeypot's 60-events/day cap means
 an attacker can fill the day's budget with trivial requests from a chosen
 ASN, making the Threat Intelligence dashboard show attacker-chosen data and
 hiding genuine scanning. Low impact (no security control depends on this
@@ -99,7 +101,7 @@ secondary manual path still exists (`npx wrangler deploy` from the laptop,
 used to test a branch before merging, `CLAUDE.md`) that points at the same
 production Worker — a compromised laptop can still publish directly,
 without going through GitHub. See finding H3 in
-`docs/security-review-2026-07-29.md`: the real gap isn't "manual deploy",
+the 2026-07-29 security review (not published): the real gap isn't "manual deploy",
 it's the absence of verifiable provenance and a reviewer gate on either
 path.
 
@@ -137,7 +139,7 @@ depends on the Observability retention window.
 
 ## Explicitly accepted residual risks
 
-Public-dashboard poisoning (A2/A3) — unavoidable without authentication,
+Public-dashboard poisoning (A3) — unavoidable without authentication,
 which would cost more than it's worth. Fidelity limits of the firewall
 panels on the Free plan. Availability of crt.sh as the CT watcher's single
 source. Zero-day in Astro or workerd. Cloudflare as a single point of
@@ -172,3 +174,8 @@ and `/api/csp-violations` are gone; the CSP itself is unaffected (still
 enforced, just no longer reported on). Corrected
 attack-surface count again (10 GET endpoints, 1 POST endpoint) and removed
 the A3 finding's CSP half.
+
+**2026-10-02:** internal honeypot retired
+([ADR 0022](adr/0022-retire-internal-honeypot.md)) — no decoy routes, no
+IP list, no `/api/honeypot`/`/api/map`/`/api/ticker`; GET endpoints down to
+7, NVD/CISA KEV no longer upstream, A2 retired.

@@ -37,6 +37,7 @@ const jsStrings = {
 ---
 
 <BaseLayout lang={lang} title={s.cloudflareMetaTitle} altUrl={routes.cloudflare[other]} active="cloudflare" wide>
+  <SiteLayers lang={lang} current="cloudflare" />
   <div class="page-head">
     <h1>{s.cloudflareTitle}</h1>
     <p class="intro">{s.cloudflareIntro}</p>
@@ -102,7 +103,6 @@ const jsStrings = {
     </div>
   </div>
 
-  <SiteLayers lang={lang} current="cloudflare" />
 </BaseLayout>
 
 <script>
@@ -302,7 +302,7 @@ const jsStrings = {
       const g = document.createElementNS(SVG_NS, 'g');
       const title = document.createElementNS(SVG_NS, 'title');
       const raw = `${formatNumber(row.threats, locale)}/${formatNumber(row.requests, locale)}`;
-      title.textContent = `${row.country} — ${formatPercent(rate)} (${raw})${row.lowSample ? ` · ${S.riskLowSample}` : ''}`;
+      title.textContent = `${row.country}: ${formatPercent(rate)} (${raw})${row.lowSample ? ` · ${S.riskLowSample}` : ''}`;
       g.append(title);
       const circle = document.createElementNS(SVG_NS, 'circle');
       circle.setAttribute('cx', p.x.toFixed(1));
@@ -449,7 +449,7 @@ const jsStrings = {
       const cx = x + barW / 2;
       const g = document.createElementNS(SVG_NS, 'g');
       const title = document.createElementNS(SVG_NS, 'title');
-      title.textContent = `${r.date} — ${S.tiDailyBlocked}: ${formatNumber(r.blocked, locale)} · `
+      title.textContent = `${r.date} · ${S.tiDailyBlocked}: ${formatNumber(r.blocked, locale)} · `
         + `${S.tiDailyChallenged}: ${formatNumber(r.challenged, locale)} · `
         + `${S.tiDailyAllowed}: ${formatNumber(r.allowed, locale)}`;
       g.append(title);

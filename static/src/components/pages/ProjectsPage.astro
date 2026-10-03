@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import type { Lang } from '../../config';
+import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, projectUrl } from '../../i18n/routes';
 
@@ -13,17 +13,9 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
 const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order);
 
-// Gancho compacto do índice: primeira frase da descrição, cortada a ~100
-// caracteres num limite de palavra. A escrita longa vive na página própria
-// de cada projeto (projectUrl), não aqui.
-function excerpt(text: string, max = 90): string {
-  const firstSentence = text.split(/(?<=[.!?])\s/)[0] ?? text;
-  if (firstSentence.length <= max) return firstSentence;
-  const cut = firstSentence.slice(0, max);
-  const lastSpace = cut.lastIndexOf(' ');
-  const trimmed = (lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[,;:—-]+$/, '');
-  return `${trimmed}…`;
-}
+// A descrição aparece inteira: cada uma é escrita para caber num cartão
+// (≤ ~100 caracteres) em vez de ser cortada a meio de uma frase aqui. A
+// escrita longa vive na página própria de cada projeto.
 ---
 
 <BaseLayout lang={lang} title={dict.projects.title} altUrl={routes.projects[other]} active="projects">
@@ -37,34 +29,25 @@ function excerpt(text: string, max = 90): string {
       const slug = entry.id.slice(3);
       return (
         <div class="card">
-          <h3><a href={projectUrl(lang, slug)}>{entry.data.title}</a></h3>
-          <p>{excerpt(entry.data.description)}</p>
+          <h2><a href={projectUrl(lang, slug)}>{entry.data.title}</a></h2>
+          <p>{entry.data.description}</p>
           <div class="meta">
             {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
-            {/* Sinal visual de que este-site e Honeypot fazem parte da teia
-               de cross-links "por camadas" (SiteLayers) com Segurança/Provas/
-               Cloudflare/Performance — distingue-os, sem precisar de clicar,
-               dos projetos independentes (Homelab, star-organizer). */}
-            {(slug === 'este-site' || slug === 'honeypot') && (
+            {/* Sinal de que "Este site" é o próprio sistema (o cartão abre a
+               secção Este site) e não um projeto à parte como Threat Intel,
+               Homelab ou star-organizer. */}
+            {slug === 'este-site' && (
               <span class="badge amber">{dict.projects.systemBadge}</span>
             )}
           </div>
-          {(entry.data.repo || slug === 'honeypot') && (
-            <div class="card-links mono">
-              {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
-              {/* O painel /honeypot/ (telemetria ao vivo, decoys + correlação
-                 ATT&CK) é um destino distinto desta página (o
-                 "porquê"/arquitetura) — evita confundir os dois sítios. */}
-              {slug === 'honeypot' && <a href={routes.honeypot[lang]}>[{dict.projects.live}]</a>}
-            </div>
-          )}
-          {/* Único gancho, no índice, para a teia de cross-links "por camadas"
-             que já liga Segurança/Provas/Cloudflare/Performance a este
-             projeto — sem isto, só se descobre a partir de dentro de uma
-             dessas páginas. */}
-          {slug === 'este-site' && (
-            <p class="card-hint"><a href={routes.security[lang]}>{dict.projects.systemCta}</a></p>
-          )}
+          {/* Uma linha de ações igual em todos os cartões: abrir o projeto e,
+             só onde existe, o código e o painel público do Threat Intel
+             (outro domínio, intel.danielmala.co: o relatório do sensor). */}
+          <div class="card-links mono">
+            <a href={projectUrl(lang, slug)}>[{dict.projects.open}]</a>
+            {entry.data.repo && <a href={entry.data.repo} rel="noopener">[{dict.projects.repo}]</a>}
+            {slug === 'threat-intel' && <a href={SITE.honeypotIntel} rel="noopener">[{dict.projects.live}]</a>}
+          </div>
         </div>
       );
     })}
@@ -76,22 +59,21 @@ function excerpt(text: string, max = 90): string {
      ficava inconsistente entre cartões — órfão numa 2.ª linha quando as tags
      enchiam a 1.ª (ex.: "Este site"), colado a meio quando não enchiam. Os
      links de ação ficam agora sempre na sua própria linha, à esquerda. */
+  /* Cartão em coluna e linha de ações empurrada para o fundo: na mesma fila
+     de cartões, as ações ficam alinhadas entre si. */
+  .card {
+    display: flex;
+    flex-direction: column;
+  }
   .card-links {
     display: flex;
     gap: 0.9rem;
     flex-wrap: wrap;
-    margin-top: 0.7rem;
+    margin-top: auto;
+    padding-top: 0.7rem;
     font-size: 0.78rem;
   }
   .card-links a {
-    color: var(--accent);
-  }
-  .card-hint {
-    margin: 0.6rem 0 0;
-    font-size: 0.78rem;
-    color: var(--muted);
-  }
-  .card-hint a {
     color: var(--accent);
   }
 </style>

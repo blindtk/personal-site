@@ -1,7 +1,10 @@
 # ADR 0020 — Honeypot events record and publish the source IP, for cross-honeypot correlation
 
-**Status:** accepted and implemented (`dynamic/worker/src/lib/ipguard.js`,
-`dynamic/worker/src/lib/ipthreat.js`, `recordHoneypot` in `src/index.js`).
+**Status:** superseded by [ADR 0022](0022-retire-internal-honeypot.md)
+(2026-10-02). The correlation this decision was for was never built on
+either side, so the IP list (and the code below: `ipguard.js`,
+`ipthreat.js`, `recordHoneypot`) was removed and the stored list deleted
+by the Worker's cron. Kept as the record of the decision.
 
 ## Context
 
@@ -31,7 +34,7 @@ the trade-offs of (a) were laid out.
 Honeypot decoy-path events now record and publish the source IP,
 alongside the existing fields (country, ASN, path, technique) — extended
 with first/last-seen and a sighting count, the same shape as the VPS's
-threat list (ADR 0019 / `docs/external-honeypot-vps.md` §3), so the two
+threat list (ADR 0019), so the two
 can be compared directly. Same three controls, applied here too:
 
 1. **Expiry.** Entries age out after a period without a repeat sighting —

@@ -1,8 +1,8 @@
 # dynamic/ — dynamic app ("Lab") plan
 
 > **Status: in production.** `dynamic/worker/` (the Worker behind the
-> site's security features — honeypot, hostile-traffic map, SOC ticker,
-> and CT watch) is deployed on the `danielmala.co` domain's
+> site's security features — Cloudflare/firewall panels, CT watch, Web
+> Vitals, the HIBP relay and the mirror) is deployed on the `danielmala.co` domain's
 > routes. Deploy, gotchas, and infrastructure (Access, WAF) are
 > documented in `dynamic/worker/README.md` and `docs/cloudflare-deploy.md`.
 > The network tools below (DNS/whois/…) are still to be built; the
@@ -10,9 +10,28 @@
 
 ## Recorded decisions
 
+- **2026-10-02 — Remove two tools** (decision by the repo owner): the
+  passkey lab and the encoder/decoder. They are generic utilities that
+  other tools do better (CyberChef, for one). The password generator was
+  removed in the same pass and restored on 2026-10-03 at the owner's
+  request. The old URLs 301 to the tools index. `encoding.js` stays,
+  because the Lab terminal's `encode`/`decode` commands use it.
+
+- **2026-10-02 — Retire the internal honeypot** (decision by the repo
+  owner; [ADR 0022](../docs/adr/0022-retire-internal-honeypot.md)). The
+  decoy paths sat behind a Managed Challenge and saw little mass scanning,
+  and the IP list from ADR 0020 existed for a correlation with the
+  external Cowrie honeypot that was never built. Removed: decoy routes,
+  `recordHoneypot`, `iplist`, `/api/honeypot`, `/api/map`, `/api/ticker`
+  (its ATT&CK tagging only served the decoy correlation) and the site's
+  Honeypot page. `/api/threat-intel` keeps only `firewall7d`. The cron's
+  `purgeLegacyHoneypotKeys` deletes the leftover KV keys, reading first so
+  later ticks write nothing. Write budget: ~810 → ~440/day. Owner-side
+  follow-ups: delete WAF rule 3 and the `NVD_API_KEY` secret.
+
 - **2026-09-25 — Fixes for the security audit run with Cloudflare's
-  `security-audit` skill** (requested by the repo owner; report in
-  `docs/security-audit-2026-09-25/`). All four records are addressed in
+  `security-audit` skill** (requested by the repo owner; the report is
+  not published). All four records are addressed in
   one PR:
     1. *(medium, confirmed)* Uncapped KV writes from public GETs via
        `cached()`. Request-driven refreshes now draw from a
@@ -57,8 +76,7 @@
   temporarily turns on the pathname (never query/fragment) in the `self`
   bucket, just for this diagnosis. Minimal exposure risk while this stays
   on: production is still behind Cloudflare Access
-  (`docs/public-repo-decision.md` — "doesn't load for anyone" except the
-  owner).
+  ("doesn't load for anyone" except the owner).
   **Revert (`DEBUG_EXPOSE_SELF_PATH = false` and the 2 tests that depend
   on the path) as soon as the cause of the self/self violations is
   confirmed.**
@@ -101,7 +119,7 @@
 
 - **2026-07-29 — Rate limit fails closed when the global write cap runs
   out** (finding from a security review, see
-  `docs/security-review-2026-07-29.md` finding A1 and
+  the 2026-07-29 security review (not published) finding A1 and
   `docs/adr/0003-rate-limit-kv-vs-nativo.md`): `rateLimit()` kept
   returning `allowed: true` when `RATE_LIMIT_WRITE_CAP` (300 writes/day)
   ran out — it just stopped persisting per-client state. That froze that
@@ -136,7 +154,7 @@
   of what's installed, as a workflow artifact. Runs weekly and on
   `workflow_dispatch`, not on every PR: the repository is currently over
   the GitHub Actions Free-plan minute quota (see
-  `docs/security-review-2026-07-29.md` §0.2), and adding more steps to
+  §0.2 of the 2026-07-29 security review, not published), and adding more steps to
   every PR's path would make that worse. `dynamic/worker/package.json`
   gained a `version` field (required by `npm sbom` to generate a valid
   purl — without it, `ESBOMPROBLEMS` because the root package ends up
@@ -386,7 +404,9 @@
     a hard guarantee that the IP never appears in the body. Rate limit
     30/min per client; per-request response (`no-store`).
 
-  - **Passkey Lab** (`/ferramentas/passkeys/`, **100% client-side**):
+  - **Passkey Lab** (`/ferramentas/passkeys/`, **100% client-side**) —
+    *removed 2026-10-02 with the encoder and the password generator, at the
+    owner's request (the tools that no longer fit the site)*:
     creates a real demo passkey (WebAuthn), dissects `authenticatorData`
     byte by byte (rpIdHash, UP/UV/BE/BS/ED flags, signCount, identified
     AAGUID, COSE public key via `getPublicKey`), and verifies the

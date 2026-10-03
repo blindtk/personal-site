@@ -19,7 +19,7 @@ rate limiter: concurrent requests across different colos can read stale
 counts.
 
 **Finding from a security review (2026-07-29,
-[docs/security-review-2026-07-29.md](../security-review-2026-07-29.md),
+the 2026-07-29 security review (not published),
 finding A1):** when the global write cap (300/day) was exhausted,
 `rateLimit()` kept returning `allowed: true` — it just stopped persisting
 per-client state. That froze that client's window indefinitely: ~300
@@ -49,7 +49,7 @@ available on the Free plan). Advantages over the current implementation:
 
 Not done in this round because it's a configuration change in the
 Cloudflare dashboard (outside what a code PR can express) — see
-`docs/security-review-2026-07-29.md` §9 for the rule design.
+§9 of the 2026-07-29 security review (not published) for the rule design.
 
 ## Consequences
 
@@ -66,7 +66,7 @@ Cloudflare dashboard (outside what a code PR can express) — see
 
 ## Update — 2026-09-25: per-client state moved to the Cache API
 
-The [2026-09-25 security audit](../security-audit-2026-09-25/REPORT.md)
+The 2026-09-25 security audit (not published)
 confirmed that the KV rate limiter undercounted its own cost: each allowed
 request wrote **two** keys (`rl:<route>:<hash>` + `rlcap:<day>`) while
 `RATE_LIMIT_WRITE_CAP` counted one, and the HIBP relay also wrote an

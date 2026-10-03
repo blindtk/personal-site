@@ -11,6 +11,8 @@
   --border-strong: #2b3646;
   --text: #dbe4ef;
   --muted: #8593a5;
+  /* Só decoração (//, setas, bordas, pontos): 3,2:1 sobre --bg, abaixo de
+     4,5:1. Qualquer texto que se lê usa --muted (6,2:1). */
   --faint: #586475;
   --accent: #3ddc84;
   --accent-dim: rgba(61, 220, 132, 0.12);
@@ -48,6 +50,12 @@ html {
 
 body {
   margin: 0;
+  /* Coluna flex com altura mínima do ecrã: em páginas curtas o <main> cresce
+     (flex: 1) e o rodapé assenta no fundo em vez de ficar a meio do ecrã. */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg);
   color: var(--text);
   font-family: var(--sans);
@@ -79,6 +87,19 @@ a {
 a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* Links no meio de texto corrido: a cor sozinha não chega para os distinguir
+   (WCAG 1.4.1 — o axe acusa "link-in-text-block"). Sublinhado discreto em
+   repouso, cheio no hover. Nav, cartões e listas de navegação não são texto
+   corrido e ficam fora deste seletor. */
+main :is(p, td, dd, .note, .prose li) a {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+main :is(p, td, dd, .note, .prose li) a:hover {
+  text-decoration-color: currentColor;
 }
 
 code, kbd, pre, .mono {
@@ -413,9 +434,16 @@ img {
 
 /* ---------- Secções e títulos ---------- */
 
-main {
-  min-height: 60vh;
-  padding: 2.2rem 0 4rem;
+/* main.container e não só main: .container (especificidade 0,1,0) define
+   `padding: 0 1.1rem` e anulava o padding vertical de um seletor `main`
+   simples — o h1 de cada página ficava colado à nav. padding-block só toca
+   no eixo vertical e deixa a margem lateral de .container intacta. */
+main.container {
+  flex: 1 0 auto;
+  /* Num body flex em coluna, margin: 0 auto encolheria o main à largura do
+     conteúdo — width: 100% repõe o comportamento de bloco (max-width manda). */
+  width: 100%;
+  padding-block: 2.2rem 4rem;
 }
 
 .section-title {
@@ -499,8 +527,12 @@ a.card:hover {
   border-color: var(--accent);
   transform: translateY(-2px);
 }
-.card h3 {
+/* h2 nos cartões que são o primeiro nível sob o h1 (Projetos, Ferramentas —
+   saltar de h1 para h3 quebra a ordem de títulos), h3 nos que vivem dentro
+   de uma secção com h2. Mesmo aspeto nos dois casos. */
+.card :is(h2, h3) {
   margin: 0 0 0.35rem;
+  font-size: 1.05rem;
   overflow-wrap: anywhere;
 }
 .card p {
@@ -561,6 +593,29 @@ a.card:hover {
   flex: none;
 }
 .mini-list a:hover .go { color: var(--accent); }
+/* Em telemóvel a linha única deixava ~15 caracteres de descrição antes do
+   "…" — não dizia nada. Abaixo de 40rem: nome por cima, descrição por baixo
+   em até 2 linhas, seta centrada à direita. */
+@media (max-width: 40rem) {
+  .mini-list a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.8rem;
+    align-items: center;
+  }
+  .mini-list .desc {
+    grid-column: 1;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+  .mini-list .go {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
 
 .badge {
   display: inline-block;
@@ -579,19 +634,6 @@ a.card:hover {
 }
 
 /* ---------- Dashboard (hero da home) ---------- */
-
-.top-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: 1fr;
-  margin-top: 1.3rem;
-}
-@media (min-width: 860px) {
-  /* 2fr e não 1.6fr: a identidade é a informação primária da home, mas
-     partilhava um .panel visualmente igual ao das stats — dar-lhe mais
-     largura reforça a hierarquia sem tocar em cor. */
-  .top-grid { grid-template-columns: 2fr 1fr; }
-}
 
 .panel {
   background: var(--bg-raise);
@@ -622,6 +664,7 @@ a.card:hover {
 .panel.identity {
   position: relative;
   overflow: hidden;
+  margin-top: 1.3rem;
 }
 .panel.identity > :not(.net-bg) {
   position: relative;
@@ -695,7 +738,8 @@ a.card:hover {
 }
 .identity .sum {
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.98rem;
+  max-width: 68ch;
   margin: 0.9rem 0 0;
 }
 .identity .meta-row {
@@ -706,20 +750,6 @@ a.card:hover {
   font-family: var(--mono);
   font-size: 0.78rem;
   color: var(--muted);
-}
-
-.credentials-link {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--muted);
-  text-decoration: none;
-  margin-top: 0.5rem;
-}
-.credentials-link:hover,
-.credentials-link:focus-visible {
-  color: var(--accent);
-  text-decoration: underline;
 }
 
 .chip-row {
@@ -771,19 +801,6 @@ a.card:hover {
 .stat.amber .n { color: var(--accent-2); }
 .stat.blue .n { color: var(--accent-3); }
 .stat.red .n { color: var(--danger); }
-/* Stat clicável (nº de badges → página Certificações): parece um cartão de
-   stat normal, mas com afordância de link no hover/foco. */
-.stat-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.15s ease, background 0.15s ease;
-}
-.stat-link:hover,
-.stat-link:focus-visible {
-  border-color: var(--accent-2);
-  background: var(--bg-raise);
-}
 .stat .l {
   font-size: 0.72rem;
   color: var(--muted);
@@ -841,44 +858,9 @@ a.card:hover {
 .bar-fill.warn { background: var(--accent-2); }
 .bar-fill.down { background: var(--danger); }
 
-/* Heatmap dia × hora e faixa de horas da Threat Intelligence. Vivem no CSS
-   GLOBAL (não scoped) de propósito: as células/barras são criadas por script
-   (createElement) e por isso não recebem o atributo de scope do Astro — um
-   seletor scoped nunca lhes bateria (mesma razão das .bar-* acima). */
-.heatmap { display: flex; flex-direction: column; gap: 3px; overflow-x: auto; }
-.heatmap-row {
-  display: grid;
-  grid-template-columns: 3rem repeat(24, minmax(9px, 1fr));
-  gap: 3px;
-  align-items: center;
-}
-.heat-label { font-size: 0.6rem; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
-.heat-cell { height: 15px; min-width: 9px; border-radius: 2px; background: var(--bg-raise-2); }
-.heatmap-axis {
-  display: flex;
-  justify-content: space-between;
-  padding-left: 3rem; /* alinha com a coluna de rótulos das linhas */
-  margin-top: 4px;
-  font-size: 0.58rem;
-  color: var(--faint);
-}
-.hours-strip {
-  display: grid;
-  grid-template-columns: repeat(24, 1fr);
-  gap: 2px;
-  align-items: end;
-  height: 3.4rem;
-}
-.hour-bar { background: var(--accent-2); border-radius: 2px 2px 0 0; min-height: 2px; align-self: end; }
-.heatmap-legend { display: flex; align-items: center; gap: 0.35rem; font-size: 0.66rem; color: var(--faint); margin-top: 0.6rem; }
-.heatmap-legend .swatch { width: 13px; height: 13px; border-radius: 2px; }
-.heatmap-legend .i1 { background: rgba(61, 220, 132, 0.25); }
-.heatmap-legend .i2 { background: rgba(61, 220, 132, 0.5); }
-.heatmap-legend .i3 { background: rgba(61, 220, 132, 0.75); }
-.heatmap-legend .i4 { background: rgba(61, 220, 132, 1); }
-
 /* Sparklines (timelines Requests/Threats) — SVG criado por script, por isso
-   as classes vivem no global (mesma razão das barras e do heatmap acima). */
+   as classes vivem no global (mesma razão das barras acima): elementos
+   criados com createElement não recebem o atributo de scope do Astro. */
 .spark-svg { width: 100%; height: 48px; display: block; overflow: visible; }
 .spark-area { fill: var(--accent-dim); }
 .spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; }
@@ -912,7 +894,6 @@ a.card:hover {
 .scatter-dot.med { fill: var(--accent-2); fill-opacity: 0.85; }
 .scatter-dot.low { fill: var(--accent); fill-opacity: 0.85; }
 .scatter-dot.sample { fill: none; stroke: var(--muted); stroke-width: 1.5; }
-.timeline-dot { fill: var(--accent); stroke: var(--bg-raise); stroke-width: 2; }
 
 /* Lista chave→valor do painel de estado (versão, commit, branch…). */
 .kv-list {
@@ -1019,30 +1000,6 @@ input[type='file']::file-selector-button:hover {
   color: var(--accent);
 }
 
-/* Select sem a seta nativa do sistema; o chevron é desenhado em CSS pelo
-   .select-wrap (sem imagens nem data: URIs, para não alargar a CSP). */
-select {
-  appearance: none;
-  padding-right: 2.2rem;
-  cursor: pointer;
-}
-.select-wrap {
-  position: relative;
-}
-.select-wrap::after {
-  content: '';
-  position: absolute;
-  right: 0.95rem;
-  top: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin-top: -0.4rem;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  transform: rotate(45deg);
-  pointer-events: none;
-}
-
 .check-row {
   display: flex;
   align-items: center;
@@ -1050,7 +1007,7 @@ select {
   font-size: 0.9rem;
   color: var(--text);
   /* min-height 44px (alvo de toque) em vez de confiar só no checkbox de
-     1rem — o padding substitui a margem-bottom anterior como respiro. */
+     1rem; o padding substitui a margem-bottom anterior como respiro. */
   min-height: 44px;
   padding: 0.3rem 0;
   font-family: var(--mono);
@@ -1130,6 +1087,9 @@ select {
   word-break: break-all;
 }
 .result-table td .hl { color: var(--accent); }
+/* O binário da calculadora de subnets quebra só nos <wbr> entre octetos;
+   break-all partia-o a meio de um octeto ("1010100 / 0.00000001"). */
+.result-table td#r-binary { word-break: normal; }
 
 /* Em ecrãs estreitos os 11rem fixos do th não deixavam espaço nenhum à
    coluna de valor — um IP de 13 caracteres partia-se a meio mesmo cabendo
@@ -1248,7 +1208,7 @@ select {
 .emailh-verdict[data-v='pass'] { color: var(--accent); }
 .emailh-verdict[data-v='soft'] { color: var(--accent-2); }
 .emailh-verdict[data-v='fail'] { color: var(--danger); }
-.emailh-verdict[data-v='none'] { color: var(--faint); }
+.emailh-verdict[data-v='none'] { color: var(--muted); }
 .emailh-auth-card p {
   margin: 0.5rem 0 0;
   font-size: 0.8rem;
@@ -1257,7 +1217,7 @@ select {
 }
 .emailh-auth-card .emailh-detail {
   font-family: var(--mono);
-  color: var(--faint);
+  color: var(--muted);
   word-break: break-all;
 }
 /* Na tabela de hops o th de 11rem da .result-table não faz sentido. */
@@ -1300,6 +1260,16 @@ select {
 .emailh-flags li[data-level='ok']::before { content: '✓'; color: var(--accent); }
 
 /* Medidor de entropia */
+.password-out {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0.7rem 0.8rem;
+  word-break: break-all;
+  min-height: 2.9rem;
+}
 .meter {
   height: 8px;
   background: var(--bg);
@@ -1316,73 +1286,53 @@ select {
   transition: width 0.25s ease, background-color 0.25s ease;
 }
 
-.password-out {
-  font-family: var(--mono);
-  font-size: 1.05rem;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  padding: 0.7rem 0.8rem;
-  word-break: break-all;
-  min-height: 2.9rem;
-}
+/* ---------- Percurso (timeline) ---------- */
 
-/* ---------- Percurso (timeline horizontal) ---------- */
-
-.journey-hint {
-  text-align: right;
-}
-/* 1100px e não 901px: as 5 paragens ocupam ~1040px, e entre 901–1100px o
-   scroll horizontal ainda existe — o hint tem de continuar visível aí
-   (abaixo disso, o JS esconde-o quando se chega ao fim do scroll). */
-@media (min-width: 1100px) {
-  .journey-hint { display: none; }
-}
-
-.journey-wrap {
-  position: relative;
-}
-/* Sombra no bordo direito, só onde o scroll horizontal é mesmo preciso
-   (até ~1100px, a largura em que as 5 paragens deixam de caber no
-   container), para sinalizar que há mais paragens fora do ecrã. */
-@media (max-width: 1099px) {
-  .journey-wrap::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 2.4rem;
-    background: linear-gradient(to right, transparent, var(--bg));
-    pointer-events: none;
-  }
-}
-
+/* Vertical por omissão (mobile-first) e horizontal só a partir de 1100px,
+   a largura em que as 5 paragens (~1040px) cabem no container. Antes era
+   sempre horizontal com scroll: em telemóvel via-se 1,5 paragens com o texto
+   cortado, e a região de scroll não era alcançável por teclado. */
 .journey {
   list-style: none;
   margin: 0;
-  padding: 1.4rem 0.2rem 0.6rem;
+  padding: 0.8rem 0 0 0.4rem;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(13rem, 1fr);
   gap: 0;
-  overflow-x: auto;
-  position: relative;
 }
 .journey .stop {
   position: relative;
-  padding: 1.1rem 1.2rem 0.4rem 0;
-  border-top: 2px solid var(--border-strong);
+  padding: 0 0 1.3rem 1.4rem;
+  border-left: 2px solid var(--border-strong);
+}
+.journey .stop:last-child {
+  padding-bottom: 0.2rem;
 }
 .journey .stop .dot {
   position: absolute;
-  top: -6px;
-  left: 0;
+  top: 0.35rem;
+  left: -6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: var(--bg);
   border: 2px solid var(--accent);
+}
+@media (min-width: 1100px) {
+  .journey {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    padding: 1.4rem 0.2rem 0.6rem;
+  }
+  .journey .stop,
+  .journey .stop:last-child {
+    padding: 1.1rem 1.2rem 0.4rem 0;
+    border-left: none;
+    border-top: 2px solid var(--border-strong);
+  }
+  .journey .stop .dot {
+    top: -6px;
+    left: 0;
+  }
 }
 .journey .stop:last-child .dot {
   background: var(--accent);
@@ -1404,14 +1354,7 @@ select {
   font-size: 0.95rem;
   margin-top: 0.25rem;
 }
-.journey .name .flag {
-  display: inline-block;
-  vertical-align: -2px;
-  border-radius: 2px;
-  outline: 1px solid var(--border);
-  margin-right: 0.3rem;
-}
-.journey .place {
+.journey .role {
   font-size: 0.8rem;
   color: var(--muted);
 }
@@ -1420,7 +1363,31 @@ select {
   /* --muted e não --faint: é a nota real de cada paragem, não decoração. */
   color: var(--muted);
   margin-top: 0.35rem;
-  max-width: 15rem;
+  max-width: 34rem;
+}
+/* Projetos dentro da empresa: um fio à esquerda mostra que pertencem a ela. */
+.journey .projects {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0 0 0 0.8rem;
+  border-left: 1px dashed var(--border-strong);
+  display: grid;
+  gap: 0.5rem;
+}
+.journey .pname {
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.journey .pname .flag {
+  display: inline-block;
+  vertical-align: -2px;
+  border-radius: 2px;
+  outline: 1px solid var(--border);
+  margin-right: 0.4rem;
+}
+@media (min-width: 1100px) {
+  .journey .note { max-width: 20rem; }
 }
 
 /* ---------- Catálogo de estrelas (Links) ---------- */
@@ -1547,6 +1514,28 @@ select {
   padding: 0.45rem 0.7rem;
   text-align: left;
 }
+/* Em telemóvel as tabelas de 3 colunas do Sobre (Referenciais) excediam a
+   largura do ecrã e arrastavam a página para o lado. Letra e padding menores
+   resolvem a maior parte. As palavras ficam inteiras ("Profundidade",
+   "Enquadramento"): `break-word` não conta para a largura mínima da célula,
+   por isso as colunas estreitas ficam com o tamanho da palavra mais longa e a
+   coluna do meio, que tem texto corrido, é a que encolhe. `anywhere` fazia o
+   contrário e esmagava as colunas laterais a ~50px, partindo as palavras. */
+@media (max-width: 40rem) {
+  .prose table { font-size: 0.84rem; }
+  .prose table th, .prose table td {
+    padding: 0.4rem 0.4rem;
+    overflow-wrap: break-word;
+  }
+}
+@media (max-width: 24rem) {
+  .prose table { font-size: 0.78rem; }
+  .prose table th, .prose table td { padding: 0.35rem 0.3rem; }
+}
+@media (max-width: 21rem) {
+  .prose table { font-size: 0.7rem; }
+  .prose table th, .prose table td { padding: 0.3rem 0.25rem; }
+}
 
 /* Accordions do Percurso (details/summary escritos no markdown do Sobre).
    O corpo fica em sans (herda do body); só o summary é mono, como os títulos. */
@@ -1604,9 +1593,8 @@ select {
   margin-bottom: 2rem;
 }
 
-/* ---------- Honeypot (/perimetro) ---------- */
+/* ---------- Painéis ao vivo: aviso de indisponível e carregamento ---------- */
 
-.honeypot .stats-grid { margin-bottom: 1.2rem; }
 /* o atributo hidden tem de vencer o display:grid/flex das classes */
 .stats-grid[hidden], .table-scroll[hidden] { display: none; }
 .hp-fallback {
@@ -1617,140 +1605,8 @@ select {
   color: var(--accent-2);
   font-size: 0.9rem;
 }
-.hp-table th { white-space: nowrap; }
-.hp-loading { color: var(--faint); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
+.hp-loading { color: var(--muted); text-align: center; font-family: var(--mono); font-size: 0.82rem; }
 .hp-cc { color: var(--text); }
-.hp-path { color: var(--accent-2); }
-.hp-verdict { color: var(--accent); font-size: 0.82rem; white-space: nowrap; }
-
-/* Coluna Técnica: link para /attack#<id> + cruzamento com o ticker CISA KEV. */
-.hp-tech { white-space: nowrap; font-size: 0.82rem; }
-.hp-tech-id { color: var(--accent-3); border-bottom: 1px dotted currentColor; }
-.hp-tech-id:hover { color: var(--accent); }
-/* Selo "explorada agora": técnica tentada = técnica ativa no ticker KEV. */
-.hp-corr-badge {
-  display: inline-block;
-  margin-left: 0.4rem;
-  padding: 0 0.35rem;
-  border: 1px solid var(--accent-2);
-  border-radius: 999px;
-  background: rgba(240, 180, 92, 0.08);
-  color: var(--accent-2);
-  font-size: 0.72rem;
-  white-space: nowrap;
-}
-.hp-corr-badge:hover { background: rgba(240, 180, 92, 0.16); color: var(--accent-2); }
-.hp-corr-row td { background: rgba(240, 180, 92, 0.05); }
-.hp-corr-row .hp-path { color: var(--accent-2); font-weight: 600; }
-/* Banner de correlação: só aparece quando há pelo menos um cruzamento vivo. */
-.hp-corr-banner {
-  border: 1px solid var(--accent-2);
-  border-left-width: 3px;
-  border-radius: var(--radius);
-  background: rgba(240, 180, 92, 0.06);
-  padding: 0.8rem 1rem;
-  margin-bottom: 1.2rem;
-  color: var(--accent-2);
-  font-size: 0.86rem;
-  line-height: 1.5;
-}
-.hp-corr-banner[hidden] { display: none; }
-.hp-corr-spark { margin-right: 0.35rem; }
-
-/* ---------- Ticker SOC (topo do Perímetro) ---------- */
-
-.ticker {
-  overflow: hidden;
-  white-space: nowrap;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-raise-2);
-  padding: 0.5rem 0;
-  margin-bottom: 1.4rem;
-}
-.ticker-track {
-  display: inline-flex;
-  gap: 0;
-  animation: ticker-slide 60s linear infinite;
-  will-change: transform;
-}
-.ticker:hover .ticker-track,
-.ticker:focus-within .ticker-track {
-  animation-play-state: paused;
-}
-.ticker .ti {
-  margin: 0 1.6rem;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-.ticker .ti a { color: var(--muted); }
-.ticker .ti a:hover { color: var(--accent); }
-.ticker .tag { color: var(--danger); margin-right: 0.5rem; }
-.ticker .tag.k { color: var(--accent-2); }
-@keyframes ticker-slide {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-@media (max-width: 480px) {
-  .ticker { padding: 0.35rem 0; }
-  .ticker .ti { margin: 0 1rem; font-size: 0.7rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ticker { white-space: normal; }
-  .ticker-track { animation: none; flex-wrap: wrap; }
-}
-
-/* ---------- Mapa de tráfego hostil (/perimetro) ---------- */
-
-.hostmap { margin-top: 2rem; }
-.map-frame {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg-raise);
-  padding: 0.6rem;
-  overflow: hidden;
-}
-.map-svg { width: 100%; height: auto; display: block; }
-.map-svg #map-dots circle { fill: var(--border-strong); }
-.map-svg .src { fill: var(--bg-raise-2); stroke: var(--faint); stroke-width: 1; }
-.map-svg .arc {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.3;
-  opacity: 0.8;
-  stroke-dasharray: 6 5;
-  animation: map-flow 2.2s linear infinite;
-}
-.map-svg .arc.amber { stroke: var(--accent-2); opacity: 0.5; animation-duration: 3s; }
-.map-svg .map-dst { fill: var(--accent); }
-.map-svg .map-pulse {
-  fill: none;
-  stroke: var(--accent);
-  opacity: 0.6;
-  animation: map-pulse 1.8s ease-out infinite;
-}
-.map-svg .map-label { fill: var(--faint); font-size: 9px; font-family: var(--mono); }
-.map-svg .map-label.pt { fill: var(--accent); }
-@keyframes map-flow { to { stroke-dashoffset: -22; } }
-@keyframes map-pulse { from { r: 5; opacity: 0.7; } to { r: 16; opacity: 0; } }
-.map-legend {
-  display: flex;
-  gap: 1.1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 0.6rem 0.4rem 0.2rem;
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  /* --muted e não --faint: é o texto que explica o que as cores do mapa
-     significam — se ele próprio for ilegível, a regra "não só por cor"
-     deixa de valer. */
-  color: var(--muted);
-}
-.map-legend .mk { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.4rem; }
-.map-legend .mk.g { background: var(--accent); }
-.map-legend .mk.a { background: var(--accent-2); }
-.map-legend .map-totals { margin-left: auto; }
 
 /* ---------- Diagrama do homelab (projeto /projetos/homelab) ---------- */
 
@@ -1770,7 +1626,7 @@ select {
   stroke-dasharray: 4 4;
 }
 .diagram-homelab .diagram-label {
-  fill: var(--faint);
+  fill: var(--muted);
   font-family: var(--mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -1810,7 +1666,7 @@ select {
 }
 .diagram-homelab .diagram-arrowhead { fill: var(--muted); }
 .diagram-homelab .diagram-caption {
-  fill: var(--faint);
+  fill: var(--muted);
   font-family: var(--mono);
   font-size: 9px;
 }
@@ -1972,7 +1828,7 @@ select {
 .atk-hint {
   font-family: var(--mono);
   font-size: 0.72rem;
-  color: var(--faint);
+  color: var(--muted);
   margin: 0 0 0.6rem;
   text-align: right;
   opacity: 1;
@@ -2068,7 +1924,7 @@ select {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* Deep-link vindo de /perimetro: destaca a técnica alvo da âncora. */
+/* Deep-link (/attack#<id>): destaca a técnica alvo da âncora. */
 .atk-cell:target {
   outline: 2px solid var(--accent-2);
   outline-offset: 2px;
@@ -2100,6 +1956,44 @@ select {
 .atk-cell:focus-within .atk-tip {
   opacity: 1;
   visibility: visible;
+}
+
+/* Telemóvel: as 14 colunas num scroll horizontal mostravam 1,5 táticas de
+   cada vez e o tooltip dependia de hover. Abaixo de 48rem as táticas ficam
+   empilhadas, sem scroll, e o "coberto por" de cada técnica aparece por
+   baixo dela, sempre visível. */
+@media (max-width: 47.99rem) {
+  .atk-hint,
+  .atk-fade { display: none; }
+  .atk-scroll { overflow-x: visible; }
+  .atk {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    gap: 1.1rem;
+  }
+  .atk-tactic {
+    min-height: 0;
+    font-size: 0.72rem;
+  }
+  .atk-cell {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.6rem;
+  }
+  .atk-tip {
+    position: static;
+    display: block;
+    width: auto;
+    max-width: none;
+    margin-top: 0.3rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--muted);
+    opacity: 1;
+    visibility: visible;
+  }
+  .atk-cell.prod, .atk-cell.exp { cursor: default; }
 }
 
 /* ---------- Rodapé ---------- */
@@ -2266,131 +2160,12 @@ select {
 }
 .mirror-note b { font-weight: 600; }
 
-/* ---------- Laboratório de passkeys (/ferramentas/passkeys) ---------- */
-
-/* Stepper: sequência real (1 cria → 2 abre → 3 usa), por isso numerada. */
-.pk-steps { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-top: 1.4rem; }
-.pk-step {
-  background: var(--bg-raise);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1.2rem 1.3rem;
-}
-.pk-step.done { border-color: var(--accent); }
-.pk-step.active { border-color: var(--accent-2); }
-.pk-shead {
-  display: flex;
-  align-items: baseline;
-  gap: 0.7rem;
-  font-family: var(--mono);
-  margin-bottom: 0.7rem;
-  flex-wrap: wrap;
-}
-.pk-n {
-  font-size: 0.72rem;
-  color: var(--faint);
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  padding: 0.05rem 0.5rem;
-}
-.pk-step.done .pk-n { color: var(--accent); border-color: var(--accent); }
-.pk-step.active .pk-n { color: var(--accent-2); border-color: var(--accent-2); }
-.pk-shead h2 { margin: 0; font-size: 0.95rem; }
-/* --muted e não --faint: é o estado real do passo, não decoração (os
-   estados done/active já têm cor própria abaixo, esta é a base/pendente). */
-.pk-state { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
-.pk-step.done .pk-state { color: var(--accent); }
-.pk-step.active .pk-state { color: var(--accent-2); }
-.pk-exp { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.88rem; max-width: 46rem; }
-.pk-step .btn[disabled] { opacity: 0.4; cursor: default; }
-
-/* Dissecação: hex à esquerda, significado à direita. */
-.pk-dissect {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--bg);
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  overflow-x: auto;
-}
-.pk-dissect > div {
-  display: flex;
-  gap: 1rem;
-  padding: 0.42rem 0.9rem;
-  border-bottom: 1px solid var(--border);
-}
-.pk-dissect > div:last-child { border-bottom: 0; }
-.pk-hex { color: var(--accent-3); width: 15rem; flex: none; word-break: break-all; }
-.pk-lbl { color: var(--muted); }
-.pk-lbl b { color: var(--text); font-weight: 600; }
-.pk-lbl .ok { color: var(--accent); }
-.pk-lbl .amb { color: var(--accent-2); }
-
-.pk-flagchips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
-.pk-fchip {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  border-radius: 5px;
-  padding: 0.2rem 0.55rem;
-  border: 1px solid var(--border-strong);
-  /* --muted e não --faint: são as flags reais do autenticador (UP/UV/BE/
-     BS/ED), conteúdo educativo da ferramenta, não decoração. */
-  color: var(--muted);
-  background: var(--bg-raise-2);
-}
-.pk-fchip.on { color: var(--accent); border-color: rgba(61, 220, 132, 0.4); background: var(--accent-dim); }
-
-.pk-verify-log {
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--bg);
-  font-family: var(--mono);
-  font-size: 0.8rem;
-  line-height: 1.75;
-  padding: 0.9rem 1.1rem;
-  color: var(--muted);
-  overflow-x: auto;
-}
-.pk-verify-log .p { color: var(--faint); }
-.pk-verify-log .ok { color: var(--accent); }
-.pk-verify-log .bad { color: var(--danger); }
-
-.pk-why {
-  border: 1px solid var(--accent);
-  border-left-width: 3px;
-  border-radius: var(--radius);
-  background: var(--accent-dim);
-  padding: 0.9rem 1.1rem;
-  margin-top: 1.4rem;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  color: var(--text);
-  max-width: 46rem;
-}
-.pk-why b { font-family: var(--mono); }
-.pk-why .bad { color: var(--danger); font-family: var(--mono); }
-
-.pk-cleanup {
-  border: 1px dashed var(--accent-2);
-  border-radius: var(--radius);
-  background: rgba(240, 180, 92, 0.05);
-  padding: 0.8rem 1rem;
-  margin-top: 1.2rem;
-  color: var(--accent-2);
-  font-family: var(--mono);
-  font-size: 0.82rem;
-  line-height: 1.6;
-}
-
 /* ---------- reduced-motion — overrides tardios ----------
-   Ficam no fim de propósito: as regras base de .net-bg e .map-svg são
+   Ficam no fim de propósito: as regras base de .net-bg são
    declaradas depois do bloco reduced-motion do topo, por isso o override
    tem de vir depois delas para ganhar a cascata (mesma especificidade). */
 @media (prefers-reduced-motion: reduce) {
   /* topologia do hero: pulsos somem, nós "vivos" ficam acesos fixos */
   .net-bg .pulse { animation: none; opacity: 0; }
   .net-bg .node.live { animation: none; fill-opacity: 0.6; }
-  /* mapa de tráfego: arcos param (visíveis, sólidos), pulso some */
-  .map-svg .arc { animation: none; stroke-dasharray: none; }
-  .map-svg .map-pulse { animation: none; opacity: 0; }
 }

@@ -1,35 +1,20 @@
 ---
 import type { Lang } from '../config';
 import { t } from '../i18n/ui';
-import { routes, projectUrl } from '../i18n/routes';
+import { routes } from '../i18n/routes';
 
 /**
- * Cross-links entre as páginas do "sistema" do site (Segurança, Honeypot,
- * Cloudflare, Provas, Performance e o projeto este-site). O mesmo bloco em
- * todas elas, com a página atual
- * marcada — é o que liga a narrativa do projeto este-site à postura de
- * segurança e à telemetria ao vivo. Não aparece no hub (SiteOverviewPage):
- * essa página já lista as mesmas ligações em "Mapa desta secção", uma
- * segunda cópia do mesmo bloco ali seria redundante.
+ * Separadores da secção "Este site", no topo de cada uma das cinco páginas,
+ * com a atual marcada. Substitui a lista "por camadas" que se repetia no fim
+ * de cada página: a navegação fica num sítio só e a descrição de cada página
+ * vive uma vez, na Visão geral.
  *
- * Honeypot e Cloudflare eram uma só página ("Perímetro", 5 tabs) até se
- * dividirem por fonte de dados — ver
- * docs/this-site-section-audit-2026-08-06.md.
- *
- * ATT&CK fica de fora de propósito (mesma razão que o exclui do dropdown
- * "Este Site" na nav principal — ver BaseLayout.astro): não é sobre este
- * site, é sobre credenciais e percurso pessoais. Não é uma "camada" do
- * sistema, por isso não aparece aqui — evita a própria página ATT&CK
- * dizer-se a si mesma parte de algo de que a nav a exclui.
+ * O honeypot não é uma página desta secção: é um projeto à parte
+ * (Threat Intel), descrito em Projetos. ATT&CK e Certificações também ficam
+ * de fora: são sobre o percurso pessoal, não sobre o site (ver a nota no
+ * BaseLayout.astro).
  */
-type LayerKey =
-  | 'overview'
-  | 'security'
-  | 'honeypot'
-  | 'cloudflare'
-  | 'evidence'
-  | 'performance'
-  | 'project';
+type LayerKey = 'overview' | 'security' | 'cloudflare' | 'evidence' | 'performance';
 
 interface Props {
   lang: Lang;
@@ -41,70 +26,55 @@ const dict = t(lang).layers;
 const items: { key: LayerKey; href: string; label: string }[] = [
   { key: 'overview', href: routes.siteOverview[lang], label: dict.overview },
   { key: 'security', href: routes.security[lang], label: dict.security },
-  { key: 'honeypot', href: routes.honeypot[lang], label: dict.honeypot },
   { key: 'cloudflare', href: routes.cloudflare[lang], label: dict.cloudflare },
   { key: 'evidence', href: routes.evidence[lang], label: dict.evidence },
   { key: 'performance', href: routes.performance[lang], label: dict.performance },
-  { key: 'project', href: projectUrl(lang, 'este-site'), label: dict.project },
 ];
 ---
 
-<nav class="layers" aria-label={dict.title}>
-  <div class="section-title">
-    <h2>{dict.title}</h2>
-  </div>
-  <p class="layers-intro">{dict.intro}</p>
-  <ul class="layers-list mono">
-    {items.map((item) =>
-      item.key === current ? (
-        <li class="is-current" aria-current="page">
-          <span>{item.label}</span>
-        </li>
-      ) : (
-        <li>
-          <a href={item.href}>{item.label}</a>
-        </li>
-      ),
-    )}
+<nav class="layers-tabs" aria-label={dict.title}>
+  <ul class="mono">
+    {items.map((item) => (
+      <li>
+        <a href={item.href} aria-current={item.key === current ? 'page' : undefined}>{item.label}</a>
+      </li>
+    ))}
   </ul>
 </nav>
 
 <style>
-  .layers {
-    margin-top: 2.6rem;
+  .layers-tabs {
+    margin: 1.3rem 0 1.6rem;
+    border-bottom: 1px solid var(--border);
   }
-  .layers-intro {
-    color: var(--muted);
-    font-size: 0.9rem;
-    margin: 0 0 0.8rem;
-    max-width: 46rem;
-  }
-  .layers-list {
+  .layers-tabs ul {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.45rem 1.6rem;
-    font-size: 0.85rem;
+    display: flex;
+    /* Em ecrãs estreitos os separadores partem em duas linhas em vez de
+       esconderem os últimos atrás de um scroll horizontal. */
+    flex-wrap: wrap;
+    gap: 0 0.2rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
   }
-  @media (min-width: 720px) {
-    .layers-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-  .layers-list li::before {
-    content: '→ ';
-    color: var(--faint);
-  }
-  .layers-list a {
-    color: var(--accent);
-  }
-  .layers-list .is-current span {
+  .layers-tabs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.6rem;
     color: var(--muted);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
   }
-  .layers-list .is-current::before {
-    content: '● ';
+  .layers-tabs a:hover,
+  .layers-tabs a:focus-visible {
+    color: var(--text);
+  }
+  .layers-tabs a[aria-current='page'] {
     color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 </style>

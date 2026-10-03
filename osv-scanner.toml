@@ -7,4 +7,8 @@
 # astro 7.1.0 — ver ossf/malicious-packages#1383) removido em 2026-08-07: o
 # osv-scanner passou a reportá-lo como "unused ignores" depois do astro
 # subir para 7.1.5 (o advisory já não bate certo com a versão instalada).
-# Sem entradas de momento.
+
+[[IgnoredVulns]]
+id = "GHSA-ch52-4w7c-c8xp"
+ignoreUntil = 2026-11-03
+reason = "http-cache-semantics 4.2.0 (via astro 7.3.5), sem versão corrigida. O advisory afeta caches partilhadas que servem respostas a vários utilizadores; o astro só o usa na cache de imagens remotas durante o build, e este site não configura imagens remotas. Mesma exceção em .github/npm-audit-allowlist.json."

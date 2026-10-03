@@ -1,8 +1,14 @@
 # personal-site-worker
 
-Backend for the site's security features (Block 3): honeypot, hostile
-traffic map, SOC ticker, and CT watch. A single Cloudflare
-Worker + one KV namespace.
+Backend for the site's security features (Block 3): the Cloudflare/firewall
+panels, CT watch, Web Vitals, the HIBP range relay and the mirror. A single
+Cloudflare Worker + one KV namespace.
+
+> The site's internal honeypot (decoy paths, IP list, hostile-traffic map
+> and the KEV/NVD ticker) was retired on 2026-10-02 —
+> [ADR 0022](../../docs/adr/0022-retire-internal-honeypot.md). The
+> honeypot is now the separate `honeypot-vps-infra` project. The cron's
+> `purgeLegacyHoneypotKeys` deletes what it left in KV.
 
 > **Why it lives here and not in `static/`:** the monorepo rule is that
 > `static/` is 100% client, no backend. Anything that needs a server
@@ -12,12 +18,8 @@ Worker + one KV namespace.
 
 | Route | What it does | Cache | Rate limit |
 | --- | --- | --- | --- |
-| *(decoys)* `/wp-login.php`, `/.env`, `/admin`, `/phpmyadmin/`, `/.git/config` | Records metadata (country, ASN, path, timestamp) and returns 404; the source IP is recorded separately, and published (ADR 0020 — see Privacy section below) | — | — |
-| `GET /api/honeypot` | Aggregated stats + last 30 attempts (no IP — see Privacy section) | 60 s (data-center Cache API, then KV) | — |
-| `GET /api/map` | Origins by country (24 h / 7 d) | 60 s (data-center Cache API, then KV) | — |
 | `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | 24 h per prefix (data-center Cache API — never KV) | 20/min per client |
-| `GET /api/ticker` | CISA KEV + critical NVD entries, sanitized | 1 h | — |
-| `GET /api/threat-intel` | Heatmap, time-of-day, tops (country/ASN/technique), recent events, and the honeypot's published IP list (`ips` — ADR 0020) | 6 h | — |
+| `GET /api/threat-intel` | The zone firewall's 7-day breakdown (`firewall7d`: by action, source, country, ASN, and per day), from the cron's daily snapshots — never an IP. The name dates from when it also served the honeypot dashboards | 6 h | — |
 | `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (429 past this limit) + global daily write budget of 300 writes = 150 samples (silently dropped past the cap, still 204) |
 | `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s (data-center Cache API, then KV) | — |
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
@@ -25,40 +27,17 @@ Worker + one KV namespace.
 | `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, **never the IP**) | — (per-request, `no-store`) | 30/min per client |
 | `GET /api/health` | Liveness | — | — |
 
-## Privacy (honeypot)
+## Privacy
 
-**Two different postures, by design — not an inconsistency.**
-
-The **Cloudflare Status/firewall panel** (`src/lib/cf-analytics.js`,
-zone-wide traffic including every legitimate visitor) stays governed by
-[ADR 0004](../../docs/adr/0004-zero-pii-honeypot.md), unchanged: no IP is
-ever stored. The only thing derived from the IP anywhere in that path is
-the rate-limit key — a truncated SHA-256 hash combining `RATE_SALT` with
-the UTC date (this derived key changes daily even though the underlying
-`RATE_SALT` secret itself is rotated manually on a weekly cadence, see
-the secrets table below), kept only during the limit's window and never
-associated with any event.
-
-The **honeypot's own decoy-path events** are different, by an explicit,
-later decision: [ADR 0020](../../docs/adr/0020-honeypot-public-ip.md)
-records the source IP (`recordHoneypot`, `src/index.js`) into a
-**separate** KV key (`iplist`) — never mixed into the anonymous
-`recent`/hourly/daily buckets that feed `/api/honeypot`, `/api/map`, and
-the "Registo" (log) table, which keep the same country/ASN/path/technique
-shape and the same 5-minute-rounded timestamp they always had. Only a
-public, validated IP (`src/lib/ipguard.js` — excludes RFC 1918, loopback,
-link-local, CGNAT, multicast, and documentation/TEST-NET ranges) gets
-recorded; entries age out after 30 days without a repeat sighting
-(`IP_RETENTION_MS`, pruned by the cron in `scheduled()`) — shorter than
-the sibling external-VPS project's 60–90 days
-(`docs/external-honeypot-vps.md`), because HTTP-scanning botnets are more
-likely than SSH brute-forcers to run on compromised residential/IoT
-devices. The list is published via `/api/threat-intel`'s `ips` field, for
-cross-honeypot correlation.
-
-Covered by tests (`test/logic.test.mjs`): the anonymous buckets/`recent`
-never gain an `ip` field; a private/reserved IP never reaches `iplist`;
-sightings of the same IP accumulate count/techniques without duplicating.
+[ADR 0004](../../docs/adr/0004-zero-pii-honeypot.md): no IP address is
+stored anywhere by this Worker — and since ADR 0022 that has no
+exception. The only thing derived from the IP is the rate-limit key — a
+truncated SHA-256 hash combining `RATE_SALT` with the UTC date (this
+derived key changes daily even though the underlying `RATE_SALT` secret
+itself is rotated manually on a weekly cadence, see the secrets table
+below), kept only during the limit's window and never associated with any
+event. `/api/mirror` sees the IP of the request it answers but never
+returns or stores it.
 
 ## CT watcher (`/api/ct`)
 
@@ -94,9 +73,7 @@ The country table sums the `countryMap` field from each day in the
 window (it's per day, not per period — the aggregation happens here, in
 `topCountriesByThreats` in `src/lib/cf-analytics.js`), filters out
 countries with zero threats and invalid codes, and shows the top 10 by
-blocked threats. It's a broader signal than the Honeypot's "hostile
-traffic map" (`/api/map`): that one only records who hit the decoy paths;
-this one covers what the Cloudflare WAF/edge blocked across the
+blocked threats, covering what the Cloudflare WAF/edge blocked across the
 **entire** zone.
 
 **This is not Cloudflare Radar.** Radar is a global, anonymous aggregate
@@ -169,26 +146,25 @@ of puts the event makes, including its own counter):
 
 | Budget | Writes/day | Covers |
 | --- | --- | --- |
-| `HONEYPOT_WRITE_CAP` | 300 | decoy events (4 puts each, 5 when the IP enters `iplist`) — ~60 events |
 | `VITALS_WRITE_CAP` | 300 | RUM samples (2 puts each) — 150 samples |
 | `CACHE_WRITE_CAP` | 80 | KV cache refreshes triggered by public GETs (2 puts each) |
 | `REFRESH_WRITE_CAP` | 40 | `/api/cf-stats?refresh=1` (2 puts each) |
-| cron (fixed rate) | ~90 | cache warm-up every 30 min, firewall snapshot, `iplist` pruning |
+| cron (fixed rate) | ~16 | cache warm-up every 30 min, firewall snapshot (the legacy-honeypot clean-up writes only once) |
 
-Total ≈ 810/day, leaving headroom for the overshoot concurrent requests can
+Total ≈ 440/day, leaving headroom for the overshoot concurrent requests can
 cause (the counters are best-effort read-then-write on an eventually
-consistent store). Past a budget, the event is dropped (the decoy still
-returns the same 404, the beacon the same 204) or the cache serves its
+consistent store). Past a budget, the sample is dropped (the beacon still
+returns the same 204) or the cache serves its
 stale copy instead of rewriting it.
 
 Two things deliberately **don't** use KV, so they cost none of that budget
 (`src/lib/edgecache.js`, the data-center Cache API): the per-client
 rate-limit state and the HIBP range cache. Before the 2026-09-25 security
 audit both lived in KV, and a single client could exhaust the account's
-daily writes through them in ~16 minutes
-([`docs/security-audit-2026-09-25/`](../../docs/security-audit-2026-09-25/REPORT.md)).
-Every public cached route (`/api/honeypot`, `/api/map`, `/api/vitals`,
-`/api/threat-intel`, `/api/ct`, `/api/cf-stats`, `/api/ticker`) is also
+daily writes through them in ~16 minutes (the audit report is not
+published).
+Every public cached route (`/api/vitals`, `/api/threat-intel`, `/api/ct`,
+`/api/cf-stats`) is also
 cached there first, for as long as its response `max-age`. Repeated
 requests therefore cost no KV operations, and they don't re-run the
 producer even while the KV write budget is exhausted. The Cache API is
@@ -228,14 +204,13 @@ npx wrangler kv namespace create HONEYPOT --preview
 # paste the ids into wrangler.toml (id / preview_id)
 
 npx wrangler secret put RATE_SALT     # any long random string
-npx wrangler secret put NVD_API_KEY   # optional (raises the NVD rate limit)
 ```
 
 ### 2a. Deploy on the real domain (what's in production)
 
-The `routes` block in `wrangler.toml` (decoy paths + `/api/*` on
-`danielmala.co`) is already active — `npx wrangler deploy` (or a push to
-`main`, via Workers Builds) intercepts those paths; the rest of the site
+The `routes` block in `wrangler.toml` (`/api/*` on `danielmala.co`) is
+already active — `npx wrangler deploy` (or a push to `main`, via Workers
+Builds) intercepts those paths; the rest of the site
 stays served by Cloudflare Pages. Since the API ends up **same-origin**,
 the frontend calls `/api/...` and the CSP's `connect-src 'self'` is
 enough — nothing to change.
@@ -253,21 +228,15 @@ enough — nothing to change.
    `static/public/_headers` — the **only** exception to the `'self'`
    CSP, and only needed in this test mode. Not needed in mode 2a.
 
-> Note: the decoy paths only catch real scanners when the Worker is on
-> the domain's routes (2a). On `*.workers.dev` (2b), the honeypot works
-> for testing, but real hostile traffic hits Pages, not the Worker.
-
 ## Variables and secrets — summary
 
 | Name | Type | Where | For |
 | --- | --- | --- | --- |
-| `KV` | binding | wrangler.toml | single namespace (events, buckets, caches, rate limit) |
+| `KV` | binding | wrangler.toml | single namespace (vitals histograms, firewall snapshots, caches, write budgets) |
 | `RATE_SALT` | secret, **mandatory** | `wrangler secret put` | rate-limit hash; the secret itself is rotated manually WEEKLY (invalidates accumulated limits on purpose) — the *effective* rate-limit key derived from it already changes daily (see Privacy section above). **Unresolved risk:** if unset, the Worker logs `rate_salt_missing` but doesn't fail closed — it falls back to the public, hardcoded `'rotate-me'` string (`dailySalt` in `src/lib/ratelimit.js`), so rate-limiting continues to "work" with a predictable salt instead of stopping. Fixing this (reject requests when the secret is absent) is tracked as a separate Worker change, not a docs fix. |
-| `NVD_API_KEY` | secret | `wrangler secret put` | optional, NVD rate limit |
 | `CF_API_TOKEN` | secret | `wrangler secret put` | Analytics:Read (zone + account) + Firewall/WAF:Read (zone + account) token, for `/api/cf-stats` — see the "Cloudflare Status" section above |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (mode 2b only) |
 | `SCAN_TARGET` | var | wrangler.toml | own site URL — feeds the CT watch's domain |
-| `DEPLOY_TS` | var | `--var` on deploy | "time to first scan" (optional) |
 | `CF_ZONE_TAG` | var | wrangler.toml | zone ID, for `/api/cf-stats` |
 | `CF_ACCOUNT_ID` | var | wrangler.toml | account ID, for `/api/cf-stats` |
 | `CF_WORKER_SCRIPT` | var | wrangler.toml | this Worker's name on the account, for `/api/cf-stats` |

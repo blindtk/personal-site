@@ -1,5 +1,5 @@
 # Configuração da CodeRabbit — revisão de PR por IA (grátis em repositório
-# público). Ver docs/security-review-2026-07-29.md §4 "CodeRabbit —
+# público). Ver a revisão de segurança de 2026-07-29 (não publicada), §4 "CodeRabbit —
 # Recommended": por omissão é verbosa e comenta em decisões de estilo já
 # tomadas ("Needs a .coderabbit.yaml to be tolerable") — este ficheiro é
 # essa calibração.

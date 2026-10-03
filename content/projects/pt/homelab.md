@@ -1,72 +1,65 @@
 ---
 title: 'Homelab'
-description: 'Cluster k3s em Raspberry Pi, em casa — o terreno onde testo tudo antes de chegar perto de produção.'
-tags: ['kubernetes', 'k3s', 'raspberry-pi', 'homelab']
+description: 'A minha rede doméstica com zero trust por omissão: Raspberry Pi, firewall com deny all, VPN em malha e CI próprio.'
+tags: ['homelab', 'zero-trust', 'k3s', 'tailscale']
 order: 4
 ---
 
-Em casa mantenho um cluster [k3s](https://k3s.io/) — a distribuição leve do
-Kubernetes, pensada para hardware modesto e ARM — a correr em Raspberry Pi.
-É o mesmo homelab que já mencionei no [Sobre](/sobre/): a cobaia para tudo o
-que quero experimentar antes de chegar perto de produção.
+O meu homelab é uma pequena rede doméstica feita de três Raspberry Pi, uma
+firewall, um switch, access points e portáteis. Serve para praticar, em
+ponto pequeno, o que faço no trabalho: segmentação de rede, acesso remoto
+controlado, automação e verificação. O desenho e as decisões estão
+documentados num repositório próprio.
 
-<svg class="diagram-homelab" viewBox="0 0 640 220" role="img" aria-label="Topologia simplificada do homelab: cluster k3s com control-plane e agentes, isolado da produção">
-  <defs>
-    <marker id="homelab-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path class="diagram-arrowhead" d="M0,0 L10,5 L0,10 z"></path>
-    </marker>
-  </defs>
-  <rect class="diagram-boundary" x="20" y="24" width="380" height="168" rx="8"></rect>
-  <text class="diagram-label" x="34" y="44">homelab</text>
-  <rect class="diagram-node" x="165" y="76" width="110" height="46" rx="6"></rect>
-  <text class="diagram-node-title" x="220" y="97" text-anchor="middle">control-plane</text>
-  <text class="diagram-node-sub" x="220" y="111" text-anchor="middle">k3s server · Pi</text>
-  <rect class="diagram-node" x="60" y="150" width="100" height="40" rx="6"></rect>
-  <text class="diagram-node-title" x="110" y="172" text-anchor="middle">agente</text>
-  <text class="diagram-node-sub" x="110" y="184" text-anchor="middle">k3s agent · Pi</text>
-  <rect class="diagram-node" x="270" y="150" width="100" height="40" rx="6"></rect>
-  <text class="diagram-node-title" x="320" y="172" text-anchor="middle">agente</text>
-  <text class="diagram-node-sub" x="320" y="184" text-anchor="middle">k3s agent · Pi</text>
-  <path class="diagram-edge" d="M192,122 L110,150"></path>
-  <path class="diagram-edge" d="M248,122 L320,150"></path>
-  <rect class="diagram-node diagram-node--prod" x="470" y="99" width="130" height="46" rx="6"></rect>
-  <text class="diagram-node-title" x="535" y="120" text-anchor="middle">produção</text>
-  <text class="diagram-node-sub" x="535" y="134" text-anchor="middle">fora do homelab</text>
-  <path class="diagram-edge diagram-edge--dashed" d="M400,122 L465,122"></path>
-  <text class="diagram-caption" x="432" y="110" text-anchor="middle">testar primeiro</text>
+<svg class="diagram-homelab" viewBox="0 0 640 214" role="img" aria-label="Esquema simplificado do homelab: uma firewall que liga quatro segmentos (vault, archive, workshop e bench) e bloqueia tudo por omissão">
+  <rect class="diagram-node" x="40" y="20" width="560" height="44" rx="6"></rect>
+  <text class="diagram-node-title" x="320" y="47" text-anchor="middle">firewall · deny all por omissão</text>
+  <path class="diagram-edge" d="M80,64 L80,110"></path>
+  <rect class="diagram-node" x="12" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="80" y="146" text-anchor="middle">vault</text>
+  <text class="diagram-node-sub" x="80" y="164" text-anchor="middle">o que não se perde</text>
+  <path class="diagram-edge" d="M240,64 L240,110"></path>
+  <rect class="diagram-node" x="172" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="240" y="146" text-anchor="middle">archive</text>
+  <text class="diagram-node-sub" x="240" y="164" text-anchor="middle">cópia do que importa</text>
+  <path class="diagram-edge" d="M400,64 L400,110"></path>
+  <rect class="diagram-node" x="332" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="400" y="146" text-anchor="middle">workshop</text>
+  <text class="diagram-node-sub" x="400" y="164" text-anchor="middle">para testar e partir</text>
+  <path class="diagram-edge" d="M560,64 L560,110"></path>
+  <rect class="diagram-node diagram-node--prod" x="492" y="110" width="136" height="84" rx="6"></rect>
+  <text class="diagram-node-title" x="560" y="146" text-anchor="middle">bench</text>
+  <text class="diagram-node-sub" x="560" y="164" text-anchor="middle">de onde giro tudo</text>
 </svg>
 
-*Topologia simplificada e ilustrativa — o número real de nós varia; o que
-interessa aqui é a relação entre o cluster e a produção, não um inventário.*
+*Os segmentos só comunicam através da firewall, que bloqueia tudo o que não tenha uma regra explícita.*
 
-## O que corre lá
+## Zero trust por omissão
 
-Não há uma lista fixa — é essa a natureza de um terreno de testes: passam por
-lá as ferramentas deste site antes de irem para o browser de outra pessoa,
-configurações que quero validar antes de as levar para o trabalho, e
-montagens de infraestrutura ofensiva para lab e CTFs (o
-[heatmap ATT&CK](/attack/) mapeia essa prática à técnica *Acquire Infrastructure* do
-MITRE ATT&CK, ao nível "experiência pontual / lab"). O denominador comum é
-sempre o mesmo: nada toca produção sem primeiro passar por aqui.
+Nenhuma máquina confia noutra só por estar na mesma rede. A firewall nega
+todo o tráfego entre segmentos por omissão (deny all) e só abre o que cada
+função precisa, com uma regra explícita. Cada Raspberry Pi tem um
+papel (vault, archive ou workshop) e vive no seu segmento, e os portáteis
+formam o bench, de onde administro.
 
-## Porquê k3s
+## O que usa
 
-Um Raspberry Pi não tem o footprint para um Kubernetes "a sério" — o k3s
-existe exatamente para isto: a mesma API do Kubernetes, com o etcd, os
-controllers legacy e as dependências desnecessárias cortadas para caber em
-hardware ARM de baixo consumo. Ganho a prática dos padrões que interessam em
-produção — multi-nó, scheduling, resiliência a perder um nó — num ambiente
-barato o suficiente para partir sem custar nada.
+- **Firewall, switch e access points.** A firewall impõe as fronteiras entre
+  segmentos, e o switch e os access points levam as VLANs até às máquinas.
+- **Tailscale.** A VPN em malha para o acesso remoto.
+- **Docker.** Os serviços correm em contentores, geridos com Compose, cada um
+  com o seu utilizador.
+- **Gestor de passwords.** Auto-alojado.
+- **Runners do GitHub Actions.** O CI próprio.
+- **k3s.** Um Kubernetes leve, para aprender e testar.
 
-## Decisões técnicas
+## Como o mantenho
 
-- **Cluster, não um Pi isolado.** Um único nó testa "corre o container";
-  vários nós testam o que falha de verdade em produção — perder um nó,
-  agendar em falta de recursos, tolerar reinícios.
-- **Isolamento deliberado da produção.** O homelab não tem acesso a nada que
-  importe fora dele; é um ambiente descartável por construção, para poder
-  ser destruído e reconstruído sem cerimónia.
-- **Sem exposição pública fixa.** Ainda não há um subdomínio a apontar para
-  o homelab (ver `docs/dns-tls.md` neste repo) — decide-se se e quando fizer
-  sentido, sem comprometer entretanto a política de HSTS preload do domínio
-  principal.
+- **Verificar, não assumir.** Cada regra de rede tem um mecanismo que a
+  impõe e um teste que a confirma, e esse teste corre de forma automática.
+- **Configuração como código.** As máquinas configuram-se com scripts
+  versionados, aplicados pelo CI.
+- **Segredos fora do repositório.** Nenhum segredo entra no git, e há um
+  scanner a garanti-lo.
+- **Decisões registadas.** Cada escolha tem o seu registo, com o contexto e
+  o porquê, para que daqui a um ano eu perceba o que decidi.

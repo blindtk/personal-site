@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 import { SITE, SITE_URL, type Lang } from '../config';
 import { t } from '../i18n/ui';
-import { routes, projectUrl, type RouteKey } from '../i18n/routes';
+import { routes, type RouteKey } from '../i18n/routes';
 import '../styles/global.css';
 
 interface Props {
@@ -20,7 +20,12 @@ interface Props {
 const { lang, title, description, altUrl, active, wide } = Astro.props;
 const dict = t(lang);
 const otherLang: Lang = lang === 'pt' ? 'en' : 'pt';
-const desc = description ?? SITE.description[lang];
+// Descrição: a que a página passar (projetos, posts, ferramentas) ou, para
+// as rotas de routes.ts, a de dict.metaDesc[rota]; o resto (home, 404) cai
+// em SITE.description.
+const routeKey = (Object.keys(routes) as RouteKey[]).find((key) => routes[key][lang] === Astro.url.pathname);
+const routeDesc = routeKey && routeKey in dict.metaDesc ? dict.metaDesc[routeKey as keyof typeof dict.metaDesc] : undefined;
+const desc = description ?? routeDesc ?? SITE.description[lang];
 const pageTitle = `${title} · ${SITE.handle}`;
 
 // "Blog" só aparece na nav se houver pelo menos um post publicado
@@ -43,33 +48,19 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
 
 const currentPath = Astro.url.pathname;
 
-// "Este Site" agrupa na nav as sete camadas do mesmo sistema — a mesma
-// lista e ordem do bloco de cross-links no fundo de cada uma delas (ver
-// SiteLayers.astro, que é a fonte de verdade desta ordem): Visão Geral,
-// Segurança, Honeypot (decoys + correlação ATT&CK + registo), Cloudflare
-// (ameaças à zona + firewall + mitigação), Provas, Performance (tráfego +
-// Core Web Vitals) e o projeto «Este site» (arquitetura e decisões).
-// Honeypot/Cloudflare (ataque ao vivo, ao minuto) vêm antes de Provas (o
-// audit trail — commit, cabeçalhos, CI) de propósito: mostra primeiro o
-// que está a acontecer, só depois o "não acredites, verifica".
-// Eram uma só página ("Perímetro", 5 tabs) até se dividirem por fonte de
-// dados — ver docs/this-site-section-audit-2026-08-06.md.
-// `href` explícito, não RouteKey: o projeto «Este site» vive nos posts de
-// /projetos/ (projectUrl), não é uma rota estática de routes.ts — e usar
-// href também para as outras seis simplifica o aria-current para uma só
-// comparação (currentPath === item.href) que funciona para as sete.
-// ATT&CK e Certificações ficam de fora de propósito — não são sobre o site,
-// são sobre credenciais e percurso pessoais (o próprio attack.json chama-lhe
-// "heatmap pessoal", "o meu CV"). O sítio natural para as duas é o Sobre,
-// que já as linka em prosa; continuam também acessíveis pelo rodapé.
+// "Este site" agrupa na nav as cinco páginas da secção, pela mesma ordem
+// dos separadores no topo de cada uma (SiteLayers.astro). Cloudflare (o que
+// acontece ao vivo) vem antes de Provas (commit, cabeçalhos, CI): primeiro o
+// que está a acontecer, depois o "não acredites, verifica".
+// ATT&CK e Certificações ficam de fora de propósito: não são sobre o site,
+// são sobre credenciais e percurso pessoais. O sítio natural para as duas é
+// o Sobre, que já as liga em prosa; continuam também acessíveis pelo rodapé.
 const siteGroup: { href: string; label: string }[] = [
   { href: routes.siteOverview[lang], label: dict.nav.overview },
   { href: routes.security[lang], label: dict.nav.security },
-  { href: routes.honeypot[lang], label: dict.nav.honeypot },
   { href: routes.cloudflare[lang], label: dict.nav.cloudflare },
   { href: routes.evidence[lang], label: dict.footer.evidence },
   { href: routes.performance[lang], label: dict.nav.performance },
-  { href: projectUrl(lang, 'este-site'), label: dict.nav.projectThisSite },
 ];
 const siteActive = siteGroup.some((item) => item.href === currentPath);
 
@@ -222,7 +213,6 @@ const personSchema = {
         <span class="footer-group">
           {dict.footer.thisSiteLabel}{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
-          <a href={routes.honeypot[lang]}>{dict.footer.honeypot}</a> ·{' '}
           <a href={routes.cloudflare[lang]}>{dict.footer.cloudflare}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
         </span>

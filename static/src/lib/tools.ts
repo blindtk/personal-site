@@ -6,12 +6,10 @@
 export const TOOLS = [
   { slug: 'subnets', kind: 'client' },
   { slug: 'hashes', kind: 'client' },
-  { slug: 'encoder', kind: 'client' },
   { slug: 'passwords', kind: 'client' },
   { slug: 'email-headers', kind: 'client' },
   { slug: 'exif', kind: 'client' },
   { slug: 'csp', kind: 'client' },
-  { slug: 'passkeys', kind: 'client' },
   { slug: 'pwned', kind: 'server' },
   { slug: 'mirror', kind: 'server' },
 ] as const;

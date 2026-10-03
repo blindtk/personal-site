@@ -1,6 +1,6 @@
 // Alvo de fuzzing: as funções de dynamic/worker/src/lib/sanitize.js que
-// recebem texto de fora sem confiança prévia (paths do honeypot, user-agents
-// do firewall, feeds CISA/NVD, cabeçalhos cf-*). Não basta "não lança
+// recebem texto de fora sem confiança prévia (paths e user-agents do
+// firewall, cabeçalhos cf-*). Não basta "não lança
 // exceção" — estas funções são regex sobre strings e praticamente nunca
 // lançam. Cada saída é verificada contra o contrato que a função promete;
 // uma violação lança e o libFuzzer reporta-a como crash, com o input que a
@@ -12,7 +12,6 @@ import {
 	escapeHtml,
 	normalizeCountry,
 	normalizeAsn,
-	normalizeCveId,
 } from "../../dynamic/worker/src/lib/sanitize.js";
 
 /** Lança com o input e o output quando uma propriedade do contrato falha. */
@@ -79,7 +78,4 @@ export function fuzz(data) {
 		text,
 		asn,
 	);
-
-	const cve = normalizeCveId(text);
-	check(cve === "" || /^CVE-\d{4}-\d{4,7}$/.test(cve), "normalizeCveId", text, cve);
 }

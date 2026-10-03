@@ -1,67 +1,67 @@
 ---
-title: 'Sobre'
+title: 'Sobre mim'
 ---
 
-Sou o **Daniel Malaco**, **Information Security Engineer** no Porto, Portugal.
-Desde 2020 estou na Ascendi, onde desenho e opero a arquitetura de segurança
-de infraestrutura crítica rodoviária: firewalls de nova geração, SIEM,
-proteção de endpoints, gestão de identidades, threat intelligence e resposta
-a incidentes — o ciclo completo, do desenho do controlo à análise do evento.
+Sou o **Daniel Malaco**, **Information Security Engineer** no Porto. Desde
+2020 trabalho na Ascendi, onde desenho e opero a segurança de infraestrutura
+crítica rodoviária. O trabalho cobre o ciclo todo: firewalls de nova geração,
+SIEM, proteção de endpoints, gestão de identidades, threat intelligence e
+resposta a incidentes. Tanto desenho o controlo como analiso o evento que ele
+apanha.
 
-Cheguei à segurança pelo caminho das redes. Durante vários anos desenhei,
-instalei e comissionei redes IP para sistemas de metro e ferrovia
-em quatro países — o metro de Doha no Qatar, o VLT de Santos no Brasil e os
-metros ligeiros de Odense e Bergen, na Dinamarca e na Noruega. Em
-infraestrutura de transporte, uma falha de rede não é um incómodo: é um
-sistema parado e milhares de pessoas em terra. Foi aí que aprendi a projetar
-para a redundância, a documentar para quem vem depois e a testar tudo em
-staging antes de tocar em produção.
+Cheguei à segurança pelas redes. Entre 2017 e 2020 desenhei, instalei e
+comissionei redes IP em projetos de metro e ferrovia: o metro de Doha, o VLT
+de Santos e os metros ligeiros de Odense e Bergen. Num sistema de transporte,
+uma falha de rede não é um simples incómodo: os comboios param e milhares de
+pessoas ficam à espera. Foi aí que aprendi a desenhar com redundância, a documentar
+para quem vem a seguir e a testar tudo em laboratório antes de tocar em
+produção.
 
-Em 2020 mudei o foco das redes para quem as ataca. Na Hardsecure instalei
-firewalls de nova geração e fiz testes de intrusão internos — encontrar as
-vulnerabilidades antes que alguém as explore — e trouxe essa perspetiva
-ofensiva para o trabalho defensivo que faço hoje. Levo-a a sério também fora
-do horário: SANS SEC504, summits de DFIR e ransomware, e um CTF ganho em
-Lisboa em 2022.
+Em 2020 passei a olhar para as redes do lado de quem as ataca. Na Hardsecure
+instalei firewalls e fiz testes de intrusão internos, à procura das
+vulnerabilidades antes de alguém as explorar. É essa forma de pensar que levo
+hoje para o trabalho defensivo. Também a treino fora do trabalho: fiz o SANS
+SEC504, acompanho os summits de DFIR e ransomware da SANS e já ganhei quatro
+CTFs, o primeiro em Lisboa, em 2022. As fotos estão no fim desta página.
 
-Gosto de construir as ferramentas que uso: as deste site correm todas no
-browser, e em casa mantenho um homelab com um cluster k3s em Raspberry Pi
-que serve de cobaia para tudo o que quero experimentar antes de chegar perto
-de produção. Este site é parte disso — estático, bilingue, sem trackers e
-com a postura de segurança documentada e verificável.
+Gosto de construir as ferramentas que uso. As deste site correm no browser, e
+em casa tenho um homelab, segmentado por função, onde experimento
+o que quero testar antes de chegar perto de produção. O próprio site faz parte
+disso: é estático, bilingue, não tem trackers e a forma como está protegido
+está explicada em [Este site](/este-site/).
 
 ## Percurso
 
-O essencial está acima; o detalhe de cada função fica aqui, recolhido.
+Abre cada função para ver o detalhe.
 
 <details>
 <summary>Information Security Engineer · Ascendi <span>nov 2020 → presente</span></summary>
 
-- **Contexto:** segurança de infraestruturas críticas rodoviárias, em Portugal.
-- **Papel:** desenho, deployment e operação de arquitetura de segurança da
-  informação, com gestão de tarefas/incidentes em ITSM.
-- **Tecnologias:** NGFW, AV/EDR, VA, SIEM, IAM, WAF, SEG.
-- **Resultado:** manutenção contínua da segurança de redes, sistemas e
-  aplicações através de políticas e procedimentos; deteção de ameaças e
-  vulnerabilidades e implementação de controlos para as mitigar via
-  monitorização e análise de eventos de segurança.
-- **Referência externa:** a infraestrutura de segurança que ajudei a
-  construir foi tema de um [Fortinet Customer Story sobre a
-  Ascendi](https://www.fortinet.com/customers/ascendi) — o artigo não me
-  nomeia (cita o Head of IT), mas fiz parte da equipa por trás do trabalho
-  descrito.
+- **Contexto:** segurança da infraestrutura crítica rodoviária da Ascendi, em
+  Portugal.
+- **Papel:** desenho, implementação e operação da arquitetura de segurança da
+  informação; gestão de pedidos e incidentes em ITSM.
+- **Tecnologias:** NGFW, AV/EDR, análise de vulnerabilidades, SIEM, IAM, WAF e
+  gateway de email (SEG).
+- **No dia a dia:** manter seguras as redes, os sistemas e as aplicações com
+  políticas e procedimentos, detetar ameaças e vulnerabilidades e pôr em
+  prática os controlos que as mitigam, a partir da monitorização e da análise
+  de eventos de segurança.
+- **Referência externa:** a Fortinet publicou um [caso de estudo sobre a
+  Ascendi](https://www.fortinet.com/customers/ascendi) que descreve a
+  infraestrutura de segurança que ajudei a construir. O artigo cita o Head of
+  IT e não me nomeia, mas fiz parte da equipa que fez esse trabalho.
 
 </details>
 
 <details>
 <summary>Cyber Security Engineer · Hardsecure <span>fev 2020 → set 2020</span></summary>
 
-- **Contexto:** deployment de firewalls de nova geração e testes de intrusão
-  internos.
+- **Contexto:** implementação de firewalls de nova geração e testes de
+  intrusão internos.
 - **Papel:** instalação, configuração e suporte de NGFW.
-- **Tecnologias:** firewalls de nova geração (NGFW), scanning e enumeração de
-  redes.
-- **Resultado:** localização de vulnerabilidades em redes antes de serem
+- **Tecnologias:** NGFW, scanning e enumeração de redes.
+- **Resultado:** vulnerabilidades encontradas nas redes antes de serem
   exploradas.
 
 </details>
@@ -71,23 +71,25 @@ O essencial está acima; o detalhe de cada função fica aqui, recolhido.
 
 **Odense Letbane** (Dinamarca)
 
-- **Contexto:** projeto de metro ligeiro na Dinamarca.
-- **Papel:** desenho, instalação e comissionamento de redes IP e segurança.
-- **Tecnologias:** requisitos de sistema, documentos de desenho e instalação,
-  lab staging, procedimentos de teste e comissionamento.
-- **Resultado:** rede IP e camada de segurança do metro ligeiro levadas do
-  desenho ao comissionamento — staging em laboratório, procedimentos de teste
-  e entrega documentada à operação.
+- **Contexto:** projeto do metro ligeiro de Odense.
+- **Papel:** desenho, instalação e comissionamento das redes IP e da
+  segurança.
+- **Método:** requisitos de sistema, documentos de desenho e instalação,
+  staging em laboratório, procedimentos de teste e comissionamento.
+- **Resultado:** a rede IP e a camada de segurança passaram do desenho ao
+  comissionamento, com staging em laboratório, testes e entrega documentada à
+  equipa de operação.
 
 **Bergen D42** (Noruega)
 
-- **Contexto:** projeto de metro ligeiro na Noruega.
-- **Papel:** desenho, instalação e comissionamento de redes IP e segurança.
-- **Tecnologias:** requisitos de sistema, documentos de desenho e instalação,
-  lab staging, procedimentos de teste e comissionamento.
-- **Resultado:** requisitos de sistema transformados em desenho, instalação e
-  comissionamento documentados do troço D42 — a base técnica para a linha
-  entrar em serviço.
+- **Contexto:** projeto do metro ligeiro de Bergen, troço D42.
+- **Papel:** desenho, instalação e comissionamento das redes IP e da
+  segurança.
+- **Método:** o mesmo de Odense, dos requisitos de sistema ao
+  comissionamento.
+- **Resultado:** desenho, instalação e comissionamento do troço D42
+  documentados a partir dos requisitos de sistema, prontos para a linha entrar
+  em serviço.
 
 </details>
 
@@ -96,75 +98,68 @@ O essencial está acima; o detalhe de cada função fica aqui, recolhido.
 
 **Metro de Doha** (Qatar)
 
-- **Contexto:** projeto de metro no Qatar.
-- **Papel:** desenho, instalação e comissionamento de redes IP e sistemas
-  BBRS (WiFi móvel para comboios).
-- **Tecnologias:** redes IP, sistemas BBRS, ambientes ferroviários/de metro.
-- **Resultado:** redes IP e sistema BBRS (o WiFi móvel que acompanha os
-  comboios) entregues da especificação ao comissionamento, num metro
-  construído de raiz.
+- **Contexto:** projeto do metro de Doha, construído de raiz.
+- **Papel:** desenho, instalação e comissionamento das redes IP e do sistema
+  BBRS, o WiFi móvel que acompanha os comboios.
+- **Tecnologias:** redes IP, BBRS, ambientes ferroviários e de metro.
 
 **VLT Santos** (Brasil)
 
-- **Contexto:** projeto de veículo leve sobre trilhos (VLT) no Brasil.
-- **Papel:** desenho, instalação e comissionamento de redes IP e sistemas
-  BBRS (WiFi móvel para comboios).
-- **Tecnologias:** redes IP, sistemas BBRS, ambientes ferroviários/de metro.
-- **Resultado:** rede IP e BBRS entregues do desenho ao comissionamento,
-  adaptando a mesma stack ferroviária a um sistema de VLT urbano.
+- **Contexto:** projeto do VLT (veículo leve sobre trilhos) de Santos.
+- **Papel:** desenho, instalação e comissionamento das redes IP e do BBRS.
+- **Resultado:** a mesma stack ferroviária de Doha adaptada a um sistema
+  urbano de VLT.
 
 </details>
 
 ## Formação
 
-- **Mestrado em Engenharia Eletrotécnica e de Computadores** — FEUP,
-  Faculdade de Engenharia da Universidade do Porto (2009–2016),
+- **Mestrado em Engenharia Eletrotécnica e de Computadores** na FEUP
+  (Faculdade de Engenharia da Universidade do Porto), 2009 a 2016, com
   especialização em Redes e Serviços de Comunicação.
 
 ## Certificações
 
-Fortinet (Credly), SANS SEC504 e os summits, Microsoft, CyberDefenders e mais
-— a lista completa, com o estado atual e verificação independente no Credly,
-vive numa página própria: **[Certificações](/certificacoes/)**.
+Tenho certificações da Fortinet, da SANS, da Microsoft, da CyberDefenders e
+de outras entidades. A lista completa, com o estado de cada uma e verificação
+independente no Credly, está em **[Certificações](/certificacoes/)**.
 
 ## Cobertura ATT&CK
 
-As técnicas do MITRE ATT&CK que cubro defensivamente, tática a tática, com a
-ferramenta ou experiência por trás de cada uma — o mesmo currículo, na
-linguagem nativa da indústria: **[Heatmap ATT&CK](/attack/)**.
+O **[heatmap ATT&CK](/attack/)** mostra, tática a tática, as técnicas do MITRE
+ATT&CK que cubro do lado defensivo e a ferramenta ou experiência por trás de
+cada uma.
 
 ## Competências
 
 | Área | Detalhe |
 | --- | --- |
-| Frameworks | MITRE ATT&CK, CIS benchmarks & controls, CISA CPG, OWASP Top 10, ISO 27001 |
 | Perímetro | NGFW, WAF, Security Email Gateway (SEG) |
 | Endpoint | Antivírus (AV), Endpoint Detection & Response (EDR) |
 | Identidade | IAM, Active Directory |
-| Deteção & resposta | SIEM, análise de vulnerabilidades (VA), testes de intrusão |
+| Deteção e resposta | SIEM, análise de vulnerabilidades (VA), testes de intrusão |
 | Resiliência | Business Continuity Planning (BCP) |
 | Linguagens | Python, Bash, PowerShell, Golang, C/C++ |
 | Plataformas | Linux, Windows, AWS, Azure, Rapid7 InsightVM, ServiceNow |
 
-## Referenciais aplicados
+## Referenciais
 
-Os referenciais abaixo entram no trabalho como ferramenta, não como
-objetivo. Uso-os para estruturar decisões, priorizar controlos e falar a
-mesma língua de auditores, fornecedores e reguladores. A tabela diz onde
-cada um entra e com que profundidade — nenhum deles fica aqui explicado.
+Uso estes referenciais como ferramentas de trabalho: para estruturar
+decisões, priorizar controlos e falar a mesma língua que auditores,
+fornecedores e reguladores. A tabela diz onde cada um entra e com que
+profundidade.
 
 | Referencial | Onde entra no trabalho | Profundidade |
 | --- | --- | --- |
-| ISO 27001 | Referência para políticas e procedimentos de segurança e para organizar controlos técnicos por domínio. | Referência |
-| NIS2 | Enquadramento regulatório do setor em que trabalho — infraestrutura crítica de transportes; informa prioridades de controlo e de reporte. | Enquadramento |
-| CIS Controls & Benchmarks | Base de hardening de sistemas e equipamentos de rede, e referência na verificação de configurações. | Aplicado |
-| CISA CPG | Termo de comparação para priorizar controlos de base em infraestrutura crítica. | Referência |
-| OWASP Top 10 | Vocabulário comum para classificar achados de análise de vulnerabilidades e testes internos, e para afinar regras de WAF. | Aplicado |
-| MITRE ATT&CK | Mapeamento de cobertura de deteção e estruturação da análise de incidentes — detalhe técnica a técnica no [heatmap](/attack/). | Aplicado |
+| ISO 27001 | Base para as políticas e procedimentos de segurança e para organizar os controlos técnicos por domínio. | Referência |
+| NIS2 | Enquadramento regulatório do setor em que trabalho, a infraestrutura crítica de transportes. Orienta as prioridades de controlo e de reporte. | Enquadramento |
+| CIS Controls & Benchmarks | Base para o hardening de sistemas e equipamentos de rede, e para verificar configurações. | Aplicado |
+| CISA CPG | Termo de comparação para priorizar os controlos de base em infraestrutura crítica. | Referência |
+| OWASP Top 10 | Vocabulário comum para classificar o que a análise de vulnerabilidades e os testes internos encontram, e para afinar regras de WAF. | Aplicado |
+| MITRE ATT&CK | Mapear a cobertura de deteção e estruturar a análise de incidentes. O detalhe, técnica a técnica, está no [heatmap](/attack/). | Aplicado |
 
-**Sobre a coluna de profundidade.** *Aplicado* — uso corrente em controlos
-que opero. *Referência* — consulta no desenho e na priorização, sem
-processo formal associado. *Enquadramento* — contexto regulatório do setor,
-não um programa que eu conduza. Nenhuma linha implica certificação,
-auditoria formal ou conformidade declarada: é só onde o referencial entra
-no trabalho.
+*Aplicado* quer dizer uso corrente nos controlos que opero. *Referência* quer
+dizer que o consulto no desenho e na priorização, sem um processo formal
+associado. *Enquadramento* é o contexto regulatório do setor, não um programa
+que eu conduza. Nenhuma linha quer dizer certificação, auditoria formal ou
+conformidade declarada.

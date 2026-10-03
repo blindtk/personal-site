@@ -1,6 +1,6 @@
 # Verificações de supply-chain de baixa frequência: não correm em cada PR de
 # propósito (achado da revisão de segurança 2026-07-29,
-# docs/security-review-2026-07-29.md — o repositório está hoje ACIMA da
+# revisão de segurança de 2026-07-29 (não publicada) — o repositório está hoje ACIMA da
 # quota de minutos do plano Free do GitHub Actions com 7 jobs por PR ×
 # ~100 PRs/mês; acrescentar mais passos ao caminho de cada PR piora isso).
 # Em vez disso: semanal + à mão. Cobre os dois lockfiles (static/ e

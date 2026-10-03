@@ -95,7 +95,7 @@ Method used: **Workers Builds** (automatic deploy via Git), not a manual
 
 KV namespace created via the dashboard (`Storage & Databases → KV →
 Create a namespace`, one for production and one `_PREVIEW`), with the IDs
-pasted into `wrangler.toml`. Secrets (`RATE_SALT`, `NVD_API_KEY`) via
+pasted into `wrangler.toml`. Secrets (`RATE_SALT`, `CF_API_TOKEN`) via
 `Settings → Variables and Secrets` on the Worker, with **Encrypt**
 enabled — never in `wrangler.toml` (it's a versioned file; CI's gitleaks
 catches any slip-up).
@@ -144,100 +144,20 @@ While this wasn't fixed, routes were added by hand in the dashboard
 (`Worker → Domains → Custom Domains and Routes → Add Route`) as a
 temporary workaround — no longer needed after the fix.
 
-## 5. WAF — rules on the `danielmala.co` zone
+## 5. WAF — custom rules on the `danielmala.co` zone
 
-`Security → WAF → Custom rules` (the zone, not the Worker/Pages). These
-rules diverge from the original design prepared before launch — see
-["History: original design vs. production"](#history-original-design-vs-production)
-at the end of this section for what changed and why.
+`Security → WAF → Custom rules` (the zone, not the Worker/Pages). In broad
+terms: verified bots are skipped; the scheduled CI checks
+(`verify-headers.yml`, `verify-worker.yml`, `verify-tls.yml`) are skipped
+by a header carrying the `CI_WAF_TOKEN` secret (rotate it in GitHub Actions
+and in the rule at the same time, same discipline as
+`RATE_SALT`/`CF_API_TOKEN`); everything else goes through a geographic
+policy with a challenge or a block. The exact conditions and their history
+are kept out of this public repository on purpose — they live in the
+dashboard and in the owner's private notes.
 
-Exact rule order in production (`Skip` rules come first; the honeypot
-rule comes before the country policy, and each rule acts **on evaluation
-order**):
-
-| # | Rule | Condition (summary) | Action |
-|---|---|---|---|
-| 1 | Verified bots | `cf.client.bot` (Cloudflare-verified bots) | Skip |
-| 2 | CI headers check | `http.request.headers["x-ci-waf-token"][0] eq "<CI_WAF_TOKEN secret value>"` (migrated 2026-07-31 — see note below) | Skip |
-| 3 | Honeypot Paths | Path is `/.env`, `/.git/config`, `/wp-login.php`, `/admin`, or starts with `/phpmyadmin` | **Managed Challenge**, stops evaluation |
-| 4 | Allowed Countries - Site | outside the paths above **and** country is PT | **Managed Challenge**, stops evaluation |
-| 5 | Blocked Countries - Site | outside the paths above **and** country is not PT | **Block**, stops evaluation |
-
-Why each rule:
-- **2**: `.github/workflows/verify-headers.yml` and `.github/workflows/verify-worker.yml`
-  `fetch` production from GitHub runners (usually outside PT) — without
-  this rule, both workflows fall into the country policy (rules 4/5) after
-  launch and start reporting production as broken because of the WAF
-  itself, not a real regression.
-  > **Note (2026-07-30):** the original match ("User-Agent contains
-  > `headers-check`") was a public string, documented in this very
-  > file — any request from anywhere in the world could copy it and
-  > bypass the country policy (found during a launch-validation session).
-  > **Resolved (2026-07-31, confirmed by the repo owner):** the rule in
-  > the dashboard now matches on the signed header `X-Ci-Waf-Token`
-  > (`http.request.headers["x-ci-waf-token"][0] eq "<secret value>"`),
-  > not the User-Agent — the scripts (`check-headers.mjs`,
-  > `check-invariants.mjs`) were already sending the `CI_WAF_TOKEN`
-  > (GitHub Actions secret) in this header. Rotation: change the value in
-  > GitHub Actions (Settings → Secrets → Actions → `CI_WAF_TOKEN`) and in
-  > the WAF rule at the same time, same discipline as
-  > `RATE_SALT`/`CF_API_TOKEN`.
-- **3**: the honeypot's five decoy paths (`dynamic/worker/`, `DECOYS` in
-  `src/index.js`) get a `Managed Challenge` instead of passing straight
-  through to the Worker, for any visitor — an explicit decision by the
-  repo owner: the decoys don't stay open to the world without some
-  barrier, even though they're just a sensor returning a 404.
-  **A consequence to accept, not a side effect:** a Managed Challenge
-  exists to filter automated bots — exactly the traffic the honeypot
-  exists to observe. While this rule is active, the honeypot only
-  records whoever *solves* the challenge (a real browser with JS, in some
-  cases advanced scanners with browser-like automation), not the
-  indiscriminate mass scanning that dominates the Internet. See
-  `docs/backlog.md` for a summary of the analysis of this trade-off
-  (protection vs. observability) — the full detail lives in git history
-  after `docs/proposals/` was consolidated on 2026-07-31.
-- **4/5**: the geographic policy hardened from "27 EU countries, Managed
-  Challenge" (original design below) to "only PT gets through, with a
-  challenge; everything else is blocked" — more restrictive than
-  planned, and without the `ip.geoip.is_in_european_union`
-  approximation (that field still requires Business+, unavailable on
-  Free; it stopped mattering because the list no longer tries to
-  approximate the EU).
-- The **Log** action (to observe without affecting traffic) is still
-  **unavailable on Free** for Custom Rules — only `Managed
-  Challenge`/`Block`/etc.
-
-### History: original design vs. production
-
-> This subsection is a historical record — it does not describe the
-> current state (the table above is the source of truth). Kept because it
-> explains *why* production diverges from what was planned.
-
-The design below (bots + social previews + CI + the owner's IP as
-*Skip*, a catch-all of 27 EU countries as `Managed Challenge`) was what
-got prepared ahead of time, with Access (section 3) as the real
-protection in the meantime — the recorded idea was that the final rule
-would already be in its definitive action with no risk, since nobody from
-outside could reach it anyway.
-
-| # | Rule | Expression | Action |
-|---|---|---|---|
-| 1 | Verified bots (SEO) | `(cf.client.bot)` | Skip |
-| 2 | Social previews | `(http.user_agent contains "LinkedInBot") or (http.user_agent contains "Twitterbot") or (http.user_agent contains "facebookexternalhit")` | Skip |
-| 3 | GitHub Actions CI | `(http.user_agent contains "headers-check")` | Skip |
-| 4 | The owner, always | `(ip.src eq <IP>)` | Skip |
-| 5 | Geo catch-all | `not (ip.geoip.country in {"PT" "AT" "BE" "BG" "HR" "CY" "CZ" "DK" "EE" "FI" "FR" "DE" "GR" "HU" "IE" "IT" "LV" "LT" "LU" "MT" "NL" "PL" "RO" "SK" "SI" "ES" "SE"})` | Managed Challenge |
-
-**What changed, and why (2026-07-29):** the rules in production today are
-more restrictive in some ways (a single country instead of 27, `Block`
-instead of `Managed Challenge` for the rest of the world) and have one new,
-deliberate piece (rule 3, dedicated to the honeypot) that the original plan
-didn't anticipate. The "Social previews" and "The owner, always" rules
-from the original design **were not created, by choice, not by
-oversight** — confirmed 2026-07-29 (see section 7): social preview bots
-are already caught by rule 1 (`cf.client.bot` includes known preview
-crawlers), and as for the owner, traveling outside PT subjects them to
-rule 5 (Block) like any visitor — a decision kept on purpose.
+The **Log** action (to observe without affecting traffic) is unavailable
+on the Free plan for Custom Rules — only `Managed Challenge`/`Block`/etc.
 
 ## 6. GitHub repository
 

@@ -4,8 +4,8 @@
 // takeover de DNS/registrar — fica registado nos logs CT; aqui compara-se
 // cada emissão com a allowlist de emissores esperados. Sem input de
 // visitantes: o domínio vem de SCAN_TARGET, a query é sempre a mesma.
-// Como em feeds.js, as funções de PARSE (puras, testáveis) estão separadas
-// das de FETCH (rede).
+// As funções de PARSE (puras, testáveis) estão separadas das de FETCH
+// (rede).
 
 import { sanitizeText } from './sanitize.js';
 

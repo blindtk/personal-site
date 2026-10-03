@@ -1,49 +1,35 @@
 ---
 title: 'Este site'
-description: 'Monorepo com site estático em Astro, conteúdo em markdown e ferramentas client-side.'
+description: 'Um site pessoal gerido como sistema de produção: modelo de ameaça, CSP estrita e provas que podes verificar.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---
 
-Site pessoal bilingue construído com Astro: calculadora de subnets, gerador
-de hashes e mais — as ferramentas correm no browser, e o pouco que precisa
-mesmo de servidor vive num Cloudflare Worker isolado, à parte.
+### Astro, sem framework no browser
 
-Bilingue por construção: o conteúdo (markdown/JSON) vive separado do código
-e alimenta as duas versões (PT/EN) a partir das mesmas componentes — sem
-duplicar lógica entre idiomas.
+As páginas são geradas no build e chegam ao browser sem JavaScript. As partes
+interativas (as ferramentas e o Lab) usam scripts pequenos, sem React, Vue ou
+outro runtime de hidratação.
 
-A segurança moldou o design desde o início: Content-Security-Policy
-estrita sem 'unsafe-inline', cabeçalhos de segurança e uma política de
-divulgação responsável publicada. O porquê de cada camada está em
-[Segurança](/este-site/seguranca/); as provas — commit, scan aos cabeçalhos
-ao vivo, workflows — são verificáveis em [Provas](/este-site/provas/).
+Não foi só por performance. Sem um framework a injetar estilos ou scripts
+inline, a Content-Security-Policy pode ficar em `script-src 'self'` e
+`style-src 'self'`, sem `'unsafe-inline'` e sem uma única hash. Experimentei
+primeiro o contrário, com uma hash SHA-256 por cada script e estilo inline,
+mas o número de hashes crescia com o número de páginas e ao fim de umas
+dezenas a CSP já passava dos 2000 caracteres que o Cloudflare Pages aceita por
+linha de cabeçalho. Tirar o código inline resolveu o problema na origem.
 
-## Decisões de arquitetura
+### Um Worker à parte para o que precisa de servidor
 
-**Porquê Astro sem framework client-side.** Zero React/Vue/Svelte por
-omissão — as páginas nascem sem JavaScript, e as ilhas que precisam de
-interatividade (as ferramentas de rede, o Lab) não carregam runtime de
-hidratação nenhum. Isto não é só uma escolha de performance: torna a CSP
-estrita sem `'unsafe-inline'` fácil de manter, porque não há um framework a
-injetar estilo ou script inline em tempo de execução de forma invisível —
-e porque escrevo os meus próprios `<script>` como ficheiros externos, nunca
-inline, `script-src 'self'` e `style-src 'self'` chegam sem precisar de uma
-única hash. (Já tentei o caminho inverso — hashes SHA-256 por script/estilo
-inline — mas o número de hashes cresce com o número de páginas, e ao fim de
-umas dezenas a Content-Security-Policy passa dos 2000 caracteres que o
-Cloudflare Pages aceita por linha de cabeçalho; eliminar o inline em vez de
-o catalogar resolve na raiz.)
+O site não tem backend, base de dados nem input de visitantes que chegue a um
+servidor, o que deixa o modelo de ameaça muito simples. As poucas funções que
+precisam mesmo de servidor vivem num Cloudflare Worker publicado
+separadamente, que não guarda dados pessoais. Se o Worker estiver em baixo, o
+site continua a funcionar e cada painel que depende dele diz que está
+indisponível, em vez de partir a página.
 
-**Porquê monorepo com o Worker separado do estático.** O `static/` (este
-site) mantém o modelo de ameaça descrito na página de
-[Segurança](/este-site/seguranca/) o mais simples possível: sem backend, sem base de
-dados, sem input de utilizador que chegue a um servidor. As funcionalidades
-que precisam mesmo de servidor — o [honeypot](/projetos/honeypot/), o mapa de
-tráfego, o vigia de Certificate Transparency, ticker de threat intel — vivem isoladas num
-Cloudflare Worker (`dynamic/worker/`), publicado à parte. Isso significa que
-o site estático continua a funcionar (e a cumprir a promessa de "sem
-backend") mesmo que o Worker esteja em baixo ou nem sequer publicado — as
-secções que dependem dele degradam com graça em vez de partir o resto. O
-resultado ao vivo destas camadas está no [Honeypot](/este-site/honeypot/)
-e na [Cloudflare](/este-site/cloudflare/).
+### Conteúdo separado do código, nas duas línguas
+
+Os textos vivem em Markdown e JSON, fora do código, e as páginas em português
+e em inglês saem dos mesmos componentes. Assim nenhuma lógica é escrita duas
+vezes, e uma página nunca existe só numa das línguas.

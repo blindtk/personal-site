@@ -5,13 +5,6 @@ import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
-import { TOOLS } from '../../lib/tools';
-// content/ é a fonte de verdade: os stats de certificações e o painel do
-// honeypot vêm daqui, com o mesmo critério (verified !== false) da página
-// Certificações e a mesma contagem de paths-isco da página Honeypot.
-import certs from '../../../../content/certs.json';
-import awards from '../../../../content/awards.json';
-import honeypotAttack from '../../../../content/honeypot-attack.json';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -25,73 +18,19 @@ const posts = (await getCollection('blog', (e) => e.id.startsWith(`${lang}/`) &&
 const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang}/`)))
   .sort((a, b) => a.data.order - b.data.order);
 
-// Seleção de 6 ferramentas (de 11) para a Home — "em destaque", não "todas as
-// client-side", para não contradizer o total de 11 mostrado no widget de
-// stats do site.
+// Seleção de ferramentas para a Home — "em destaque", só as que correm no
+// browser; a lista completa (com as que precisam de servidor) vive em
+// Ferramentas.
 const tools = [
   { slug: 'subnets', ...dict.tools.subnets },
   { slug: 'hashes', ...dict.tools.hashes },
-  { slug: 'encoder', ...dict.tools.encoder },
   { slug: 'passwords', ...dict.tools.passwords },
+  { slug: 'csp', ...dict.tools.csp },
   { slug: 'email-headers', ...dict.tools['email-headers'] },
   { slug: 'exif', ...dict.tools.exif },
 ];
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
-
-// Certificações: nº de badges verificáveis vem de certs.json para nunca
-// divergir da página Certificações — usado na linha de credenciais do
-// bloco de identidade, não no widget de stats do site.
-const certItems = certs.items as { verified?: boolean }[];
-const verifiedBadges = certItems.filter((item) => item.verified !== false).length;
-
-// Stats do site: sinais estruturais (o que o site é/tem), não de consumo
-// (os 550 repos do catálogo GitHub vivem na página Links, não aqui) nem de
-// competência pessoal (isso ficou para o bloco de identidade). Ferramentas
-// e paths-isco vêm de content/ e de lib/tools para nunca divergir das
-// páginas Ferramentas e Honeypot. Páginas e cabeçalhos verificados são
-// manuais — não há como derivá-los de content/ sem duplicar routes.ts e
-// scan.js aqui; rever os dois lados juntos se mudarem.
-const toolsClientCount = TOOLS.filter((tool) => tool.kind === 'client').length;
-const decoyCount = Object.keys(honeypotAttack.paths).length;
-// Manual: lista de cabeçalhos pontuados em dynamic/worker/src/lib/scan.js
-// (fora do build estático — static/ não importa dynamic/). Rever os dois
-// lados juntos se a lista de scan.js mudar. Tem de bater certo com
-// .github/expected-headers.json (contrato da página Provas) e com a lista
-// em ui.ts (Segurança) — mesma fonte de verdade nas 3 páginas.
-const headerCount = 9;
-// dict.evidence.pipeline é a mesma tabela renderizada em Provas — usar o
-// comprimento em vez de um número manual evita que a stat divirja da tabela
-// que a prova.
-const ciLayersCount = dict.evidence.pipeline.length;
-const statValues: Record<string, string> = {
-  ciLayers: String(ciLayersCount),
-  tools: String(TOOLS.length),
-  toolsClient: String(toolsClientCount),
-  headers: String(headerCount),
-  decoys: String(decoyCount),
-  certsVerified: String(verifiedBadges),
-  // CTFs vencidos: mesmo comprimento de content/awards.json usado no chip
-  // "{awards} CTFs vencidos" — para nunca divergir da galeria de prémios
-  // na página Sobre.
-  awards: String(awards.items.length),
-};
-const fill = (text: string) => text.replace(/\{(\w+)\}/g, (_, key: string) => statValues[key] ?? `{${key}}`);
-const stats = dict.home.statsStatic.map((stat) => ({ ...stat, n: fill(stat.n), d: fill(stat.d) }));
-const credentialsText = fill(dict.home.credentials);
-
-// Cada tile liga à página que prova o número — "não acredites, verifica".
-// ciLayers e headers apontam os dois para Provas: é lá que vivem a tabela
-// de CI e o contrato de cabeçalhos que provam cada um.
-const statLinks: Record<string, string> = {
-  ciLayers: routes.evidence[lang],
-  tools: routes.tools[lang],
-  headers: routes.evidence[lang],
-  decoys: routes.honeypot[lang],
-};
-const statLink = (key: string) => statLinks[key] ?? routes.siteOverview[lang];
-
-const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'blue' };
 ---
 
 <BaseLayout
@@ -99,68 +38,50 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
   title={dict.home.metaTitle}
   altUrl={routes.home[other]}
 >
-  <div class="top-grid">
-    <section class="panel identity" aria-label={dict.home.identity}>
-      <NetworkTopology />
-      <div class="phead">
-        <span>{dict.home.location}</span>
-      </div>
-      <h1>{SITE.name}</h1>
-      <p class="role">{SITE.role[lang]}</p>
-      <p class="sum">{dict.home.bio}</p>
-      <div class="meta-row">
-        {dict.home.meta.map((item) => <span>{item}</span>)}
-      </div>
-      <a class="credentials-link" href={routes.certifications[lang]}>{credentialsText}</a>
-      <div class="chip-row">
-        {dict.home.chips.map((chip) => <span class="chip">{fill(chip)}</span>)}
-      </div>
-      <p class="stack-line">{dict.home.stack}</p>
-    </section>
-
-    <section class="panel" aria-label={dict.home.statsLabel}>
-      <div class="phead">
-        <span>&#47;&#47; {dict.home.statsLabel}</span>
-      </div>
-      <div class="stats-grid">
-        {stats.map((stat) => {
-          const cls = `stat ${toneClass[stat.tone] ?? ''}`.trim();
-          // Cada stat do site liga à página que o prova — a mesma lógica
-          // "não acredites, verifica" que já se aplicava aos stats de
-          // certificações.
-          return (
-            <a class={`${cls} stat-link`} href={statLink(stat.key)}>
-              <div class="n">{stat.n}</div>
-              <div class="l">{stat.d}</div>
-            </a>
-          );
-        })}
-      </div>
-      <p class="note">{dict.home.statsNoteBody} <a href={routes.siteOverview[lang]}>{dict.home.statsNoteCta}</a></p>
-    </section>
-  </div>
+  <section class="panel identity" aria-label={dict.home.identity}>
+    <NetworkTopology />
+    <div class="phead">
+      <span>{dict.home.location}</span>
+    </div>
+    <h1>{SITE.name}</h1>
+    <p class="role">{SITE.role[lang]}</p>
+    <p class="sum">{dict.home.bio}</p>
+    <div class="meta-row">
+      {dict.home.meta.map((item) => <span>{item}</span>)}
+    </div>
+    <div class="chip-row">
+      {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
+    </div>
+    <p class="stack-line">{dict.home.stack}</p>
+  </section>
 
   <section aria-labelledby="h-journey">
     <div class="section-title">
       <h2 id="h-journey">{dict.home.journey.title}</h2>
     </div>
-    <p class="atk-hint journey-hint" aria-hidden="true">{dict.home.journey.scrollHint}</p>
-    <div class="journey-wrap">
-      <ol class="journey" id="journey-scroll">
-        {dict.home.journey.items.map((stop) => (
-          <li class="stop">
-            <span class="dot" aria-hidden="true"></span>
-            <span class="years">{stop.years}</span>
-            <span class="name">
-              <img class="flag" src={`/flags/${stop.flag}.svg`} alt="" width="20" height="15" decoding="async" />
-              {stop.name}
-            </span>
-            <span class="place">{stop.place}</span>
-            <span class="note">{stop.note}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
+    <ol class="journey">
+      {dict.home.journey.items.map((stop) => (
+        <li class="stop">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="years">{stop.years}</span>
+          <span class="name">{stop.name}</span>
+          <span class="role">{stop.role}</span>
+          {stop.note && <span class="note">{stop.note}</span>}
+          {stop.projects.length > 0 && (
+            <ul class="projects">
+              {stop.projects.map((project) => (
+                <li>
+                  <span class="pname">
+                    <img class="flag" src={`/flags/${project.flag}.svg`} alt="" width="20" height="15" decoding="async" />
+                    {project.name}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ol>
   </section>
 
   {posts.length > 0 && (
@@ -219,19 +140,3 @@ const toneClass: Record<string, string> = { green: '', amber: 'amber', blue: 'bl
   </section>
 </BaseLayout>
 
-<script>
-  // Esconde o hint textual quando o utilizador chega ao fim do scroll
-  // horizontal da timeline — mesmo padrão do heatmap ATT&CK.
-  const scrollEl = document.getElementById('journey-scroll');
-  const hint = document.querySelector('.journey-hint');
-
-  if (scrollEl && hint) {
-    const checkEnd = () => {
-      const atEnd = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 4;
-      hint.classList.toggle('hidden', atEnd);
-    };
-    scrollEl.addEventListener('scroll', checkEnd, { passive: true });
-    window.addEventListener('resize', checkEnd);
-    checkEnd();
-  }
-</script>
