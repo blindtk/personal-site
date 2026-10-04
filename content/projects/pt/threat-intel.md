@@ -1,6 +1,6 @@
 ---
 title: 'Threat Intel'
-description: 'Honeypot SSH/HTTP numa VPS própria e o feed público de ameaças que produz.'
+description: 'Honeypot SSH/HTTP numa VPS própria e o feed público que produz.'
 tags: ['python', 'terraform', 'oracle-cloud']
 order: 2
 ---

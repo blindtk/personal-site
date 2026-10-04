@@ -1,6 +1,6 @@
 ---
 title: 'Este site'
-description: 'Site estático no Cloudflare Pages, seguro por desenho: CSP estrita e sem trackers.'
+description: 'Site estático no Cloudflare Pages, seguro por desenho, sem trackers.'
 tags: ['astro', 'typescript', 'cloudflare']
 order: 1
 ---

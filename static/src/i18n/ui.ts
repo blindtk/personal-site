@@ -509,7 +509,7 @@ export const ui = {
       },
       csp: {
         name: 'Analisador de CSP',
-        desc: 'Cola uma Content-Security-Policy e recebe uma leitura crítica, diretiva a diretiva: o que protege, o que só finge proteger, e o que falta.',
+        desc: 'Cola uma CSP e vê, diretiva a diretiva, o que protege e o que falta.',
         inputLabel: 'política (valor do header, uma ou mais linhas)',
         analyze: 'Analisar',
         exWeak: 'exemplo fraco',
@@ -657,7 +657,7 @@ export const ui = {
       },
       passwords: {
         name: 'Gerador de passwords',
-        desc: 'Passwords fortes geradas com crypto.getRandomValues, com medidor de entropia.',
+        desc: 'Passwords fortes geradas no browser, com medidor de entropia.',
         length: 'Comprimento',
         lower: 'minúsculas (a-z)',
         upper: 'MAIÚSCULAS (A-Z)',
@@ -677,7 +677,7 @@ export const ui = {
       },
       'email-headers': {
         name: 'Analisador de cabeçalhos de email',
-        desc: 'Cola o cabeçalho raw de um email e vê a cadeia de Received, os veredictos SPF/DKIM/DMARC e os sinais de spoofing.',
+        desc: 'Cola um cabeçalho de email: Received, SPF/DKIM/DMARC e spoofing.',
         inputLabel: 'Cabeçalho raw do email',
         howTo: 'No Gmail: ⋮ → «Mostrar original». No Outlook: Ficheiro → Propriedades → «Cabeçalhos da Internet». Cola aqui o texto completo.',
         analyze: 'Analisar',
@@ -727,7 +727,7 @@ export const ui = {
       },
       exif: {
         name: 'O que a tua foto revela',
-        desc: 'Extrai os metadados EXIF de uma imagem JPEG: câmara, data, definições e coordenadas GPS, se existirem.',
+        desc: 'Extrai os metadados EXIF de um JPEG: câmara, data, definições e GPS.',
         dropHint: 'arrasta uma foto para aqui, ou',
         chooseFile: 'escolher ficheiro',
         loadDemo: 'carregar exemplo',
@@ -1313,7 +1313,7 @@ export const ui = {
       },
       csp: {
         name: 'CSP analyzer',
-        desc: 'Paste a Content-Security-Policy and get a critical read, directive by directive: what it protects, what only pretends to, and what is missing.',
+        desc: 'Paste a CSP and see, directive by directive, what it protects and misses.',
         inputLabel: 'policy (header value, one or more lines)',
         analyze: 'Analyze',
         exWeak: 'weak example',
@@ -1461,7 +1461,7 @@ export const ui = {
       },
       passwords: {
         name: 'Password generator',
-        desc: 'Strong passwords generated with crypto.getRandomValues, with an entropy meter.',
+        desc: 'Strong passwords generated in the browser, with an entropy meter.',
         length: 'Length',
         lower: 'lowercase (a-z)',
         upper: 'UPPERCASE (A-Z)',
@@ -1481,7 +1481,7 @@ export const ui = {
       },
       'email-headers': {
         name: 'Email header analyzer',
-        desc: 'Paste an email’s raw header and see the Received chain, the SPF/DKIM/DMARC verdicts, and the spoofing signals.',
+        desc: 'Paste an email header: Received chain, SPF/DKIM/DMARC and spoofing.',
         inputLabel: 'Raw email header',
         howTo: 'In Gmail: ⋮ → “Show original”. In Outlook: File → Properties → “Internet headers”. Paste the full text here.',
         analyze: 'Analyze',
@@ -1531,7 +1531,7 @@ export const ui = {
       },
       exif: {
         name: 'What your photo reveals',
-        desc: 'Extracts the EXIF metadata from a JPEG image: camera, date, settings and GPS coordinates, if present.',
+        desc: 'Extracts EXIF metadata from a JPEG: camera, date, settings and GPS.',
         dropHint: 'drag a photo here, or',
         chooseFile: 'choose file',
         loadDemo: 'load demo',
