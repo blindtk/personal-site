@@ -189,28 +189,6 @@ export function classifyDaily(daily) {
 }
 
 /**
- * Posição X numa escala logarítmica de `min`..`max`, mapeada para
- * `rangeMin`..`rangeMax`. Valores fora do domínio (incl. ≤0) clampam ao
- * extremo — nunca devolve NaN/Infinity, mesmo com 1 pedido contra um domínio
- * que começa em 1. `min`/`max` iguais degrada para o centro do range.
- */
-export function logScaleX(value, { min, max, rangeMin, rangeMax }) {
-  if (!(min > 0) || !(max > min)) return (rangeMin + rangeMax) / 2;
-  const v = Math.max(min, Math.min(max, Number(value) || min));
-  const t = (Math.log10(v) - Math.log10(min)) / (Math.log10(max) - Math.log10(min));
-  return rangeMin + t * (rangeMax - rangeMin);
-}
-
-/**
- * Raio de um círculo de ÁREA proporcional a `value` (escala em raiz
- * quadrada — a perceção de tamanho num scatter é pela área, não pelo raio),
- * com um mínimo para o ponto continuar clicável/visível mesmo a valor 0.
- */
-export function areaRadius(value, { minR = 4, k = 1 } = {}) {
-  return Math.max(minR, k * Math.sqrt(Math.max(0, Number(value) || 0)));
-}
-
-/**
  * Escolhe, entre os certificados devolvidos por /api/ct, o mais provável de
  * estar ATIVO agora: válido no instante `now` (notBefore ≤ now ≤ notAfter),
  * cobrindo o domínio exato (não só um wildcard/subdomínio) e de emissor

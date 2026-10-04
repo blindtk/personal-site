@@ -16,7 +16,7 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
-import { parseCfStats, firewallBreakdown, firewallDetailBreakdown } from '../src/lib/cf-analytics.js';
+import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames } from '../src/lib/cf-analytics.js';
 import { serverView } from '../src/lib/mirror.js';
 import { edgeKey, edgeGetJSON, edgePutJSON } from '../src/lib/edgecache.js';
 import worker from '../src/index.js';
@@ -853,6 +853,22 @@ test('firewallDetailBreakdown: nunca processa clientIP (mesmo se viesse na respo
   assert.equal(fw.firewallByPath[0].key, '/scriptx/script'); // <> removidos por sanitizeText
   assert.equal(fw.firewallByUserAgent[0].key.length, 140); // truncado (139 + '…')
   assert.deepEqual(fw.firewallByAsn, []); // -1 e 0 são inválidos p/ normalizeAsn
+});
+
+test('asnNames/withAsnNames: junta a descrição à ASN, sanitiza e ignora ASN inválida ou descrição vazia', () => {
+  const names = asnNames(firewallFixture([
+    { clientAsn: '16509', clientASNDescription: 'AMAZON-02' },
+    { clientAsn: 16509, clientASNDescription: 'outro nome' }, // a primeira vence
+    { clientAsn: 4837, clientASNDescription: '<b>CHINA169</b>' },
+    { clientAsn: 64512, clientASNDescription: '' },
+    { clientAsn: -1, clientASNDescription: 'INVALIDA' },
+  ]));
+  assert.deepEqual([...names], [['AS16509', 'AMAZON-02'], ['AS4837', 'bCHINA169/b']]);
+  assert.deepEqual(
+    withAsnNames([{ key: 'AS16509', count: 3 }, { key: 'AS64512', count: 1 }], names),
+    [{ key: 'AS16509', count: 3, name: 'AMAZON-02' }, { key: 'AS64512', count: 1 }],
+  );
+  assert.equal(asnNames(null).size, 0);
 });
 
 test('firewallDetailBreakdown: shape ausente/nulo degrada para listas vazias', () => {

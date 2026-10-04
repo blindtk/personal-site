@@ -878,7 +878,7 @@ a.card:hover {
 
 /* ---------- Gráficos SVG do Perímetro (Mitigação por dia, Risco por país,
    linha do tempo) — SVG criado por script, mesma razão do bloco acima. ---------- */
-.daily-svg, .scatter-svg, .timeline-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.daily-svg, .timeline-svg { width: 100%; height: auto; display: block; overflow: visible; }
 .chart-axis { stroke: var(--border); stroke-width: 1; }
 .chart-threshold { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
 .chart-lbl { font-family: var(--mono); font-size: 9px; fill: var(--muted); }
@@ -889,11 +889,6 @@ a.card:hover {
 .chart-dot.blocked, .daily-seg.blocked { fill: var(--danger); background: var(--danger); }
 .chart-dot.challenged, .daily-seg.challenged { fill: var(--accent-2); background: var(--accent-2); }
 .chart-dot.allowed, .daily-seg.allowed { fill: var(--accent); background: var(--accent); }
-.scatter-dot { stroke: var(--bg-raise); stroke-width: 2; }
-.scatter-dot.high { fill: var(--danger); fill-opacity: 0.85; }
-.scatter-dot.med { fill: var(--accent-2); fill-opacity: 0.85; }
-.scatter-dot.low { fill: var(--accent); fill-opacity: 0.85; }
-.scatter-dot.sample { fill: none; stroke: var(--muted); stroke-width: 1.5; }
 
 /* Lista chave→valor do painel de estado (versão, commit, branch…). */
 .kv-list {
