@@ -34,8 +34,13 @@ export interface BuildInfo {
   builtAt: string;
 }
 
+// A versão é a última tag `v*` (as releases são tags manuais, ver
+// release.yml); o package.json fica de fallback para builds sem tags
+// (clone superficial) ou sem git. O `v` inicial é acrescentado na página.
+const tag = git('describe --tags --abbrev=0 --match "v*"', '').replace(/^v/, '');
+
 export const BUILD_INFO: BuildInfo = {
-  version: (pkg as { version?: string }).version ?? '0.0.0',
+  version: tag || (pkg as { version?: string }).version || '0.0.0',
   commit: git('rev-parse --short HEAD'),
   branch: git('rev-parse --abbrev-ref HEAD'),
   commitDate: git('log -1 --format=%cI', ''),
