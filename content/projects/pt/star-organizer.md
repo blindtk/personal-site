@@ -1,6 +1,6 @@
 ---
 title: 'star-organizer'
-description: 'As minhas estrelas do GitHub, organizadas por categoria em Markdown e JSON.'
+description: 'As minhas estrelas do GitHub, por categoria, em Markdown e JSON.'
 tags: ['python', 'yaml', 'markdown']
 order: 3
 ---
