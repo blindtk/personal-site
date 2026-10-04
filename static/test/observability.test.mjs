@@ -14,8 +14,6 @@ import {
   firewallActionTone,
   sumByActionClass,
   classifyDaily,
-  logScaleX,
-  areaRadius,
   currentCertificate,
   daysUntil,
   certProgressPct,
@@ -161,27 +159,6 @@ test('classifyDaily: reparte byAction cru de cada dia em bloqueado/desafiado/pas
     { date: '2026-08-03', blocked: 42, challenged: 0, allowed: 444, total: 486 },
   ]);
   assert.deepEqual(classifyDaily(undefined), []);
-});
-
-test('logScaleX: mapeia 1..1000 para um range de pixels, clamped', () => {
-  const opts = { min: 1, max: 1000, rangeMin: 0, rangeMax: 300 };
-  assert.equal(logScaleX(1, opts), 0);
-  assert.equal(logScaleX(1000, opts), 300);
-  // sqrt(1000) → meio da escala log; tolerância porque Math.log10 não é
-  // exatamente arredondado pela especificação.
-  assert.ok(Math.abs(logScaleX(31.622776601683793, opts) - 150) < 1e-9);
-  // fora do domínio: clampa aos extremos, nunca NaN
-  assert.equal(logScaleX(0, opts), 0);
-  assert.equal(logScaleX(999999, opts), 300);
-  // min===max: degrada para o centro do range, sem dividir por zero
-  assert.equal(logScaleX(5, { min: 10, max: 10, rangeMin: 0, rangeMax: 300 }), 150);
-});
-
-test('areaRadius: cresce em raiz quadrada, nunca abaixo do mínimo', () => {
-  assert.equal(areaRadius(0), 4); // mínimo
-  assert.equal(areaRadius(-5), 4); // negativo degrada para 0 → mínimo
-  assert.equal(areaRadius(100, { minR: 4, k: 1 }), 10); // sqrt(100)=10
-  assert.equal(areaRadius(4, { minR: 4, k: 2 }), 4); // sqrt(4)*2=4, empata no mínimo
 });
 
 test('currentCertificate: escolhe o válido, do domínio exato, de emissor esperado, mais recente', () => {

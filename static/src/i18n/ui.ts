@@ -130,20 +130,13 @@ export const ui = {
       wFirewallPaths: 'URLs mais visadas (firewall · 24h)',
       wFirewallUserAgents: 'User-agents mais vistos (firewall · 24h)',
       wFirewallAsns: 'Redes mais vistas (firewall · 24h)',
-      riskLowSample: 'amostra pequena',
       // Nota curta: o gráfico de dispersão (posição = pedidos, eixo log;
       // círculo aberto = amostra pequena) já mostra a diferença de amostra
       // visualmente — não precisa de a explicar em texto, ao contrário da
       // lista de barras que isto substituiu (essa tinha uma nota de 5 linhas
       // aqui porque ES a 96,9%/127 pedidos e GB a 100%/1 pedido apareciam
       // lado a lado sem contexto nenhum).
-      riskAxisRequests: 'pedidos na janela (escala logarítmica)',
-      riskLegendHigh: 'taxa ≥ 50%',
-      riskLegendMed: 'taxa 20–50%',
-      riskLegendLow: 'taxa < 20%',
-      riskLegendSample: 'amostra < 100 pedidos',
-      riskThresholdLeft: '← amostra pequena',
-      riskThresholdRight: 'amostra fiável →',
+      countryUnknown: 'Desconhecido',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
       statusEmpty: 'Sem respostas 4xx/5xx na janela.',
       firewallEmpty: 'Sem eventos de firewall nesta janela.',
@@ -176,14 +169,12 @@ export const ui = {
       tiDailyChallenged: 'desafiado',
       tiDailyAllowed: 'passado',
       tiFirewallAction: 'Firewall por ação (7d)',
-      tiFirewallSource: 'Firewall por origem (7d)',
       // ----- Fases seguintes: timelines, visitantes, risco, atacantes -----
       cardVisitors: 'Visitantes',
       tlRequests: 'Pedidos ao longo do tempo',
       tlThreats: 'Ameaças ao longo do tempo',
       tlPeak: 'pico',
       tlLast: 'último',
-      tiRiskCountry: 'Risk score por país',
       tiNoneYet: 'Nada ainda nesta janela.',
     },
     footer: {
@@ -921,14 +912,7 @@ export const ui = {
       wFirewallPaths: 'Most-targeted URLs (firewall · 24h)',
       wFirewallUserAgents: 'Most-seen user-agents (firewall · 24h)',
       wFirewallAsns: 'Most-seen networks (firewall · 24h)',
-      riskLowSample: 'small sample',
-      riskAxisRequests: 'requests in the window (logarithmic scale)',
-      riskLegendHigh: 'rate ≥ 50%',
-      riskLegendMed: 'rate 20–50%',
-      riskLegendLow: 'rate < 20%',
-      riskLegendSample: 'sample < 100 requests',
-      riskThresholdLeft: '← small sample',
-      riskThresholdRight: 'reliable sample →',
+      countryUnknown: 'Unknown',
       countriesEmpty: 'No threats recorded by country in the window.',
       statusEmpty: 'No 4xx/5xx responses in the window.',
       firewallEmpty: 'No firewall events in this window.',
@@ -957,14 +941,12 @@ export const ui = {
       tiDailyChallenged: 'challenged',
       tiDailyAllowed: 'allowed',
       tiFirewallAction: 'Firewall by action (7d)',
-      tiFirewallSource: 'Firewall by source (7d)',
       // ----- Later phases: timelines, visitors, risk, attackers -----
       cardVisitors: 'Visitors',
       tlRequests: 'Requests over time',
       tlThreats: 'Threats over time',
       tlPeak: 'peak',
       tlLast: 'last',
-      tiRiskCountry: 'Risk score by country',
       tiNoneYet: 'Nothing yet in this window.',
     },
     footer: {

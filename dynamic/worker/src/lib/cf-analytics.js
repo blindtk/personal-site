@@ -116,6 +116,47 @@ const CF_FIREWALL_DETAIL_QUERY = `
   }
 `;
 
+// Nomes das ASNs vistas pelo firewall (últimas 24h) — pedido ISOLADO: se o
+// campo de descrição não existir no schema da conta, só se perdem os nomes e
+// o painel continua a mostrar "AS<número>".
+const CF_FIREWALL_ASN_NAME_QUERY = `
+  query CfFirewallAsnNames($zoneTag: String!, $since24hDt: Time!, $untilDt: Time!) {
+    viewer {
+      zones(filter: { zoneTag: $zoneTag }) {
+        firewallEventsAdaptive(limit: 10000, filter: { datetime_geq: $since24hDt, datetime_leq: $untilDt }, orderBy: [datetime_DESC]) {
+          clientAsn clientASNDescription
+        }
+      }
+    }
+  }
+`;
+
+const CF_ASN_NAME_MAXLEN = 60;
+
+/**
+ * Mapa `AS<número>` → descrição da ASN (ex. "AS16509" → "AMAZON-02"), a partir
+ * do pedido CF_FIREWALL_ASN_NAME_QUERY. Descrição vazia ou ASN inválida é
+ * ignorada; o texto passa por sanitizeText. Pura e defensiva: nunca lança.
+ */
+export function asnNames(raw) {
+  const zones = raw?.data?.viewer?.zones;
+  const events = (Array.isArray(zones) ? zones[0] : null)?.firewallEventsAdaptive ?? [];
+  const names = new Map();
+  for (const e of Array.isArray(events) ? events : []) {
+    const asn = normalizeAsn(e?.clientAsn);
+    const name = sanitizeText(e?.clientASNDescription, CF_ASN_NAME_MAXLEN);
+    if (asn && name && !names.has(`AS${asn}`)) names.set(`AS${asn}`, name);
+  }
+  return names;
+}
+
+/** Junta o nome (quando conhecido) a cada entrada de `firewallByAsn`. */
+export function withAsnNames(entries, names) {
+  return (Array.isArray(entries) ? entries : []).map((e) =>
+    names.has(e.key) ? { ...e, name: names.get(e.key) } : e,
+  );
+}
+
 function isoDate(ms) {
   return new Date(ms).toISOString().slice(0, 10);
 }
@@ -489,6 +530,25 @@ export async function fetchCfStats(env, { timeoutMs = 8000, now = Date.now(), wi
     }
   } catch (err) {
     console.error('cf_firewall_detail_query_failed', err?.message ?? String(err));
+  }
+
+  // Nomes das ASNs — best-effort e isolado (ver CF_FIREWALL_ASN_NAME_QUERY).
+  if (Array.isArray(stats.zone.firewallByAsn) && stats.zone.firewallByAsn.length > 0) {
+    try {
+      const nameRes = await post(CF_FIREWALL_ASN_NAME_QUERY);
+      if (nameRes.ok) {
+        const nameRaw = await nameRes.json();
+        if (Array.isArray(nameRaw?.errors) && nameRaw.errors.length > 0) {
+          console.error('cf_firewall_asn_name_query_errors', JSON.stringify(nameRaw.errors).slice(0, 300));
+        } else {
+          stats.zone.firewallByAsn = withAsnNames(stats.zone.firewallByAsn, asnNames(nameRaw));
+        }
+      } else {
+        console.error('cf_firewall_asn_name_query_http', nameRes.status);
+      }
+    } catch (err) {
+      console.error('cf_firewall_asn_name_query_failed', err?.message ?? String(err));
+    }
   }
 
   return stats;

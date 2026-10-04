@@ -18,11 +18,7 @@ const jsStrings = {
   statusEmpty: s.statusEmpty,
   firewallEmpty: s.firewallEmpty,
   tiNoneYet: s.tiNoneYet,
-  riskLowSample: s.riskLowSample,
-  riskThresholdLeft: s.riskThresholdLeft,
-  riskThresholdRight: s.riskThresholdRight,
-  riskAxisRequests: s.riskAxisRequests,
-  riskTitle: s.tiRiskCountry,
+  countryUnknown: s.countryUnknown,
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
   tiDailyTitle: s.tiDailyTitle,
@@ -63,18 +59,6 @@ const jsStrings = {
         </Widget>
       </div>
       <div class="widget-grid an-mt">
-        <Widget title={s.tiRiskCountry} tone="warn" meta={s.windowNote} class="wide-widget">
-          <div id="cf-risk" class="scatter-wrap"><Skeleton block /></div>
-          <div class="risk-legend mono">
-            <span><i class="dot high"></i>{s.riskLegendHigh}</span>
-            <span><i class="dot med"></i>{s.riskLegendMed}</span>
-            <span><i class="dot low"></i>{s.riskLegendLow}</span>
-            <span><i class="dot sample"></i>{s.riskLegendSample}</span>
-          </div>
-        </Widget>
-      </div>
-
-      <div class="widget-grid an-mt">
         <Widget title={s.wFirewallPaths} tone="warn"><div id="cf-fw-paths"><Skeleton rows={4} /></div></Widget>
         <Widget title={s.wFirewallUserAgents} tone="warn"><div id="cf-fw-uas"><Skeleton rows={4} /></div></Widget>
         <Widget title={s.wFirewallAsns} tone="warn"><div id="cf-fw-asns"><Skeleton rows={4} /></div></Widget>
@@ -87,7 +71,6 @@ const jsStrings = {
       </div>
       <div class="widget-grid an-mt">
         <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="cf-fwaction"></div></Widget>
-        <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="cf-fwsource"></div></Widget>
       </div>
 
     </div>
@@ -98,9 +81,8 @@ const jsStrings = {
 <script>
   import {
     formatNumber, formatPercent, threatRate, withBars, sparkPath,
-    firewallActionTone, classifyDaily, logScaleX, areaRadius,
+    firewallActionTone, classifyDaily,
   } from '../../scripts/observability.js';
-  import { riskDotClass, labelsWithoutCollision } from '../../scripts/perimeter-charts.js';
 
   const root = document.getElementById('cf-root')!;
   const base = root.dataset.api ?? '';
@@ -156,6 +138,17 @@ const jsStrings = {
     host.append(list);
   }
 
+  // Nome do país por extenso (a API só dá o código ISO); "T1" é o código da
+  // Cloudflare para Tor, que não é uma região válida para o Intl.
+  const regionNames = (() => {
+    try { return new Intl.DisplayNames([locale], { type: 'region' }); } catch { return null; }
+  })();
+  const countryName = (code: string) => {
+    if (code === 'T1') return 'Tor';
+    if (code === 'XX') return S.countryUnknown;
+    try { return regionNames?.of(code) ?? code; } catch { return code; }
+  };
+
   const bars = (rows: any[], keyField: string, valField: string, tone?: string) =>
     rows.map((r) => ({ label: String(r[keyField]), value: Number(r[valField]) || 0, tone }));
 
@@ -196,119 +189,6 @@ const jsStrings = {
     host.append(cap);
   }
 
-  // ---------- Risco por país: dispersão pedidos × taxa ----------
-  type RiskPoint = { x: number; y: number; r: number; row: any };
-
-  function renderRiskScatter(rows: any[]) {
-    const host = document.getElementById('cf-risk');
-    if (!host) return;
-    host.replaceChildren();
-    if (rows.length === 0) {
-      const el = document.createElement('p');
-      el.className = 'note';
-      el.textContent = S.tiNoneYet;
-      host.append(el);
-      return;
-    }
-    const W = 620;
-    const H = 244;
-    const L = 46;
-    const R = 604;
-    const T = 20;
-    const B = 188;
-    const maxReq = Math.max(1, ...rows.map((r) => Number(r.requests) || 0));
-    const domainMax = Math.max(10, 10 ** Math.ceil(Math.log10(maxReq)));
-    const scaleX = (v: number) => logScaleX(v, { min: 1, max: domainMax, rangeMin: L, rangeMax: R });
-
-    const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    svg.setAttribute('class', 'scatter-svg');
-    svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', S.riskTitle);
-
-    const line = (x1: number, y1: number, x2: number, y2: number, cls: string) => {
-      const el = document.createElementNS(SVG_NS, 'line');
-      el.setAttribute('x1', x1.toFixed(1));
-      el.setAttribute('y1', y1.toFixed(1));
-      el.setAttribute('x2', x2.toFixed(1));
-      el.setAttribute('y2', y2.toFixed(1));
-      el.setAttribute('class', cls);
-      svg.append(el);
-    };
-    const text = (x: number, y: number, anchor: string, cls: string, content: string) => {
-      const el = document.createElementNS(SVG_NS, 'text');
-      el.setAttribute('x', x.toFixed(1));
-      el.setAttribute('y', y.toFixed(1));
-      el.setAttribute('text-anchor', anchor);
-      el.setAttribute('class', cls);
-      el.textContent = content;
-      svg.append(el);
-    };
-
-    line(L, B, R, B, 'chart-axis');
-    for (const pct of [25, 50, 75, 100]) {
-      const y = B - (pct / 100) * (B - T);
-      line(L, y, R, y, 'chart-axis');
-      text(L - 8, y + 3, 'end', 'chart-lbl', `${pct}%`);
-    }
-    text(L - 8, B + 3, 'end', 'chart-lbl', '0');
-
-    const thresholdX = scaleX(100);
-    const thr = document.createElementNS(SVG_NS, 'line');
-    thr.setAttribute('x1', thresholdX.toFixed(1));
-    thr.setAttribute('y1', String(T));
-    thr.setAttribute('x2', thresholdX.toFixed(1));
-    thr.setAttribute('y2', String(B));
-    thr.setAttribute('class', 'chart-threshold');
-    svg.append(thr);
-    text(thresholdX - 6, B - 6, 'end', 'chart-lbl', S.riskThresholdLeft);
-    text(thresholdX + 6, B - 6, 'start', 'chart-lbl', S.riskThresholdRight);
-
-    for (let v = 1; v <= domainMax + 1; v *= 10) {
-      text(scaleX(v), B + 20, 'middle', 'chart-lbl', formatNumber(v, locale));
-    }
-    text((L + R) / 2, B + 38, 'middle', 'chart-lbl', S.riskAxisRequests);
-
-    const pts: RiskPoint[] = rows.map((row) => {
-      const rate = Number(row.rate) || 0;
-      return {
-        x: scaleX(Number(row.requests) || 1),
-        y: B - Math.min(1, Math.max(0, rate)) * (B - T),
-        r: areaRadius(Number(row.threats) || 0, { minR: row.lowSample ? 5 : 6, k: 1 }),
-        row,
-      };
-    });
-    // Rótulos diretos só onde não colidem — ver labelsWithoutCollision em
-    // perimeter-charts.js (largura real do texto, não uma distância fixa).
-    const MONO_CHAR_W = 5.6;
-    const labelText = (row: any) => `${row.country} · ${formatPercent(Number(row.rate) || 0)}`;
-    const labelled = labelsWithoutCollision(
-      pts.map((p) => ({ x: p.x, y: p.y, halfWidth: (labelText(p.row).length * MONO_CHAR_W) / 2 + 4 })),
-    );
-
-    pts.forEach((p, i) => {
-      const row = p.row;
-      const rate = Number(row.rate) || 0;
-      const g = document.createElementNS(SVG_NS, 'g');
-      const title = document.createElementNS(SVG_NS, 'title');
-      const raw = `${formatNumber(row.threats, locale)}/${formatNumber(row.requests, locale)}`;
-      title.textContent = `${row.country}: ${formatPercent(rate)} (${raw})${row.lowSample ? ` · ${S.riskLowSample}` : ''}`;
-      g.append(title);
-      const circle = document.createElementNS(SVG_NS, 'circle');
-      circle.setAttribute('cx', p.x.toFixed(1));
-      circle.setAttribute('cy', p.y.toFixed(1));
-      circle.setAttribute('r', p.r.toFixed(1));
-      circle.setAttribute('class', `scatter-dot ${riskDotClass(row)}`);
-      g.append(circle);
-      if (labelled.has(i)) {
-        text(p.x, p.y - p.r - 6, 'middle', 'chart-lbl strong', labelText(row));
-      }
-      svg.append(g);
-    });
-
-    host.append(svg);
-  }
-
   // ---------- Cloudflare (ameaças à zona, /api/cf-stats) ----------
   async function loadCfThreats() {
     try {
@@ -329,17 +209,27 @@ const jsStrings = {
       setText('cf-challenges', formatNumber(challenges, locale));
       setText('cf-threatrate', formatPercent(threatRate(threats, requests)));
 
-      renderBars('cf-countries', bars(zone.topCountries ?? [], 'country', 'threats', 'warn'), S.countriesEmpty);
+      renderBars(
+        'cf-countries',
+        bars(zone.topCountries ?? [], 'country', 'threats', 'warn').map((r) => ({ ...r, label: countryName(r.label) })),
+        S.countriesEmpty,
+      );
       renderBars('cf-status', bars(zone.blockedByStatus ?? [], 'key', 'count'), S.statusEmpty);
-      const riskRows = Array.isArray(zone.riskByCountry) ? zone.riskByCountry : [];
-      renderRiskScatter(riskRows);
 
       // Detalhe por URL/user-agent/ASN — vem do dataset CRU
       // firewallEventsAdaptive (dataset amostrado): nunca IP, mesmo esse
       // campo estando disponível na fonte.
       renderBars('cf-fw-paths', bars(zone.firewallByPath ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderBars('cf-fw-uas', bars(zone.firewallByUserAgent ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
-      renderBars('cf-fw-asns', bars(zone.firewallByAsn ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
+      renderBars(
+        'cf-fw-asns',
+        (zone.firewallByAsn ?? []).map((r: any) => ({
+          label: r.name ? `${r.key} · ${r.name}` : String(r.key),
+          value: Number(r.count) || 0,
+          tone: 'warn',
+        })),
+        S.firewallEmpty,
+      );
 
       const series = Array.isArray(zone.series) ? zone.series : [];
       renderSpark('cf-tl-threats', series, 'threats');
@@ -483,7 +373,6 @@ const jsStrings = {
         })),
         S.firewallEmpty,
       );
-      renderBars('cf-fwsource', bars(fw.bySource ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
     } catch {
       // Sem Worker/dados: fica o fallback já pintado no widget-container.
     }
@@ -497,28 +386,5 @@ const jsStrings = {
   .an-mt { margin-top: 0.9rem; }
   .wide-widget { grid-column: 1 / -1; }
 
-  /* ---------- Risco por país: legenda ---------- */
-  /* Só o wrapper e a legenda: são markup ESTÁTICO do template (por isso um
-     <style> com scope do Astro chega a estas classes). O <svg> em si e os
-     seus pontos são criados por JS em runtime — o Astro só aplica o hash de
-     scope a elementos escritos no template, nunca aos que um script cria
-     depois; essas regras (.scatter-dot, .chart-*, .daily-seg) vivem em
-     global.css, como o resto dos gráficos SVG do site (.bar-fill,
-     .spark-line — mesmo motivo). */
-  .scatter-wrap { margin-bottom: 0.5rem; }
-  /* Na página larga os gráficos SVG escalam com a largura e ficavam enormes. */
-  .scatter-wrap, #cf-daily, #cf-tl-threats { max-width: 44rem; }
-  .risk-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.9rem;
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin: 0.7rem 0;
-  }
-  .risk-legend .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 0.35rem; vertical-align: middle; }
-  .risk-legend .dot.high { background: var(--danger); }
-  .risk-legend .dot.med { background: var(--accent-2); }
-  .risk-legend .dot.low { background: var(--accent); }
-  .risk-legend .dot.sample { background: none; border: 1.5px solid var(--muted); }
+  #cf-daily, #cf-tl-threats { max-width: 44rem; }
 </style>
