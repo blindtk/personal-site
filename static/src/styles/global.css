@@ -1699,6 +1699,12 @@ main .contact-list td a { text-decoration: none; }
   vertical-align: -0.12em;
   margin-right: 0.15rem;
 }
+/* Com o numeral grande, "691 repos · atualizado 03/10/2026" já não cabe numa
+   linha a 320px (saía 8px do ecrã): em telemóvel a data pode passar para a
+   linha de baixo. */
+@media (max-width: 40rem) {
+  .catalog-meta { white-space: normal; }
+}
 .catalog-filters {
   display: flex;
   flex-wrap: wrap;
