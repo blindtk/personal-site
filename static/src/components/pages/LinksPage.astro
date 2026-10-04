@@ -241,11 +241,22 @@ const slug = (name: string) =>
   .catalog-section > summary::-webkit-details-marker {
     display: none;
   }
+  /* Categorias numeradas (01, 02…) como as secções da home, em vez do '//'
+     genérico. O contador nasce na barra de filtros (irmã das secções) e
+     conta só as categorias visíveis, por isso renumera ao filtrar. */
+  .catalog-filters { counter-reset: cat; }
+  .catalog-section { counter-increment: cat; }
   .catalog-section > summary .section-title::before {
-    content: '▸ //';
+    content: '▸ ' counter(cat, decimal-leading-zero);
+    color: var(--accent);
   }
   .catalog-section[open] > summary .section-title::before {
-    content: '▾ //';
+    content: '▾ ' counter(cat, decimal-leading-zero);
+  }
+  /* Categorias fechadas: lista compacta, sem o respiro de 1rem que só faz
+     sentido quando há cartões por baixo do título. */
+  .catalog-section:not([open]) > summary .section-title {
+    margin: 1.3rem 0 0;
   }
   .catalog-section > summary:hover .section-title h2 {
     color: var(--accent);

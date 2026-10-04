@@ -1290,6 +1290,90 @@ input[type='file']::file-selector-button:hover {
   overflow-x: auto;
 }
 
+/* Contactos → lista de perfis: o email é a ação principal da página, por isso
+   é o maior elemento; os restantes perfis seguem em linhas grandes, com uma
+   seta que aparece no hover/foco. É só apresentação — a tabela mantém-se
+   (rótulo/valor), tal como o link do email montado por JS. */
+.contact-list { margin-top: 0; }
+.contact-list th {
+  width: 9rem;
+  padding: 1.2rem 0.7rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: baseline;
+}
+.contact-list td {
+  padding: 1rem 0.7rem;
+  font-size: clamp(0.95rem, 2vw, 1.3rem);
+  vertical-align: baseline;
+}
+.contact-list tr:first-child td { font-size: clamp(1.15rem, 3.6vw, 2.3rem); }
+.contact-list tr:first-child td a { font-weight: 700; }
+.contact-list tr { position: relative; transition: background 0.2s; }
+/* Linha de metro (a mesma do Percurso): cada contacto é uma estação e o
+   email, o primeiro, é a estação atual — "fala comigo". O traço liga o centro
+   de cada linha ao da seguinte: ::before é a metade de cima, ::after a de
+   baixo, escondidas na primeira/última linha. O ponto vive no <th>. */
+.contact-list th { padding-left: 2.4rem; position: static; }
+.contact-list th::before {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 4px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--accent);
+  box-sizing: border-box;
+  z-index: 1;
+}
+.contact-list tr:first-child th::before {
+  background: var(--accent);
+  animation: station 2.4s ease-out infinite;
+}
+.contact-list th::after,
+.contact-list th ~ td::before {
+  content: '';
+  position: absolute;
+  left: calc(0.7rem + 7px);
+  width: 4px;
+  background: color-mix(in srgb, var(--accent) 55%, var(--bg));
+}
+.contact-list th ~ td::before { top: 0; bottom: 50%; }
+.contact-list th::after { top: 50%; bottom: 0; }
+.contact-list tr:first-child td::before,
+.contact-list tr:last-child th::after { display: none; }
+@media (min-width: 1100px) {
+  /* alinha os valores com a coluna de conteúdo das secções por baixo
+     (12rem de rótulos + 2,75rem de intervalo, menos o padding do td) */
+  .contact-list th { width: 14.05rem; }
+}
+.contact-list tr:hover { background: linear-gradient(90deg, var(--accent-dim), transparent 75%); }
+main .contact-list td a { text-decoration: none; }
+.contact-list td a::after {
+  content: '→';
+  display: inline-block;
+  margin-left: 0.6em;
+  opacity: 0;
+  transform: translateX(-0.4em);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.contact-list tr:hover td a::after,
+.contact-list td a:focus-visible::after {
+  opacity: 1;
+  transform: none;
+}
+@media (max-width: 40rem) {
+  .contact-list tbody, .contact-list tr, .contact-list th, .contact-list td { display: block; }
+  .contact-list tr { padding: 0.85rem 0; border-bottom: 1px solid var(--border); }
+  .contact-list th, .contact-list td { border: 0; padding: 0.1rem 0.7rem 0.1rem 2.4rem; width: auto; }
+  .contact-list td a::after { display: none; }
+}
+
 /* Variante para tabelas cujo conteúdo é prosa (Contactos, Segurança):
    o break-all por omissão da .result-table é pensado para hashes/binário
    e parte palavras (e emails) a meio em ecrãs estreitos. */
@@ -1607,12 +1691,36 @@ input[type='file']::file-selector-button:hover {
 .catalog-meta #catalog-count {
   color: var(--accent);
   font-weight: 700;
+  /* O total vira o número em destaque da barra de ferramentas (estilo
+     dashboard) e muda em direto ao pesquisar/filtrar — feedback imediato. */
+  font-size: 2.1rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  vertical-align: -0.12em;
+  margin-right: 0.15rem;
 }
 .catalog-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
   margin-bottom: 0.6rem;
+}
+/* Telemóvel: 16 filtros em muro empurravam o conteúdo ~1000px para baixo.
+   Passam a uma linha deslizante (cada chip continua a ser um botão, por isso
+   o foco por teclado também a faz deslizar), com esbatimento nas pontas a
+   indicar que há mais à direita. */
+@media (max-width: 40rem) {
+  .catalog-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -1.1rem;
+    padding: 0.2rem 1.1rem 0.5rem;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 1.1rem, #000 calc(100% - 2.6rem), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 1.1rem, #000 calc(100% - 2.6rem), transparent);
+  }
+  .catalog-filters::-webkit-scrollbar { display: none; }
+  .catalog-filters .filter-chip { flex: none; }
 }
 .filter-chip {
   /* inline-flex + min-height: mesma técnica do .btn.small — alvo de toque
@@ -2527,5 +2635,8 @@ main > section > p:not([class]), main > p:not([class]) {
   .identity .role::after { animation: none; }
   .about-prose details:first-of-type::after { animation: none; }
   .bar-fill, .daily-seg { animation: none; }
+  .contact-list tr:first-child th::before { animation: none; }
+  .contact-list tr, .contact-list td a::after { transition: none; }
+  .contact-list td a::after { transform: none; }
   .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }

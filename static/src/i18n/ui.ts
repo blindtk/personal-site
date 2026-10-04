@@ -734,7 +734,6 @@ export const ui = {
     },
     contact: {
       title: 'Contactos',
-      intro: 'A forma mais rápida de me apanhar é por email. Os restantes perfis públicos estão ligados abaixo:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
@@ -1491,7 +1490,6 @@ export const ui = {
     },
     contact: {
       title: 'Contact',
-      intro: 'The fastest way to reach me is email. Other public profiles are linked below:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
