@@ -114,11 +114,6 @@ export const ui = {
       cardRequests: 'Pedidos',
       cardThreats: 'Ameaças',
       cardBlocked: 'Bloqueados (4xx/5xx)',
-      // Vem do dataset cru de eventos de firewall (retenção 24h no plano
-      // Free), ao contrário dos outros cartões desta linha, que são 7d — a
-      // janela tem de estar na etiqueta. Soma todas as ações de desafio
-      // (managed_challenge, js_challenge, challenge), não só a "managed".
-      cardChallenges: 'Desafios do firewall (24h)',
       cardBandwidth: 'Largura de banda',
       cardCacheRatio: 'Cache HIT',
       cardThreatRate: 'Taxa de ameaça',
@@ -126,19 +121,11 @@ export const ui = {
       cardWorkerReq: 'Invocações',
       cardWorkerErr: 'Taxa de erro',
       wTopCountries: 'Ameaças por país',
-      wTopStatus: 'Respostas por código HTTP',
       wFirewallPaths: 'URLs mais visadas (firewall · 24h)',
       wFirewallUserAgents: 'User-agents mais vistos (firewall · 24h)',
       wFirewallAsns: 'Redes mais vistas (firewall · 24h)',
-      // Nota curta: o gráfico de dispersão (posição = pedidos, eixo log;
-      // círculo aberto = amostra pequena) já mostra a diferença de amostra
-      // visualmente — não precisa de a explicar em texto, ao contrário da
-      // lista de barras que isto substituiu (essa tinha uma nota de 5 linhas
-      // aqui porque ES a 96,9%/127 pedidos e GB a 100%/1 pedido apareciam
-      // lado a lado sem contexto nenhum).
       countryUnknown: 'Desconhecido',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
-      statusEmpty: 'Sem respostas 4xx/5xx na janela.',
       firewallEmpty: 'Sem eventos de firewall nesta janela.',
       unavailable: 'Painel ao vivo indisponível: o Worker de telemetria não respondeu. O site é estático e funciona na mesma.',
       // ----- Cloudflare (era a tab "Cloudflare (24h)" — a etiqueta "24h"
@@ -900,7 +887,6 @@ export const ui = {
       cardRequests: 'Requests',
       cardThreats: 'Threats',
       cardBlocked: 'Blocked (4xx/5xx)',
-      cardChallenges: 'Firewall challenges (24h)',
       cardBandwidth: 'Bandwidth',
       cardCacheRatio: 'Cache HIT',
       cardThreatRate: 'Threat rate',
@@ -908,13 +894,11 @@ export const ui = {
       cardWorkerReq: 'Invocations',
       cardWorkerErr: 'Error rate',
       wTopCountries: 'Threats by country',
-      wTopStatus: 'Responses by HTTP status',
       wFirewallPaths: 'Most-targeted URLs (firewall · 24h)',
       wFirewallUserAgents: 'Most-seen user-agents (firewall · 24h)',
       wFirewallAsns: 'Most-seen networks (firewall · 24h)',
       countryUnknown: 'Unknown',
       countriesEmpty: 'No threats recorded by country in the window.',
-      statusEmpty: 'No 4xx/5xx responses in the window.',
       firewallEmpty: 'No firewall events in this window.',
       unavailable: 'Live panel unavailable: the telemetry Worker did not respond. The site is static and works regardless.',
       // ----- Cloudflare (was the "Cloudflare (24h)" tab — the "24h" label
