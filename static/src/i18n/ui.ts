@@ -438,7 +438,7 @@ export const ui = {
     },
     tools: {
       title: 'Ferramentas',
-      intro: 'Utilitários de rede e segurança. A maioria corre só no browser; duas falam com o Worker (dynamic/), e o badge de cada cartão diz qual é qual.',
+      intro: 'As ferramentas de rede e segurança que eu próprio uso, feitas à medida.',
       openTool: 'abrir',
       back: '← Voltar às ferramentas',
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
@@ -1195,7 +1195,7 @@ export const ui = {
     },
     tools: {
       title: 'Tools',
-      intro: 'Networking and security utilities. Most run entirely in your browser; two talk to the Worker (dynamic/), and each card’s badge says which is which.',
+      intro: 'The network and security tools I use myself, built to fit.',
       openTool: 'open',
       back: '← Back to tools',
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
