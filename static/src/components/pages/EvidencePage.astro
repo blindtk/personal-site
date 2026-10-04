@@ -69,7 +69,6 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-commit">{ev.commitTitle}</h2>
     </div>
-    <p>{ev.commitIntro}</p>
     {commit ? (
       <>
         <div class="table-scroll">
@@ -100,8 +99,6 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-headers">{ev.headersTitle}</h2>
     </div>
-    <p class="intro">{ev.headersIntro}</p>
-    <p class="intro">{ev.contractIntro}</p>
     <div class="table-scroll">
       <table class="result-table ev-contract">
         <thead>
@@ -136,8 +133,6 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-workflows">{ev.workflowsTitle}</h2>
     </div>
-    <p>{ev.workflowsIntro}</p>
-    <p class="intro">{ev.pipelineIntro}</p>
     <div class="table-scroll">
       <table class="result-table ev-pipeline">
         <thead>
@@ -156,8 +151,7 @@ const scanners = [
         </tbody>
       </table>
     </div>
-    <p class="note">{ev.pipelineNote}</p>
-    <ul class="ev-links mono">
+    <ul class="ev-links ev-links-inline mono">
       {workflows.map((wf) => (
         <li><a href={`${SITE.repo}/actions/workflows/${wf}`} rel="noopener">→ {wf}</a></li>
       ))}
@@ -168,7 +162,6 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-verify">{ev.verifyTitle}</h2>
     </div>
-    <p>{ev.verifyIntro}</p>
     <ul class="ev-links mono">
       {scanners.map((l) => (
         <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
@@ -193,6 +186,26 @@ const scanners = [
   }
   .ev-links a:hover {
     text-decoration: underline;
+  }
+  /* Lista de workflows: em linha e a quebrar, não uma coluna de 14 ligações. */
+  .ev-links-inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.1rem;
+    font-size: 0.82rem;
+  }
+  /* No telemóvel, nome por cima e valor por baixo: duas colunas estreitas
+     faziam cada linha crescer em altura. */
+  @media (max-width: 639px) {
+    .ev-contract tr, .ev-pipeline tr { display: block; padding: 0.45rem 0; }
+    .ev-contract thead, .ev-pipeline thead { display: none; }
+    .ev-contract th, .ev-contract td, .ev-pipeline th, .ev-pipeline td {
+      display: block;
+      border: 0;
+      padding: 0.1rem 0;
+    }
+    .ev-contract td { display: flex; }
+    .ev-contract .badge { font-size: 0.7rem; padding: 0.05rem 0.4rem; }
   }
   .result-table td a.hl {
     text-decoration: none;

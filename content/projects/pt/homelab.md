@@ -1,6 +1,6 @@
 ---
 title: 'Homelab'
-description: 'Rede doméstica zero trust: Raspberry Pi, firewall e GitOps com Flux.'
+description: 'Rede doméstica zero trust: Raspberry Pi, firewall e GitOps.'
 tags: ['flux', 'docker', 'k3s']
 order: 4
 ---
