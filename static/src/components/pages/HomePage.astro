@@ -21,13 +21,15 @@ const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang
 // Seleção de ferramentas para a Home — "em destaque", só as que correm no
 // browser; a lista completa (com as que precisam de servidor) vive em
 // Ferramentas.
+// Glifos: os mesmos do Lab (LabDesktop.astro) onde a ferramenta lá existe —
+// símbolos, não texto, por isso não vão para ui.ts.
 const tools = [
-  { slug: 'subnets', ...dict.tools.subnets },
-  { slug: 'hashes', ...dict.tools.hashes },
-  { slug: 'passwords', ...dict.tools.passwords },
-  { slug: 'csp', ...dict.tools.csp },
-  { slug: 'email-headers', ...dict.tools['email-headers'] },
-  { slug: 'exif', ...dict.tools.exif },
+  { slug: 'subnets', glyph: '⌗', ...dict.tools.subnets },
+  { slug: 'hashes', glyph: '#', ...dict.tools.hashes },
+  { slug: 'passwords', glyph: '⚿', ...dict.tools.passwords },
+  { slug: 'csp', glyph: '{}', ...dict.tools.csp },
+  { slug: 'email-headers', glyph: '@', ...dict.tools['email-headers'] },
+  { slug: 'exif', glyph: '◎', ...dict.tools.exif },
 ];
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
@@ -111,15 +113,21 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
         <h2 id="h-projects">{dict.home.projects}</h2>
         <a class="more" href={routes.projects[lang]}>{dict.home.allProjects} →</a>
       </div>
-      <div class="mini-list">
-        {projects.map((project) => (
-          <a href={projectUrl(lang, project.id.slice(3))}>
-            <span class="name">{project.data.title}</span>
-            <span class="desc">{project.data.description}</span>
-            <span class="go" aria-hidden="true">→</span>
-          </a>
+      <ol class="proj-index">
+        {projects.map((project, i) => (
+          <li>
+            <a href={projectUrl(lang, project.id.slice(3))}>
+              <span class="idx" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <span class="body">
+                <span class="name">{project.data.title}</span>
+                <span class="desc">{project.data.description}</span>
+              </span>
+              <span class="tags" aria-hidden="true">{project.data.tags.join(' · ')}</span>
+              <span class="go" aria-hidden="true">→</span>
+            </a>
+          </li>
         ))}
-      </div>
+      </ol>
     </section>
   )}
 
@@ -128,12 +136,12 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
       <h2 id="h-tools">{dict.home.featuredTools}</h2>
       <a class="more" href={routes.tools[lang]}>{dict.home.allTools} →</a>
     </div>
-    <div class="mini-list">
+    <div class="tool-tiles">
       {tools.map((tool) => (
         <a href={toolUrl(lang, tool.slug)}>
+          <span class="glyph" aria-hidden="true">{tool.glyph}</span>
           <span class="name">{tool.name}</span>
           <span class="desc">{tool.desc}</span>
-          <span class="go" aria-hidden="true">→</span>
         </a>
       ))}
     </div>

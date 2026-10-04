@@ -590,76 +590,125 @@ a.card:hover {
   color: var(--muted);
 }
 
-/* Lista compacta da home: destaques em linha única, distintos dos cards
-   das páginas dedicadas (a profundidade vive lá, aqui é só o gancho). */
-.mini-list {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
+/* Home → Projetos: índice editorial numerado. Sem caixa — linhas com
+   filete, número grande que acende no hover; distinto dos cartões da página
+   Projetos (lá vive a profundidade, aqui é o índice). */
+.proj-index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
-.mini-list a {
-  display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
-  padding: 0.7rem 1rem;
-  background: var(--bg-raise);
+.proj-index a {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.2rem 1rem;
+  padding: 1rem 0.4rem;
   border-bottom: 1px solid var(--border);
   color: var(--text);
+  transition: background 0.2s, padding 0.2s;
 }
-.mini-list a:last-child { border-bottom: 0; }
-.mini-list a {
-  box-shadow: inset 2px 0 0 transparent;
-  transition: background 0.15s, box-shadow 0.15s;
-}
-.mini-list a:hover, .mini-list a:focus-visible {
+.proj-index a:hover, .proj-index a:focus-visible {
   text-decoration: none;
-  background: var(--bg-raise-2);
-  box-shadow: inset 2px 0 0 var(--accent);
+  background: linear-gradient(90deg, var(--accent-dim), transparent 70%);
+  padding-left: 0.9rem;
 }
-.mini-list .go { transition: transform 0.15s, color 0.15s; }
-.mini-list a:hover .go { transform: translateX(3px); }
-.mini-list .name {
+.proj-index .idx {
   font-family: var(--mono);
-  font-size: 0.88rem;
-  color: var(--accent);
-  flex: none;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--faint);
+  transition: color 0.2s;
 }
-.mini-list .desc {
+.proj-index a:hover .idx, .proj-index a:focus-visible .idx { color: var(--accent); }
+.proj-index .body { display: grid; gap: 0.2rem; min-width: 0; }
+.proj-index .name {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.proj-index .desc { color: var(--muted); font-size: 0.9rem; }
+.proj-index .tags {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.proj-index .go { display: none; }
+@media (max-width: 40rem) {
+  .proj-index a { grid-template-columns: 2.4rem minmax(0, 1fr); }
+  .proj-index .idx { font-size: 1.2rem; align-self: start; padding-top: 0.15rem; }
+  .proj-index .tags { grid-column: 2; white-space: normal; }
+}
+
+/* Home → Ferramentas: mosaico com o glifo de cada uma (o mesmo do Lab). */
+.tool-tiles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
+}
+@media (min-width: 640px) {
+  .tool-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* 3 colunas (não auto-fill): 6 ferramentas = 3×2, sem fila órfã. */
+@media (min-width: 960px) {
+  .tool-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.tool-tiles a {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 1.1rem 1.1rem 1.2rem;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.tool-tiles a:hover, .tool-tiles a:focus-visible {
+  text-decoration: none;
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+.tool-tiles .glyph {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--accent);
+  margin-bottom: 0.4rem;
+}
+.tool-tiles .name {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.tool-tiles .desc {
   color: var(--muted);
   font-size: 0.85rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.5;
 }
-.mini-list .go {
-  margin-left: auto;
-  font-family: var(--mono);
-  color: var(--faint);
-  flex: none;
-}
-.mini-list a:hover .go { color: var(--accent); }
-/* Em telemóvel a linha única deixava ~15 caracteres de descrição antes do
-   "…" — não dizia nada. Abaixo de 40rem: nome por cima, descrição por baixo
-   em até 2 linhas, seta centrada à direita. */
-@media (max-width: 40rem) {
-  .mini-list a {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.15rem 0.8rem;
-    align-items: center;
+/* Telemóvel: linha compacta, glifo à esquerda — 6 mosaicos empilhados
+   ocupavam ecrãs inteiros. */
+@media (max-width: 639px) {
+  .tool-tiles { gap: 0.5rem; }
+  .tool-tiles a {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    column-gap: 0.7rem;
+    padding: 0.85rem 0.9rem;
   }
-  .mini-list .desc {
-    grid-column: 1;
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-  .mini-list .go {
-    grid-column: 2;
+  .tool-tiles .glyph {
     grid-row: 1 / span 2;
+    margin: 0.1rem 0 0;
+    font-size: 1.25rem;
+    text-align: center;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-tiles a, .proj-index a { transition: none; }
+  .tool-tiles a:hover { transform: none; }
 }
 
 .badge {
@@ -1601,7 +1650,7 @@ input[type='file']::file-selector-button:hover {
 /* Medida de leitura: ~70 caracteres por linha. Tabelas e <details> mantêm
    a largura toda; só o texto corrido fica contido. */
 .prose > p, .prose > ul, .prose > ol, .prose > blockquote,
-main > section > p, main > p {
+main > section > p:not([class]), main > p:not([class]) {
   max-width: 70ch;
 }
 .prose blockquote {
@@ -2152,11 +2201,22 @@ main > section > p, main > p {
   font-family: var(--mono);
   font-size: 0.78rem;
 }
+/* Grelha: identidade + "construído com" à esquerda, os dois grupos de
+   ligações em colunas à direita. Em flex com wrap, a 4.ª peça caía sozinha
+   numa linha nova em qualquer largura. */
 .site-footer .inner {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7rem;
+}
+.site-footer .inner > :first-child { color: var(--text); }
+@media (min-width: 1100px) {
+  .site-footer .inner {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 2.5rem;
+    row-gap: 0.5rem;
+  }
+  .site-footer .inner > :last-child { grid-column: 1; grid-row: 2; }
 }
 .site-footer a { color: var(--muted); }
 .site-footer a:hover { color: var(--accent); }
