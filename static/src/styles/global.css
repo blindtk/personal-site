@@ -477,6 +477,24 @@ main.container {
 }
 .section-title .more:hover { color: var(--accent); }
 
+/* Home: secções numeradas (01, 02…) em vez do '//' genérico — dá ritmo e
+   lê-se como índice. O contador nasce no hero e conta as secções irmãs. */
+.panel.identity { counter-reset: hsec; }
+.identity ~ section { counter-increment: hsec; }
+.identity ~ section .section-title {
+  margin-top: 3.2rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+.identity ~ section .section-title::before {
+  content: counter(hsec, decimal-leading-zero);
+  color: var(--accent);
+  font-size: 0.78rem;
+}
+.identity ~ section .section-title h2 {
+  color: var(--text);
+}
+
 .page-head {
   margin-bottom: 2rem;
 }
@@ -569,10 +587,17 @@ a.card:hover {
   color: var(--text);
 }
 .mini-list a:last-child { border-bottom: 0; }
-.mini-list a:hover {
+.mini-list a {
+  box-shadow: inset 2px 0 0 transparent;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.mini-list a:hover, .mini-list a:focus-visible {
   text-decoration: none;
   background: var(--bg-raise-2);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
+.mini-list .go { transition: transform 0.15s, color 0.15s; }
+.mini-list a:hover .go { transform: translateX(3px); }
 .mini-list .name {
   font-family: var(--mono);
   font-size: 0.88rem;
@@ -664,7 +689,14 @@ a.card:hover {
 .panel.identity {
   position: relative;
   overflow: hidden;
-  margin-top: 1.3rem;
+  margin-top: 0.4rem;
+  /* Hero sem "cartão": o nome é o protagonista, não uma caixa. Só um
+     degradê discreto e um filete inferior separam-no do resto. */
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: clamp(2rem, 6vw, 4.2rem) 0 clamp(1.8rem, 5vw, 3rem);
+  background: transparent;
 }
 .panel.identity > :not(.net-bg) {
   position: relative;
@@ -676,6 +708,26 @@ a.card:hover {
   z-index: 0;
   pointer-events: none;
   opacity: 0.55;
+}
+/* No hero, a topologia vive à direita e desvanece para a esquerda: as linhas
+   nunca cruzam o texto (legibilidade), mas o motivo continua a ver-se. Em
+   ecrã estreito o texto ocupa tudo, por isso desvanece de baixo para cima. */
+.identity .net-bg {
+  left: 40%;
+  opacity: 0.85;
+  background: var(--accent-dim);
+  /* Elipse: desvanece em todos os lados — sem arestas duras no topo/direita. */
+  -webkit-mask-image: radial-gradient(ellipse 60% 65% at 62% 45%, #000 20%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 65% at 62% 45%, #000 20%, transparent 100%);
+}
+@media (max-width: 48rem) {
+  .identity .net-bg {
+    left: 0;
+    opacity: 0.45;
+    background: none;
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent 30%);
+    mask-image: linear-gradient(180deg, #000, transparent 30%);
+  }
 }
 .net-bg svg {
   width: 100%;
@@ -727,20 +779,38 @@ a.card:hover {
 }
 
 .identity h1 {
-  font-size: clamp(1.4rem, 4vw, 1.8rem);
-  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 4.6rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  margin: 0.2rem 0 0;
 }
 .identity .role {
   color: var(--accent);
   font-family: var(--mono);
-  font-size: 0.95rem;
-  margin: 0.3rem 0 0;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  margin: 0.8rem 0 0;
+}
+/* Cursor de terminal a piscar depois do cargo — assinatura, não ruído.
+   Fica fixo em reduced-motion (override no fim do ficheiro). */
+.identity .role::after {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 0.3em;
+  vertical-align: -0.15em;
+  background: var(--accent);
+  animation: caret 1.1s steps(1) infinite;
+}
+@keyframes caret {
+  50% { opacity: 0; }
 }
 .identity .sum {
-  color: var(--muted);
-  font-size: 0.98rem;
-  max-width: 68ch;
-  margin: 0.9rem 0 0;
+  color: var(--text);
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  line-height: 1.65;
+  max-width: 58ch;
+  margin: 1.4rem 0 0;
 }
 .identity .meta-row {
   display: flex;
@@ -1296,21 +1366,27 @@ input[type='file']::file-selector-button:hover {
 }
 .journey .stop {
   position: relative;
-  padding: 0 0 1.3rem 1.4rem;
-  border-left: 2px solid var(--border-strong);
+  padding: 0 0 1.6rem 1.6rem;
+  /* Linha de metro: traço grosso na cor da marca, como num mapa de rede de
+     transportes — eco do percurso em metro e ferrovia. */
+  border-left: 4px solid color-mix(in srgb, var(--accent) 55%, var(--bg));
 }
 .journey .stop:last-child {
   padding-bottom: 0.2rem;
+  border-left-color: transparent;
+  border-image: linear-gradient(180deg, var(--accent), transparent) 1;
 }
+/* Estação: miolo claro, anel na cor da linha — a convenção dos mapas de metro. */
 .journey .stop .dot {
   position: absolute;
-  top: 0.35rem;
-  left: -6px;
-  width: 10px;
-  height: 10px;
+  top: 0.2rem;
+  left: -11px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid var(--accent);
+  background: var(--text);
+  border: 4px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 @media (min-width: 1100px) {
   .journey {
@@ -1320,18 +1396,27 @@ input[type='file']::file-selector-button:hover {
   }
   .journey .stop,
   .journey .stop:last-child {
-    padding: 1.1rem 1.2rem 0.4rem 0;
+    padding: 1.4rem 1.2rem 0.4rem 0;
     border-left: none;
-    border-top: 2px solid var(--border-strong);
+    border-top: 4px solid color-mix(in srgb, var(--accent) 55%, var(--bg));
+  }
+  .journey .stop:last-child {
+    border-top-color: transparent;
+    border-image: linear-gradient(90deg, var(--accent), transparent) 1;
   }
   .journey .stop .dot {
-    top: -6px;
+    top: -11px;
     left: 0;
   }
 }
 .journey .stop:last-child .dot {
   background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
+  animation: station 2.4s ease-out infinite;
+}
+/* Estação atual: um anel que se expande e apaga — "estás aqui". */
+@keyframes station {
+  0% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 2px var(--accent-dim); }
+  70%, 100% { box-shadow: 0 0 0 2px var(--accent), 0 0 0 14px transparent; }
 }
 .journey .stop span {
   display: block;
@@ -1492,6 +1577,11 @@ input[type='file']::file-selector-button:hover {
 }
 .prose p, .prose li {
   color: var(--text);
+}
+/* Medida de leitura: ~70 caracteres por linha. Tabelas e <details> mantêm
+   a largura toda; só o texto corrido fica contido. */
+.prose > p, .prose > ul, .prose > ol, .prose > blockquote {
+  max-width: 70ch;
 }
 .prose blockquote {
   border-left: 3px solid var(--accent);
@@ -2168,4 +2258,6 @@ input[type='file']::file-selector-button:hover {
   /* topologia do hero: pulsos somem, nós "vivos" ficam acesos fixos */
   .net-bg .pulse { animation: none; opacity: 0; }
   .net-bg .node.live { animation: none; fill-opacity: 0.6; }
+  .identity .role::after { animation: none; }
+  .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }
