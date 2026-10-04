@@ -25,11 +25,12 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
   </div>
 
   <div class="grid grid-2">
-    {entries.map((entry) => {
+    {entries.map((entry, i) => {
       const slug = entry.id.slice(3);
       return (
         <div class="card">
-          <h2><a href={projectUrl(lang, slug)}>{entry.data.title}</a></h2>
+          <span class="idx" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <h2><a class="stretch" href={projectUrl(lang, slug)}>{entry.data.title}</a></h2>
           <p>{entry.data.description}</p>
           <div class="meta">
             {entry.data.tags.map((tag) => <span class="badge">{tag}</span>)}
@@ -56,8 +57,41 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
   /* Cartão em coluna e linha de ações empurrada para o fundo: na mesma fila
      de cartões, as ações ficam alinhadas entre si. */
   .card {
+    position: relative;
     display: flex;
     flex-direction: column;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  /* O mesmo número do índice da Home: a Home lista, aqui aprofunda-se, mas
+     o projeto 02 é o 02 nos dois sítios. */
+  .idx {
+    font-family: var(--mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--faint);
+    margin-bottom: 0.7rem;
+    transition: color 0.15s;
+  }
+  /* Cartão inteiro clicável (o link do título estende-se por cima), sem
+     aninhar links: as ações (código, painel) ficam por cima, com z-index. */
+  .stretch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .stretch:hover { text-decoration: none; }
+  .card:has(.stretch:hover), .card:has(.stretch:focus-visible) {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .card:has(.stretch:hover) .idx, .card:has(.stretch:focus-visible) .idx {
+    color: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card, .idx { transition: none; }
+    .card:has(.stretch:hover) { transform: none; }
   }
   .card-links {
     display: flex;
@@ -68,6 +102,8 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
     font-size: 0.78rem;
   }
   .card-links a {
+    position: relative;
+    z-index: 1;
     color: var(--accent);
   }
 </style>

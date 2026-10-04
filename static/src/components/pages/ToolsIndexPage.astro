@@ -19,19 +19,55 @@ const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug] }));
     <p class="intro">{dict.tools.intro}</p>
   </div>
 
-  <div class="grid grid-2">
+  {/* O mesmo mosaico de glifos da Home, aqui com as 8 (4×2 em desktop) e o
+     badge client-side/servidor no fundo de cada mosaico. */}
+  <div class="tool-tiles tool-tiles-index">
     {tools.map((tool) => (
-      <a class="card" href={toolUrl(lang, tool.slug)}>
-        <h2>{tool.name}</h2>
-        <p>{tool.desc}</p>
-        <div class="meta">
-          <span class={`badge ${tool.kind === 'server' ? 'amber' : ''}`}>
-            {tool.kind === 'server' ? `🛰️ ${dict.tools.serverBadge}` : `🔒 ${dict.tools.clientBadge}`}
-          </span>
-        </div>
+      <a href={toolUrl(lang, tool.slug)}>
+        <span class="glyph" aria-hidden="true">{tool.glyph}</span>
+        <h2 class="name">{tool.name}</h2>
+        <span class="desc">{tool.desc}</span>
+        <span class={`kind badge ${tool.kind === 'server' ? 'amber' : ''}`}>
+          {tool.kind === 'server' ? dict.tools.serverBadge : dict.tools.clientBadge}
+        </span>
       </a>
     ))}
   </div>
 
   <p class="note">{dict.tools.indexNote}</p>
 </BaseLayout>
+
+<style>
+  .tool-tiles-index .name {
+    margin: 0;
+    line-height: 1.3;
+  }
+  /* Badge sempre no fundo do mosaico: na mesma fila ficam alinhados mesmo
+     com descrições de 1 e de 3 linhas. */
+  .tool-tiles-index a {
+    grid-template-rows: auto auto 1fr auto;
+  }
+  .tool-tiles-index .kind {
+    justify-self: start;
+    align-self: end;
+    margin-top: 0.6rem;
+  }
+  .tool-tiles-index .kind::before {
+    content: '';
+    display: inline-block;
+    width: 0.45em;
+    height: 0.45em;
+    margin-right: 0.45em;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: 0.1em;
+  }
+  @media (min-width: 960px) {
+    .tool-tiles-index { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  @media (max-width: 639px) {
+    .tool-tiles-index a { grid-template-rows: none; }
+    .tool-tiles-index .glyph { grid-row: 1 / span 3; }
+    .tool-tiles-index .kind { grid-column: 2; }
+  }
+</style>

@@ -515,14 +515,19 @@ main.container {
   line-height: 1.05;
   letter-spacing: -0.035em;
 }
-.page-head h1::before {
-  content: '//';
+/* Assinatura das páginas internas: o caminho da página como prompt de
+   terminal (BaseLayout). Decorativo (aria-hidden) — o h1 já diz onde se
+   está. Escondido onde não há .page-head (Home, Lab, 404). */
+.page-prompt {
+  display: none;
+  margin: 0.6rem 0 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
   color: var(--accent);
-  font-size: 0.55em;
-  letter-spacing: 0;
-  margin-right: 0.45em;
-  vertical-align: 0.3em;
+  overflow-wrap: anywhere;
 }
+main:has(> .page-head) > .page-prompt { display: block; }
 .page-head .intro {
   color: var(--muted);
   font-size: clamp(1rem, 1.5vw, 1.08rem);
@@ -785,7 +790,9 @@ a.card:hover {
    nunca cruzam o texto (legibilidade), mas o motivo continua a ver-se. Em
    ecrã estreito o texto ocupa tudo, por isso desvanece de baixo para cima. */
 .identity .net-bg {
-  left: 40%;
+  /* 58% + bio a 54ch: a coluna de texto acaba antes de o gráfico começar
+     (a 40% a bio, com 58ch, passava por cima de nós e arestas). */
+  left: 58%;
   opacity: 0.85;
   background: var(--accent-dim);
   /* Elipse: desvanece em todos os lados — sem arestas duras no topo/direita. */
@@ -881,8 +888,9 @@ a.card:hover {
   color: var(--text);
   font-size: clamp(1rem, 1.6vw, 1.12rem);
   line-height: 1.65;
-  max-width: 58ch;
+  max-width: 54ch;
   margin: 1.4rem 0 0;
+  text-wrap: pretty;
 }
 .identity .meta-row {
   display: flex;
