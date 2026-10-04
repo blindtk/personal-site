@@ -2259,7 +2259,16 @@ main > section > p:not([class]), main > p:not([class]) {
   grid-template-columns: minmax(0, 1fr);
   gap: 0.7rem;
 }
-.site-footer .inner > :first-child { color: var(--text); }
+.site-footer .inner > :first-child {
+  color: var(--text);
+  /* "© 2026 Nome · Cargo" numa só linha em qualquer telemóvel: são 52
+     caracteres monoespaçados (~0,6em cada), por isso o tamanho acompanha a
+     largura útil do ecrã (100vw menos o padding de 2×1,1rem do .container),
+     com o divisor 33 a dar folga a tipos de letra um pouco mais largos. Em
+     ecrãs maiores o min() devolve o tamanho normal do rodapé. */
+  font-size: min(0.78rem, calc((100vw - 2.2rem) / 33));
+  white-space: nowrap;
+}
 @media (min-width: 1100px) {
   .site-footer .inner {
     grid-template-columns: minmax(0, 1fr) auto auto;
