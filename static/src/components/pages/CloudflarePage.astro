@@ -15,7 +15,6 @@ const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 const jsStrings = {
   countriesEmpty: s.countriesEmpty,
-  statusEmpty: s.statusEmpty,
   firewallEmpty: s.firewallEmpty,
   tiNoneYet: s.tiNoneYet,
   countryUnknown: s.countryUnknown,
@@ -41,7 +40,6 @@ const jsStrings = {
       <div class="metric-grid">
         <div class="stat amber"><div class="n" id="cf-threats">—</div><div class="l">{s.cardThreats}</div></div>
         <div class="stat amber"><div class="n" id="cf-blocked">—</div><div class="l">{s.cardBlocked}</div></div>
-        <div class="stat"><div class="n" id="cf-challenges">—</div><div class="l">{s.cardChallenges}</div></div>
         <div class="stat amber"><div class="n" id="cf-threatrate">—</div><div class="l">{s.cardThreatRate}</div></div>
       </div>
 
@@ -53,9 +51,6 @@ const jsStrings = {
       <div class="widget-grid an-mt">
         <Widget title={s.wTopCountries} tone="warn" meta={s.windowNote}>
           <div id="cf-countries"><Skeleton rows={4} /></div>
-        </Widget>
-        <Widget title={s.wTopStatus} meta={s.windowNote}>
-          <div id="cf-status"><Skeleton rows={4} /></div>
         </Widget>
       </div>
       <div class="widget-grid an-mt">
@@ -200,13 +195,9 @@ const jsStrings = {
       const requests = Number(zone.requests ?? 0);
       const threats = Number(zone.threats ?? 0);
       const blocked = (zone.blockedByStatus ?? []).reduce((a: number, r: any) => a + (Number(r.count) || 0), 0);
-      const challenges = (zone.firewallByAction ?? []).reduce(
-        (a: number, r: any) => (firewallActionTone(r.key) === 'warn' ? a + (Number(r.count) || 0) : a), 0,
-      );
 
       setText('cf-threats', formatNumber(threats, locale));
       setText('cf-blocked', formatNumber(blocked, locale));
-      setText('cf-challenges', formatNumber(challenges, locale));
       setText('cf-threatrate', formatPercent(threatRate(threats, requests)));
 
       renderBars(
@@ -214,7 +205,6 @@ const jsStrings = {
         bars(zone.topCountries ?? [], 'country', 'threats', 'warn').map((r) => ({ ...r, label: countryName(r.label) })),
         S.countriesEmpty,
       );
-      renderBars('cf-status', bars(zone.blockedByStatus ?? [], 'key', 'count'), S.statusEmpty);
 
       // Detalhe por URL/user-agent/ASN — vem do dataset CRU
       // firewallEventsAdaptive (dataset amostrado): nunca IP, mesmo esse
