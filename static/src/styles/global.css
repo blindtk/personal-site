@@ -527,13 +527,13 @@ main.container {
   color: var(--muted);
   font-size: clamp(1rem, 1.5vw, 1.08rem);
   line-height: 1.6;
-  max-width: 60ch;
+  /* Sem limite de largura: a introdução ocupa a largura do conteúdo, como o
+     resto do texto das páginas (o limite de 60ch deixava-a a 63% enquanto o
+     corpo da página ia até ao fim, em todas as páginas). */
+  max-width: none;
   margin: 0;
 }
 .page-head .intro + .intro { margin-top: 0.4rem; }
-/* Intro solta logo a seguir ao cabeçalho (ex.: Certificações): mesma medida
-   da intro do cabeçalho, em vez de ir a toda a largura. */
-main > p.intro { max-width: 60ch; }
 
 /* ---------- Cartões e grelhas ---------- */
 
