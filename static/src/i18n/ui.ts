@@ -424,7 +424,7 @@ export const ui = {
     },
     projects: {
       title: 'Projetos',
-      intro: 'Coisas que construí ou mantenho, de scripts a infraestrutura.',
+      intro: 'Projetos pessoais de segurança e infraestrutura. Cada um explica o que faz, como está montado e porquê.',
       repo: 'código',
       demo: 'demo',
       live: 'painel ao vivo',
@@ -1181,7 +1181,7 @@ export const ui = {
     },
     projects: {
       title: 'Projects',
-      intro: 'Things I built or maintain, from scripts to infrastructure.',
+      intro: 'Personal security and infrastructure projects. Each one explains what it does, how it’s built and why.',
       repo: 'code',
       demo: 'demo',
       live: 'live panel',
