@@ -444,8 +444,8 @@ export const ui = {
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
       clientBadge: 'client-side',
       serverBadge: 'requer servidor',
-      serverNote: 'Esta ferramenta fala com o Worker (dynamic/). O que é enviado, e porquê, está explicado acima.',
-      indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o Worker (dynamic/), e cada uma explica na sua página exatamente o que envia.',
+      serverNote: 'Esta ferramenta fala com o servidor do site (um Cloudflare Worker). O que é enviado, e porquê, está explicado acima.',
+      indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o servidor do site (um Cloudflare Worker), e cada uma explica na sua página exatamente o que envia.',
       pwned: {
         name: 'Password comprometida?',
         desc: 'Verifica se uma password aparece em fugas de dados conhecidas, sem que ela alguma vez saia do teu browser (k-anonimato via Have I Been Pwned).',
@@ -1201,8 +1201,8 @@ export const ui = {
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
       clientBadge: 'client-side',
       serverBadge: 'needs server',
-      serverNote: 'This tool talks to the Worker (dynamic/). What is sent, and why, is explained above.',
-      indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the Worker (dynamic/), and each one explains on its own page exactly what it sends.',
+      serverNote: 'This tool talks to the site’s server (a Cloudflare Worker). What is sent, and why, is explained above.',
+      indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the site’s server (a Cloudflare Worker), and each one explains on its own page exactly what it sends.',
       pwned: {
         name: 'Has your password leaked?',
         desc: 'Checks if a password appears in known data breaches, without it ever leaving your browser (k-anonymity via Have I Been Pwned).',
