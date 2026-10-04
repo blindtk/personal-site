@@ -531,6 +531,9 @@ main.container {
   margin: 0;
 }
 .page-head .intro + .intro { margin-top: 0.4rem; }
+/* Intro solta logo a seguir ao cabeçalho (ex.: Certificações): mesma medida
+   da intro do cabeçalho, em vez de ir a toda a largura. */
+main > p.intro { max-width: 60ch; }
 
 /* ---------- Cartões e grelhas ---------- */
 
@@ -925,11 +928,25 @@ a.card:hover {
   gap: 0.7rem;
 }
 .stat {
+  position: relative;
+  overflow: hidden;
   background: var(--bg-raise-2);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 0.8rem 0.9rem;
 }
+/* Filete superior na cor do tom do número — liga o cartão à série que
+   representa (verde tráfego, âmbar ameaças, azul visitantes…). */
+.stat::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent 85%);
+}
+.stat.amber::before { background: linear-gradient(90deg, var(--accent-2), transparent 85%); }
+.stat.blue::before { background: linear-gradient(90deg, var(--accent-3), transparent 85%); }
+.stat.red::before { background: linear-gradient(90deg, var(--danger), transparent 85%); }
 .stat .n {
   font-family: var(--mono);
   font-size: 1.5rem;
@@ -962,6 +979,16 @@ a.card:hover {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
   gap: 0.7rem;
+}
+/* Exatamente 3 números (Cloudflare): no telemóvel o auto-fit dava 2 + 1 com
+   o terceiro sozinho. Três colunas compactas leem-se como uma linha só. */
+@media (max-width: 40rem) {
+  .metric-grid:has(> :nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .metric-grid:has(> :nth-child(3):last-child) .stat { padding: 0.7rem 0.6rem; }
+  .metric-grid:has(> :nth-child(3):last-child) .stat .n { font-size: 1.25rem; }
 }
 
 /* Lista de barras horizontais (Top países, códigos HTTP, ações…). Desenhada
@@ -996,6 +1023,29 @@ a.card:hover {
 }
 .bar-fill.warn { background: var(--accent-2); }
 .bar-fill.down { background: var(--danger); }
+/* As barras crescem da esquerda quando os dados chegam, em cascata — o
+   painel "acende" em vez de aparecer de uma vez. Só transform (sem layout). */
+.bar-fill {
+  transform-origin: left center;
+  animation: bar-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.bar-row:nth-child(2) .bar-fill { animation-delay: 0.06s; }
+.bar-row:nth-child(3) .bar-fill { animation-delay: 0.12s; }
+.bar-row:nth-child(4) .bar-fill { animation-delay: 0.18s; }
+.bar-row:nth-child(5) .bar-fill { animation-delay: 0.24s; }
+.bar-row:nth-child(n + 6) .bar-fill { animation-delay: 0.3s; }
+@keyframes bar-in {
+  from { transform: scaleX(0); }
+}
+/* Colunas do gráfico diário sobem a partir do eixo. */
+.daily-seg {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: col-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes col-in {
+  from { transform: scaleY(0); }
+}
 
 /* Sparklines (timelines Requests/Threats) — SVG criado por script, por isso
    as classes vivem no global (mesma razão das barras acima): elementos
@@ -2365,6 +2415,91 @@ main > section > p:not([class]), main > p:not([class]) {
 }
 .mirror-note b { font-weight: 600; }
 
+/* ---------- Duas colunas em desktop (páginas de leitura) ----------
+   Título da secção numa coluna à esquerda, conteúdo
+   à direita: a página fica preenchida de ponta a ponta e o texto mantém uma
+   medida legível (~95 caracteres) em vez de ~140 a toda a largura.
+   Aplica-se a secções com .section-title e à prosa markdown das páginas
+   (Sobre, projetos). Ficam de fora a home (grelhas e índice próprios), os
+   painéis (main.wide) e o catálogo de Links (grelhas de cartões). */
+@media (min-width: 1100px) {
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)),
+  main:not(.wide) > article.prose {
+    --split-label: 12rem;
+    display: grid;
+    grid-template-columns: var(--split-label) minmax(0, 1fr);
+    column-gap: 2.75rem;
+    align-items: start;
+  }
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)) {
+    margin-top: 2.8rem;
+    padding-top: 1.3rem;
+    border-top: 1px solid var(--border);
+  }
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)) > * {
+    grid-column: 2;
+  }
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)) > .section-title {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    /* sem wrap: num título longo o '//' ficava sozinho numa linha; assim é
+       o próprio h2 que quebra, com o '//' à cabeça */
+    flex-wrap: nowrap;
+    line-height: 1.5;
+  }
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)) > :nth-child(2) {
+    margin-top: 0;
+  }
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)) > :nth-child(2) .result-table,
+  main:not(.wide) > section:has(> .section-title:first-child):not(.identity ~ section):not(:has(.grid-3)) > .table-scroll:nth-child(2) > table {
+    margin-top: 0;
+  }
+
+  /* Prosa markdown: cada ## vai para a coluna da esquerda, na mesma linha do
+     primeiro bloco a seguir (colocação automática da grelha), com o mesmo
+     aspeto dos títulos de secção. O filete partido pelas duas colunas marca
+     o início de cada secção. */
+  main:not(.wide) > article.prose > * {
+    grid-column: 2;
+    margin-top: 0;
+    margin-bottom: 1.1rem;
+  }
+  main:not(.wide) > article.prose > h2 {
+    grid-column: 1;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    line-height: 1.5;
+  }
+  main:not(.wide) > article.prose > h2::before {
+    content: '// ';
+    font-size: 0.75rem;
+  }
+  main:not(.wide) > article.prose > h2,
+  main:not(.wide) > article.prose > h2 + * {
+    margin-top: 1.6rem;
+    padding-top: 1.3rem;
+    border-top: 1px solid var(--border);
+  }
+  main:not(.wide) > article.prose > .about-prose details,
+  main:not(.wide) > article.about-prose > details {
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+  }
+
+  /* Com a coluna de rótulos a ocupar o lado esquerdo, o texto preenche a
+     coluna da direita (~95 caracteres) — o limite de 70ch deixava de novo
+     um vazio à direita. */
+  main:not(.wide) > article.prose > :is(p, ul, ol, blockquote),
+  main:not(.wide) > section:has(> .section-title:first-child) > p:not([class]),
+  main:not(.wide) > section:has(> .section-title:first-child) > .prose > :is(p, ul, ol, blockquote) {
+    max-width: none;
+  }
+}
+
 /* ---------- reduced-motion — overrides tardios ----------
    Ficam no fim de propósito: as regras base de .net-bg são
    declaradas depois do bloco reduced-motion do topo, por isso o override
@@ -2375,5 +2510,6 @@ main > section > p:not([class]), main > p:not([class]) {
   .net-bg .node.live { animation: none; fill-opacity: 0.6; }
   .identity .role::after { animation: none; }
   .about-prose details:first-of-type::after { animation: none; }
+  .bar-fill, .daily-seg { animation: none; }
   .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }
