@@ -20,10 +20,10 @@ const tabs = [
 ];
 
 const metrics = [
-  { key: 'lcp', label: 'LCP', desc: s.metricLcpDesc },
-  { key: 'inp', label: 'INP', desc: s.metricInpDesc },
-  { key: 'cls', label: 'CLS', desc: s.metricClsDesc },
-  { key: 'ttfb', label: 'TTFB', desc: s.metricTtfbDesc },
+  { key: 'lcp', label: 'LCP' },
+  { key: 'inp', label: 'INP' },
+  { key: 'cls', label: 'CLS' },
+  { key: 'ttfb', label: 'TTFB' },
 ];
 
 const jsStrings = {
@@ -84,7 +84,6 @@ const jsStrings = {
                   <span class="cwv-val" id={`cwv-${m.key}`}>—</span>
                   <span class="cwv-rating" id={`cwv-${m.key}-r`}></span>
                 </div>
-                <p class="cwv-desc">{m.desc}</p>
               </Widget>
             ))}
           </div>
@@ -237,5 +236,4 @@ const jsStrings = {
   .cwv-rating.ok { color: var(--accent); border-color: var(--accent); }
   .cwv-rating.warn { color: var(--accent-2); border-color: var(--accent-2); }
   .cwv-rating.down { color: var(--danger); border-color: var(--danger); }
-  .cwv-desc { font-size: 0.72rem; color: var(--muted); margin: 0.4rem 0 0; }
 </style>

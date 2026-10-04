@@ -48,7 +48,6 @@ const jsStrings = {
         <div class="stat"><div class="n" id="cf-challenges">—</div><div class="l">{s.cardChallenges}</div></div>
         <div class="stat amber"><div class="n" id="cf-threatrate">—</div><div class="l">{s.cardThreatRate}</div></div>
       </div>
-      <p class="note">{s.threatsDefNote}</p>
 
       <div class="widget-grid an-mt">
         <Widget title={s.tlThreats} tone="warn" meta={s.windowNote} class="wide-widget">
@@ -80,7 +79,6 @@ const jsStrings = {
         <Widget title={s.wFirewallUserAgents} tone="warn"><div id="cf-fw-uas"><Skeleton rows={4} /></div></Widget>
         <Widget title={s.wFirewallAsns} tone="warn"><div id="cf-fw-asns"><Skeleton rows={4} /></div></Widget>
       </div>
-      <p class="note">{s.samplingNote}</p>
 
       <div class="widget-grid an-mt">
         <Widget title={s.tiDailyTitle} tone="warn" meta={s.windowNote} class="wide-widget">
@@ -92,7 +90,6 @@ const jsStrings = {
         <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="cf-fwsource"></div></Widget>
       </div>
 
-      <p class="note">🛰️ {s.privacyNote}</p>
     </div>
   </div>
 
@@ -338,7 +335,7 @@ const jsStrings = {
       renderRiskScatter(riskRows);
 
       // Detalhe por URL/user-agent/ASN — vem do dataset CRU
-      // firewallEventsAdaptive (ver samplingNote): nunca IP, mesmo esse
+      // firewallEventsAdaptive (dataset amostrado): nunca IP, mesmo esse
       // campo estando disponível na fonte.
       renderBars('cf-fw-paths', bars(zone.firewallByPath ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
       renderBars('cf-fw-uas', bars(zone.firewallByUserAgent ?? [], 'key', 'count', 'warn'), S.firewallEmpty);
