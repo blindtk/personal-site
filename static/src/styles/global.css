@@ -2265,14 +2265,21 @@ main > section > p:not([class]), main > p:not([class]) {
      caracteres monoespaçados (~0,6em cada), por isso o tamanho acompanha a
      largura útil do ecrã (100vw menos o padding de 2×1,1rem do .container),
      com o divisor 33 a dar folga a tipos de letra um pouco mais largos. Em
-     ecrãs maiores o min() devolve o tamanho normal do rodapé. */
-  font-size: min(0.78rem, calc((100vw - 2.2rem) / 33));
-  white-space: nowrap;
+     ecrãs maiores o min() devolve o tamanho normal do rodapé. O mínimo de
+     9,5px evita letra ilegível em ecrãs muito estreitos (<~336px), onde a
+     linha passa a quebrar em vez de encolher mais; não há white-space:
+     nowrap de propósito — com um tipo de letra mais largo do que o previsto
+     é preferível quebrar a sair do ecrã. */
+  font-size: max(9.5px, min(0.78rem, calc((100vw - 2.2rem) / 33)));
 }
 @media (min-width: 1100px) {
   .site-footer .inner {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    column-gap: 2.5rem;
+    /* A coluna do nome nunca fica mais estreita que o seu texto (max-content):
+       em EN os dois grupos de ligações são mais largos e, com 1fr a secas, a
+       linha "© 2026 Nome · Cargo" quebrava. Intervalo de 1,5rem para tudo
+       caber nos 1053px úteis do contentor (medido: ~1038px em EN). */
+    grid-template-columns: minmax(max-content, 1fr) auto auto;
+    column-gap: 1.5rem;
     row-gap: 0.5rem;
   }
   .site-footer .inner > :last-child { grid-column: 1; grid-row: 2; }
