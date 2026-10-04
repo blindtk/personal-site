@@ -22,11 +22,7 @@ const jsStrings = {
   riskThresholdLeft: s.riskThresholdLeft,
   riskThresholdRight: s.riskThresholdRight,
   riskAxisRequests: s.riskAxisRequests,
-  riskColRate: s.riskColRate,
-  cardRequests: s.cardRequests,
-  cardThreats: s.cardThreats,
   riskTitle: s.tiRiskCountry,
-  colCountry: s.logColCountry,
   tlPeak: s.tlPeak,
   tlLast: s.tlLast,
   tiDailyTitle: s.tiDailyTitle,
@@ -76,8 +72,6 @@ const jsStrings = {
             <span><i class="dot low"></i>{s.riskLegendLow}</span>
             <span><i class="dot sample"></i>{s.riskLegendSample}</span>
           </div>
-          <p class="note">{s.riskNote}</p>
-          <div id="cf-risk-table"></div>
         </Widget>
       </div>
 
@@ -97,7 +91,6 @@ const jsStrings = {
         <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="cf-fwaction"></div></Widget>
         <Widget title={s.tiFirewallSource} tone="warn" meta={s.windowNote}><div id="cf-fwsource"></div></Widget>
       </div>
-      <p class="note">{s.tiFirewallActionNote}</p>
 
       <p class="note">🛰️ {s.privacyNote}</p>
     </div>
@@ -319,45 +312,6 @@ const jsStrings = {
     host.append(svg);
   }
 
-  function renderRiskTable(rows: any[]) {
-    const host = document.getElementById('cf-risk-table');
-    if (!host) return;
-    host.replaceChildren();
-    if (rows.length === 0) return; // a dispersão acima já mostra o estado vazio
-    const wrap = document.createElement('div');
-    wrap.className = 'table-scroll';
-    const table = document.createElement('table');
-    table.className = 'result-table wrap-normal';
-    const thead = document.createElement('thead');
-    const headRow = document.createElement('tr');
-    for (const label of [S.colCountry, S.cardRequests, S.cardThreats, S.riskColRate]) {
-      const th = document.createElement('th');
-      th.textContent = label;
-      headRow.append(th);
-    }
-    thead.append(headRow);
-    const tbody = document.createElement('tbody');
-    for (const row of rows) {
-      const tr = document.createElement('tr');
-      const tdCountry = document.createElement('td');
-      tdCountry.className = 'mono hp-cc';
-      tdCountry.textContent = String(row.country);
-      const tdReq = document.createElement('td');
-      tdReq.textContent = formatNumber(row.requests, locale);
-      const tdThreats = document.createElement('td');
-      tdThreats.textContent = formatNumber(row.threats, locale);
-      const tdRate = document.createElement('td');
-      tdRate.textContent = row.lowSample
-        ? `${formatPercent(row.rate)} (${S.riskLowSample})`
-        : formatPercent(row.rate);
-      tr.append(tdCountry, tdReq, tdThreats, tdRate);
-      tbody.append(tr);
-    }
-    table.append(thead, tbody);
-    wrap.append(table);
-    host.append(wrap);
-  }
-
   // ---------- Cloudflare (ameaças à zona, /api/cf-stats) ----------
   async function loadCfThreats() {
     try {
@@ -382,7 +336,6 @@ const jsStrings = {
       renderBars('cf-status', bars(zone.blockedByStatus ?? [], 'key', 'count'), S.statusEmpty);
       const riskRows = Array.isArray(zone.riskByCountry) ? zone.riskByCountry : [];
       renderRiskScatter(riskRows);
-      renderRiskTable(riskRows);
 
       // Detalhe por URL/user-agent/ASN — vem do dataset CRU
       // firewallEventsAdaptive (ver samplingNote): nunca IP, mesmo esse
@@ -556,6 +509,8 @@ const jsStrings = {
      global.css, como o resto dos gráficos SVG do site (.bar-fill,
      .spark-line — mesmo motivo). */
   .scatter-wrap { margin-bottom: 0.5rem; }
+  /* Na página larga os gráficos SVG escalam com a largura e ficavam enormes. */
+  .scatter-wrap, #cf-daily, #cf-tl-threats { max-width: 44rem; }
   .risk-legend {
     display: flex;
     flex-wrap: wrap;

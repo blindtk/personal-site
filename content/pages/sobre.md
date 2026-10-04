@@ -113,21 +113,15 @@ Abre cada função para ver o detalhe.
 
 ## Formação
 
-- **Mestrado em Engenharia Eletrotécnica e de Computadores** na FEUP
-  (Faculdade de Engenharia da Universidade do Porto), 2009 a 2016, com
-  especialização em Redes e Serviços de Comunicação.
+**Mestrado em Engenharia Eletrotécnica e de Computadores** na FEUP
+(Faculdade de Engenharia da Universidade do Porto), 2009 a 2016, com
+especialização em Redes e Serviços de Comunicação.
 
 ## Certificações
 
 Tenho certificações da Fortinet, da SANS, da Microsoft, da CyberDefenders e
 de outras entidades. A lista completa, com o estado de cada uma e verificação
 independente no Credly, está em **[Certificações](/certificacoes/)**.
-
-## Cobertura ATT&CK
-
-O **[heatmap ATT&CK](/attack/)** mostra, tática a tática, as técnicas do MITRE
-ATT&CK que cubro do lado defensivo e a ferramenta ou experiência por trás de
-cada uma.
 
 ## Competências
 
@@ -155,7 +149,7 @@ profundidade.
 | CIS Controls & Benchmarks | Base para o hardening de sistemas e equipamentos de rede, e para verificar configurações. | Aplicado |
 | CISA CPG | Termo de comparação para priorizar os controlos de base em infraestrutura crítica. | Referência |
 | OWASP Top 10 | Vocabulário comum para classificar o que a análise de vulnerabilidades e os testes internos encontram, e para afinar regras de WAF. | Aplicado |
-| MITRE ATT&CK | Mapear a cobertura de deteção e estruturar a análise de incidentes. O detalhe, técnica a técnica, está no [heatmap](/attack/). | Aplicado |
+| MITRE ATT&CK | Mapear a cobertura de deteção e estruturar a análise de incidentes. | Aplicado |
 
 *Aplicado* quer dizer uso corrente nos controlos que opero. *Referência* quer
 dizer que o consulto no desenho e na priorização, sem um processo formal

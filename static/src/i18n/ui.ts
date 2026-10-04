@@ -71,12 +71,7 @@ export const ui = {
       // ----- Visão Geral -----
       overviewMetaTitle: 'Este site: como funciona',
       overviewTitle: 'Este site',
-      overviewIntro: 'Um site pessoal estático e bilingue, tratado como um sistema em produção. Esta página explica como está montado e porque foi feito assim. As outras páginas da secção mostram a segurança, o que a Cloudflare vê ao vivo e as provas do que aqui se afirma.',
-      sectionTitle: 'Nesta secção',
-      sectionSecurity: 'Os cabeçalhos que o site envia, o que cada um defende e o que acontece aos teus dados.',
-      sectionCloudflare: 'O que chega ao domínio ao vivo: pedidos, ameaças e o que a firewall trava.',
-      sectionEvidence: 'Commit, cabeçalhos, certificados e CI, gerados no build para os poderes confirmar.',
-      sectionPerformance: 'Tráfego, cache e Core Web Vitals medidos em visitas reais.',
+      overviewIntro: 'Um site pessoal estático e bilingue, tratado como um sistema em produção.',
       archTitle: 'Como está montado',
       decisionsTitle: 'Porque foi feito assim',
       archBody:
@@ -105,10 +100,6 @@ export const ui = {
       valueProduction: 'Produção',
       componentsTitle: 'Componentes',
       compWorker: 'Worker / API',
-      compNote:
-        'Se estás a ler isto, a edge, o DNS e o TLS já funcionaram: foram eles que te entregaram esta página. Por isso só o Worker é verificado ao vivo, em /api/health.',
-      tlsNote: 'O certificado e as notas do SSL Labs e do Observatory estão nas',
-      tlsNoteLink: 'Provas',
       // relativo: "há {n} {unit}" — unidades no plural simples
       agoPrefix: 'há',
       unitSecond: 'segundos',
@@ -146,7 +137,6 @@ export const ui = {
       // lista de barras que isto substituiu (essa tinha uma nota de 5 linhas
       // aqui porque ES a 96,9%/127 pedidos e GB a 100%/1 pedido apareciam
       // lado a lado sem contexto nenhum).
-      riskNote: 'Cada ponto é um país: horizontal = pedidos na janela (escala logarítmica), vertical = quantos desses pedidos a Cloudflare classificou como ameaça; a área do círculo é proporcional ao número de ameaças. Círculo aberto = menos de 100 pedidos, onde a percentagem ainda não diz nada.',
       riskAxisRequests: 'pedidos na janela (escala logarítmica)',
       riskLegendHigh: 'taxa ≥ 50%',
       riskLegendMed: 'taxa 20–50%',
@@ -154,7 +144,6 @@ export const ui = {
       riskLegendSample: 'amostra < 100 pedidos',
       riskThresholdLeft: '← amostra pequena',
       riskThresholdRight: 'amostra fiável →',
-      riskColRate: 'Taxa',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
       statusEmpty: 'Sem respostas 4xx/5xx na janela.',
       firewallEmpty: 'Sem eventos de firewall nesta janela.',
@@ -173,12 +162,9 @@ export const ui = {
       perfMetaTitle: 'Performance: tráfego, cache e Core Web Vitals',
       perfTitle: 'Performance',
       perfIntro:
-        'Quão rápido este site chega a ti e quanto trabalho a borda poupa à origem. Os sinais de tráfego/cache/largura de banda são reais, da Analytics API da Cloudflare; os Core Web Vitals de utilizadores reais vêm de um beacon RUM first-party.',
+        'Quão rápido este site chega a ti e quanto trabalho a borda poupa à origem.',
       perfTabTraffic: 'Tráfego',
       perfTabCwv: 'Core Web Vitals',
-      perfCwvBody:
-        'Medidos no browser de cada visitante (LCP, CLS, INP, TTFB) e enviados uma vez, agregados e sem dados pessoais, para um beacon do próprio site. O valor mostrado é o p75, o mesmo percentil que a Google usa. Se ainda não há amostras, o painel enche-se à medida que chegam visitas.',
-      perfProvasLink: 'Provas',
       perfNoData: 'Ainda não há amostras suficientes. Os Web Vitals aparecem à medida que há visitas.',
       perfSamples: 'amostras',
       ratingGood: 'Bom',
@@ -197,9 +183,7 @@ export const ui = {
       tiDailyChallenged: 'desafiado',
       tiDailyAllowed: 'passado',
       tiFirewallAction: 'Firewall por ação (7d)',
-      tiFirewallActionNote: 'Nem toda a ação da firewall é um ataque travado. «skip» e «allow» passaram, e um desafio «bypassed» ou «solved» é um visitante legítimo que o resolveu (grande parte é tráfego meu, de Portugal). Só os bloqueios (vermelho) e os desafios por resolver (âmbar) são mitigação.',
       tiFirewallSource: 'Firewall por origem (7d)',
-      logColCountry: 'País',
       // ----- Fases seguintes: timelines, visitantes, risco, atacantes -----
       cardVisitors: 'Visitantes',
       tlRequests: 'Pedidos ao longo do tempo',
@@ -223,14 +207,13 @@ export const ui = {
       title: 'Segurança',
       metaTitle: 'Segurança',
       intro:
-        'Este site mostra trabalho técnico sem acrescentar superfície de ataque desnecessária. Esta página explica o que está em vigor e porquê.',
+        'Este site mostra trabalho técnico sem acrescentar superfície de ataque desnecessária.',
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
         'Não há contas, sessões, base de dados nem formulários que guardem o que escreves, por isso há pouco para atacar. Sobram duas coisas que vale a pena proteger: a integridade do que é servido (ninguém deve conseguir injetar ou alterar código no site) e a privacidade de quem o visita. Os cabeçalhos tratam da primeira; a secção de privacidade explica a segunda.',
       // ----- Cabeçalhos e porquê -----
       headersTitle: 'Cabeçalhos e porquê',
-      headersIntro: 'O que cada resposta traz, e para que serve:',
       headers: [
         { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline'. Não há JavaScript nem CSS inline no site, por isso só corre código servido por este domínio e um script injetado não executa. É a principal defesa contra XSS." },
         { name: 'Strict-Transport-Security', why: 'Obriga o browser a usar HTTPS durante 2 anos, mesmo que alguém tente forçar HTTP.' },
@@ -240,7 +223,7 @@ export const ui = {
         { name: 'Permissions-Policy', why: 'Desliga APIs do browser que o site não usa (câmara, microfone, geolocalização, pagamentos, USB).' },
         { name: 'Cross-Origin-Opener-Policy', why: 'Isola esta janela das de outras origens, para que uma página de outro site não a consiga controlar.' },
         { name: 'Cross-Origin-Embedder-Policy', why: 'Só deixa carregar recursos de outras origens que o autorizem explicitamente (CORP ou CORS). Funciona em conjunto com o COOP.' },
-        { name: 'Cross-Origin-Resource-Policy', why: 'Impede que outros sites carreguem diretamente os recursos deste. Estes nove cabeçalhos são os mesmos que as Provas verificam em produção.' },
+        { name: 'Cross-Origin-Resource-Policy', why: 'Impede que outros sites carreguem diretamente os recursos deste.' },
       ],
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
@@ -261,45 +244,34 @@ export const ui = {
       metaTitle: 'Provas: transparência verificável',
       title: 'Provas',
       intro:
-        'Não acredites, verifica. Tudo nesta página é gerado no build ou lido ao vivo, sem números escritos à mão nem capturas de ecrã, para poderes confirmar cada linha. O que cada cabeçalho defende está explicado na Segurança.',
+        'Não acredites, verifica. Tudo nesta página é gerado no build ou lido ao vivo.',
       commitTitle: 'Último commit',
-      commitIntro:
-        'Este site é servido a partir de main. O código que estás a ler corresponde a este commit:',
       commitHashLabel: 'commit',
       commitSubjectLabel: 'mensagem',
       commitDateLabel: 'data',
       commitPending:
         'Hash do commit indisponível neste build (fora de um clone git).',
       headersTitle: 'Cabeçalhos de segurança',
-      headersIntro:
-        'O contrato versionado abaixo garante que a produção serve mesmo estes cabeçalhos. Os scanners externos ligados no fim da página verificam o mesmo ao vivo.',
       contractTitle: 'Contrato de cabeçalhos',
-      contractIntro:
-        'A lista versionada de cabeçalhos que a produção tem de servir. O workflow Headers falha se algum faltar:',
       contractHeader: 'cabeçalho',
       contractRequires: 'exige',
       workflowsTitle: 'Workflows',
-      workflowsIntro:
-        'Estes workflows correm no GitHub Actions: a maioria a cada push para main, alguns em cron (diário ou semanal) e um só quando há uma tag de release. Verde quer dizer build limpo, sem vulnerabilidades conhecidas, sem segredos expostos e com o SAST a passar.',
-      pipelineIntro: 'O que cada um verifica. Qualquer um deles faz falhar o CI se encontrar algo:',
       pipelineToolCol: 'ferramenta',
       pipelineCatchesCol: 'o que apanha',
       pipeline: [
-        { tool: 'Renovate', catches: 'Mantém as dependências atualizadas e pina as GitHub Actions por digest SHA (proteção contra tags movidas). Corre numa janela semanal.' },
-        { tool: 'Dependency Review', catches: 'Bloqueia PRs que tragam uma dependência nova com vulnerabilidade conhecida, olhando só para o diff do PR. É o controlo rápido; o OSV-Scanner abaixo faz a varredura completa.' },
-        { tool: 'OSV-Scanner', catches: 'Dependências com vulnerabilidades conhecidas ou marcadas como maliciosas (base OSV.dev + advisories do GitHub), lidas do lockfile.' },
-        { tool: 'Gitleaks', catches: 'Segredos committados (tokens, chaves privadas) em toda a história do PR. Corre também como hook local antes de cada commit.' },
-        { tool: 'CodeQL', catches: 'Análise semântica de segurança (SAST) do JavaScript e TypeScript. Apanha uma classe de padrões diferente da do Semgrep.' },
-        { tool: 'Semgrep', catches: 'SAST: sinks de DOM XSS (innerHTML, document.write) nos scripts do lado do cliente e no terminal do Lab.' },
-        { tool: 'zizmor', catches: 'Auditoria dos próprios workflows: pins em falta, permissões excessivas, injeção de template em run:.' },
-        { tool: 'Cadeia de fornecimento', catches: 'Verifica as assinaturas do registo npm e gera um SBOM (CycloneDX) dos dois lockfiles, como artefacto. Semanal.' },
-        { tool: 'Invariantes', catches: 'Verifica /api/health e as rotas de leitura do Worker em produção, e abre uma Issue automática se algo partir. Diário.' },
-        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Um harness cobre as duas funções do Worker que processam input não confiável, os sanitizadores de output sanitizeText() e escapeHtml(). Semanal.' },
-        { tool: 'Releases assinadas', catches: 'Assina a proveniência (Sigstore) dos artefactos de build e gera um SBOM, numa GitHub Release. Só corre quando se cria uma tag v*.' },
+        { tool: 'Renovate', catches: 'Dependências atualizadas e Actions fixadas por SHA. Semanal.' },
+        { tool: 'Dependency Review', catches: 'Bloqueia PRs com dependências novas vulneráveis.' },
+        { tool: 'OSV-Scanner', catches: 'Dependências vulneráveis ou maliciosas, lidas do lockfile.' },
+        { tool: 'Gitleaks', catches: 'Segredos committados (tokens, chaves privadas).' },
+        { tool: 'CodeQL', catches: 'SAST semântico de JavaScript e TypeScript.' },
+        { tool: 'Semgrep', catches: 'SAST: sinks de DOM XSS nos scripts do cliente.' },
+        { tool: 'zizmor', catches: 'Auditoria dos próprios workflows.' },
+        { tool: 'Cadeia de fornecimento', catches: 'Assinaturas do npm e SBOM dos lockfiles. Semanal.' },
+        { tool: 'Invariantes', catches: 'Verifica o Worker em produção e abre uma Issue se algo partir. Diário.' },
+        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Fuzzing dos sanitizadores do Worker. Semanal.' },
+        { tool: 'Releases assinadas', catches: 'Proveniência (Sigstore) e SBOM em cada release.' },
       ],
-      pipelineNote: 'Além destas, o build falha em advisories high/critical do npm audit e se a CSP do cabeçalho divergir da que viaja em cada <meta>.',
       verifyTitle: 'Verifica tu mesmo',
-      verifyIntro: 'Não fiques pela minha palavra:',
       verifyHeadersScan: 'Scan em securityheaders.com',
       verifyObservatory: 'Scan no Mozilla Observatory',
     },
@@ -342,7 +314,7 @@ export const ui = {
     ctwatch: {
       title: 'Vigia de Certificate Transparency',
       intro:
-        'Qualquer certificado TLS emitido para este domínio fica registado em logs públicos de Certificate Transparency, incluindo um que um atacante conseguisse emitir depois de tomar o DNS ou a conta do registrar. O Worker vigia esses logs e compara cada emissão dos últimos 90 dias com a lista de emissores esperados. Um certificado que eu não pedi aparece aqui antes de poder ser usado contra mim.',
+        'Todo o certificado TLS emitido para este domínio fica nos logs públicos de Certificate Transparency. O Worker compara cada emissão dos últimos 90 dias com os emissores esperados: um certificado que eu não pedi aparece aqui.',
       // ----- Ciclo de vida do certificado ativo -----
       // O único painel do site que avisa de algo ANTES de acontecer — tudo o
       // resto é retrospetivo. "Ativo" é uma escolha entre os certificados
@@ -902,12 +874,7 @@ export const ui = {
       // ----- Overview -----
       overviewMetaTitle: 'This site: how it works',
       overviewTitle: 'This site',
-      overviewIntro: 'A static, bilingual personal site, run like a production system. This page explains how it is put together and why it was built this way. The other pages in the section show its security, what Cloudflare sees live and the evidence for what is claimed here.',
-      sectionTitle: 'In this section',
-      sectionSecurity: 'The headers the site sends, what each one defends and what happens to your data.',
-      sectionCloudflare: 'What reaches the domain, live: requests, threats and what the firewall stops.',
-      sectionEvidence: 'Commit, headers, certificates and CI, generated at build time so you can check them.',
-      sectionPerformance: 'Traffic, cache and Core Web Vitals measured on real visits.',
+      overviewIntro: 'A static, bilingual personal site, run like a production system.',
       archTitle: 'How it is put together',
       decisionsTitle: 'Why it was built this way',
       archBody:
@@ -936,10 +903,6 @@ export const ui = {
       valueProduction: 'Production',
       componentsTitle: 'Components',
       compWorker: 'Worker / API',
-      compNote:
-        'If you are reading this, the edge, DNS and TLS have already worked: they delivered this page. So only the Worker is checked live, against /api/health.',
-      tlsNote: 'The certificate and the SSL Labs and Observatory grades are on',
-      tlsNoteLink: 'Evidence',
       agoPrefix: '',
       unitSecond: 'seconds ago',
       unitMinute: 'minutes ago',
@@ -966,7 +929,6 @@ export const ui = {
       wFirewallUserAgents: 'Most-seen user-agents (firewall · 24h)',
       wFirewallAsns: 'Most-seen networks (firewall · 24h)',
       riskLowSample: 'small sample',
-      riskNote: 'Each dot is a country: horizontal = requests in the window (log scale), vertical = how many of those Cloudflare classed as a threat; circle area is proportional to threat count. Open circle = under 100 requests, where the percentage says nothing yet.',
       riskAxisRequests: 'requests in the window (logarithmic scale)',
       riskLegendHigh: 'rate ≥ 50%',
       riskLegendMed: 'rate 20–50%',
@@ -974,7 +936,6 @@ export const ui = {
       riskLegendSample: 'sample < 100 requests',
       riskThresholdLeft: '← small sample',
       riskThresholdRight: 'reliable sample →',
-      riskColRate: 'Rate',
       countriesEmpty: 'No threats recorded by country in the window.',
       statusEmpty: 'No 4xx/5xx responses in the window.',
       firewallEmpty: 'No firewall events in this window.',
@@ -993,12 +954,9 @@ export const ui = {
       perfMetaTitle: 'Performance: traffic, cache and Core Web Vitals',
       perfTitle: 'Performance',
       perfIntro:
-        'How fast this site reaches you and how much work the edge saves the origin. Traffic/cache/bandwidth signals are real, from Cloudflare\'s Analytics API; real-user Core Web Vitals come from a first-party RUM beacon.',
+        'How fast this site reaches you and how much work the edge saves the origin.',
       perfTabTraffic: 'Traffic',
       perfTabCwv: 'Core Web Vitals',
-      perfCwvBody:
-        'Measured in each visitor’s browser (LCP, CLS, INP, TTFB) and sent once, aggregated and with no personal data, to the site’s own beacon. The value shown is the p75, the same percentile Google uses. If there are no samples yet, the panel fills in as visits arrive.',
-      perfProvasLink: 'Evidence',
       perfNoData: 'Not enough samples yet. Web Vitals appear as visits come in.',
       perfSamples: 'samples',
       ratingGood: 'Good',
@@ -1013,9 +971,7 @@ export const ui = {
       tiDailyChallenged: 'challenged',
       tiDailyAllowed: 'allowed',
       tiFirewallAction: 'Firewall by action (7d)',
-      tiFirewallActionNote: 'Not every firewall action is an attack stopped. “skip” and “allow” went through, and a “bypassed” or “solved” challenge is a legitimate visitor who passed it (much of it is my own traffic, from Portugal). Only blocks (red) and unsolved challenges (amber) are mitigation.',
       tiFirewallSource: 'Firewall by source (7d)',
-      logColCountry: 'Country',
       // ----- Later phases: timelines, visitors, risk, attackers -----
       cardVisitors: 'Visitors',
       tlRequests: 'Requests over time',
@@ -1039,14 +995,13 @@ export const ui = {
       title: 'Security',
       metaTitle: 'Security',
       intro:
-        'This site shows technical work without adding attack surface it does not need. This page explains what is in place and why.',
+        'This site shows technical work without adding attack surface it does not need.',
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
         'There are no accounts, sessions, database or forms that store what you type, so there is little to attack. Two things are worth protecting: the integrity of what is served (nobody should be able to inject or alter code on the site) and the privacy of the people who visit. The headers take care of the first; the privacy section explains the second.',
       // ----- Headers and why -----
       headersTitle: 'Headers and why',
-      headersIntro: 'What every response carries, and what it is for:',
       headers: [
         { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline'. There is no inline JavaScript or CSS on the site, so only code served by this domain runs and an injected script does not execute. It is the main defence against XSS." },
         { name: 'Strict-Transport-Security', why: 'Makes the browser use HTTPS for 2 years, even if someone tries to force HTTP.' },
@@ -1056,7 +1011,7 @@ export const ui = {
         { name: 'Permissions-Policy', why: 'Turns off browser APIs the site does not use (camera, microphone, geolocation, payments, USB).' },
         { name: 'Cross-Origin-Opener-Policy', why: 'Isolates this window from those of other origins, so a page on another site cannot control it.' },
         { name: 'Cross-Origin-Embedder-Policy', why: 'Only lets cross-origin resources load if they explicitly allow it (CORP or CORS). Works together with COOP.' },
-        { name: 'Cross-Origin-Resource-Policy', why: 'Stops other sites from loading this site’s resources directly. These nine headers are the same ones Evidence checks in production.' },
+        { name: 'Cross-Origin-Resource-Policy', why: 'Stops other sites from loading this site’s resources directly.' },
       ],
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
@@ -1077,45 +1032,34 @@ export const ui = {
       metaTitle: 'Evidence: verifiable transparency',
       title: 'Evidence',
       intro:
-        'Don’t trust, verify. Everything on this page is generated at build time or read live, with no hand-typed numbers and no screenshots, so you can check every line. What each header defends is explained on Security.',
+        'Don’t trust, verify. Everything on this page is generated at build time or read live.',
       commitTitle: 'Latest commit',
-      commitIntro:
-        'This site is served from main. The code you are reading matches this commit:',
       commitHashLabel: 'commit',
       commitSubjectLabel: 'message',
       commitDateLabel: 'date',
       commitPending:
         'Commit hash unavailable in this build (outside a git clone).',
       headersTitle: 'Security headers',
-      headersIntro:
-        'The versioned contract below guarantees that production actually serves these headers. The external scanners linked at the end of the page check the same thing live.',
       contractTitle: 'Header contract',
-      contractIntro:
-        'The versioned list of headers production must serve. The Headers workflow fails if any is missing:',
       contractHeader: 'header',
       contractRequires: 'requires',
       workflowsTitle: 'Workflows',
-      workflowsIntro:
-        'These workflows run on GitHub Actions: most on every push to main, some on a cron (daily or weekly) and one only on a release tag. Green means a clean build, no known vulnerabilities, no exposed secrets and SAST passing.',
-      pipelineIntro: 'What each one checks. Any of them fails CI if it finds something:',
       pipelineToolCol: 'tool',
       pipelineCatchesCol: 'what it catches',
       pipeline: [
-        { tool: 'Renovate', catches: 'Keeps dependencies up to date and pins the GitHub Actions by SHA digest (protection against moved tags). Runs on a weekly window.' },
-        { tool: 'Dependency Review', catches: "Blocks PRs that bring in a new dependency with a known vulnerability, looking only at the PR’s diff. It is the fast check; the OSV-Scanner below does the full sweep." },
-        { tool: 'OSV-Scanner', catches: 'Dependencies with known vulnerabilities or flagged as malicious (OSV.dev database + GitHub advisories), read from the lockfile.' },
-        { tool: 'Gitleaks', catches: 'Committed secrets (tokens, private keys) across the full PR history. Also runs as a local hook before every commit.' },
-        { tool: 'CodeQL', catches: 'Semantic security analysis (SAST) of the JavaScript and TypeScript. It catches a different class of patterns from Semgrep.' },
-        { tool: 'Semgrep', catches: 'SAST: DOM XSS sinks (innerHTML, document.write) in the client-side scripts and the Lab terminal.' },
-        { tool: 'zizmor', catches: 'Audit of the workflows themselves: missing pins, excessive permissions, template injection in run:.' },
-        { tool: 'Supply chain', catches: 'Verifies npm registry signatures and generates a CycloneDX SBOM for both lockfiles, as an artifact. Weekly.' },
-        { tool: 'Invariants', catches: "Checks /api/health and the Worker’s read routes in production, and opens an automatic Issue if something breaks. Daily." },
-        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'One harness covers the two Worker functions that handle untrusted input, the output sanitizers sanitizeText() and escapeHtml(). Weekly.' },
-        { tool: 'Signed releases', catches: 'Signs the provenance (Sigstore) of build artefacts and generates an SBOM, on a GitHub Release. Only runs when a v* tag is created.' },
+        { tool: 'Renovate', catches: 'Keeps dependencies current and pins Actions by SHA. Weekly.' },
+        { tool: 'Dependency Review', catches: "Blocks PRs that add a vulnerable dependency." },
+        { tool: 'OSV-Scanner', catches: 'Vulnerable or malicious dependencies, read from the lockfile.' },
+        { tool: 'Gitleaks', catches: 'Committed secrets (tokens, private keys).' },
+        { tool: 'CodeQL', catches: 'Semantic SAST of the JavaScript and TypeScript.' },
+        { tool: 'Semgrep', catches: 'SAST: DOM XSS sinks in the client-side scripts.' },
+        { tool: 'zizmor', catches: 'Audit of the workflows themselves.' },
+        { tool: 'Supply chain', catches: 'npm signatures and an SBOM of the lockfiles. Weekly.' },
+        { tool: 'Invariants', catches: "Checks the Worker in production and opens an Issue if something breaks. Daily." },
+        { tool: 'Fuzzing (ClusterFuzzLite)', catches: 'Fuzzing of the Worker’s sanitizers. Weekly.' },
+        { tool: 'Signed releases', catches: 'Provenance (Sigstore) and SBOM on every release.' },
       ],
-      pipelineNote: 'Beyond these, the build fails on npm audit high/critical advisories and if the header CSP diverges from the one shipped in each <meta>.',
       verifyTitle: 'Check for yourself',
-      verifyIntro: "Don't take my word for it:",
       verifyHeadersScan: 'Scan on securityheaders.com',
       verifyObservatory: 'Scan on Mozilla Observatory',
     },
@@ -1158,7 +1102,7 @@ export const ui = {
     ctwatch: {
       title: 'Certificate Transparency watch',
       intro:
-        'Any TLS certificate issued for this domain is recorded in public Certificate Transparency logs, including one an attacker managed to obtain after taking over the DNS or the registrar account. The Worker watches those logs and checks every issuance from the last 90 days against the list of expected issuers. A certificate I did not request shows up here before it can be used against me.',
+        'Every TLS certificate issued for this domain lands in public Certificate Transparency logs. The Worker checks each issuance from the last 90 days against the expected issuers: a certificate I did not request shows up here.',
       lifecycleTitle: 'Validity of the certificate in use',
       lifecycleDaysLeft: 'days until expiry',
       lifecycleDaysLeftOne: 'day until expiry',

@@ -21,15 +21,6 @@ const siteProject = await getEntry('projects', `${lang}/${SITE_PROJECT_SLUG}`);
 if (!siteProject) throw new Error(`content/projects/${lang}/${SITE_PROJECT_SLUG}.md em falta`);
 const { Content: Decisions } = await render(siteProject);
 
-// O índice da secção: cada página com uma linha a dizer o que lá está. É o
-// único sítio onde essa descrição aparece.
-const sectionPages = [
-  { href: routes.security[lang], label: dict.layers.security, desc: s.sectionSecurity },
-  { href: routes.cloudflare[lang], label: dict.layers.cloudflare, desc: s.sectionCloudflare },
-  { href: routes.evidence[lang], label: dict.layers.evidence, desc: s.sectionEvidence },
-  { href: routes.performance[lang], label: dict.layers.performance, desc: s.sectionPerformance },
-];
-
 // Stack: etiqueta traduzida → valor (proper noun, de INFRA). Só ligação de
 // dados, sem lógica — a fonte dos valores é config.ts (regra 5 do CLAUDE.md).
 const stack: { label: string; value: string }[] = [
@@ -68,18 +59,6 @@ const jsStrings = {
     <p class="intro">{s.overviewIntro}</p>
   </div>
 
-  <section aria-labelledby="h-map">
-    <div class="section-title"><h2 id="h-map">{s.sectionTitle}</h2></div>
-    <dl class="sec-map">
-      {sectionPages.map((page) => (
-        <>
-          <dt class="mono"><a href={page.href}>{page.label}</a></dt>
-          <dd>{page.desc}</dd>
-        </>
-      ))}
-    </dl>
-  </section>
-
   <section aria-labelledby="h-status" class="overview-grid">
     <div id="ss-data" data-api={API_BASE} data-strings={JSON.stringify(jsStrings)} hidden></div>
     <Widget title={s.statusTitle} tone="ok" class="status-widget" id="site-status">
@@ -102,8 +81,6 @@ const jsStrings = {
       <ul class="components-list">
         <li><StatusBadge state="pending" label={s.stateChecking} id="ss-worker" /></li>
       </ul>
-      <p class="note">{s.compNote}</p>
-      <p class="note">🔒 {s.tlsNote} <a href={routes.evidence[lang]}>{s.tlsNoteLink}</a>.</p>
     </Widget>
   </section>
 
@@ -171,26 +148,6 @@ const jsStrings = {
 </script>
 
 <style>
-  .sec-map {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.25rem 1.4rem;
-    margin: 0.6rem 0 0;
-    max-width: 46rem;
-  }
-  @media (min-width: 640px) {
-    .sec-map { grid-template-columns: 9rem minmax(0, 1fr); }
-  }
-  .sec-map dt { font-size: 0.9rem; }
-  .sec-map dt a { color: var(--accent); }
-  .sec-map dd {
-    margin: 0 0 0.7rem;
-    color: var(--muted);
-    font-size: 0.9rem;
-  }
-  @media (min-width: 640px) {
-    .sec-map dd { margin-bottom: 0.4rem; }
-  }
   .overview-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));

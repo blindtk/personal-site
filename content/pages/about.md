@@ -113,21 +113,15 @@ Open each role for the detail.
 
 ## Education
 
-- **MSc in Electrical and Computer Engineering** at FEUP (Faculty of
-  Engineering, University of Porto), 2009 to 2016, specialising in
-  Communication Networks and Services.
+**MSc in Electrical and Computer Engineering** at FEUP (Faculty of
+Engineering, University of Porto), 2009 to 2016, specialising in
+Communication Networks and Services.
 
 ## Certifications
 
 I hold certifications from Fortinet, SANS, Microsoft, CyberDefenders and
 others. The full list, with the status of each one and independent
 verification on Credly, is on **[Certifications](/en/certifications/)**.
-
-## ATT&CK coverage
-
-The **[ATT&CK heatmap](/en/attack/)** shows, tactic by tactic, the MITRE ATT&CK
-techniques I cover on the defensive side and the tool or experience behind
-each one.
 
 ## Skills
 
@@ -154,7 +148,7 @@ table says where each one comes into the work and at what depth.
 | CIS Controls & Benchmarks | Basis for hardening systems and network equipment, and for checking configurations. | Applied |
 | CISA CPG | Point of comparison for prioritising baseline controls in critical infrastructure. | Reference |
 | OWASP Top 10 | Common vocabulary for classifying what vulnerability assessments and internal tests find, and for tuning WAF rules. | Applied |
-| MITRE ATT&CK | Mapping detection coverage and structuring incident analysis. The detail, technique by technique, is in the [heatmap](/en/attack/). | Applied |
+| MITRE ATT&CK | Mapping detection coverage and structuring incident analysis. | Applied |
 
 *Applied* means in regular use in controls I operate. *Reference* means I
 consult it during design and prioritisation, with no formal process attached.
