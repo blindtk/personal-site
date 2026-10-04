@@ -47,6 +47,10 @@ const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
 ];
 
 const currentPath = Astro.url.pathname;
+// Prompt de terminal por cima do título das páginas internas: o caminho
+// real da página. Elemento e não atributo style — a CSP (style-src 'self')
+// bloqueia estilos inline. Só aparece onde há .page-head (global.css).
+const promptPath = currentPath.replace(/\/$/, '');
 
 // "Este site" agrupa na nav as cinco páginas da secção, pela mesma ordem
 // dos separadores no topo de cada uma (SiteLayers.astro). Cloudflare (o que
@@ -197,6 +201,7 @@ const personSchema = {
     </nav>
 
     <main id="main" class:list={['container', { wide }]}>
+      <p class="page-prompt" aria-hidden="true">{SITE.handle}:~{promptPath}$</p>
       <slot />
     </main>
 

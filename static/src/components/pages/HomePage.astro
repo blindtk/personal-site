@@ -5,6 +5,7 @@ import NetworkTopology from '../NetworkTopology.astro';
 import { SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
+import { TOOLS } from '../../lib/tools';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -20,17 +21,13 @@ const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang
 
 // Seleção de ferramentas para a Home — "em destaque", só as que correm no
 // browser; a lista completa (com as que precisam de servidor) vive em
-// Ferramentas.
-// Glifos: os mesmos do Lab (LabDesktop.astro) onde a ferramenta lá existe —
-// símbolos, não texto, por isso não vão para ui.ts.
-const tools = [
-  { slug: 'subnets', glyph: '⌗', ...dict.tools.subnets },
-  { slug: 'hashes', glyph: '#', ...dict.tools.hashes },
-  { slug: 'passwords', glyph: '⚿', ...dict.tools.passwords },
-  { slug: 'csp', glyph: '{}', ...dict.tools.csp },
-  { slug: 'email-headers', glyph: '@', ...dict.tools['email-headers'] },
-  { slug: 'exif', glyph: '◎', ...dict.tools.exif },
-];
+// Ferramentas. Os glifos vêm de TOOLS (lib/tools.ts).
+const featured = ['subnets', 'hashes', 'passwords', 'csp', 'email-headers', 'exif'] as const;
+const tools = featured.map((slug) => ({
+  slug,
+  glyph: TOOLS.find((tool) => tool.slug === slug)!.glyph,
+  ...dict.tools[slug],
+}));
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 ---

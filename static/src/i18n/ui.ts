@@ -445,7 +445,7 @@ export const ui = {
       clientBadge: 'client-side',
       serverBadge: 'requer servidor',
       serverNote: 'Esta ferramenta fala com o servidor do site (um Cloudflare Worker). O que é enviado, e porquê, está explicado acima.',
-      indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o servidor do site (um Cloudflare Worker), e cada uma explica na sua página exatamente o que envia.',
+      indexNote: 'client-side: nada sai do browser. Requer servidor: fala com o servidor do site (um Cloudflare Worker), e cada uma explica na sua página exatamente o que envia.',
       pwned: {
         name: 'Password comprometida?',
         desc: 'Verifica se uma password aparece em fugas de dados conhecidas, sem que ela alguma vez saia do teu browser (k-anonimato via Have I Been Pwned).',
@@ -1201,7 +1201,7 @@ export const ui = {
       clientBadge: 'client-side',
       serverBadge: 'needs server',
       serverNote: 'This tool talks to the site’s server (a Cloudflare Worker). What is sent, and why, is explained above.',
-      indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the site’s server (a Cloudflare Worker), and each one explains on its own page exactly what it sends.',
+      indexNote: 'client-side: nothing leaves the browser. Needs server: talks to the site’s server (a Cloudflare Worker), and each one explains on its own page exactly what it sends.',
       pwned: {
         name: 'Has your password leaked?',
         desc: 'Checks if a password appears in known data breaches, without it ever leaving your browser (k-anonymity via Have I Been Pwned).',
