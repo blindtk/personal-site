@@ -451,7 +451,9 @@ main.container {
   align-items: baseline;
   flex-wrap: wrap;
   gap: 0.3rem 0.6rem;
-  margin: 2.4rem 0 0.9rem;
+  margin: 2.8rem 0 1rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
 }
 .section-title::before {
   content: '//';
@@ -464,7 +466,7 @@ main.container {
   font-size: 0.78rem;
   /* --muted e não --faint: são títulos reais (não decoração) e --faint
      fica abaixo de 4.5:1 sobre --bg. O '//' antes deles continua faint. */
-  color: var(--muted);
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-weight: 600;
@@ -483,34 +485,52 @@ main.container {
 .identity ~ section { counter-increment: hsec; }
 .identity ~ section .section-title {
   margin-top: 3.2rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 1px solid var(--border);
 }
 .identity ~ section .section-title::before {
   content: counter(hsec, decimal-leading-zero);
   color: var(--accent);
   font-size: 0.78rem;
 }
-.identity ~ section .section-title h2 {
-  color: var(--text);
-}
 
+/* Cabeçalho das páginas interiores: mesma linguagem do hero da home (título
+   grande, apertado), um filete com um segmento na cor da marca a fechar. */
 .page-head {
-  margin-bottom: 2rem;
+  position: relative;
+  margin-bottom: 2.4rem;
+  padding: 0.6rem 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.page-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 3.5rem;
+  height: 2px;
+  background: var(--accent);
 }
 .page-head h1 {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.7rem;
+  font-size: clamp(2.1rem, 6vw, 3.3rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 .page-head h1::before {
-  content: '// ';
-  color: var(--faint);
-  font-size: 0.85em;
+  content: '//';
+  color: var(--accent);
+  font-size: 0.55em;
+  letter-spacing: 0;
+  margin-right: 0.45em;
+  vertical-align: 0.3em;
 }
 .page-head .intro {
   color: var(--muted);
-  max-width: 46rem;
+  font-size: clamp(1rem, 1.5vw, 1.08rem);
+  line-height: 1.6;
+  max-width: 60ch;
   margin: 0;
 }
+.page-head .intro + .intro { margin-top: 0.4rem; }
 
 /* ---------- Cartões e grelhas ---------- */
 
@@ -1580,7 +1600,8 @@ input[type='file']::file-selector-button:hover {
 }
 /* Medida de leitura: ~70 caracteres por linha. Tabelas e <details> mantêm
    a largura toda; só o texto corrido fica contido. */
-.prose > p, .prose > ul, .prose > ol, .prose > blockquote {
+.prose > p, .prose > ul, .prose > ol, .prose > blockquote,
+main > section > p, main > p {
   max-width: 70ch;
 }
 .prose blockquote {
@@ -1659,6 +1680,40 @@ input[type='file']::file-selector-button:hover {
 }
 .prose details[open] > summary::before { content: '▾'; }
 .prose summary:hover { color: var(--accent); }
+/* Sobre → Percurso: as funções ligadas pela mesma linha de metro da home.
+   Cada <details> é uma estação; o traço desce até à seguinte e acaba na
+   última. A primeira (função atual) fica acesa, como o "estás aqui". */
+.about-prose details {
+  position: relative;
+  margin-left: 2rem;
+}
+.about-prose details::before {
+  content: '';
+  position: absolute;
+  left: calc(-2rem + 7px);
+  top: 1.4rem;
+  bottom: calc(-0.8rem - 1.4rem);
+  width: 4px;
+  background: color-mix(in srgb, var(--accent) 55%, var(--bg));
+}
+.about-prose details:not(:has(+ details))::before { display: none; }
+.about-prose details::after {
+  content: '';
+  position: absolute;
+  left: -2rem;
+  top: 0.85rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 4px solid var(--bg);
+  box-shadow: 0 0 0 2px var(--accent);
+  box-sizing: border-box;
+}
+.about-prose details:first-of-type::after {
+  background: var(--accent);
+  animation: station 2.4s ease-out infinite;
+}
 .prose summary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
@@ -2259,5 +2314,6 @@ input[type='file']::file-selector-button:hover {
   .net-bg .pulse { animation: none; opacity: 0; }
   .net-bg .node.live { animation: none; fill-opacity: 0.6; }
   .identity .role::after { animation: none; }
+  .about-prose details:first-of-type::after { animation: none; }
   .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }

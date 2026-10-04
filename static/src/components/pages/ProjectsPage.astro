@@ -24,7 +24,7 @@ const entries = (await getCollection('projects', (e) => e.id.startsWith(`${lang}
     <p class="intro">{dict.projects.intro}</p>
   </div>
 
-  <div class="grid grid-3">
+  <div class="grid grid-2">
     {entries.map((entry) => {
       const slug = entry.id.slice(3);
       return (

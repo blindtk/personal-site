@@ -165,12 +165,22 @@ const jsStrings = {
     display: grid;
     gap: 0.55rem;
   }
+  /* Rótulo e valor lado a lado, em linhas separadas por filete: com o valor
+     encostado à direita ficavam a 30rem de distância e a leitura perdia-se. */
   .stack-list {
     margin-top: 0.8rem;
     max-width: 34rem;
+    grid-template-columns: 9rem 1fr;
+    gap: 0;
+  }
+  .stack-list dt,
+  .stack-list dd {
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
   }
   .stack-list dd {
-    text-align: right;
+    text-align: left;
+    color: var(--accent);
   }
   .decisions,
   .arch-body {
