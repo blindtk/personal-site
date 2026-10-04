@@ -148,7 +148,6 @@ export const ui = {
       statusEmpty: 'Sem respostas 4xx/5xx na janela.',
       firewallEmpty: 'Sem eventos de firewall nesta janela.',
       unavailable: 'Painel ao vivo indisponível: o Worker de telemetria não respondeu. O site é estático e funciona na mesma.',
-      privacyNote: 'Zero PII: nenhum destes painéis pede, guarda ou mostra o IP de um visitante.',
       // ----- Cloudflare (era a tab "Cloudflare (24h)" — a etiqueta "24h"
       // já não era verdade para 5 dos 8 widgets, todos calculados sobre
       // CF_STATS_WINDOW_DAYS = 7; a fusão numa página só, sem corte de
@@ -156,8 +155,6 @@ export const ui = {
       cloudflareMetaTitle: 'Cloudflare: o que a zona vê e trava, ao vivo',
       cloudflareTitle: 'Cloudflare',
       cloudflareIntro: 'O que a Cloudflare vê e trava em toda a zona deste site: pedidos, ameaças classificadas e o que a firewall bloqueou ou desafiou. Só metadados agregados, nunca IPs.',
-      samplingNote: 'Os números da firewall vêm de um dataset amostrado da Cloudflare: cada evento traz o peso que representa, e é esse peso que é somado. São estimativas, não uma contagem exata.',
-      threatsDefNote: '«Ameaça» é a classificação da própria Cloudflare (heurísticas de WAF e reputação), não um juízo meu.',
       // ----- Performance -----
       perfMetaTitle: 'Performance: tráfego, cache e Core Web Vitals',
       perfTitle: 'Performance',
@@ -170,10 +167,6 @@ export const ui = {
       ratingGood: 'Bom',
       ratingNeeds: 'A melhorar',
       ratingPoor: 'Mau',
-      metricLcpDesc: 'Maior elemento renderizado',
-      metricClsDesc: 'Estabilidade visual',
-      metricInpDesc: 'Resposta à interação',
-      metricTtfbDesc: 'Tempo até ao 1.º byte',
       // ----- Mitigação por dia (dia a dia, não só o total da semana) -----
       // Os 7 snapshots diários de firewall só apareciam somados — um dia de
       // ataque a sério (ex.: 445 bloqueios) e um dia de tráfego humano a
@@ -940,7 +933,6 @@ export const ui = {
       statusEmpty: 'No 4xx/5xx responses in the window.',
       firewallEmpty: 'No firewall events in this window.',
       unavailable: 'Live panel unavailable: the telemetry Worker did not respond. The site is static and works regardless.',
-      privacyNote: 'Zero PII: none of these panels request, store or show a visitor\'s IP.',
       // ----- Cloudflare (was the "Cloudflare (24h)" tab — the "24h" label
       // was already wrong for 5 of its 8 widgets, all computed over
       // CF_STATS_WINDOW_DAYS = 7; merging into one page without a tab
@@ -948,8 +940,6 @@ export const ui = {
       cloudflareMetaTitle: 'Cloudflare: what the zone sees and stops, live',
       cloudflareTitle: 'Cloudflare',
       cloudflareIntro: 'What Cloudflare sees and stops across this site’s whole zone: requests, classified threats and what the firewall blocked or challenged. Aggregated metadata only, never IPs.',
-      samplingNote: 'Firewall numbers come from a sampled Cloudflare dataset: each event carries the weight it represents, and that weight is what gets summed. These are estimates, not exact counts.',
-      threatsDefNote: '"Threat" is Cloudflare\'s own classification (WAF and reputation heuristics), not my judgement.',
       // ----- Performance -----
       perfMetaTitle: 'Performance: traffic, cache and Core Web Vitals',
       perfTitle: 'Performance',
@@ -962,10 +952,6 @@ export const ui = {
       ratingGood: 'Good',
       ratingNeeds: 'Needs work',
       ratingPoor: 'Poor',
-      metricLcpDesc: 'Largest element painted',
-      metricClsDesc: 'Visual stability',
-      metricInpDesc: 'Interaction response',
-      metricTtfbDesc: 'Time to first byte',
       tiDailyTitle: 'Mitigation by day',
       tiDailyBlocked: 'blocked',
       tiDailyChallenged: 'challenged',
