@@ -35,12 +35,22 @@ export interface BuildInfo {
 }
 
 // A versão é a última tag `v*` (as releases são tags manuais, ver
-// release.yml); o package.json fica de fallback para builds sem tags
-// (clone superficial) ou sem git. O `v` inicial é acrescentado na página.
-const tag = git('describe --tags --abbrev=0 --match "v*"', '').replace(/^v/, '');
+// release.yml); o package.json fica de fallback para builds sem git ou sem
+// acesso às tags. O `v` inicial é acrescentado na página. Lista-se por
+// ordem de versão em vez de `git describe`: o clone do deploy é superficial
+// e não alcança a tag pelo histórico, nem sequer a traz — daí o fetch.
+function latestTag(): string {
+  const list = () => git(`tag -l "v*" --sort=-v:refname`, '').split('\n')[0];
+  let tag = list();
+  if (!tag) {
+    git('fetch --tags --depth=1 --quiet origin', '');
+    tag = list();
+  }
+  return tag.replace(/^v/, '');
+}
 
 export const BUILD_INFO: BuildInfo = {
-  version: tag || (pkg as { version?: string }).version || '0.0.0',
+  version: latestTag() || (pkg as { version?: string }).version || '0.0.0',
   commit: git('rev-parse --short HEAD'),
   branch: git('rev-parse --abbrev-ref HEAD'),
   commitDate: git('log -1 --format=%cI', ''),
