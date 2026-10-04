@@ -79,5 +79,11 @@ const { title, tone, meta, id, class: klass } = Astro.props;
   .widget-dot.warn { background: var(--accent-2); }
   .widget-dot.down { background: var(--danger); }
   .widget-dot.muted { background: var(--faint); }
+  /* Dados ao vivo (ok/warn): o ponto respira, como o do logótipo. Usa o
+     @keyframes pulse do global.css; parado em reduced-motion. */
+  .widget-dot.ok, .widget-dot.warn { animation: pulse 2.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .widget-dot.ok, .widget-dot.warn { animation: none; }
+  }
   .widget-body { min-width: 0; }
 </style>

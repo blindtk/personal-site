@@ -77,4 +77,33 @@ const items: { key: LayerKey; href: string; label: string }[] = [
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
+  /* Telemóvel: as 5 camadas não cabem numa linha, e partidas em duas os
+     sublinhados ficavam soltos. Seletor segmentado 3 + 2 numa grelha de 6
+     colunas (as 3 primeiras ocupam 2, as 2 últimas ocupam 3): cada linha
+     preenche a largura e nenhuma camada fica escondida atrás de scroll. */
+  @media (max-width: 40rem) {
+    .layers-tabs { border-bottom: 0; }
+    .layers-tabs ul {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.4rem;
+      font-size: 0.78rem;
+    }
+    .layers-tabs li:nth-child(-n + 3) { grid-column: span 2; }
+    .layers-tabs li:nth-child(n + 4) { grid-column: span 3; }
+    .layers-tabs a {
+      justify-content: center;
+      width: 100%;
+      min-height: 44px;
+      padding: 0 0.3rem;
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg-raise);
+    }
+    .layers-tabs a[aria-current='page'] {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+  }
 </style>

@@ -139,8 +139,11 @@ const groups = certs.groups
     color: var(--muted);
     margin-top: 0.15rem;
   }
-  .cert-issuer { white-space: nowrap; color: var(--muted); }
-  .cert-status { white-space: nowrap; text-align: right; }
+  /* Larguras fixas: cada grupo é uma tabela à parte, e com layout automático
+     a coluna do emissor saltava de posição de tabela para tabela. */
+  .certs-table { table-layout: fixed; }
+  .cert-issuer { white-space: nowrap; color: var(--muted); width: 12rem; }
+  .cert-status { white-space: nowrap; text-align: right; width: 11rem; }
 
   .badge.cert-valid { /* verde-terminal por omissão (.badge) — credencial ativa */ }
   .badge.cert-expired {
@@ -157,5 +160,7 @@ const groups = certs.groups
   @media (max-width: 560px) {
     .cert-full { font-size: 0.72rem; }
     .cert-issuer { display: none; }
+    /* sem a coluna do emissor não há nada a alinhar entre tabelas */
+    .certs-table { table-layout: auto; }
   }
 </style>

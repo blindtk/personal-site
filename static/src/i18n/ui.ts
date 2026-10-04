@@ -424,7 +424,7 @@ export const ui = {
     },
     projects: {
       title: 'Projetos',
-      intro: 'Coisas que construí ou mantenho, de scripts a infraestrutura.',
+      intro: 'Projetos pessoais de segurança e infraestrutura. Cada um explica o que faz, como está montado e porquê.',
       repo: 'código',
       demo: 'demo',
       live: 'painel ao vivo',
@@ -438,14 +438,14 @@ export const ui = {
     },
     tools: {
       title: 'Ferramentas',
-      intro: 'Utilitários de rede e segurança. A maioria corre só no browser; duas falam com o Worker (dynamic/), e o badge de cada cartão diz qual é qual.',
+      intro: 'As ferramentas de rede e segurança que eu próprio uso, feitas à medida.',
       openTool: 'abrir',
       back: '← Voltar às ferramentas',
       clientSideNote: '100% no browser. Nenhum dado é enviado para servidor algum.',
       clientBadge: 'client-side',
       serverBadge: 'requer servidor',
-      serverNote: 'Esta ferramenta fala com o Worker (dynamic/). O que é enviado, e porquê, está explicado acima.',
-      indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o Worker (dynamic/), e cada uma explica na sua página exatamente o que envia.',
+      serverNote: 'Esta ferramenta fala com o servidor do site (um Cloudflare Worker). O que é enviado, e porquê, está explicado acima.',
+      indexNote: '🔒 client-side: nada sai do browser. 🛰️ requer servidor: fala com o servidor do site (um Cloudflare Worker), e cada uma explica na sua página exatamente o que envia.',
       pwned: {
         name: 'Password comprometida?',
         desc: 'Verifica se uma password aparece em fugas de dados conhecidas, sem que ela alguma vez saia do teu browser (k-anonimato via Have I Been Pwned).',
@@ -734,7 +734,6 @@ export const ui = {
     },
     contact: {
       title: 'Contactos',
-      intro: 'A forma mais rápida de me apanhar é por email. Os restantes perfis públicos estão ligados abaixo:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',
@@ -1181,7 +1180,7 @@ export const ui = {
     },
     projects: {
       title: 'Projects',
-      intro: 'Things I built or maintain, from scripts to infrastructure.',
+      intro: 'Personal security and infrastructure projects. Each one explains what it does, how it’s built and why.',
       repo: 'code',
       demo: 'demo',
       live: 'live panel',
@@ -1195,14 +1194,14 @@ export const ui = {
     },
     tools: {
       title: 'Tools',
-      intro: 'Networking and security utilities. Most run entirely in your browser; two talk to the Worker (dynamic/), and each card’s badge says which is which.',
+      intro: 'The network and security tools I use myself, built to fit.',
       openTool: 'open',
       back: '← Back to tools',
       clientSideNote: '100% in-browser. No data is ever sent to any server.',
       clientBadge: 'client-side',
       serverBadge: 'needs server',
-      serverNote: 'This tool talks to the Worker (dynamic/). What is sent, and why, is explained above.',
-      indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the Worker (dynamic/), and each one explains on its own page exactly what it sends.',
+      serverNote: 'This tool talks to the site’s server (a Cloudflare Worker). What is sent, and why, is explained above.',
+      indexNote: '🔒 client-side: nothing leaves the browser. 🛰️ needs server: talks to the site’s server (a Cloudflare Worker), and each one explains on its own page exactly what it sends.',
       pwned: {
         name: 'Has your password leaked?',
         desc: 'Checks if a password appears in known data breaches, without it ever leaving your browser (k-anonymity via Have I Been Pwned).',
@@ -1491,7 +1490,6 @@ export const ui = {
     },
     contact: {
       title: 'Contact',
-      intro: 'The fastest way to reach me is email. Other public profiles are linked below:',
       emailLabel: 'Email',
       githubLabel: 'GitHub',
       linkedinLabel: 'LinkedIn',

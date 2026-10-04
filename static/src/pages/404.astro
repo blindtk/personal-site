@@ -22,4 +22,12 @@ bash: cd: /404: No such file or directory</pre>
 
 <style>
   .not-found-head { margin-top: 3rem; }
+  pre { white-space: pre-wrap; }
+  .not-found-head h1 {
+    font-size: clamp(5rem, 20vw, 10rem);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+  }
+  /* o '//' do .page-head, à escala de 10rem, competia com o número */
+  .not-found-head h1::before { font-size: 0.25em; vertical-align: 0.9em; }
 </style>

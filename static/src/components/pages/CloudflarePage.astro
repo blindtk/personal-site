@@ -59,12 +59,13 @@ const jsStrings = {
         <Widget title={s.wFirewallAsns} tone="warn"><div id="cf-fw-asns"><Skeleton rows={4} /></div></Widget>
       </div>
 
-      <div class="widget-grid an-mt">
-        <Widget title={s.tiDailyTitle} tone="warn" meta={s.windowNote} class="wide-widget">
+      {/* Mitigação por dia e firewall por ação lado a lado: a mesma janela de
+         7 dias vista de dois ângulos. Sozinho a toda a largura, o gráfico
+         ficava limitado a 44rem e deixava meio widget vazio. */}
+      <div class="split-grid an-mt">
+        <Widget title={s.tiDailyTitle} tone="warn" meta={s.windowNote}>
           <div id="cf-daily"><Skeleton block /></div>
         </Widget>
-      </div>
-      <div class="widget-grid an-mt">
         <Widget title={s.tiFirewallAction} tone="warn" meta={s.windowNote}><div id="cf-fwaction"></div></Widget>
       </div>
 
@@ -376,5 +377,21 @@ const jsStrings = {
   .an-mt { margin-top: 0.9rem; }
   .wide-widget { grid-column: 1 / -1; }
 
-  #cf-daily, #cf-tl-threats { max-width: 44rem; }
+  .split-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.8rem;
+    align-items: start;
+  }
+  @media (min-width: 960px) {
+    .split-grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); }
+  }
+  /* O SVG diário (viewBox 620) encolhe para ~0,4× num telemóvel e os rótulos
+     de 9 unidades ficavam com ~3,6px. O texto está em unidades do viewBox:
+     duplicá-lo aqui compensa a escala (7 colunas de ~80 unidades cabem
+     "28/09" a 18). :global porque o SVG é criado pelo script. */
+  @media (max-width: 40rem) {
+    #cf-daily :global(.chart-lbl),
+    #cf-daily :global(.chart-val) { font-size: 18px; }
+  }
 </style>
