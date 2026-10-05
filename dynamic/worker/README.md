@@ -24,7 +24,7 @@ Cloudflare Worker + one KV namespace.
 | `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s (data-center Cache API, then KV) | — |
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
-| `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, **never the IP**) | — (per-request, `no-store`) | 30/min per client |
+| `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, and the requester's own IP — echoed back, **never stored**; ADR 0023) | — (per-request, `no-store`) | 30/min per client |
 | `GET /api/health` | Liveness | — | — |
 
 ## Privacy
@@ -36,8 +36,9 @@ truncated SHA-256 hash combining `RATE_SALT` with the UTC date (this
 derived key changes daily even though the underlying `RATE_SALT` secret
 itself is rotated manually on a weekly cadence, see the secrets table
 below), kept only during the limit's window and never associated with any
-event. `/api/mirror` sees the IP of the request it answers but never
-returns or stores it.
+event. `/api/mirror` returns the IP of the request it answers to that
+same requester (`no-store`) and never stores or logs it
+([ADR 0023](../../docs/adr/0023-mirror-echoes-client-ip.md)).
 
 ## CT watcher (`/api/ct`)
 

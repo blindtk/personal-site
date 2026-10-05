@@ -22,6 +22,7 @@ existed.
 | [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability (superseded by ADR 0022) |
 | [0020](0020-honeypot-public-ip.md) | Honeypot events record and publish the source IP, for cross-honeypot correlation (superseded by ADR 0022) |
 | [0022](0022-retire-internal-honeypot.md) | Retire the site's internal honeypot (decoys, IP list, map, ticker); the external sensor is the honeypot (supersedes 0007 and 0020; ADR 0004's zero-IP firewall panel is unchanged) |
+| [0023](0023-mirror-echoes-client-ip.md) | The Mirror tool shows visitors their own public IP (echoed, never stored, hidden until clicked) |
 
 ## Repository & tooling
 

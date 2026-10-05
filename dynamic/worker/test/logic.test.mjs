@@ -17,7 +17,7 @@ import {
   DEFAULT_EXPECTED_ISSUERS,
 } from '../src/lib/ct.js';
 import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames } from '../src/lib/cf-analytics.js';
-import { serverView } from '../src/lib/mirror.js';
+import { serverView, normalizeIp } from '../src/lib/mirror.js';
 import { edgeKey, edgeGetJSON, edgePutJSON } from '../src/lib/edgecache.js';
 import worker from '../src/index.js';
 
@@ -1209,7 +1209,7 @@ test('cap global dos refresh manuais: acumula entre pedidos, não é por-cliente
 
 // ---------- Espelho (/api/mirror) ----------
 
-test('serverView: sanitiza, valida país/ASN e NUNCA inclui o IP', () => {
+test('serverView: sanitiza, valida país/ASN e devolve o IP de quem pediu', () => {
   const headers = new Map([
     ['user-agent', 'Mozilla/5.0 (X11; Linux) Chrome/126'],
     ['accept-language', 'pt-PT,pt;q=0.9,en;q=0.8'],
@@ -1228,9 +1228,53 @@ test('serverView: sanitiza, valida país/ASN e NUNCA inclui o IP', () => {
   assert.equal(v.asn, 3243);
   assert.equal(v.asOrganization, 'MEO');
   assert.equal(v.refererPresent, true);
-  assert.equal(v.ipWithheld, true);
-  // Garantia dura: o IP não pode aparecer em lado nenhum do objeto.
-  assert.ok(!JSON.stringify(v).includes('203.0.113.9'));
+  assert.equal(v.ip, '203.0.113.9');
+  assert.equal(v.ipVersion, 4);
+  // O valor do referer nunca sai — só a presença.
+  assert.ok(!JSON.stringify(v).includes('/ferramentas/'));
+});
+
+test('serverView: cf-connecting-ip forjado com HTML não é ecoado (fail-closed → null)', () => {
+  const v = serverView((k) => (k === 'cf-connecting-ip' ? '<img src=x onerror=alert(1)>' : null));
+  assert.equal(v.ip, null);
+  assert.equal(v.ipVersion, null);
+});
+
+test('normalizeIp: IPv4 — limites dos octetos, zeros à esquerda e listas', () => {
+  assert.deepEqual(normalizeIp('255.255.255.255'), { ip: '255.255.255.255', version: 4 });
+  assert.deepEqual(normalizeIp('0.0.0.0'), { ip: '0.0.0.0', version: 4 });
+  assert.equal(normalizeIp('256.0.0.1'), null);
+  assert.equal(normalizeIp('192.0.2.01'), null); // octal ambíguo
+  assert.equal(normalizeIp('192.0.2'), null);
+  assert.equal(normalizeIp('192.0.2.1.5'), null);
+  assert.equal(normalizeIp('192.0.2.1:443'), null);
+  assert.equal(normalizeIp('192.0.2.1, 198.51.100.1'), null); // lista à X-Forwarded-For
+  assert.equal(normalizeIp(' 192.0.2.1'), null);
+  assert.equal(normalizeIp(''), null);
+  assert.equal(normalizeIp(null), null);
+});
+
+test('normalizeIp: IPv6 — RFC 4291 (::, IPv4 embebido), contagem de grupos e zone ID', () => {
+  assert.deepEqual(normalizeIp('2001:DB8::1'), { ip: '2001:db8::1', version: 6 });
+  assert.deepEqual(normalizeIp('::'), { ip: '::', version: 6 });
+  assert.deepEqual(normalizeIp('::ffff:192.0.2.1'), { ip: '::ffff:192.0.2.1', version: 6 });
+  assert.deepEqual(normalizeIp('1:2:3:4:5:6:7:8'), { ip: '1:2:3:4:5:6:7:8', version: 6 });
+  assert.deepEqual(normalizeIp('1:2:3:4:5:6:192.0.2.1'), { ip: '1:2:3:4:5:6:192.0.2.1', version: 6 });
+  // Comprimento máximo textual de um IPv6 (45 chars) passa; 46 não.
+  const max = 'ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255';
+  assert.equal(max.length, 45);
+  assert.deepEqual(normalizeIp(max), { ip: max, version: 6 });
+  assert.equal(normalizeIp(`0${max}`), null);
+  assert.equal(normalizeIp('1:2:3:4:5:6:7'), null); // 7 grupos sem ::
+  assert.equal(normalizeIp('1:2:3:4:5:6:7:8:9'), null);
+  assert.equal(normalizeIp('1:2:3:4::5:6:7:8'), null); // :: com 8 grupos explícitos
+  assert.equal(normalizeIp('1::2::3'), null);
+  assert.equal(normalizeIp('1:::2'), null);
+  assert.equal(normalizeIp(':1:2:3:4:5:6:7'), null);
+  assert.equal(normalizeIp('12345::1'), null);
+  assert.equal(normalizeIp('1.2.3.4::1'), null); // IPv4 fora da cauda
+  assert.equal(normalizeIp('::ffff:256.0.0.1'), null);
+  assert.equal(normalizeIp('fe80::1%eth0'), null);
 });
 
 test('serverView: país forjado vira XX; ASN inválido vira null; campos vazios null', () => {
@@ -1247,7 +1291,7 @@ test('serverView: dnt e sec-gpc reconhecidos', () => {
   assert.equal(serverView(() => null).dnt, 'unset');
 });
 
-test('/api/mirror: 200 sem IP no corpo, no-store, e rate limit ao fim de 30/min', async () => {
+test('/api/mirror: 200 com o IP de quem pediu, nada persistido, no-store, e rate limit ao fim de 30/min', async () => {
   const env = { KV: fakeKV(), RATE_SALT: 's' };
   const mkReq = () => ({
     url: 'https://danielmala.co/api/mirror',
@@ -1260,8 +1304,12 @@ test('/api/mirror: 200 sem IP no corpo, no-store, e rate limit ao fim de 30/min'
   assert.equal(res.headers.get('cache-control'), 'no-store');
   const body = await res.json();
   assert.equal(body.tlsVersion, 'TLSv1.3');
-  assert.equal(body.ipWithheld, true);
-  assert.ok(!JSON.stringify(body).includes('198.51.100.7'));
+  assert.equal(body.ip, '198.51.100.7');
+  // Devolvido, nunca guardado: nada no KV (chaves ou valores) contém o IP —
+  // o rate limit usa só um hash.
+  for (const [k, v] of env.KV.store) {
+    assert.ok(!`${k}${JSON.stringify(v)}`.includes('198.51.100.7'), `IP persistido em ${k}`);
+  }
 
   // Esgota o balde (já gastámos 1 de 30).
   let last;

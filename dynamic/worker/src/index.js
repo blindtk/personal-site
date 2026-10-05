@@ -584,10 +584,10 @@ export default {
 
       // Espelho: a "vista do servidor" deste mesmo pedido. Sem input de
       // visitante (não é proxy) e sem qualquer escrita de estado — só se lê
-      // o que o pedido já trouxe. O IP é visível ao Worker mas nunca é
-      // devolvido (serverView não o inclui). Rate limit leve na mesma, para
-      // não deixar a rota ser martelada; a resposta é per-request, logo
-      // no-store (nunca em cache partilhada).
+      // o que o pedido já trouxe. O IP é devolvido só a quem pediu e nunca
+      // é guardado (ADR 0023). Rate limit leve na mesma, para não deixar a
+      // rota ser martelada; a resposta é per-request, logo no-store (nunca
+      // em cache partilhada — senão o IP de um visitante chegava a outro).
       if (path === '/api/mirror') {
         const { allowed, retryAfterSec } = await rateLimit(env, request, 'mirror', {
           windowMs: 60_000,
