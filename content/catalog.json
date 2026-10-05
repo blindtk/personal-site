@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-10-03T20:17:56Z",
+  "generatedAt": "2026-10-05T13:18:05Z",
   "user": "blindtk",
-  "totalRepos": 691,
+  "totalRepos": 695,
   "categories": [
     {
       "name": "AI & LLM Tooling",
-      "count": 149,
+      "count": 152,
       "repos": [
         {
           "name": "openclaw/openclaw",
           "url": "https://github.com/openclaw/openclaw",
-          "stars": 391240,
+          "stars": 391420,
           "language": "TypeScript",
           "description": "The AI that really does things. Any OS. Any Platform. The lobster way. 🦞",
           "tags": [
@@ -26,7 +26,7 @@
         {
           "name": "obra/superpowers",
           "url": "https://github.com/obra/superpowers",
-          "stars": 294854,
+          "stars": 295472,
           "language": "Shell",
           "description": "An agentic skills framework & software development methodology that works.",
           "tags": [
@@ -43,7 +43,7 @@
         {
           "name": "mattpocock/skills",
           "url": "https://github.com/mattpocock/skills",
-          "stars": 275286,
+          "stars": 276681,
           "language": "Shell",
           "description": "Skills for Real Engineers. Straight from my .agents directory.",
           "tags": []
@@ -51,7 +51,7 @@
         {
           "name": "affaan-m/ECC",
           "url": "https://github.com/affaan-m/ECC",
-          "stars": 272125,
+          "stars": 273314,
           "language": "JavaScript",
           "description": "The agent harness performance optimization system. Skills, instincts, memory, security, and research-first development for Claude Code, Codex, Opencode, Cursor and beyond.",
           "tags": [
@@ -68,7 +68,7 @@
         {
           "name": "NousResearch/hermes-agent",
           "url": "https://github.com/NousResearch/hermes-agent",
-          "stars": 250959,
+          "stars": 251320,
           "language": "Python",
           "description": "The agent that grows with you",
           "tags": [
@@ -90,7 +90,7 @@
         {
           "name": "multica-ai/andrej-karpathy-skills",
           "url": "https://github.com/multica-ai/andrej-karpathy-skills",
-          "stars": 216693,
+          "stars": 216975,
           "language": null,
           "description": "A single CLAUDE.md file to improve Claude Code behavior, derived from Andrej Karpathy's observations on LLM coding pitfalls.",
           "tags": []
@@ -98,7 +98,7 @@
         {
           "name": "firecrawl/firecrawl",
           "url": "https://github.com/firecrawl/firecrawl",
-          "stars": 188229,
+          "stars": 188766,
           "language": "TypeScript",
           "description": "Supercharge your AI agents with data from the web and beyond. Building the library for superintelligence. 🔥",
           "tags": [
@@ -126,7 +126,7 @@
         {
           "name": "ollama/ollama",
           "url": "https://github.com/ollama/ollama",
-          "stars": 182107,
+          "stars": 182224,
           "language": "Go",
           "description": "Get up and running with Kimi, GLM, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models.",
           "tags": [
@@ -150,7 +150,7 @@
         {
           "name": "anthropics/skills",
           "url": "https://github.com/anthropics/skills",
-          "stars": 179517,
+          "stars": 179724,
           "language": "Python",
           "description": "Public repository for Agent Skills",
           "tags": [
@@ -160,7 +160,7 @@
         {
           "name": "f/prompts.chat",
           "url": "https://github.com/f/prompts.chat",
-          "stars": 171934,
+          "stars": 172068,
           "language": "HTML",
           "description": "f.k.a. Awesome ChatGPT Prompts. Share, discover, and collect prompts from the community. Free and open source — self-host for your organization with complete privacy.",
           "tags": [
@@ -187,7 +187,7 @@
         {
           "name": "langgenius/dify",
           "url": "https://github.com/langgenius/dify",
-          "stars": 157776,
+          "stars": 157872,
           "language": "TypeScript",
           "description": "Build Agentic workflows, RAG pipelines, with rich AI model and tool support on one collaborative workspace. Deploy on cloud, VPC, or self-hosted, so teams move from prototype to production without rebuilding the stack.",
           "tags": [
@@ -215,7 +215,7 @@
         {
           "name": "msitarzewski/agency-agents",
           "url": "https://github.com/msitarzewski/agency-agents",
-          "stars": 155973,
+          "stars": 156972,
           "language": "Shell",
           "description": "A complete AI agency at your fingertips - From frontend wizards to Reddit community ninjas, from whimsy injectors to reality checkers. Each agent is a specialized expert with personality, processes, and proven deliverables.",
           "tags": [
@@ -223,9 +223,28 @@
           ]
         },
         {
+          "name": "DietrichGebert/ponytail",
+          "url": "https://github.com/DietrichGebert/ponytail",
+          "stars": 155581,
+          "language": "JavaScript",
+          "description": "Makes your AI agent think like the laziest senior dev in the room. The best code is the code you never wrote.",
+          "tags": [
+            "agent-skills",
+            "ai-agents",
+            "claude",
+            "claude-code",
+            "claude-code-plugin",
+            "cursor-rules",
+            "developer-tools",
+            "llm",
+            "prompt-engineering",
+            "yagni"
+          ]
+        },
+        {
           "name": "open-webui/open-webui",
           "url": "https://github.com/open-webui/open-webui",
-          "stars": 153876,
+          "stars": 153985,
           "language": "Python",
           "description": "User-friendly AI Interface (Supports Ollama, OpenAI API, ...)",
           "tags": [
@@ -247,28 +266,9 @@
           ]
         },
         {
-          "name": "DietrichGebert/ponytail",
-          "url": "https://github.com/DietrichGebert/ponytail",
-          "stars": 153154,
-          "language": "JavaScript",
-          "description": "Makes your AI agent think like the laziest senior dev in the room. The best code is the code you never wrote.",
-          "tags": [
-            "agent-skills",
-            "ai-agents",
-            "claude",
-            "claude-code",
-            "claude-code-plugin",
-            "cursor-rules",
-            "developer-tools",
-            "llm",
-            "prompt-engineering",
-            "yagni"
-          ]
-        },
-        {
           "name": "anthropics/claude-code",
           "url": "https://github.com/anthropics/claude-code",
-          "stars": 149167,
+          "stars": 149467,
           "language": "TypeScript",
           "description": "Claude Code is an agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster by executing routine tasks, explaining complex code, and handling git workflows - all through natural language commands.",
           "tags": [
@@ -278,7 +278,7 @@
         {
           "name": "garrytan/gstack",
           "url": "https://github.com/garrytan/gstack",
-          "stars": 134926,
+          "stars": 135297,
           "language": "TypeScript",
           "description": "Use Garry Tan's exact Claude Code setup: 23 opinionated tools that serve as CEO, Designer, Eng Manager, Release Manager, Doc Engineer, and QA",
           "tags": []
@@ -286,7 +286,7 @@
         {
           "name": "nextlevelbuilder/ui-ux-pro-max-skill",
           "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
-          "stars": 132770,
+          "stars": 133163,
           "language": "Python",
           "description": "An AI skill that provides design intelligence for building professional UI/UX across multiple platforms.",
           "tags": [
@@ -314,7 +314,7 @@
         {
           "name": "Graphify-Labs/graphify",
           "url": "https://github.com/Graphify-Labs/graphify",
-          "stars": 123524,
+          "stars": 123932,
           "language": "Python",
           "description": "Turn any codebase, with its docs, SQL schemas, configs, and PDFs, into a queryable knowledge graph. A /graphify skill for Claude Code, Cursor, Codex, and Gemini CLI: local deterministic AST parsing, every edge explained, no vector store.",
           "tags": [
@@ -328,6 +328,7 @@
             "cursor",
             "developer-tools",
             "gemini",
+            "graphify",
             "graphrag",
             "knowledge-graph",
             "leiden",
@@ -342,7 +343,7 @@
         {
           "name": "microsoft/generative-ai-for-beginners",
           "url": "https://github.com/microsoft/generative-ai-for-beginners",
-          "stars": 120975,
+          "stars": 121021,
           "language": "Jupyter Notebook",
           "description": "21 Lessons, Get Started Building with Generative AI",
           "tags": [
@@ -365,7 +366,7 @@
         {
           "name": "JuliusBrussee/caveman",
           "url": "https://github.com/JuliusBrussee/caveman",
-          "stars": 109470,
+          "stars": 109923,
           "language": "Go",
           "description": "🪨 why use many token when few token do trick. Viral skill + proxy for coding agents that cuts 65% of tokens by talking like a caveman.",
           "tags": [
@@ -384,7 +385,7 @@
         {
           "name": "addyosmani/agent-skills",
           "url": "https://github.com/addyosmani/agent-skills",
-          "stars": 100795,
+          "stars": 101397,
           "language": "JavaScript",
           "description": "Production-grade engineering skills for AI coding agents.",
           "tags": [
@@ -397,9 +398,17 @@
           ]
         },
         {
+          "name": "paperclipai/paperclip",
+          "url": "https://github.com/paperclipai/paperclip",
+          "stars": 97416,
+          "language": "TypeScript",
+          "description": "The open-source app everyone uses to manage agents at work",
+          "tags": []
+        },
+        {
           "name": "karpathy/autoresearch",
           "url": "https://github.com/karpathy/autoresearch",
-          "stars": 97202,
+          "stars": 97325,
           "language": "Python",
           "description": "AI agents running research on single-GPU nanochat training automatically",
           "tags": []
@@ -407,7 +416,7 @@
         {
           "name": "hacksider/Deep-Live-Cam",
           "url": "https://github.com/hacksider/Deep-Live-Cam",
-          "stars": 96908,
+          "stars": 96913,
           "language": "Python",
           "description": "real time face swap and one-click video deepfake with only a single image",
           "tags": [
@@ -432,17 +441,9 @@
           ]
         },
         {
-          "name": "paperclipai/paperclip",
-          "url": "https://github.com/paperclipai/paperclip",
-          "stars": 96689,
-          "language": "TypeScript",
-          "description": "The open-source app everyone uses to manage agents at work",
-          "tags": []
-        },
-        {
           "name": "thedotmack/claude-mem",
           "url": "https://github.com/thedotmack/claude-mem",
-          "stars": 95489,
+          "stars": 96395,
           "language": "TypeScript",
           "description": "Persistent Context Across Sessions for Every Agent –  Captures everything your agent does during sessions, compresses it with AI, and injects relevant context back into future sessions. Works with Claude Code, OpenClaw, Codex, Gemini, Hermes, Copilot, OpenCode + More",
           "tags": [
@@ -471,7 +472,7 @@
         {
           "name": "OpenHands/OpenHands",
           "url": "https://github.com/OpenHands/OpenHands",
-          "stars": 89899,
+          "stars": 90021,
           "language": "TypeScript",
           "description": "🙌 OpenHands: AI-Driven Development",
           "tags": [
@@ -489,7 +490,7 @@
         {
           "name": "koala73/worldmonitor",
           "url": "https://github.com/koala73/worldmonitor",
-          "stars": 87715,
+          "stars": 87801,
           "language": "TypeScript",
           "description": "Real-time global intelligence dashboard. AI-powered news aggregation, geopolitical monitoring, and infrastructure tracking in a unified situational awareness interface",
           "tags": [
@@ -510,7 +511,7 @@
         {
           "name": "Egonex-AI/Understand-Anything",
           "url": "https://github.com/Egonex-AI/Understand-Anything",
-          "stars": 85175,
+          "stars": 85322,
           "language": "TypeScript",
           "description": "Graphs that teach > graphs that impress. Turn any code into an interactive knowledge graph you can explore, search, and ask questions about. Works with Claude Code, Codex, Cursor, Copilot, Gemini CLI, and more.",
           "tags": [
@@ -536,7 +537,7 @@
         {
           "name": "unclecode/crawl4ai",
           "url": "https://github.com/unclecode/crawl4ai",
-          "stars": 84690,
+          "stars": 84776,
           "language": "Python",
           "description": "Open-source web crawler and scraper for LLMs and AI agents: any website into clean, LLM-ready Markdown. Run it yourself, or use Crawl4AI Cloud with one key.",
           "tags": [
@@ -560,7 +561,7 @@
         {
           "name": "bytedance/deer-flow",
           "url": "https://github.com/bytedance/deer-flow",
-          "stars": 83354,
+          "stars": 83402,
           "language": "Python",
           "description": "An open-source long-horizon SuperAgent harness that researches, codes, and creates. With the help of sandboxes, memories, tools, skill, subagents and message gateway, it handles different levels of tasks that could take minutes to hours.",
           "tags": [
@@ -587,7 +588,7 @@
         {
           "name": "shareAI-lab/learn-claude-code",
           "url": "https://github.com/shareAI-lab/learn-claude-code",
-          "stars": 77953,
+          "stars": 78023,
           "language": "Python",
           "description": "Bash is all you need -  A nano claude code–like 「agent harness」, built from 0 to 1",
           "tags": [
@@ -604,9 +605,38 @@
           ]
         },
         {
+          "name": "tt-a1i/archify",
+          "url": "https://github.com/tt-a1i/archify",
+          "stars": 77865,
+          "language": "JavaScript",
+          "description": "Turn any idea, plan, or codebase into a beautiful interactive diagram. An agent skill for Claude Code, Codex, and more.",
+          "tags": [
+            "agent-skills",
+            "ai-agents",
+            "architecture-diagram",
+            "claude-code",
+            "claude-skills",
+            "codex",
+            "coding-agents",
+            "deepseek-harness",
+            "developer-tools",
+            "diagrams",
+            "diagrams-as-code",
+            "dsh-plugin",
+            "flowchart",
+            "llm",
+            "mermaid",
+            "opencode",
+            "sequence-diagram",
+            "software-architecture",
+            "system-design",
+            "visualization"
+          ]
+        },
+        {
           "name": "nomic-ai/gpt4all",
           "url": "https://github.com/nomic-ai/gpt4all",
-          "stars": 77387,
+          "stars": 77384,
           "language": "C++",
           "description": "GPT4All: Run Local LLMs on Any Device. Open-source and available for commercial use.",
           "tags": [
@@ -615,38 +645,9 @@
           ]
         },
         {
-          "name": "tt-a1i/archify",
-          "url": "https://github.com/tt-a1i/archify",
-          "stars": 76698,
-          "language": "JavaScript",
-          "description": "Agent skill for beautiful, verifiable architecture, workflow, sequence, data-flow, and lifecycle diagrams—self-contained HTML with motion and crisp export.",
-          "tags": [
-            "agent-skills",
-            "architecture-as-code",
-            "architecture-diagram",
-            "claude-skill",
-            "code-visualization",
-            "codex",
-            "coding-agents",
-            "data-flow-diagram",
-            "deepseek-harness",
-            "developer-tools",
-            "diagram-as-code",
-            "diagrams",
-            "diagrams-as-code",
-            "dsh-plugin",
-            "mermaid-alternative",
-            "opencode",
-            "sequence-diagram",
-            "software-architecture",
-            "system-design",
-            "text-to-diagram"
-          ]
-        },
-        {
           "name": "openai/openai-cookbook",
           "url": "https://github.com/openai/openai-cookbook",
-          "stars": 76330,
+          "stars": 76350,
           "language": "Jupyter Notebook",
           "description": "Examples and guides for using the OpenAI API",
           "tags": [
@@ -659,7 +660,7 @@
         {
           "name": "colbymchenry/codegraph",
           "url": "https://github.com/colbymchenry/codegraph",
-          "stars": 73118,
+          "stars": 73239,
           "language": "C",
           "description": "Pre-indexed code knowledge graph, auto syncs on code changes, for Claude Code, Codex, Gemini, Cursor, OpenCode, AntiGravity, Kiro, CoPilot, and Hermes Agent — fewer tokens, fewer tool calls, 100% local",
           "tags": []
@@ -667,7 +668,7 @@
         {
           "name": "shanraisshan/claude-code-best-practice",
           "url": "https://github.com/shanraisshan/claude-code-best-practice",
-          "stars": 67035,
+          "stars": 67106,
           "language": "HTML",
           "description": "from vibe coding to agentic engineering - practice makes claude perfect",
           "tags": [
@@ -696,7 +697,7 @@
         {
           "name": "gsd-build/get-shit-done",
           "url": "https://github.com/gsd-build/get-shit-done",
-          "stars": 64383,
+          "stars": 64377,
           "language": "JavaScript",
           "description": "A light-weight and powerful meta-prompting, context engineering and spec-driven development system for Claude Code by TÂCHES.",
           "tags": [
@@ -709,7 +710,7 @@
         {
           "name": "mvanhorn/last30days-skill",
           "url": "https://github.com/mvanhorn/last30days-skill",
-          "stars": 63446,
+          "stars": 63553,
           "language": "Python",
           "description": "AI agent skill that researches any topic across Reddit, X, YouTube, HN, Polymarket, and the web - then synthesizes a grounded summary",
           "tags": [
@@ -738,7 +739,7 @@
         {
           "name": "crewAIInc/crewAI",
           "url": "https://github.com/crewAIInc/crewAI",
-          "stars": 59321,
+          "stars": 59357,
           "language": "Python",
           "description": "Framework for orchestrating role-playing, autonomous AI agents. By fostering collaborative intelligence, CrewAI empowers agents to work together seamlessly, tackling complex tasks.",
           "tags": [
@@ -752,7 +753,7 @@
         {
           "name": "zylon-ai/private-gpt",
           "url": "https://github.com/zylon-ai/private-gpt",
-          "stars": 57559,
+          "stars": 57553,
           "language": "Python",
           "description": "Complete API layer for private AI applications on local models: RAG, skills, tools, MCP, text-to-sql, and more. Works with any OpenAI-compatible inference server.",
           "tags": [
@@ -764,7 +765,7 @@
         {
           "name": "heygen-com/hyperframes",
           "url": "https://github.com/heygen-com/hyperframes",
-          "stars": 56257,
+          "stars": 57046,
           "language": "TypeScript",
           "description": "Write HTML. Render video. Built for agents.",
           "tags": [
@@ -784,7 +785,7 @@
         {
           "name": "jamiepine/voicebox",
           "url": "https://github.com/jamiepine/voicebox",
-          "stars": 56253,
+          "stars": 56410,
           "language": "TypeScript",
           "description": "The open-source AI voice studio. Clone, dictate, create.",
           "tags": [
@@ -801,7 +802,7 @@
         {
           "name": "aaif-goose/goose",
           "url": "https://github.com/aaif-goose/goose",
-          "stars": 54906,
+          "stars": 54950,
           "language": "Rust",
           "description": "an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM",
           "tags": [
@@ -814,7 +815,7 @@
         {
           "name": "blader/humanizer",
           "url": "https://github.com/blader/humanizer",
-          "stars": 53760,
+          "stars": 54090,
           "language": "Python",
           "description": "Agent skill that removes signs of AI-generated writing from text",
           "tags": [
@@ -834,23 +835,9 @@
           ]
         },
         {
-          "name": "bmad-code-org/BMAD-METHOD",
-          "url": "https://github.com/bmad-code-org/BMAD-METHOD",
-          "stars": 53754,
-          "language": "Python",
-          "description": "Breakthrough Method for Agile Ai Driven Development",
-          "tags": [
-            "agile",
-            "ai",
-            "context-engineering",
-            "sdlc",
-            "spec-driven-development"
-          ]
-        },
-        {
           "name": "ayghri/i-have-adhd",
           "url": "https://github.com/ayghri/i-have-adhd",
-          "stars": 53160,
+          "stars": 53800,
           "language": "Python",
           "description": "A skill to stop your coding agent from burying the answer. ADHD-friendly output.",
           "tags": [
@@ -863,19 +850,23 @@
           ]
         },
         {
-          "name": "anthropics/claude-cookbooks",
-          "url": "https://github.com/anthropics/claude-cookbooks",
-          "stars": 53160,
-          "language": "Jupyter Notebook",
-          "description": "A collection of notebooks/recipes showcasing some fun and effective ways of using Claude.",
+          "name": "bmad-code-org/BMAD-METHOD",
+          "url": "https://github.com/bmad-code-org/BMAD-METHOD",
+          "stars": 53794,
+          "language": "Python",
+          "description": "Breakthrough Method for Agile Ai Driven Development",
           "tags": [
-            "Reference, Awesome Lists & Learning"
+            "agile",
+            "ai",
+            "context-engineering",
+            "sdlc",
+            "spec-driven-development"
           ]
         },
         {
           "name": "coreyhaines31/marketingskills",
           "url": "https://github.com/coreyhaines31/marketingskills",
-          "stars": 52675,
+          "stars": 53309,
           "language": "JavaScript",
           "description": "Marketing skills for Claude Code and AI agents. CRO, copywriting, SEO, analytics, and growth engineering.",
           "tags": [
@@ -885,9 +876,19 @@
           ]
         },
         {
+          "name": "anthropics/claude-cookbooks",
+          "url": "https://github.com/anthropics/claude-cookbooks",
+          "stars": 53204,
+          "language": "Jupyter Notebook",
+          "description": "A collection of notebooks/recipes showcasing some fun and effective ways of using Claude.",
+          "tags": [
+            "Reference, Awesome Lists & Learning"
+          ]
+        },
+        {
           "name": "Aider-AI/aider",
           "url": "https://github.com/Aider-AI/aider",
-          "stars": 49354,
+          "stars": 49374,
           "language": "Python",
           "description": "aider is AI pair programming in your terminal",
           "tags": [
@@ -909,7 +910,7 @@
         {
           "name": "kepano/obsidian-skills",
           "url": "https://github.com/kepano/obsidian-skills",
-          "stars": 49114,
+          "stars": 49160,
           "language": null,
           "description": "Agent skills for Obsidian. Teach your agent to use Obsidian CLI and open formats including Markdown, Bases, JSON Canvas.",
           "tags": [
@@ -935,7 +936,7 @@
         {
           "name": "abhigyanpatwari/GitNexus",
           "url": "https://github.com/abhigyanpatwari/GitNexus",
-          "stars": 47703,
+          "stars": 47730,
           "language": "TypeScript",
           "description": "GitNexus: The Zero-Server Code Intelligence Engine",
           "tags": [
@@ -945,7 +946,7 @@
         {
           "name": "LibreChat-AI/LibreChat",
           "url": "https://github.com/LibreChat-AI/LibreChat",
-          "stars": 45225,
+          "stars": 45293,
           "language": "TypeScript",
           "description": "Enhanced ChatGPT Clone: Features Agents, MCP, Skills, DeepSeek, Anthropic, AWS, OpenAI, Responses API, Azure, Groq, o1, GPT-5, Mistral, OpenRouter, Vertex AI, Gemini, Artifacts, AI model switching, message search, Code Interpreter, langchain, DALL-E-3, OpenAPI Actions, Functions, Secure Multi-User Auth, Presets, open-source for self-hosting. Active",
           "tags": [
@@ -974,7 +975,7 @@
         {
           "name": "MadsLorentzen/ai-job-search",
           "url": "https://github.com/MadsLorentzen/ai-job-search",
-          "stars": 44865,
+          "stars": 45006,
           "language": "Python",
           "description": "The job search that runs on your machine. AI job application framework built on Claude Code: evaluate postings, tailor CVs, write cover letters, prep interviews. Fork it and own it.",
           "tags": [
@@ -995,7 +996,7 @@
         {
           "name": "janhq/jan",
           "url": "https://github.com/janhq/jan",
-          "stars": 44776,
+          "stars": 44798,
           "language": "Rust",
           "description": "Jan is an open source alternative to ChatGPT that runs 100% offline on your computer.",
           "tags": [
@@ -1026,7 +1027,7 @@
         {
           "name": "emilkowalski/skills",
           "url": "https://github.com/emilkowalski/skills",
-          "stars": 42979,
+          "stars": 43524,
           "language": "Markdown",
           "description": "Skills for Designers and Engineers.",
           "tags": []
@@ -1034,7 +1035,7 @@
         {
           "name": "HKUDS/DeepTutor",
           "url": "https://github.com/HKUDS/DeepTutor",
-          "stars": 40749,
+          "stars": 40811,
           "language": "Python",
           "description": "DeepTutor: Lifelong Personalized Tutoring. https://deeptutor.info/.",
           "tags": [
@@ -1052,7 +1053,7 @@
         {
           "name": "novuhq/novu",
           "url": "https://github.com/novuhq/novu",
-          "stars": 40108,
+          "stars": 40115,
           "language": "TypeScript",
           "description": "The open-source communication infrastructure for agents and products",
           "tags": [
@@ -1076,7 +1077,7 @@
         {
           "name": "HKUDS/LightRAG",
           "url": "https://github.com/HKUDS/LightRAG",
-          "stars": 39958,
+          "stars": 39981,
           "language": "Python",
           "description": "[EMNLP2025] LightRAG: Simple and Fast Retrieval-Augmented Generation",
           "tags": [
@@ -1096,7 +1097,7 @@
         {
           "name": "THU-MAIC/OpenMAIC",
           "url": "https://github.com/THU-MAIC/OpenMAIC",
-          "stars": 39890,
+          "stars": 39972,
           "language": "TypeScript",
           "description": "Open Multi-Agent Interactive Classroom — Get an immersive, multi-agent learning experience in just one click",
           "tags": []
@@ -1104,7 +1105,7 @@
         {
           "name": "anthropics/financial-services",
           "url": "https://github.com/anthropics/financial-services",
-          "stars": 38628,
+          "stars": 38756,
           "language": "Python",
           "description": null,
           "tags": []
@@ -1112,7 +1113,7 @@
         {
           "name": "ashishpatel26/500-AI-Agents-Projects",
           "url": "https://github.com/ashishpatel26/500-AI-Agents-Projects",
-          "stars": 38279,
+          "stars": 38317,
           "language": "Python",
           "description": "The 500 AI Agents Projects is a curated collection of AI agent use cases across various industries. It showcases practical applications and provides links to open-source projects for implementation, illustrating how AI agents are transforming sectors such as healthcare, finance, education, retail, and more.",
           "tags": [
@@ -1123,7 +1124,7 @@
         {
           "name": "JCodesMore/ai-website-cloner-template",
           "url": "https://github.com/JCodesMore/ai-website-cloner-template",
-          "stars": 35588,
+          "stars": 35790,
           "language": "TypeScript",
           "description": "Clone any website with one command using AI coding agents",
           "tags": [
@@ -1151,7 +1152,7 @@
         {
           "name": "mukul975/Anthropic-Cybersecurity-Skills",
           "url": "https://github.com/mukul975/Anthropic-Cybersecurity-Skills",
-          "stars": 33749,
+          "stars": 33792,
           "language": "Python",
           "description": "817 structured cybersecurity skills for AI agents · Mapped to 6 frameworks: MITRE ATT&CK, NIST CSF 2.0, MITRE ATLAS, D3FEND, NIST AI RMF & MITRE F3 (Fight Fraud) · agentskills.io standard · Works with Claude Code, GitHub Copilot, Codex CLI, Cursor, Gemini CLI & 20+ platforms · 29 security domains · Apache 2.0",
           "tags": [
@@ -1180,7 +1181,7 @@
         {
           "name": "googleworkspace/cli",
           "url": "https://github.com/googleworkspace/cli",
-          "stars": 31235,
+          "stars": 31249,
           "language": "Rust",
           "description": "Google Workspace CLI — one command-line tool for Drive, Gmail, Calendar, Sheets, Docs, Chat, Admin, and more. Dynamically built from Google Discovery Service. Includes AI agent skills.",
           "tags": [
@@ -1205,7 +1206,7 @@
         {
           "name": "supermemoryai/supermemory",
           "url": "https://github.com/supermemoryai/supermemory",
-          "stars": 31072,
+          "stars": 31082,
           "language": "TypeScript",
           "description": "Memory and context engine + app that is extremely fast, scalable, and can be run fully locally. The Memory API for the AI era.",
           "tags": [
@@ -1226,7 +1227,7 @@
         {
           "name": "eyaltoledano/claude-task-master",
           "url": "https://github.com/eyaltoledano/claude-task-master",
-          "stars": 28135,
+          "stars": 28144,
           "language": "JavaScript",
           "description": "An AI-powered task-management system you can drop into Cursor, Lovable, Windsurf, Roo, and others.",
           "tags": [
@@ -1247,7 +1248,7 @@
         {
           "name": "VoltAgent/awesome-claude-code-subagents",
           "url": "https://github.com/VoltAgent/awesome-claude-code-subagents",
-          "stars": 25481,
+          "stars": 25507,
           "language": "Shell",
           "description": "A collection of 100+ specialized Claude Code subagents covering a wide range of development use cases",
           "tags": [
@@ -1266,7 +1267,7 @@
         {
           "name": "vxcontrol/pentagi",
           "url": "https://github.com/vxcontrol/pentagi",
-          "stars": 25221,
+          "stars": 25257,
           "language": "Go",
           "description": "Fully autonomous AI Agents system capable of performing complex penetration testing tasks",
           "tags": [
@@ -1293,7 +1294,7 @@
         {
           "name": "karpathy/llm-council",
           "url": "https://github.com/karpathy/llm-council",
-          "stars": 25127,
+          "stars": 25154,
           "language": "Python",
           "description": "LLM Council works together to answer your hardest questions",
           "tags": []
@@ -1301,7 +1302,7 @@
         {
           "name": "cloudflare/security-audit-skill",
           "url": "https://github.com/cloudflare/security-audit-skill",
-          "stars": 23916,
+          "stars": 24602,
           "language": "JavaScript",
           "description": "A coding-agent skill for multi-phase security audits with independently verified, machine-readable findings",
           "tags": []
@@ -1309,7 +1310,7 @@
         {
           "name": "czlonkowski/n8n-mcp",
           "url": "https://github.com/czlonkowski/n8n-mcp",
-          "stars": 23034,
+          "stars": 23035,
           "language": "TypeScript",
           "description": "A MCP for Claude Desktop / Claude Code / Windsurf / Cursor to build n8n workflows for you",
           "tags": [
@@ -1322,33 +1323,15 @@
         {
           "name": "snarktank/ralph",
           "url": "https://github.com/snarktank/ralph",
-          "stars": 21896,
+          "stars": 21909,
           "language": "TypeScript",
           "description": "Ralph is an autonomous AI agent loop that runs repeatedly until all PRD items are complete.",
           "tags": []
         },
         {
-          "name": "danielmiessler/LifeOS",
-          "url": "https://github.com/danielmiessler/LifeOS",
-          "stars": 19289,
-          "language": "TypeScript",
-          "description": "⛰️ LifeOS — The universal AI Harness designed to move you from Current to Ideal state in both life and work.",
-          "tags": [
-            "ai",
-            "ai-harness",
-            "augmentation",
-            "coding",
-            "humans",
-            "intent-engineering",
-            "lifeos",
-            "personal-ai",
-            "productivity"
-          ]
-        },
-        {
           "name": "NVIDIA/SkillSpector",
           "url": "https://github.com/NVIDIA/SkillSpector",
-          "stars": 19246,
+          "stars": 19424,
           "language": "Python",
           "description": "Security scanner for AI agent skills. Detect vulnerabilities, malicious patterns, security risks, prompt injection, data exfiltration, and supply-chain risks in Claude Code, Codex, and MCP skills before you install them.",
           "tags": [
@@ -1366,9 +1349,27 @@
           ]
         },
         {
+          "name": "danielmiessler/LifeOS",
+          "url": "https://github.com/danielmiessler/LifeOS",
+          "stars": 19308,
+          "language": "TypeScript",
+          "description": "⛰️ LifeOS — The universal AI Harness designed to move you from Current to Ideal state in both life and work.",
+          "tags": [
+            "ai",
+            "ai-harness",
+            "augmentation",
+            "coding",
+            "humans",
+            "intent-engineering",
+            "lifeos",
+            "personal-ai",
+            "productivity"
+          ]
+        },
+        {
           "name": "RightNow-AI/openfang",
           "url": "https://github.com/RightNow-AI/openfang",
-          "stars": 18210,
+          "stars": 18205,
           "language": "Rust",
           "description": "Open-source Agent Operating System",
           "tags": [
@@ -1385,7 +1386,7 @@
         {
           "name": "hardikpandya/stop-slop",
           "url": "https://github.com/hardikpandya/stop-slop",
-          "stars": 17727,
+          "stars": 17758,
           "language": null,
           "description": "A skill file for removing AI tells from prose",
           "tags": []
@@ -1393,7 +1394,7 @@
         {
           "name": "microsoft/data-formulator",
           "url": "https://github.com/microsoft/data-formulator",
-          "stars": 17521,
+          "stars": 17525,
           "language": "Python",
           "description": "🪄 Data Formulator is an interactive AI-powered data analysis system makes it easy to connect, explore and visualize data.",
           "tags": []
@@ -1401,7 +1402,7 @@
         {
           "name": "triggerdotdev/trigger.dev",
           "url": "https://github.com/triggerdotdev/trigger.dev",
-          "stars": 16459,
+          "stars": 16467,
           "language": "TypeScript",
           "description": "Trigger.dev – build and deploy durable AI agents and workflows",
           "tags": [
@@ -1423,7 +1424,7 @@
         {
           "name": "Arindam200/awesome-ai-apps",
           "url": "https://github.com/Arindam200/awesome-ai-apps",
-          "stars": 16053,
+          "stars": 16063,
           "language": "Python",
           "description": "A collection of projects showcasing RAG, agents, workflows, and other AI use cases",
           "tags": [
@@ -1437,7 +1438,7 @@
         {
           "name": "Piebald-AI/claude-code-system-prompts",
           "url": "https://github.com/Piebald-AI/claude-code-system-prompts",
-          "stars": 12822,
+          "stars": 12832,
           "language": "JavaScript",
           "description": "All parts of Claude Code's system prompt, 27 builtin tool descriptions, sub agent prompts (Plan/Explore/Task), utility prompts (CLAUDE.md, compact,  statusline, magic docs, WebFetch, Bash cmd, security review, agent creation).  Updated for each Claude Code version.",
           "tags": [
@@ -1449,7 +1450,7 @@
         {
           "name": "NangoHQ/nango",
           "url": "https://github.com/NangoHQ/nango",
-          "stars": 12498,
+          "stars": 12523,
           "language": "TypeScript",
           "description": "Connect your agents & product to 1,000 APIs.",
           "tags": [
@@ -1470,7 +1471,7 @@
         {
           "name": "contains-studio/agents",
           "url": "https://github.com/contains-studio/agents",
-          "stars": 12420,
+          "stars": 12417,
           "language": null,
           "description": "sharing current agents in use",
           "tags": []
@@ -1478,7 +1479,7 @@
         {
           "name": "0x4m4/hexstrike-ai",
           "url": "https://github.com/0x4m4/hexstrike-ai",
-          "stars": 12295,
+          "stars": 12396,
           "language": "Python",
           "description": "HexStrike AI MCP Agents is an advanced MCP server that lets AI agents (Claude, GPT, Copilot, etc.) autonomously run 150+ cybersecurity tools for automated pentesting, vulnerability discovery, bug bounty automation, and security research. Seamlessly bridge LLMs with real-world offensive security capabilities.",
           "tags": [
@@ -1507,7 +1508,7 @@
         {
           "name": "petergyang/no-ai-slop",
           "url": "https://github.com/petergyang/no-ai-slop",
-          "stars": 11799,
+          "stars": 11899,
           "language": "Python",
           "description": "Removes 20+ patterns of AI slop from any piece of writing.",
           "tags": []
@@ -1515,7 +1516,7 @@
         {
           "name": "aliasrobotics/cai",
           "url": "https://github.com/aliasrobotics/cai",
-          "stars": 9841,
+          "stars": 9844,
           "language": "Python",
           "description": "Cybersecurity AI (CAI), the framework for AI Security",
           "tags": [
@@ -1530,7 +1531,7 @@
         {
           "name": "AgriciDaniel/claude-ads",
           "url": "https://github.com/AgriciDaniel/claude-ads",
-          "stars": 9697,
+          "stars": 9720,
           "language": "Python",
           "description": "Claude-first paid-media operations skill for Claude Code across 12 ad platforms (Google, Meta, YouTube, LinkedIn, TikTok, Microsoft, Apple, Amazon, Reddit, Pinterest, Snapchat, X): source-grounded audits, deterministic scoring, versioned JSON reports, and capability-gated account changes.",
           "tags": [
@@ -1550,7 +1551,7 @@
         {
           "name": "oso95/scroll-world",
           "url": "https://github.com/oso95/scroll-world",
-          "stars": 9664,
+          "stars": 9698,
           "language": "JavaScript",
           "description": "A skill that turn any brand into a scrollable 3D world landing page",
           "tags": []
@@ -1558,7 +1559,7 @@
         {
           "name": "trailhq/Graft",
           "url": "https://github.com/trailhq/Graft",
-          "stars": 9537,
+          "stars": 9581,
           "language": "TypeScript",
           "description": "Turbocharge Claude Code, Cursor, Codex, Gemini & every coding agent: faster, cheaper, with contextual understanding specific to your codebase.",
           "tags": [
@@ -1584,7 +1585,7 @@
         {
           "name": "cloudflare/computer",
           "url": "https://github.com/cloudflare/computer",
-          "stars": 9461,
+          "stars": 9483,
           "language": "TypeScript",
           "description": "Give your agent a computer 👾",
           "tags": []
@@ -1592,7 +1593,7 @@
         {
           "name": "shadcn/improve",
           "url": "https://github.com/shadcn/improve",
-          "stars": 9199,
+          "stars": 9202,
           "language": null,
           "description": "Use your most capable model to audit your codebase and write plans for cheaper models to execute.",
           "tags": []
@@ -1600,7 +1601,7 @@
         {
           "name": "HKUDS/ClawWork",
           "url": "https://github.com/HKUDS/ClawWork",
-          "stars": 8550,
+          "stars": 8548,
           "language": "Python",
           "description": "\"ClawWork: OpenClaw as Your AI Coworker - 💰 $15K earned in 11 Hours\"",
           "tags": []
@@ -1620,7 +1621,7 @@
         {
           "name": "tamaratran/fast-jev-compaction",
           "url": "https://github.com/tamaratran/fast-jev-compaction",
-          "stars": 7356,
+          "stars": 7404,
           "language": "TypeScript",
           "description": "Claude Code plugin that replaces the compaction summary with Jev decisions: every tool call and result is scored in one fast request, stale ones are dropped or truncated, everything kept stays verbatim.",
           "tags": []
@@ -1628,7 +1629,7 @@
         {
           "name": "trailofbits/skills",
           "url": "https://github.com/trailofbits/skills",
-          "stars": 7352,
+          "stars": 7370,
           "language": "Python",
           "description": "Trail of Bits Claude Code skills for security research, vulnerability detection, and audit workflows",
           "tags": [
@@ -1638,7 +1639,7 @@
         {
           "name": "tradesdontlie/tradingview-mcp",
           "url": "https://github.com/tradesdontlie/tradingview-mcp",
-          "stars": 6708,
+          "stars": 6719,
           "language": "JavaScript",
           "description": "AI-assisted TradingView chart analysis — connect Claude Code to your TradingView Desktop for personal workflow automation",
           "tags": [
@@ -1660,9 +1661,38 @@
           ]
         },
         {
+          "name": "mahseema/awesome-ai-tools",
+          "url": "https://github.com/mahseema/awesome-ai-tools",
+          "stars": 6348,
+          "language": null,
+          "description": "A curated list of Artificial Intelligence Top Tools",
+          "tags": [
+            "ai",
+            "ai-agent",
+            "ai-agents",
+            "ai-assistant",
+            "ai-tools",
+            "ai-tools-list",
+            "ai-top-tools",
+            "awesome",
+            "awesome-ai",
+            "awesome-ai-tools",
+            "awesome-list",
+            "bestofai",
+            "futuretools",
+            "machine-learning",
+            "ml",
+            "mlops",
+            "theresanaiforthat",
+            "top-ai-tools",
+            "vibe-coding",
+            "workflow"
+          ]
+        },
+        {
           "name": "google/agents-cli",
           "url": "https://github.com/google/agents-cli",
-          "stars": 6044,
+          "stars": 6050,
           "language": "Python",
           "description": "The CLI and skills that turn any coding assistant into an expert at creating, evaluating, and deploying AI agents on Google Cloud.",
           "tags": [
@@ -1679,7 +1709,7 @@
         {
           "name": "potpie-ai/potpie",
           "url": "https://github.com/potpie-ai/potpie",
-          "stars": 5736,
+          "stars": 5733,
           "language": "Python",
           "description": "Context Graph for AI Native SDLC",
           "tags": [
@@ -1698,7 +1728,7 @@
         {
           "name": "jgraph/drawio-mcp",
           "url": "https://github.com/jgraph/drawio-mcp",
-          "stars": 5561,
+          "stars": 5571,
           "language": "JavaScript",
           "description": null,
           "tags": []
@@ -1706,7 +1736,7 @@
         {
           "name": "business-science/ai-data-science-team",
           "url": "https://github.com/business-science/ai-data-science-team",
-          "stars": 5435,
+          "stars": 5444,
           "language": "Python",
           "description": "An AI-powered data science team of agents to help you perform common data science tasks 10X faster.",
           "tags": [
@@ -1728,7 +1758,7 @@
         {
           "name": "breferrari/obsidian-mind",
           "url": "https://github.com/breferrari/obsidian-mind",
-          "stars": 4876,
+          "stars": 4896,
           "language": "TypeScript",
           "description": "A self-organizing Obsidian vault that gives AI coding agents persistent memory.",
           "tags": [
@@ -1747,7 +1777,7 @@
         {
           "name": "remotion-dev/skills",
           "url": "https://github.com/remotion-dev/skills",
-          "stars": 4826,
+          "stars": 4846,
           "language": "TypeScript",
           "description": "Agent Skills",
           "tags": []
@@ -1755,7 +1785,7 @@
         {
           "name": "Agenta-AI/agenta",
           "url": "https://github.com/Agenta-AI/agenta",
-          "stars": 4805,
+          "stars": 4807,
           "language": "TypeScript",
           "description": "Agenta is a workspace where you and your team build agents and automations.",
           "tags": [
@@ -1780,7 +1810,7 @@
         {
           "name": "nowork-studio/notfair-plugin",
           "url": "https://github.com/nowork-studio/notfair-plugin",
-          "stars": 3891,
+          "stars": 3898,
           "language": "TypeScript",
           "description": "Open-source SEO, GEO, and marketing skills for AI agents.",
           "tags": [
@@ -1799,7 +1829,7 @@
         {
           "name": "m1guelpf/chatgpt-telegram",
           "url": "https://github.com/m1guelpf/chatgpt-telegram",
-          "stars": 3880,
+          "stars": 3881,
           "language": "Go",
           "description": "Run your own GPTChat Telegram bot, with a single command!",
           "tags": [
@@ -1812,7 +1842,7 @@
         {
           "name": "gadievron/raptor",
           "url": "https://github.com/gadievron/raptor",
-          "stars": 3854,
+          "stars": 3858,
           "language": "Python",
           "description": "Raptor turns Claude Code into a general-purpose AI offensive/defensive security agent. By using Claude.md and creating rules, sub-agents, and skills, and orchestrating security tool usage, we configure the agent for adversarial thinking, and perform research or attack/defense operations.",
           "tags": [
@@ -1823,7 +1853,7 @@
         {
           "name": "AmintaCCCP/GithubStarsManager",
           "url": "https://github.com/AmintaCCCP/GithubStarsManager",
-          "stars": 3631,
+          "stars": 3638,
           "language": "TypeScript",
           "description": "AI-powered GitHub stars manager with semantic search, auto-categorization, and release tracking",
           "tags": [
@@ -1849,7 +1879,7 @@
         {
           "name": "ericosiu/ai-marketing-skills",
           "url": "https://github.com/ericosiu/ai-marketing-skills",
-          "stars": 3599,
+          "stars": 3606,
           "language": "Python",
           "description": "Open-source AI marketing skills — growth experiments, sales pipeline, content ops, outbound, SEO, and finance automation",
           "tags": [
@@ -1880,7 +1910,7 @@
         {
           "name": "itsOwen/CyberScraper-2077",
           "url": "https://github.com/itsOwen/CyberScraper-2077",
-          "stars": 3274,
+          "stars": 3279,
           "language": "Python",
           "description": "A Powerful web scraper powered by LLM | OpenAI, Gemini & Ollama",
           "tags": [
@@ -1897,7 +1927,7 @@
         {
           "name": "anthropics/claude-agent-sdk-demos",
           "url": "https://github.com/anthropics/claude-agent-sdk-demos",
-          "stars": 2766,
+          "stars": 2769,
           "language": "TypeScript",
           "description": "Claude Code SDK Demos",
           "tags": []
@@ -1905,7 +1935,7 @@
         {
           "name": "rohitg00/awesome-claude-code-toolkit",
           "url": "https://github.com/rohitg00/awesome-claude-code-toolkit",
-          "stars": 2671,
+          "stars": 2674,
           "language": "JavaScript",
           "description": "The most comprehensive toolkit for Claude Code -- 135 agents, 35 curated skills, 42 commands, 176+ plugins, 20 hooks, 15 rules, 7 templates, 14 MCP configs, 26 companion apps, 52 ecosystem entries, and more.",
           "tags": [
@@ -1920,7 +1950,7 @@
         {
           "name": "typesafe-ai/skills",
           "url": "https://github.com/typesafe-ai/skills",
-          "stars": 2557,
+          "stars": 2586,
           "language": null,
           "description": "Agent skills for building with TypeSafe's System One API",
           "tags": []
@@ -1928,7 +1958,7 @@
         {
           "name": "vasu-devs/JustHireMe",
           "url": "https://github.com/vasu-devs/JustHireMe",
-          "stars": 2256,
+          "stars": 2257,
           "language": "Python",
           "description": "Local-first AI job intelligence workbench for scraping roles, ranking fit, and generating tailored application materials.",
           "tags": [
@@ -1982,7 +2012,7 @@
         {
           "name": "microsoft/azure-skills",
           "url": "https://github.com/microsoft/azure-skills",
-          "stars": 1532,
+          "stars": 1538,
           "language": "Shell",
           "description": "Official agent plugin providing skills and MCP server configurations for Azure scenarios.",
           "tags": [
@@ -1990,9 +2020,38 @@
           ]
         },
         {
+          "name": "dariubs/awesome-workflow-automation",
+          "url": "https://github.com/dariubs/awesome-workflow-automation",
+          "stars": 1238,
+          "language": null,
+          "description": "A curated list of Workflow Automation  Software, Engines and Tools",
+          "tags": [
+            "activepieces",
+            "agents",
+            "ai-agents",
+            "ai-agents-cli",
+            "ai-agents-framework",
+            "awesome-ai-agents",
+            "make",
+            "n8n",
+            "n8n-nodes",
+            "n8n-workflow",
+            "workflow",
+            "workflow-automation",
+            "workflow-automation-software",
+            "workflow-automation-tools",
+            "workflow-engine",
+            "workflow-engines",
+            "workflow-management",
+            "workflow-reusable",
+            "workflow-tool",
+            "zapier"
+          ]
+        },
+        {
           "name": "mattprusak/autoresearch-genealogy",
           "url": "https://github.com/mattprusak/autoresearch-genealogy",
-          "stars": 1179,
+          "stars": 1181,
           "language": "Ruby",
           "description": "Structured prompts, vault templates, and archive guides for AI-assisted genealogy research. Built for Claude Code.",
           "tags": []
@@ -2000,7 +2059,7 @@
         {
           "name": "getsentry/skills",
           "url": "https://github.com/getsentry/skills",
-          "stars": 1034,
+          "stars": 1037,
           "language": "Python",
           "description": "Agent Skills used by the Sentry team for development.",
           "tags": [
@@ -2010,7 +2069,7 @@
         {
           "name": "avinash201199/free-ai-agents-resources",
           "url": "https://github.com/avinash201199/free-ai-agents-resources",
-          "stars": 1021,
+          "stars": 1033,
           "language": null,
           "description": "Free AI Agents Resources – Your All-in-One 2026 Learning Hub",
           "tags": [
@@ -2022,7 +2081,7 @@
         {
           "name": "sunblaze-ucb/cybergym",
           "url": "https://github.com/sunblaze-ucb/cybergym",
-          "stars": 926,
+          "stars": 932,
           "language": "Python",
           "description": "CyberGym is a large-scale, high-quality cybersecurity evaluation framework designed to rigorously assess the capabilities of AI agents on real-world vulnerability analysis tasks.",
           "tags": [
@@ -2032,7 +2091,7 @@
         {
           "name": "danielmiessler/Substrate",
           "url": "https://github.com/danielmiessler/Substrate",
-          "stars": 919,
+          "stars": 920,
           "language": "TypeScript",
           "description": "An Open-source Framework for Human Understanding, Meaning, and Progress.",
           "tags": [
@@ -2043,9 +2102,32 @@
           ]
         },
         {
+          "name": "awesome-vibe-coding/awesome-vibe-coding",
+          "url": "https://github.com/awesome-vibe-coding/awesome-vibe-coding",
+          "stars": 860,
+          "language": "HTML",
+          "description": "A hand-picked collection of tools and resources for Vibe Coding",
+          "tags": [
+            "ai",
+            "ai-agents",
+            "ai-app-builder",
+            "ai-ide",
+            "ai-tools",
+            "awesome-ai",
+            "awesome-ai-tools",
+            "awesome-list",
+            "awesome-vibe-coding",
+            "vibe",
+            "vibe-coding",
+            "vibecode",
+            "vibecoding",
+            "vibecoding-tool"
+          ]
+        },
+        {
           "name": "anthropics/code-migration-kit-with-claude-code",
           "url": "https://github.com/anthropics/code-migration-kit-with-claude-code",
-          "stars": 732,
+          "stars": 736,
           "language": "Python",
           "description": "Prompts, templates, and scripts for running large-scale language migrations with Claude Code",
           "tags": []
@@ -2053,7 +2135,7 @@
         {
           "name": "shannhk/hermes-agent-control-room",
           "url": "https://github.com/shannhk/hermes-agent-control-room",
-          "stars": 721,
+          "stars": 722,
           "language": "Shell",
           "description": "Control Room-first template for managing Hermes agents from one VPS agent to specialist teams and orchestrated workflows",
           "tags": [
@@ -2067,7 +2149,7 @@
         {
           "name": "automateyournetwork/netclaw",
           "url": "https://github.com/automateyournetwork/netclaw",
-          "stars": 673,
+          "stars": 674,
           "language": "Python",
           "description": "An AI agent that claws through your network",
           "tags": []
@@ -2091,7 +2173,7 @@
         {
           "name": "unicodef1wn/grokbot-field-notes",
           "url": "https://github.com/unicodef1wn/grokbot-field-notes",
-          "stars": 570,
+          "stars": 577,
           "language": "Python",
           "description": "Rules, playbooks, bot roles and a failure log from the xAI Grok Bot team's 72-hour live build. Drop AGENTS.md into your repo and go.",
           "tags": [
@@ -2112,7 +2194,7 @@
         {
           "name": "semgrep/skills",
           "url": "https://github.com/semgrep/skills",
-          "stars": 319,
+          "stars": 320,
           "language": "JavaScript",
           "description": "A collection of skills for AI coding agents from Semgrep",
           "tags": [
@@ -2143,7 +2225,7 @@
         {
           "name": "resend/resend-skills",
           "url": "https://github.com/resend/resend-skills",
-          "stars": 193,
+          "stars": 195,
           "language": "JavaScript",
           "description": "Agent Skills for working with Resend to send and receive emails.",
           "tags": []
@@ -2178,7 +2260,7 @@
         {
           "name": "DevMortimer/pi-warden",
           "url": "https://github.com/DevMortimer/pi-warden",
-          "stars": 157,
+          "stars": 161,
           "language": "TypeScript",
           "description": "Guardrails for Pi that steer instead of interrupt: enforces your project rules on every write, holds only hard-to-undo actions (3 per 1,000 calls, measured on real sessions), catches unverified \"done\" claims and stuck loops, and trims tool output. Built on pi-typesafe.",
           "tags": [
@@ -2192,7 +2274,7 @@
         {
           "name": "antropos17/Aegis",
           "url": "https://github.com/antropos17/Aegis",
-          "stars": 152,
+          "stars": 154,
           "language": "JavaScript",
           "description": "Desktop monitoring and local security reviews for AI agents, with opt-in policy-controlled execution and MCP action tools. Windows primary; macOS/Linux experimental.",
           "tags": [
@@ -2225,7 +2307,7 @@
         {
           "name": "display-dev/visualize",
           "url": "https://github.com/display-dev/visualize",
-          "stars": 111,
+          "stars": 123,
           "language": "HTML",
           "description": "Generate beautiful, on-brand HTML artifacts with AI coding agents.",
           "tags": []
@@ -2241,7 +2323,7 @@
         {
           "name": "mastra-ai/skills",
           "url": "https://github.com/mastra-ai/skills",
-          "stars": 96,
+          "stars": 95,
           "language": "JavaScript",
           "description": "Official agent skills for coding agents working with the Mastra AI framework",
           "tags": []
@@ -2249,7 +2331,7 @@
         {
           "name": "clerk/skills",
           "url": "https://github.com/clerk/skills",
-          "stars": 85,
+          "stars": 86,
           "language": "JavaScript",
           "description": "AI Skills to enhance working with Clerk",
           "tags": []
@@ -2265,7 +2347,7 @@
         {
           "name": "prisma/skills",
           "url": "https://github.com/prisma/skills",
-          "stars": 68,
+          "stars": 67,
           "language": null,
           "description": null,
           "tags": []
@@ -2329,7 +2411,7 @@
         {
           "name": "imthenachoman/How-To-Secure-A-Linux-Server",
           "url": "https://github.com/imthenachoman/How-To-Secure-A-Linux-Server",
-          "stars": 31753,
+          "stars": 31769,
           "language": null,
           "description": "An evolving how-to guide for securing a Linux server.",
           "tags": [
@@ -2346,7 +2428,7 @@
         {
           "name": "gitleaks/gitleaks",
           "url": "https://github.com/gitleaks/gitleaks",
-          "stars": 29638,
+          "stars": 29675,
           "language": "Go",
           "description": "Find secrets with Gitleaks 🔑",
           "tags": [
@@ -2375,7 +2457,7 @@
         {
           "name": "trufflesecurity/trufflehog",
           "url": "https://github.com/trufflesecurity/trufflehog",
-          "stars": 28257,
+          "stars": 28287,
           "language": "Go",
           "description": "Find, verify, and analyze leaked credentials",
           "tags": [
@@ -2396,7 +2478,7 @@
         {
           "name": "wazuh/wazuh",
           "url": "https://github.com/wazuh/wazuh",
-          "stars": 17078,
+          "stars": 17108,
           "language": "C++",
           "description": "Wazuh - The Open Source Security Platform. Unified XDR and SIEM protection for endpoints and cloud workloads.",
           "tags": [
@@ -2425,7 +2507,7 @@
         {
           "name": "semgrep/semgrep",
           "url": "https://github.com/semgrep/semgrep",
-          "stars": 16852,
+          "stars": 16878,
           "language": "C",
           "description": "Lightweight static analysis for many languages. Find bug variants with patterns that look like source code.",
           "tags": [
@@ -2446,7 +2528,7 @@
         {
           "name": "awslabs/git-secrets",
           "url": "https://github.com/awslabs/git-secrets",
-          "stars": 13410,
+          "stars": 13409,
           "language": "Shell",
           "description": "Prevents you from committing secrets and credentials into git repositories",
           "tags": []
@@ -2454,7 +2536,7 @@
         {
           "name": "redcanaryco/atomic-red-team",
           "url": "https://github.com/redcanaryco/atomic-red-team",
-          "stars": 12607,
+          "stars": 12608,
           "language": "C",
           "description": "Small and highly portable detection tests based on MITRE's ATT&CK.",
           "tags": [
@@ -2465,7 +2547,7 @@
         {
           "name": "SigmaHQ/sigma",
           "url": "https://github.com/SigmaHQ/sigma",
-          "stars": 11148,
+          "stars": 11156,
           "language": "Python",
           "description": "Main Sigma Rule Repository",
           "tags": [
@@ -2483,7 +2565,7 @@
         {
           "name": "telekom-security/tpotce",
           "url": "https://github.com/telekom-security/tpotce",
-          "stars": 9556,
+          "stars": 9560,
           "language": "Shell",
           "description": "🍯 T-Pot - The All In One Multi Honeypot Platform 🐝",
           "tags": [
@@ -2507,7 +2589,7 @@
         {
           "name": "openbao/openbao",
           "url": "https://github.com/openbao/openbao",
-          "stars": 8290,
+          "stars": 8310,
           "language": "Go",
           "description": "OpenBao is a software solution to manage, store, and distribute sensitive data including secrets, certificates, and keys.",
           "tags": [
@@ -2519,7 +2601,7 @@
         {
           "name": "zeek/zeek",
           "url": "https://github.com/zeek/zeek",
-          "stars": 8057,
+          "stars": 8061,
           "language": "C++",
           "description": "Zeek is a powerful network analysis framework that is much different from the typical IDS you may know.",
           "tags": [
@@ -2536,7 +2618,7 @@
         {
           "name": "Cisco-Talos/clamav",
           "url": "https://github.com/Cisco-Talos/clamav",
-          "stars": 7314,
+          "stars": 7321,
           "language": "C",
           "description": "ClamAV - Documentation is here: https://docs.clamav.net",
           "tags": [
@@ -2549,7 +2631,7 @@
         {
           "name": "OISF/suricata",
           "url": "https://github.com/OISF/suricata",
-          "stars": 6685,
+          "stars": 6691,
           "language": "C",
           "description": "Suricata is a network Intrusion Detection System, Intrusion Prevention System and Network Security Monitoring engine developed by the OISF and the Suricata community.",
           "tags": [
@@ -2569,7 +2651,7 @@
         {
           "name": "cowrie/cowrie",
           "url": "https://github.com/cowrie/cowrie",
-          "stars": 6575,
+          "stars": 6577,
           "language": "Python",
           "description": "Cowrie SSH/Telnet Honeypot https://docs.cowrie.org/",
           "tags": [
@@ -2594,7 +2676,7 @@
         {
           "name": "decalage2/awesome-security-hardening",
           "url": "https://github.com/decalage2/awesome-security-hardening",
-          "stars": 6569,
+          "stars": 6572,
           "language": null,
           "description": "A collection of awesome security hardening guides, tools and other resources",
           "tags": [
@@ -2617,7 +2699,7 @@
         {
           "name": "ossec/ossec-hids",
           "url": "https://github.com/ossec/ossec-hids",
-          "stars": 5061,
+          "stars": 5060,
           "language": "C",
           "description": "OSSEC is an Open Source Host-based Intrusion Detection System that performs log analysis, file integrity checking, policy monitoring, rootkit detection, real-time alerting and active response.",
           "tags": [
@@ -2637,7 +2719,7 @@
         {
           "name": "DefectDojo/django-DefectDojo",
           "url": "https://github.com/DefectDojo/django-DefectDojo",
-          "stars": 4976,
+          "stars": 4982,
           "language": "Python",
           "description": "Open-Source Unified Vulnerability Management, DevSecOps & ASPM",
           "tags": [
@@ -2661,7 +2743,7 @@
         {
           "name": "intuitem/ciso-assistant-community",
           "url": "https://github.com/intuitem/ciso-assistant-community",
-          "stars": 4475,
+          "stars": 4480,
           "language": "Python",
           "description": "CISO Assistant is a one-stop-shop GRC platform for Risk Management, AppSec, Compliance & Audit, TPRM, BIA, Privacy, and Reporting. It supports 200+ global frameworks with automatic control mapping, including ISO 27001, NIST CSF, SOC 2, CIS, PCI DSS, NIS2, DORA, GDPR, HIPAA, CMMC, and more.",
           "tags": [
@@ -2690,7 +2772,7 @@
         {
           "name": "DependencyTrack/dependency-track",
           "url": "https://github.com/DependencyTrack/dependency-track",
-          "stars": 4258,
+          "stars": 4262,
           "language": "Java",
           "description": "Dependency-Track is an intelligent Component Analysis platform that allows organizations to identify and reduce risk in the software supply chain.",
           "tags": [
@@ -2738,7 +2820,7 @@
         {
           "name": "snort3/snort3",
           "url": "https://github.com/snort3/snort3",
-          "stars": 3429,
+          "stars": 3430,
           "language": "C++",
           "description": "Snort++",
           "tags": []
@@ -2754,7 +2836,7 @@
         {
           "name": "thinkst/opencanary",
           "url": "https://github.com/thinkst/opencanary",
-          "stars": 3051,
+          "stars": 3052,
           "language": "Python",
           "description": "Modular and decentralised honeypot",
           "tags": []
@@ -2866,7 +2948,7 @@
         {
           "name": "Neo23x0/auditd",
           "url": "https://github.com/Neo23x0/auditd",
-          "stars": 1950,
+          "stars": 1948,
           "language": "Shell",
           "description": "Best Practice Auditd Configuration",
           "tags": []
@@ -2885,7 +2967,7 @@
         {
           "name": "scipag/HardeningKitty",
           "url": "https://github.com/scipag/HardeningKitty",
-          "stars": 1851,
+          "stars": 1853,
           "language": "PowerShell",
           "description": "HardeningKitty - Checks and hardens your Windows configuration",
           "tags": [
@@ -2905,7 +2987,7 @@
         {
           "name": "Bert-JanP/Hunting-Queries-Detection-Rules",
           "url": "https://github.com/Bert-JanP/Hunting-Queries-Detection-Rules",
-          "stars": 1755,
+          "stars": 1756,
           "language": "Python",
           "description": "KQL Queries. Defender For Endpoint and Azure Sentinel Hunting and Detection Queries in KQL. Out of the box KQL queries for: Advanced Hunting, Custom Detection, Analytics Rules & Hunting Rules.",
           "tags": [
@@ -3513,7 +3595,7 @@
         {
           "name": "Hack-with-Github/Awesome-Hacking",
           "url": "https://github.com/Hack-with-Github/Awesome-Hacking",
-          "stars": 121785,
+          "stars": 121902,
           "language": null,
           "description": "A collection of various awesome lists for hackers, pentesters and security researchers",
           "tags": [
@@ -3531,7 +3613,7 @@
         {
           "name": "swisskyrepo/PayloadsAllTheThings",
           "url": "https://github.com/swisskyrepo/PayloadsAllTheThings",
-          "stars": 81440,
+          "stars": 81485,
           "language": "Python",
           "description": "A list of useful payloads and bypass for Web Application Security and Pentest/CTF",
           "tags": [
@@ -3557,7 +3639,7 @@
         {
           "name": "Z4nzu/hackingtool",
           "url": "https://github.com/Z4nzu/hackingtool",
-          "stars": 80069,
+          "stars": 80100,
           "language": "Python",
           "description": "ALL IN ONE Hacking Tool For Hackers",
           "tags": [
@@ -3579,7 +3661,7 @@
         {
           "name": "danielmiessler/SecLists",
           "url": "https://github.com/danielmiessler/SecLists",
-          "stars": 73913,
+          "stars": 73944,
           "language": "PHP",
           "description": "SecLists is the security tester's companion. It's a collection of multiple types of lists used during security assessments, collected in one place. List types include usernames, passwords, URLs, sensitive data patterns, fuzzing payloads, web shells, and many more.",
           "tags": [
@@ -3590,7 +3672,7 @@
         {
           "name": "usestrix/strix",
           "url": "https://github.com/usestrix/strix",
-          "stars": 66326,
+          "stars": 66583,
           "language": "Python",
           "description": "Open-source AI penetration testing tool to find and fix your app’s vulnerabilities.",
           "tags": [
@@ -3619,7 +3701,7 @@
         {
           "name": "KeygraphHQ/shannon",
           "url": "https://github.com/KeygraphHQ/shannon",
-          "stars": 48554,
+          "stars": 48582,
           "language": "TypeScript",
           "description": "Shannon is an AI pentester for web applications and APIs. It analyzes your source code, identifies attack vectors, and executes real exploits to prove vulnerabilities before they reach production.",
           "tags": [
@@ -3648,7 +3730,7 @@
         {
           "name": "mitmproxy/mitmproxy",
           "url": "https://github.com/mitmproxy/mitmproxy",
-          "stars": 45246,
+          "stars": 45262,
           "language": "Python",
           "description": "An interactive TLS-capable intercepting HTTP proxy for penetration testers and software developers.",
           "tags": [
@@ -3668,7 +3750,7 @@
         {
           "name": "projectdiscovery/nuclei",
           "url": "https://github.com/projectdiscovery/nuclei",
-          "stars": 31695,
+          "stars": 31736,
           "language": "Go",
           "description": "Nuclei is a fast, customizable vulnerability scanner powered by the global security community and built on a simple YAML-based DSL, enabling collaboration to tackle trending vulnerabilities on the internet. It helps you find vulnerabilities in your applications, APIs, networks, DNS, and cloud configurations.",
           "tags": [
@@ -3688,7 +3770,7 @@
         {
           "name": "robertdavidgraham/masscan",
           "url": "https://github.com/robertdavidgraham/masscan",
-          "stars": 26061,
+          "stars": 26060,
           "language": "C",
           "description": "TCP port scanner, spews SYN packets asynchronously, scanning entire Internet in under 5 minutes.",
           "tags": []
@@ -3696,7 +3778,7 @@
         {
           "name": "peass-ng/PEASS-ng",
           "url": "https://github.com/peass-ng/PEASS-ng",
-          "stars": 20605,
+          "stars": 20613,
           "language": "C#",
           "description": "PEASS - Privilege Escalation Awesome Scripts SUITE (with colors)",
           "tags": [
@@ -3724,7 +3806,7 @@
         {
           "name": "MatrixTM/MHDDoS",
           "url": "https://github.com/MatrixTM/MHDDoS",
-          "stars": 16779,
+          "stars": 16784,
           "language": "Python",
           "description": "Best DDoS Attack Script  Python3, (Cyber / DDos) Attack With 56 Methods",
           "tags": [
@@ -3752,7 +3834,7 @@
         {
           "name": "kgretzky/evilginx2",
           "url": "https://github.com/kgretzky/evilginx2",
-          "stars": 15684,
+          "stars": 15689,
           "language": "Go",
           "description": "Standalone man-in-the-middle attack framework used for phishing login credentials along with session cookies, allowing for the bypass of 2-factor authentication",
           "tags": []
@@ -3760,7 +3842,7 @@
         {
           "name": "moonD4rk/HackBrowserData",
           "url": "https://github.com/moonD4rk/HackBrowserData",
-          "stars": 14580,
+          "stars": 14583,
           "language": "Go",
           "description": "Extract and decrypt browser data, supporting multiple data types, runnable on various operating systems (macOS, Windows, Linux).",
           "tags": [
@@ -3787,7 +3869,7 @@
         {
           "name": "projectdiscovery/nuclei-templates",
           "url": "https://github.com/projectdiscovery/nuclei-templates",
-          "stars": 13053,
+          "stars": 13057,
           "language": "JavaScript",
           "description": "Community curated list of templates for the nuclei engine to find security vulnerabilities.",
           "tags": [
@@ -3806,7 +3888,7 @@
         {
           "name": "dstotijn/hetty",
           "url": "https://github.com/dstotijn/hetty",
-          "stars": 12507,
+          "stars": 12512,
           "language": "Go",
           "description": "An HTTP toolkit for security research.",
           "tags": [
@@ -3821,7 +3903,7 @@
         {
           "name": "AlessandroZ/LaZagne",
           "url": "https://github.com/AlessandroZ/LaZagne",
-          "stars": 11001,
+          "stars": 11003,
           "language": "Python",
           "description": "Credentials recovery project",
           "tags": []
@@ -3829,7 +3911,7 @@
         {
           "name": "OWASP/wstg",
           "url": "https://github.com/OWASP/wstg",
-          "stars": 9953,
+          "stars": 9964,
           "language": "Python",
           "description": "The Web Security Testing Guide is a comprehensive Open Source guide to testing the security of web applications and web services.",
           "tags": [
@@ -3849,7 +3931,7 @@
         {
           "name": "LOLBAS-Project/LOLBAS",
           "url": "https://github.com/LOLBAS-Project/LOLBAS",
-          "stars": 8856,
+          "stars": 8860,
           "language": "XSLT",
           "description": "Living Off The Land Binaries And Scripts - (LOLBins and LOLScripts)",
           "tags": [
@@ -3865,7 +3947,7 @@
         {
           "name": "HavocFramework/Havoc",
           "url": "https://github.com/HavocFramework/Havoc",
-          "stars": 8512,
+          "stars": 8511,
           "language": "Go",
           "description": "The Havoc Framework",
           "tags": []
@@ -3899,7 +3981,7 @@
         {
           "name": "apache/caldera",
           "url": "https://github.com/apache/caldera",
-          "stars": 7305,
+          "stars": 7307,
           "language": "Python",
           "description": "Automated Adversary Emulation Platform",
           "tags": [
@@ -3915,7 +3997,7 @@
         {
           "name": "SnailSploit/Claude-Red",
           "url": "https://github.com/SnailSploit/Claude-Red",
-          "stars": 7224,
+          "stars": 7270,
           "language": "Python",
           "description": "claude-red is a curated library of offensive security skills designed for the Claude skills system. Each skill is a structured SKILL.md file that primes Claude with expert-level methodology for a specific attack surface — from SQLi to shellcode, EDR evasion to exploit development.",
           "tags": [
@@ -3944,7 +4026,7 @@
         {
           "name": "Pennyw0rth/NetExec",
           "url": "https://github.com/Pennyw0rth/NetExec",
-          "stars": 5907,
+          "stars": 5908,
           "language": "Python",
           "description": "The Network Execution Tool",
           "tags": [
@@ -3968,7 +4050,7 @@
         {
           "name": "RedSiege/EyeWitness",
           "url": "https://github.com/RedSiege/EyeWitness",
-          "stars": 5860,
+          "stars": 5861,
           "language": "Python",
           "description": "EyeWitness is designed to take screenshots of websites, provide some server header info, and identify default credentials if possible.",
           "tags": [
@@ -3979,7 +4061,7 @@
         {
           "name": "Ne0nd0g/merlin",
           "url": "https://github.com/Ne0nd0g/merlin",
-          "stars": 5608,
+          "stars": 5610,
           "language": "Go",
           "description": "Merlin is a cross-platform post-exploitation HTTP/2 Command & Control  server and agent written in golang.",
           "tags": [
@@ -3994,7 +4076,7 @@
         {
           "name": "awarexone/Agentic-Bug-Hunter",
           "url": "https://github.com/awarexone/Agentic-Bug-Hunter",
-          "stars": 5251,
+          "stars": 5271,
           "language": "Python",
           "description": "AI-powered bug bounty hunting toolkit that works with or without subscription.",
           "tags": [
@@ -4016,7 +4098,7 @@
         {
           "name": "cobbr/Covenant",
           "url": "https://github.com/cobbr/Covenant",
-          "stars": 4738,
+          "stars": 4740,
           "language": "C#",
           "description": "Covenant is a collaborative .NET C2 framework for red teamers.",
           "tags": [
@@ -4030,7 +4112,7 @@
         {
           "name": "GhostPack/Seatbelt",
           "url": "https://github.com/GhostPack/Seatbelt",
-          "stars": 4713,
+          "stars": 4716,
           "language": "C#",
           "description": "Seatbelt is a C# project that performs a number of security oriented host-survey \"safety checks\" relevant from both offensive and defensive security perspectives.",
           "tags": [
@@ -4041,7 +4123,7 @@
         {
           "name": "bluscreenofjeff/Red-Team-Infrastructure-Wiki",
           "url": "https://github.com/bluscreenofjeff/Red-Team-Infrastructure-Wiki",
-          "stars": 4538,
+          "stars": 4539,
           "language": null,
           "description": "Wiki to collect Red Team infrastructure hardening resources",
           "tags": [
@@ -4056,7 +4138,7 @@
         {
           "name": "iagox86/dnscat2",
           "url": "https://github.com/iagox86/dnscat2",
-          "stars": 3972,
+          "stars": 3974,
           "language": "PHP",
           "description": null,
           "tags": []
@@ -4074,7 +4156,7 @@
         {
           "name": "matro7sh/BypassAV",
           "url": "https://github.com/matro7sh/BypassAV",
-          "stars": 3471,
+          "stars": 3470,
           "language": null,
           "description": "This map lists the essential techniques to bypass anti-virus and EDR",
           "tags": [
@@ -4090,7 +4172,7 @@
         {
           "name": "s0md3v/Smap",
           "url": "https://github.com/s0md3v/Smap",
-          "stars": 3302,
+          "stars": 3300,
           "language": "Go",
           "description": "a drop-in replacement for Nmap powered by shodan.io",
           "tags": [
@@ -4123,7 +4205,7 @@
         {
           "name": "SnaffCon/Snaffler",
           "url": "https://github.com/SnaffCon/Snaffler",
-          "stars": 2950,
+          "stars": 2951,
           "language": "C#",
           "description": "a tool for pentesters to help find delicious candy, by @l0ss and @Sh3r4 ( Twitter: @/mikeloss and @/sh3r4_hax )",
           "tags": []
@@ -4131,7 +4213,7 @@
         {
           "name": "samugit83/redamon",
           "url": "https://github.com/samugit83/redamon",
-          "stars": 2913,
+          "stars": 2932,
           "language": "Python",
           "description": "Open-source, self-hosted AI penetration testing framework: maps your attack surface into a graph, autonomously exploits it from a Kali sandbox with human approval gates, and opens PRs that fix what it finds. MCP both ways: plug in any MCP server as a tool, or drive RedAmon from Claude Code or your own agent.",
           "tags": [
@@ -4174,7 +4256,7 @@
         {
           "name": "unode/firefox_decrypt",
           "url": "https://github.com/unode/firefox_decrypt",
-          "stars": 2484,
+          "stars": 2486,
           "language": "Python",
           "description": "Firefox Decrypt is a tool to extract passwords from Mozilla (Firefox™, Waterfox™, Thunderbird®, SeaMonkey®) profiles",
           "tags": [
@@ -4265,7 +4347,7 @@
         {
           "name": "magicsword-io/LOLDrivers",
           "url": "https://github.com/magicsword-io/LOLDrivers",
-          "stars": 1806,
+          "stars": 1807,
           "language": "YARA",
           "description": "Living Off The Land Drivers",
           "tags": [
@@ -4381,7 +4463,7 @@
         {
           "name": "RedTeamPentesting/pretender",
           "url": "https://github.com/RedTeamPentesting/pretender",
-          "stars": 1325,
+          "stars": 1326,
           "language": "Go",
           "description": "Your MitM sidekick for relaying attacks featuring DHCPv6 DNS takeover as well as mDNS, LLMNR and NetBIOS-NS spoofing.",
           "tags": [
@@ -4411,7 +4493,7 @@
         {
           "name": "mbrg/power-pwn",
           "url": "https://github.com/mbrg/power-pwn",
-          "stars": 1254,
+          "stars": 1255,
           "language": "Python",
           "description": "An offensive/defense security toolset for discovery, recon and ethical assessment of AI Agents",
           "tags": [
@@ -4440,7 +4522,7 @@
         {
           "name": "CERT-Polska/Artemis",
           "url": "https://github.com/CERT-Polska/Artemis",
-          "stars": 1236,
+          "stars": 1235,
           "language": "Python",
           "description": "A modular vulnerability scanner with automatic report generation capabilities.",
           "tags": [
@@ -4614,7 +4696,7 @@
         {
           "name": "akha-security/akca",
           "url": "https://github.com/akha-security/akca",
-          "stars": 221,
+          "stars": 224,
           "language": "Go",
           "description": "AKCA Advanced Web Security Scanner",
           "tags": [
@@ -4745,7 +4827,7 @@
         {
           "name": "fortra/impacket",
           "url": "https://github.com/fortra/impacket",
-          "stars": 16144,
+          "stars": 16149,
           "language": "Python",
           "description": "Impacket is a collection of Python classes for working with network protocols.",
           "tags": [
@@ -4764,7 +4846,7 @@
         {
           "name": "SpecterOps/BloodHound-Legacy",
           "url": "https://github.com/SpecterOps/BloodHound-Legacy",
-          "stars": 10608,
+          "stars": 10609,
           "language": "PowerShell",
           "description": "Six Degrees of Domain Admin",
           "tags": []
@@ -4772,7 +4854,7 @@
         {
           "name": "byt3bl33d3r/CrackMapExec",
           "url": "https://github.com/byt3bl33d3r/CrackMapExec",
-          "stars": 9159,
+          "stars": 9158,
           "language": "Python",
           "description": "A swiss army knife for pentesting networks",
           "tags": [
@@ -4787,7 +4869,7 @@
         {
           "name": "Orange-Cyberdefense/GOAD",
           "url": "https://github.com/Orange-Cyberdefense/GOAD",
-          "stars": 8419,
+          "stars": 8429,
           "language": "PowerShell",
           "description": "game of active directory",
           "tags": [
@@ -4802,7 +4884,7 @@
         {
           "name": "S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet",
           "url": "https://github.com/S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet",
-          "stars": 6761,
+          "stars": 6760,
           "language": null,
           "description": "A cheat sheet that contains common enumeration and attack methods for Windows Active Directory.",
           "tags": [
@@ -4841,7 +4923,7 @@
         {
           "name": "HotCakeX/Harden-Windows-Security",
           "url": "https://github.com/HotCakeX/Harden-Windows-Security",
-          "stars": 4762,
+          "stars": 4775,
           "language": "C#",
           "description": "Harden Windows Safely, Securely using Official Supported Microsoft methods and proper explanation | Always up-to-date and works with the latest build of Windows | Provides tools and Guides for Personal, Enterprise, Government and Military security levels | SLSA Level 3 Compliant for Secure Development and Build Process | Apps Available on MS Store✨",
           "tags": [
@@ -4870,7 +4952,7 @@
         {
           "name": "ly4k/Certipy",
           "url": "https://github.com/ly4k/Certipy",
-          "stars": 3680,
+          "stars": 3679,
           "language": "Python",
           "description": "Tool for Active Directory Certificate Services enumeration and abuse",
           "tags": [
@@ -4881,7 +4963,7 @@
         {
           "name": "cisagov/ScubaGear",
           "url": "https://github.com/cisagov/ScubaGear",
-          "stars": 2691,
+          "stars": 2694,
           "language": "PowerShell",
           "description": "Automation to assess the state of your M365 tenant against CISA's baselines",
           "tags": [
@@ -4903,7 +4985,7 @@
         {
           "name": "Cloud-Architekt/AzureAD-Attack-Defense",
           "url": "https://github.com/Cloud-Architekt/AzureAD-Attack-Defense",
-          "stars": 2558,
+          "stars": 2560,
           "language": "PowerShell",
           "description": "This publication is a collection of various common attack scenarios on Microsoft Entra ID (formerly known as Azure Active Directory) and how they can be mitigated or detected.",
           "tags": [
@@ -4959,7 +5041,7 @@
         {
           "name": "12Knocksinna/Office365itpros",
           "url": "https://github.com/12Knocksinna/Office365itpros",
-          "stars": 1795,
+          "stars": 1796,
           "language": "PowerShell",
           "description": "PowerShell examples for articles published on https://office365itpros.com and https://practical365.com. See https://o365itpros.gumroad.com/l/M365PS for the Automating Microsoft 365 with PowerShell eBook (included in the MIcrosoft 365 for IT Pros bundle https://gum.co/O365IT/)",
           "tags": [
@@ -4972,7 +5054,7 @@
         {
           "name": "Gerenios/AADInternals",
           "url": "https://github.com/Gerenios/AADInternals",
-          "stars": 1701,
+          "stars": 1702,
           "language": "PowerShell",
           "description": "AADInternals PowerShell module for administering Azure AD and Office 365",
           "tags": []
@@ -4980,7 +5062,7 @@
         {
           "name": "jakehildreth/Locksmith",
           "url": "https://github.com/jakehildreth/Locksmith",
-          "stars": 1619,
+          "stars": 1618,
           "language": "PowerShell",
           "description": "A small tool built to find and fix common misconfigurations in Active Directory Certificate Services.",
           "tags": [
@@ -4997,7 +5079,7 @@
         {
           "name": "AD-Security/AD_Miner",
           "url": "https://github.com/AD-Security/AD_Miner",
-          "stars": 1571,
+          "stars": 1570,
           "language": "JavaScript",
           "description": "AD Miner is an Active Directory audit tool that leverages cypher queries to crunch data from the #Bloodhound graph database to uncover security weaknesses",
           "tags": []
@@ -5005,7 +5087,7 @@
         {
           "name": "SkipToTheEndpoint/OpenIntuneBaseline",
           "url": "https://github.com/SkipToTheEndpoint/OpenIntuneBaseline",
-          "stars": 1513,
+          "stars": 1518,
           "language": "PowerShell",
           "description": "Community-driven baseline to accelerate Intune adoption and learning.",
           "tags": [
@@ -5018,7 +5100,7 @@
         {
           "name": "silverhack/monkey365",
           "url": "https://github.com/silverhack/monkey365",
-          "stars": 1352,
+          "stars": 1355,
           "language": "PowerShell",
           "description": "Monkey365 is an open-source security assessment tool for Microsoft 365, Azure, and Microsoft Entra ID. It helps security professionals identify misconfigurations, review cloud security posture, and evaluate environments against industry security best practices and compliance standards.",
           "tags": [
@@ -5046,7 +5128,7 @@
         {
           "name": "PlumHound/PlumHound",
           "url": "https://github.com/PlumHound/PlumHound",
-          "stars": 1322,
+          "stars": 1323,
           "language": "Python",
           "description": "Bloodhound Reporting for Blue and Purple Teams",
           "tags": [
@@ -5073,17 +5155,9 @@
           ]
         },
         {
-          "name": "KelvinTegelaar/CIPP",
-          "url": "https://github.com/KelvinTegelaar/CIPP",
-          "stars": 1241,
-          "language": "JavaScript",
-          "description": "CIPP is a M365 multitenant management solution",
-          "tags": []
-        },
-        {
           "name": "EvotecIT/GPOZaurr",
           "url": "https://github.com/EvotecIT/GPOZaurr",
-          "stars": 1240,
+          "stars": 1242,
           "language": "PowerShell",
           "description": "Group Policy Eater is a PowerShell module that aims to gather information about Group Policies but also allows fixing issues that you may find in them.",
           "tags": [
@@ -5095,9 +5169,17 @@
           ]
         },
         {
+          "name": "KelvinTegelaar/CIPP",
+          "url": "https://github.com/KelvinTegelaar/CIPP",
+          "stars": 1241,
+          "language": "JavaScript",
+          "description": "CIPP is a M365 multitenant management solution",
+          "tags": []
+        },
+        {
           "name": "lkarlslund/ldapnomnom",
           "url": "https://github.com/lkarlslund/ldapnomnom",
-          "stars": 1134,
+          "stars": 1133,
           "language": "Go",
           "description": "Quietly and anonymously bruteforce Active Directory usernames at insane speeds from Domain Controllers by (ab)using LDAP Ping requests (cLDAP)",
           "tags": [
@@ -5111,7 +5193,7 @@
         {
           "name": "maester365/maester",
           "url": "https://github.com/maester365/maester",
-          "stars": 1121,
+          "stars": 1122,
           "language": "PowerShell",
           "description": "Maester is a test automation framework to help you stay in control of your Microsoft security configuration.",
           "tags": [
@@ -5137,7 +5219,7 @@
         {
           "name": "microsoft/EntraExporter",
           "url": "https://github.com/microsoft/EntraExporter",
-          "stars": 884,
+          "stars": 885,
           "language": "PowerShell",
           "description": "PowerShell module to export a local copy of an Entra (Azure AD) tenant configuration.",
           "tags": [
@@ -5174,7 +5256,7 @@
         {
           "name": "LETHAL-FORENSICS/Microsoft-Analyzer-Suite",
           "url": "https://github.com/LETHAL-FORENSICS/Microsoft-Analyzer-Suite",
-          "stars": 679,
+          "stars": 680,
           "language": "PowerShell",
           "description": "A collection of PowerShell scripts for analyzing data from Microsoft 365 and Microsoft Entra ID",
           "tags": [
@@ -5203,7 +5285,7 @@
         {
           "name": "soteria-security/365Inspect",
           "url": "https://github.com/soteria-security/365Inspect",
-          "stars": 660,
+          "stars": 661,
           "language": "PowerShell",
           "description": "A PowerShell script that automates the security assessment of Microsoft 365 environments.",
           "tags": [
@@ -5249,23 +5331,23 @@
           "tags": []
         },
         {
-          "name": "dievus/ADPulse",
-          "url": "https://github.com/dievus/ADPulse",
-          "stars": 482,
-          "language": "Python",
-          "description": "Active Directory Vulnerability Scanner",
-          "tags": [
-            "Security · Offensive",
-            "Security · Defensive"
-          ]
-        },
-        {
           "name": "techspence/ADeleginator",
           "url": "https://github.com/techspence/ADeleginator",
           "stars": 482,
           "language": "PowerShell",
           "description": "A companion tool that uses ADeleg to find insecure trustee and resource delegations in Active Directory",
           "tags": []
+        },
+        {
+          "name": "dievus/ADPulse",
+          "url": "https://github.com/dievus/ADPulse",
+          "stars": 481,
+          "language": "Python",
+          "description": "Active Directory Vulnerability Scanner",
+          "tags": [
+            "Security · Offensive",
+            "Security · Defensive"
+          ]
         },
         {
           "name": "zjorz/Public-AD-Scripts",
@@ -5294,7 +5376,7 @@
         {
           "name": "microsoft/aka",
           "url": "https://github.com/microsoft/aka",
-          "stars": 462,
+          "stars": 463,
           "language": null,
           "description": "Doc page listing all public aka.ms links for Microsoft admin portals",
           "tags": []
@@ -5335,7 +5417,7 @@
         {
           "name": "microsoft/ActiveDirectoryTierModel",
           "url": "https://github.com/microsoft/ActiveDirectoryTierModel",
-          "stars": 405,
+          "stars": 406,
           "language": "PowerShell",
           "description": "Deployment of an Active Directory Tier Model structure to support Tier 0, Tier 1, and Tier 2 objects.",
           "tags": []
@@ -5359,7 +5441,7 @@
         {
           "name": "synacktiv/gpoParser",
           "url": "https://github.com/synacktiv/gpoParser",
-          "stars": 377,
+          "stars": 376,
           "language": "Python",
           "description": "gpoParser is a tool designed to extract and analyze configurations applied through Group Policy Objects (GPOs) in an Active Directory environment.",
           "tags": [
@@ -5422,9 +5504,19 @@
           "tags": []
         },
         {
+          "name": "nirajkharel/AD-Pentesting-Notes",
+          "url": "https://github.com/nirajkharel/AD-Pentesting-Notes",
+          "stars": 330,
+          "language": null,
+          "description": null,
+          "tags": [
+            "Security · Offensive"
+          ]
+        },
+        {
           "name": "Cloud-Architekt/EntraOps",
           "url": "https://github.com/Cloud-Architekt/EntraOps",
-          "stars": 330,
+          "stars": 329,
           "language": "PowerShell",
           "description": "Community project to classify, identify and protect your privileges based on Enterprise Access Model (EAM)",
           "tags": [
@@ -5433,16 +5525,6 @@
             "powershell",
             "privileged-access-management",
             "privileged-access-security"
-          ]
-        },
-        {
-          "name": "nirajkharel/AD-Pentesting-Notes",
-          "url": "https://github.com/nirajkharel/AD-Pentesting-Notes",
-          "stars": 330,
-          "language": null,
-          "description": null,
-          "tags": [
-            "Security · Offensive"
           ]
         },
         {
@@ -5491,7 +5573,7 @@
         {
           "name": "f-bader/MSRC-PatchReview",
           "url": "https://github.com/f-bader/MSRC-PatchReview",
-          "stars": 225,
+          "stars": 226,
           "language": "PowerShell",
           "description": "A PowerShell variant of the amazing patch_review.py by kevthehermit",
           "tags": []
@@ -5574,7 +5656,7 @@
         {
           "name": "soteria-security/ADInspect",
           "url": "https://github.com/soteria-security/ADInspect",
-          "stars": 69,
+          "stars": 70,
           "language": "HTML",
           "description": "A PowerShell script that automates the security assessment of Microsoft Active Directory environments.",
           "tags": [
@@ -5705,7 +5787,7 @@
         {
           "name": "awesome-selfhosted/awesome-selfhosted",
           "url": "https://github.com/awesome-selfhosted/awesome-selfhosted",
-          "stars": 323639,
+          "stars": 324020,
           "language": null,
           "description": "A list of Free Software network services and web applications which can be hosted on your own servers",
           "tags": [
@@ -5722,7 +5804,7 @@
         {
           "name": "bregman-arie/devops-exercises",
           "url": "https://github.com/bregman-arie/devops-exercises",
-          "stars": 84759,
+          "stars": 84768,
           "language": "Python",
           "description": "Linux, Jenkins, AWS, SRE, Prometheus, Docker, Python, Ansible, Git, Kubernetes, Terraform, OpenStack, SQL, NoSQL, Azure, GCP, DNS, Elastic, Network, Virtualization. DevOps Interview Questions",
           "tags": [
@@ -5750,7 +5832,7 @@
         {
           "name": "coollabsio/coolify",
           "url": "https://github.com/coollabsio/coolify",
-          "stars": 62552,
+          "stars": 62603,
           "language": "PHP",
           "description": "An open-source, self-hostable PaaS alternative to Vercel, Heroku & Netlify that lets you easily deploy static sites, databases, full-stack applications and 280+ one-click services on your own servers.",
           "tags": [
@@ -5779,7 +5861,7 @@
         {
           "name": "jesseduffield/lazydocker",
           "url": "https://github.com/jesseduffield/lazydocker",
-          "stars": 53025,
+          "stars": 53039,
           "language": "Go",
           "description": "The lazier way to manage everything docker",
           "tags": []
@@ -5787,7 +5869,7 @@
         {
           "name": "hashicorp/terraform",
           "url": "https://github.com/hashicorp/terraform",
-          "stars": 49821,
+          "stars": 49828,
           "language": "Go",
           "description": "Terraform enables you to safely and predictably create, change, and improve infrastructure. It is a source-available tool that codifies APIs into declarative configuration files that can be shared amongst team members, treated as code, edited, reviewed, and versioned.",
           "tags": [
@@ -5801,7 +5883,7 @@
         {
           "name": "aquasecurity/trivy",
           "url": "https://github.com/aquasecurity/trivy",
-          "stars": 38209,
+          "stars": 38238,
           "language": "Go",
           "description": "Find vulnerabilities, misconfigurations, secrets, SBOM in containers, Kubernetes, code repositories, clouds and more",
           "tags": [
@@ -5825,7 +5907,7 @@
         {
           "name": "tailscale/tailscale",
           "url": "https://github.com/tailscale/tailscale",
-          "stars": 37130,
+          "stars": 37163,
           "language": "Go",
           "description": "The easiest, most secure way to use WireGuard and 2FA.",
           "tags": [
@@ -5840,7 +5922,7 @@
         {
           "name": "derailed/k9s",
           "url": "https://github.com/derailed/k9s",
-          "stars": 34728,
+          "stars": 34740,
           "language": "Go",
           "description": "🐶 Kubernetes CLI To Manage Your Clusters In Style!",
           "tags": [
@@ -5870,7 +5952,7 @@
         {
           "name": "certbot/certbot",
           "url": "https://github.com/certbot/certbot",
-          "stars": 33257,
+          "stars": 33256,
           "language": "Python",
           "description": "Certbot is EFF's tool to obtain certs from Let's Encrypt and (optionally) auto-enable HTTPS on your server.  It can also act as a client for any other CA that uses the ACME protocol.",
           "tags": [
@@ -5885,7 +5967,7 @@
         {
           "name": "opentofu/opentofu",
           "url": "https://github.com/opentofu/opentofu",
-          "stars": 30371,
+          "stars": 30387,
           "language": "Go",
           "description": "OpenTofu lets you declaratively manage your cloud infrastructure.",
           "tags": []
@@ -5893,7 +5975,7 @@
         {
           "name": "plausible/analytics",
           "url": "https://github.com/plausible/analytics",
-          "stars": 29293,
+          "stars": 29315,
           "language": "Elixir",
           "description": "Open source, privacy-first web analytics. Lightweight, cookie-free Google Analytics alternative. Self-hosted or cloud.",
           "tags": [
@@ -5922,7 +6004,7 @@
         {
           "name": "knadh/listmonk",
           "url": "https://github.com/knadh/listmonk",
-          "stars": 23683,
+          "stars": 23695,
           "language": "Go",
           "description": "High performance, self-hosted, newsletter and mailing list manager with a modern dashboard. Single binary app.",
           "tags": [
@@ -5944,7 +6026,7 @@
         {
           "name": "m1k1o/neko",
           "url": "https://github.com/m1k1o/neko",
-          "stars": 22446,
+          "stars": 22454,
           "language": "Go",
           "description": "A self hosted virtual browser that runs in docker and uses WebRTC.",
           "tags": [
@@ -5998,7 +6080,7 @@
         {
           "name": "leaningtech/webvm",
           "url": "https://github.com/leaningtech/webvm",
-          "stars": 17411,
+          "stars": 17412,
           "language": "Svelte",
           "description": "Virtual Machine for the Web",
           "tags": [
@@ -6018,7 +6100,7 @@
         {
           "name": "Billionmail/BillionMail",
           "url": "https://github.com/Billionmail/BillionMail",
-          "stars": 15828,
+          "stars": 15844,
           "language": "Go",
           "description": "BillionMail gives you open-source MailServer, NewsLetter,  Email Marketing — fully self-hosted, dev-friendly, and free from monthly fees. Join the discord: https://discord.gg/asfXzBUhZr",
           "tags": [
@@ -6038,7 +6120,7 @@
         {
           "name": "grokability/snipe-it",
           "url": "https://github.com/grokability/snipe-it",
-          "stars": 15000,
+          "stars": 15004,
           "language": "PHP",
           "description": "A free open source IT asset/license management system",
           "tags": [
@@ -6052,7 +6134,7 @@
         {
           "name": "infracost/infracost",
           "url": "https://github.com/infracost/infracost",
-          "stars": 12550,
+          "stars": 12551,
           "language": "Go",
           "description": "Cloud cost intelligence for engineers, AI coding agents, and CI/CD 💰📉 Shift FinOps Left!",
           "tags": [
@@ -6117,7 +6199,7 @@
         {
           "name": "bridgecrewio/checkov",
           "url": "https://github.com/bridgecrewio/checkov",
-          "stars": 9054,
+          "stars": 9055,
           "language": "Python",
           "description": "Prevent cloud misconfigurations and find vulnerabilities during build-time in infrastructure as code, container images and open source packages with Checkov by Bridgecrew.",
           "tags": [
@@ -6154,7 +6236,7 @@
         {
           "name": "cloudflare/agentic-inbox",
           "url": "https://github.com/cloudflare/agentic-inbox",
-          "stars": 8156,
+          "stars": 8172,
           "language": "TypeScript",
           "description": "A self-hosted email client with an AI agent, running entirely on Cloudflare Workers",
           "tags": [
@@ -6164,7 +6246,7 @@
         {
           "name": "netalertx/NetAlertX",
           "url": "https://github.com/netalertx/NetAlertX",
-          "stars": 7241,
+          "stars": 7243,
           "language": "Python",
           "description": "Centralized network visibility and continuous asset discovery.  Monitor devices, detect change, and stay aware across distributed networks.",
           "tags": [
@@ -6208,7 +6290,7 @@
         {
           "name": "wger-project/wger",
           "url": "https://github.com/wger-project/wger",
-          "stars": 7009,
+          "stars": 7024,
           "language": "Python",
           "description": "Self hosted FLOSS fitness/workout, nutrition and weight tracker",
           "tags": [
@@ -6242,7 +6324,7 @@
         {
           "name": "dependabot/dependabot-core",
           "url": "https://github.com/dependabot/dependabot-core",
-          "stars": 5796,
+          "stars": 5799,
           "language": "Ruby",
           "description": "🤖 Dependabot's core logic for creating update PRs.",
           "tags": [
@@ -6289,7 +6371,7 @@
         {
           "name": "nextdns/nextdns",
           "url": "https://github.com/nextdns/nextdns",
-          "stars": 4199,
+          "stars": 4198,
           "language": "Go",
           "description": "NextDNS CLI client (DoH Proxy)",
           "tags": [
@@ -6300,7 +6382,7 @@
         {
           "name": "github-aws-runners/terraform-aws-github-runner",
           "url": "https://github.com/github-aws-runners/terraform-aws-github-runner",
-          "stars": 3139,
+          "stars": 3140,
           "language": "TypeScript",
           "description": "Terraform module for scalable GitHub action runners on AWS",
           "tags": [
@@ -6321,7 +6403,7 @@
         {
           "name": "onedr0p/cluster-template",
           "url": "https://github.com/onedr0p/cluster-template",
-          "stars": 2817,
+          "stars": 2820,
           "language": "YAML",
           "description": "A template for deploying a Talos Kubernetes cluster including Flux for GitOps",
           "tags": [
@@ -6337,7 +6419,7 @@
         {
           "name": "antonbabenko/terraform-best-practices",
           "url": "https://github.com/antonbabenko/terraform-best-practices",
-          "stars": 2550,
+          "stars": 2552,
           "language": "HCL",
           "description": "Terraform Best Practices free ebook translated into 🇬🇧🇦🇪🇧🇦🇧🇷🇫🇷🇬🇪🇩🇪🇬🇷🇮🇱🇮🇳🇮🇩🇮🇹🇯🇵🇰🇷🇵🇱🇷🇴🇨🇳🇪🇸🇹🇷🇺🇦🇵🇰",
           "tags": [
@@ -6352,7 +6434,7 @@
         {
           "name": "exentriquesolutions/nip.io",
           "url": "https://github.com/exentriquesolutions/nip.io",
-          "stars": 1774,
+          "stars": 1775,
           "language": "Python",
           "description": null,
           "tags": []
@@ -6360,7 +6442,7 @@
         {
           "name": "Madelena/hass-config-public",
           "url": "https://github.com/Madelena/hass-config-public",
-          "stars": 1169,
+          "stars": 1170,
           "language": "CSS",
           "description": "My Dashboards for Home Assistant - Advanced data visualizations, responsive design, a neat maximalist Metro Live Tile layout, and an ultraminimal tablet layout!",
           "tags": [
@@ -6425,7 +6507,7 @@
         {
           "name": "devopness/devopness",
           "url": "https://github.com/devopness/devopness",
-          "stars": 565,
+          "stars": 567,
           "language": "TypeScript",
           "description": "Devopness: AI DevOps on your cloud. Deploy apps, infra and CI/CD. Any cloud and any stack, one MCP. Deterministic API, opinionated and fully configurable. No cloud credentials in AI chats. Free plan.",
           "tags": [
@@ -6489,7 +6571,7 @@
         {
           "name": "askblaker/k3s.rocks",
           "url": "https://github.com/askblaker/k3s.rocks",
-          "stars": 242,
+          "stars": 241,
           "language": "Shell",
           "description": null,
           "tags": []
@@ -6572,12 +6654,12 @@
     },
     {
       "name": "Reference, Awesome Lists & Learning",
-      "count": 49,
+      "count": 50,
       "repos": [
         {
           "name": "sindresorhus/awesome",
           "url": "https://github.com/sindresorhus/awesome",
-          "stars": 514093,
+          "stars": 514936,
           "language": null,
           "description": "😎 Awesome lists about all kinds of interesting topics [NOTE: Pull requests are temporarily disabled until I have a chance to catch up with the existing ones]",
           "tags": [
@@ -6591,7 +6673,7 @@
         {
           "name": "public-apis/public-apis",
           "url": "https://github.com/public-apis/public-apis",
-          "stars": 485816,
+          "stars": 486177,
           "language": "Python",
           "description": "A collective list of free APIs",
           "tags": [
@@ -6613,7 +6695,7 @@
         {
           "name": "jwasham/coding-interview-university",
           "url": "https://github.com/jwasham/coding-interview-university",
-          "stars": 362286,
+          "stars": 362367,
           "language": null,
           "description": "A complete computer science study plan to become a software engineer.",
           "tags": [
@@ -6634,7 +6716,7 @@
         {
           "name": "trimstray/the-book-of-secret-knowledge",
           "url": "https://github.com/trimstray/the-book-of-secret-knowledge",
-          "stars": 247661,
+          "stars": 248011,
           "language": null,
           "description": "A collection of inspiring lists, manuals, cheatsheets, blogs, hacks, one-liners, cli/web tools and more.",
           "tags": [
@@ -6662,7 +6744,7 @@
         {
           "name": "ripienaar/free-for-dev",
           "url": "https://github.com/ripienaar/free-for-dev",
-          "stars": 139119,
+          "stars": 139203,
           "language": "HTML",
           "description": "A list of SaaS, PaaS and IaaS offerings that have free tiers of interest to devops and infradev",
           "tags": [
@@ -6673,7 +6755,7 @@
         {
           "name": "jaywcjlove/awesome-mac",
           "url": "https://github.com/jaywcjlove/awesome-mac",
-          "stars": 115336,
+          "stars": 115437,
           "language": "Swift",
           "description": " This project is dedicated to collecting high-quality macOS software and organizing them systematically by different categories for easy search and use.",
           "tags": [
@@ -6702,7 +6784,7 @@
         {
           "name": "bradtraversy/design-resources-for-developers",
           "url": "https://github.com/bradtraversy/design-resources-for-developers",
-          "stars": 67075,
+          "stars": 67083,
           "language": null,
           "description": "Curated list of design and UI resources from stock photos, web templates, CSS frameworks, UI libraries, tools and much more",
           "tags": [
@@ -6713,7 +6795,7 @@
         {
           "name": "veggiemonk/awesome-docker",
           "url": "https://github.com/veggiemonk/awesome-docker",
-          "stars": 36958,
+          "stars": 36966,
           "language": null,
           "description": ":whale: A curated list of Docker resources and projects",
           "tags": [
@@ -6740,7 +6822,7 @@
         {
           "name": "OWASP/CheatSheetSeries",
           "url": "https://github.com/OWASP/CheatSheetSeries",
-          "stars": 33406,
+          "stars": 33424,
           "language": "JavaScript",
           "description": "The OWASP Cheat Sheet Series was created to provide a concise collection of high value information on specific application security topics.",
           "tags": [
@@ -6756,7 +6838,7 @@
         {
           "name": "abhisheknaiidu/awesome-github-profile-readme",
           "url": "https://github.com/abhisheknaiidu/awesome-github-profile-readme",
-          "stars": 31244,
+          "stars": 31253,
           "language": null,
           "description": "😎 A curated list of awesome GitHub Profile which updates in real time",
           "tags": [
@@ -6772,7 +6854,7 @@
         {
           "name": "liquidslr/leetcode-company-wise-problems",
           "url": "https://github.com/liquidslr/leetcode-company-wise-problems",
-          "stars": 31003,
+          "stars": 31094,
           "language": null,
           "description": "Lists of company wise questions. Every csv file in the companies directory corresponds to a list of questions on leetcode for a specific company based on the leetcode company tags. Updated as of 20 June, 2025",
           "tags": [
@@ -6787,7 +6869,7 @@
         {
           "name": "carpedm20/awesome-hacking",
           "url": "https://github.com/carpedm20/awesome-hacking",
-          "stars": 17189,
+          "stars": 17200,
           "language": null,
           "description": "A curated list of awesome Hacking tutorials, tools and resources",
           "tags": [
@@ -6798,7 +6880,7 @@
         {
           "name": "sbilly/awesome-security",
           "url": "https://github.com/sbilly/awesome-security",
-          "stars": 14931,
+          "stars": 14944,
           "language": null,
           "description": "A collection of awesome software, libraries, documents, books, resources and cools stuffs about security.",
           "tags": [
@@ -6809,7 +6891,7 @@
         {
           "name": "iptv-org/awesome-iptv",
           "url": "https://github.com/iptv-org/awesome-iptv",
-          "stars": 12599,
+          "stars": 12612,
           "language": null,
           "description": "A curated list of resources related to IPTV",
           "tags": [
@@ -6822,7 +6904,7 @@
         {
           "name": "apsdehal/awesome-ctf",
           "url": "https://github.com/apsdehal/awesome-ctf",
-          "stars": 11885,
+          "stars": 11887,
           "language": "JavaScript",
           "description": "A curated list of CTF frameworks, libraries, resources and softwares",
           "tags": [
@@ -6835,7 +6917,7 @@
         {
           "name": "Kristories/awesome-guidelines",
           "url": "https://github.com/Kristories/awesome-guidelines",
-          "stars": 11150,
+          "stars": 11152,
           "language": "JavaScript",
           "description": "Programming style, best practices, and coding conventions.",
           "tags": [
@@ -6853,7 +6935,7 @@
         {
           "name": "onceupon/Bash-Oneliner",
           "url": "https://github.com/onceupon/Bash-Oneliner",
-          "stars": 10775,
+          "stars": 10777,
           "language": null,
           "description": "A collection of handy Bash One-Liners and terminal tricks for data processing and Linux system maintenance.",
           "tags": [
@@ -6877,7 +6959,7 @@
         {
           "name": "hslatman/awesome-threat-intelligence",
           "url": "https://github.com/hslatman/awesome-threat-intelligence",
-          "stars": 10696,
+          "stars": 10699,
           "language": null,
           "description": "A curated list of Awesome Threat Intelligence resources",
           "tags": [
@@ -6890,7 +6972,7 @@
         {
           "name": "paralax/awesome-honeypots",
           "url": "https://github.com/paralax/awesome-honeypots",
-          "stars": 10580,
+          "stars": 10583,
           "language": "Python",
           "description": "an awesome list of honeypot resources",
           "tags": [
@@ -6904,7 +6986,7 @@
         {
           "name": "ashishb/android-security-awesome",
           "url": "https://github.com/ashishb/android-security-awesome",
-          "stars": 9726,
+          "stars": 9729,
           "language": "Makefile",
           "description": "A collection of android security related resources",
           "tags": [
@@ -6918,7 +7000,7 @@
         {
           "name": "meirwah/awesome-incident-response",
           "url": "https://github.com/meirwah/awesome-incident-response",
-          "stars": 9431,
+          "stars": 9433,
           "language": null,
           "description": "A curated list of tools for incident response",
           "tags": [
@@ -6935,7 +7017,7 @@
         {
           "name": "humanloop/awesome-chatgpt",
           "url": "https://github.com/humanloop/awesome-chatgpt",
-          "stars": 8205,
+          "stars": 8203,
           "language": null,
           "description": "Curated list of awesome tools, demos, docs for ChatGPT and GPT-3",
           "tags": [
@@ -6948,7 +7030,7 @@
         {
           "name": "paragonie/awesome-appsec",
           "url": "https://github.com/paragonie/awesome-appsec",
-          "stars": 7078,
+          "stars": 7082,
           "language": "PHP",
           "description": "A curated list of resources for learning about application security",
           "tags": [
@@ -6963,7 +7045,7 @@
         {
           "name": "onlurking/awesome-infosec",
           "url": "https://github.com/onlurking/awesome-infosec",
-          "stars": 5756,
+          "stars": 5755,
           "language": null,
           "description": "A curated list of awesome infosec courses and training resources.",
           "tags": [
@@ -6980,7 +7062,7 @@
         {
           "name": "jixserver/free-for-dev",
           "url": "https://github.com/jixserver/free-for-dev",
-          "stars": 5458,
+          "stars": 5464,
           "language": null,
           "description": "A list of SaaS, PaaS and IaaS offerings that have free tiers of interest to devops and infradev",
           "tags": []
@@ -6996,7 +7078,7 @@
         {
           "name": "caesar0301/awesome-pcaptools",
           "url": "https://github.com/caesar0301/awesome-pcaptools",
-          "stars": 3428,
+          "stars": 3429,
           "language": null,
           "description": "A collection of tools developed by other researchers in the Computer Science area to process network traces. All the right reserved for the original authors.",
           "tags": []
@@ -7018,7 +7100,7 @@
         {
           "name": "OffcierCia/ultimate-defi-research-base",
           "url": "https://github.com/OffcierCia/ultimate-defi-research-base",
-          "stars": 2239,
+          "stars": 2238,
           "language": null,
           "description": "Here we collect and discuss the best DeFI & Blockchain researches and tools. Feel free to DM me on Twitter or open pool request.",
           "tags": [
@@ -7039,7 +7121,7 @@
         {
           "name": "hslatman/awesome-industrial-control-system-security",
           "url": "https://github.com/hslatman/awesome-industrial-control-system-security",
-          "stars": 2031,
+          "stars": 2033,
           "language": "Python",
           "description": "A curated list of resources related to Industrial Control System (ICS) security.",
           "tags": [
@@ -7054,7 +7136,7 @@
         {
           "name": "OffcierCia/Crypto-OpSec-SelfGuard-RoadMap",
           "url": "https://github.com/OffcierCia/Crypto-OpSec-SelfGuard-RoadMap",
-          "stars": 1876,
+          "stars": 1878,
           "language": null,
           "description": "Here we collect and discuss the best DeFi, Blockchain and crypto-related OpSec researches and data terminals - contributions are welcome.",
           "tags": [
@@ -7080,7 +7162,7 @@
         {
           "name": "jpantunes/awesome-cryptoeconomics",
           "url": "https://github.com/jpantunes/awesome-cryptoeconomics",
-          "stars": 1770,
+          "stars": 1769,
           "language": null,
           "description": "An awesome curated list of Cryptoeconomic research and learning materials",
           "tags": [
@@ -7097,7 +7179,7 @@
         {
           "name": "packing-box/awesome-executable-packing",
           "url": "https://github.com/packing-box/awesome-executable-packing",
-          "stars": 1624,
+          "stars": 1626,
           "language": null,
           "description": "A curated list of awesome resources related to executable packing",
           "tags": [
@@ -7120,7 +7202,7 @@
         {
           "name": "scadastrangelove/awesome-ai-security-tools",
           "url": "https://github.com/scadastrangelove/awesome-ai-security-tools",
-          "stars": 1577,
+          "stars": 1582,
           "language": "Python",
           "description": "A curated list of public-source, research, and commercial tools for AI security and AI-assisted cybersecurity — autotriage, agent security, AI/ML supply chain, pentest agents, AI SAST, LLM-driven fuzzing, threat intelligence, SOC/SIEM triage, reverse engineering, LLM red-teaming, and more.",
           "tags": [
@@ -7136,7 +7218,7 @@
         {
           "name": "theoephraim/awesome-cloudflare-selfhosted",
           "url": "https://github.com/theoephraim/awesome-cloudflare-selfhosted",
-          "stars": 1138,
+          "stars": 1141,
           "language": "JavaScript",
           "description": "🍊☁️ Open-source* apps that replace SaaS product + tools, running in your own Cloudflare account",
           "tags": [
@@ -7150,7 +7232,7 @@
         {
           "name": "timvisee/send-instances",
           "url": "https://github.com/timvisee/send-instances",
-          "stars": 1137,
+          "stars": 1138,
           "language": null,
           "description": "🌍 A list of public Send instances. Mirror.",
           "tags": [
@@ -7163,7 +7245,7 @@
         {
           "name": "GRC-Engineer/awesome-security-GRC",
           "url": "https://github.com/GRC-Engineer/awesome-security-GRC",
-          "stars": 1100,
+          "stars": 1101,
           "language": null,
           "description": "Curated list of resources for security Governance, Risk Management, Compliance and Audit professionals and enthusiasts (if they exist).",
           "tags": [
@@ -7220,7 +7302,7 @@
         {
           "name": "merill/awesome-entra",
           "url": "https://github.com/merill/awesome-entra",
-          "stars": 774,
+          "stars": 773,
           "language": null,
           "description": "😎 Awesome list of all things related to Microsoft Entra",
           "tags": [
@@ -7310,6 +7392,29 @@
           ]
         },
         {
+          "name": "substaker/awesome-substack",
+          "url": "https://github.com/substaker/awesome-substack",
+          "stars": 47,
+          "language": null,
+          "description": "A curated list of the best Substacks, resources, and tools for readers, writers, and creators on Substack.",
+          "tags": [
+            "awesome-list",
+            "awesome-substack",
+            "best-newsletters",
+            "newsletter",
+            "newsletters",
+            "podcast",
+            "podcasts",
+            "resources",
+            "substack",
+            "substack-aggregator",
+            "substack-api",
+            "substack-tool",
+            "substack-toolkit",
+            "substacks"
+          ]
+        },
+        {
           "name": "fg0x0/XSS-Cheat-Sheets-2020",
           "url": "https://github.com/fg0x0/XSS-Cheat-Sheets-2020",
           "stars": 6,
@@ -7326,7 +7431,7 @@
         {
           "name": "smicallef/spiderfoot",
           "url": "https://github.com/smicallef/spiderfoot",
-          "stars": 22747,
+          "stars": 22836,
           "language": "Python",
           "description": "SpiderFoot automates OSINT for threat intelligence and mapping your attack surface.",
           "tags": [
@@ -7354,7 +7459,7 @@
         {
           "name": "rshipp/awesome-malware-analysis",
           "url": "https://github.com/rshipp/awesome-malware-analysis",
-          "stars": 14241,
+          "stars": 14250,
           "language": null,
           "description": "Defund the Police.",
           "tags": [
@@ -7382,7 +7487,7 @@
         {
           "name": "ytisf/theZoo",
           "url": "https://github.com/ytisf/theZoo",
-          "stars": 13436,
+          "stars": 13440,
           "language": "Python",
           "description": "A repository of LIVE malwares for your own joy and pleasure. theZoo is a project created to make the possibility of malware analysis open and available to the public.",
           "tags": [
@@ -7397,7 +7502,7 @@
         {
           "name": "OpenCTI-Platform/opencti",
           "url": "https://github.com/OpenCTI-Platform/opencti",
-          "stars": 10087,
+          "stars": 10088,
           "language": "TypeScript",
           "description": "Open Cyber Threat Intelligence Platform",
           "tags": [
@@ -7413,7 +7518,7 @@
         {
           "name": "VirusTotal/yara",
           "url": "https://github.com/VirusTotal/yara",
-          "stars": 9908,
+          "stars": 9912,
           "language": "C",
           "description": "The pattern matching swiss knife",
           "tags": []
@@ -7421,7 +7526,7 @@
         {
           "name": "SwiftOnSecurity/sysmon-config",
           "url": "https://github.com/SwiftOnSecurity/sysmon-config",
-          "stars": 5670,
+          "stars": 5674,
           "language": null,
           "description": "Sysmon configuration file template with default high-quality event tracing",
           "tags": [
@@ -7438,7 +7543,7 @@
         {
           "name": "Yara-Rules/rules",
           "url": "https://github.com/Yara-Rules/rules",
-          "stars": 4907,
+          "stars": 4908,
           "language": "YARA",
           "description": "Repository of yara rules",
           "tags": []
@@ -7475,7 +7580,7 @@
         {
           "name": "pedramamini/awesome-yara",
           "url": "https://github.com/pedramamini/awesome-yara",
-          "stars": 4282,
+          "stars": 4283,
           "language": null,
           "description": "A curated list of awesome YARA rules, tools, and people.",
           "tags": [
@@ -7546,7 +7651,7 @@
         {
           "name": "Neo23x0/Loki",
           "url": "https://github.com/Neo23x0/Loki",
-          "stars": 3795,
+          "stars": 3796,
           "language": "Python",
           "description": "Loki - Simple IOC and YARA Scanner",
           "tags": [
@@ -7565,7 +7670,7 @@
         {
           "name": "kevoreilly/CAPEv2",
           "url": "https://github.com/kevoreilly/CAPEv2",
-          "stars": 3547,
+          "stars": 3551,
           "language": "Python",
           "description": "Malware Configuration And Payload Extraction",
           "tags": [
@@ -7583,7 +7688,7 @@
         {
           "name": "achillean/shodan-python",
           "url": "https://github.com/achillean/shodan-python",
-          "stars": 3235,
+          "stars": 3295,
           "language": "Python",
           "description": "The official Python library for Shodan",
           "tags": []
@@ -7591,7 +7696,7 @@
         {
           "name": "olafhartong/sysmon-modular",
           "url": "https://github.com/olafhartong/sysmon-modular",
-          "stars": 3145,
+          "stars": 3146,
           "language": "Go",
           "description": "A repository of sysmon configuration modules",
           "tags": [
@@ -7614,7 +7719,7 @@
         {
           "name": "microsoft/msticpy",
           "url": "https://github.com/microsoft/msticpy",
-          "stars": 2008,
+          "stars": 2009,
           "language": "Python",
           "description": "Microsoft Threat Intelligence Security Tools",
           "tags": []
@@ -7632,7 +7737,7 @@
         {
           "name": "hasherezade/tiny_tracer",
           "url": "https://github.com/hasherezade/tiny_tracer",
-          "stars": 1704,
+          "stars": 1703,
           "language": "C++",
           "description": "A Pin Tool for tracing API calls etc",
           "tags": [
@@ -7646,7 +7751,7 @@
         {
           "name": "mukul975/cve-mcp-server",
           "url": "https://github.com/mukul975/cve-mcp-server",
-          "stars": 1610,
+          "stars": 1613,
           "language": "Python",
           "description": "Production-grade MCP server giving Claude 27 security intelligence tools across 21 APIs — CVE lookup, EPSS scoring, CISA KEV, MITRE ATT&CK, Shodan, VirusTotal, and more.",
           "tags": [
@@ -7734,7 +7839,7 @@
         {
           "name": "CybercentreCanada/assemblyline",
           "url": "https://github.com/CybercentreCanada/assemblyline",
-          "stars": 548,
+          "stars": 549,
           "language": "Python",
           "description": "AssemblyLine 4: File triage and malware analysis",
           "tags": [
@@ -7991,7 +8096,7 @@
         {
           "name": "supabase/supabase",
           "url": "https://github.com/supabase/supabase",
-          "stars": 111051,
+          "stars": 111112,
           "language": "TypeScript",
           "description": "The Postgres development platform. Supabase gives you a dedicated Postgres database to build your web, mobile, and AI applications.",
           "tags": [
@@ -8019,7 +8124,7 @@
         {
           "name": "microsoft/terminal",
           "url": "https://github.com/microsoft/terminal",
-          "stars": 105066,
+          "stars": 105081,
           "language": "C++",
           "description": "The new Windows Terminal and the original Windows console host, all in the same place!",
           "tags": [
@@ -8039,7 +8144,7 @@
         {
           "name": "microsoft/playwright",
           "url": "https://github.com/microsoft/playwright",
-          "stars": 97056,
+          "stars": 97118,
           "language": "TypeScript",
           "description": "Playwright is a framework for Web Testing and Automation. It allows testing Chromium, Firefox and WebKit with a single API.",
           "tags": [
@@ -8063,7 +8168,7 @@
         {
           "name": "rtk-ai/rtk",
           "url": "https://github.com/rtk-ai/rtk",
-          "stars": 82305,
+          "stars": 82414,
           "language": "Rust",
           "description": "CLI proxy that reduces LLM token consumption by 60-90% on common dev commands. Single Rust binary, zero dependencies",
           "tags": [
@@ -8085,7 +8190,7 @@
         {
           "name": "alacritty/alacritty",
           "url": "https://github.com/alacritty/alacritty",
-          "stars": 65885,
+          "stars": 65891,
           "language": "Rust",
           "description": "A cross-platform, OpenGL terminal emulator.",
           "tags": [
@@ -8104,7 +8209,7 @@
         {
           "name": "scrapy/scrapy",
           "url": "https://github.com/scrapy/scrapy",
-          "stars": 64566,
+          "stars": 64588,
           "language": "Python",
           "description": "Scrapy, a fast high-level web crawling & scraping framework for Python.",
           "tags": [
@@ -8121,7 +8226,7 @@
         {
           "name": "pocketbase/pocketbase",
           "url": "https://github.com/pocketbase/pocketbase",
-          "stars": 61261,
+          "stars": 61278,
           "language": "Go",
           "description": "Open Source realtime backend in 1 file",
           "tags": [
@@ -8134,7 +8239,7 @@
         {
           "name": "wagoodman/dive",
           "url": "https://github.com/wagoodman/dive",
-          "stars": 54629,
+          "stars": 54630,
           "language": "Go",
           "description": "A tool for exploring each layer in a docker image",
           "tags": [
@@ -8149,7 +8254,7 @@
         {
           "name": "metabase/metabase",
           "url": "https://github.com/metabase/metabase",
-          "stars": 49531,
+          "stars": 49543,
           "language": "Clojure",
           "description": "The easy-to-use open source Business Intelligence and Embedded Analytics tool that lets everyone work with data :bar_chart:",
           "tags": [
@@ -8176,7 +8281,7 @@
         {
           "name": "siddharthvaddem/openscreen",
           "url": "https://github.com/siddharthvaddem/openscreen",
-          "stars": 39943,
+          "stars": 39941,
           "language": "TypeScript",
           "description": "Create stunning demos for free. Open-source, no subscriptions, no watermarks, and free for commercial use. An alternative to Screen Studio.",
           "tags": [
@@ -8190,7 +8295,7 @@
         {
           "name": "lightpanda-io/browser",
           "url": "https://github.com/lightpanda-io/browser",
-          "stars": 35926,
+          "stars": 36000,
           "language": "Zig",
           "description": "Lightpanda: the headless browser designed for AI and automation",
           "tags": [
@@ -8207,7 +8312,7 @@
         {
           "name": "FujiwaraChoki/MoneyPrinterV2",
           "url": "https://github.com/FujiwaraChoki/MoneyPrinterV2",
-          "stars": 32037,
+          "stars": 32039,
           "language": "Python",
           "description": "Automate the process of making money online.",
           "tags": [
@@ -8224,7 +8329,7 @@
         {
           "name": "Infisical/infisical",
           "url": "https://github.com/Infisical/infisical",
-          "stars": 29584,
+          "stars": 29613,
           "language": "TypeScript",
           "description": "Infisical is the open-source platform for secrets, certificates, and privileged access management.",
           "tags": [
@@ -8253,7 +8358,7 @@
         {
           "name": "wezterm/wezterm",
           "url": "https://github.com/wezterm/wezterm",
-          "stars": 29111,
+          "stars": 29125,
           "language": "Rust",
           "description": "A GPU-accelerated cross-platform terminal emulator and multiplexer written by @wez and implemented in Rust",
           "tags": [
@@ -8268,7 +8373,7 @@
         {
           "name": "hashicorp/vagrant",
           "url": "https://github.com/hashicorp/vagrant",
-          "stars": 27211,
+          "stars": 27212,
           "language": "Ruby",
           "description": "Vagrant is a tool for building and distributing development environments.",
           "tags": [
@@ -8281,7 +8386,7 @@
         {
           "name": "magic-wormhole/magic-wormhole",
           "url": "https://github.com/magic-wormhole/magic-wormhole",
-          "stars": 22974,
+          "stars": 22972,
           "language": "Python",
           "description": "get things from one computer to another, safely",
           "tags": []
@@ -8289,7 +8394,7 @@
         {
           "name": "gnachman/iTerm2",
           "url": "https://github.com/gnachman/iTerm2",
-          "stars": 18113,
+          "stars": 18121,
           "language": "Swift",
           "description": "iTerm2 is a terminal emulator for Mac OS X that does amazing things.",
           "tags": []
@@ -8297,7 +8402,7 @@
         {
           "name": "ahmedkhaleel2004/gitdiagram",
           "url": "https://github.com/ahmedkhaleel2004/gitdiagram",
-          "stars": 17784,
+          "stars": 17856,
           "language": "TypeScript",
           "description": "Visualize any GitHub codebase: free interactive architecture diagrams and one-minute explainer videos. Replace 'hub' with 'diagram' in any GitHub URL.",
           "tags": [
@@ -8322,7 +8427,7 @@
         {
           "name": "faker-js/faker",
           "url": "https://github.com/faker-js/faker",
-          "stars": 15508,
+          "stars": 15510,
           "language": "TypeScript",
           "description": "Generate massive amounts of fake data in the browser and node.js",
           "tags": [
@@ -8338,7 +8443,7 @@
         {
           "name": "microsoft/playwright-cli",
           "url": "https://github.com/microsoft/playwright-cli",
-          "stars": 13754,
+          "stars": 13800,
           "language": "JavaScript",
           "description": "CLI for common Playwright actions. Record and generate Playwright code, inspect selectors and take screenshots.",
           "tags": [
@@ -8365,7 +8470,7 @@
         {
           "name": "pinchtab/pinchtab",
           "url": "https://github.com/pinchtab/pinchtab",
-          "stars": 10331,
+          "stars": 10337,
           "language": "Go",
           "description": "High-performance browser automation bridge and multi-instance orchestrator with advanced stealth injection and real-time dashboard.",
           "tags": [
@@ -8381,7 +8486,7 @@
         {
           "name": "apache/jmeter",
           "url": "https://github.com/apache/jmeter",
-          "stars": 9550,
+          "stars": 9552,
           "language": "Java",
           "description": "Apache JMeter open-source load testing tool for analyzing and measuring the performance of a variety of services",
           "tags": [
@@ -8393,7 +8498,7 @@
         {
           "name": "artilleryio/artillery",
           "url": "https://github.com/artilleryio/artillery",
-          "stars": 9087,
+          "stars": 9088,
           "language": "TypeScript",
           "description": "The complete load testing platform. Everything you need for production-grade load tests. Serverless & distributed. Load test with Playwright. Load test HTTP APIs, GraphQL, WebSocket, and more. Use any Node.js module.",
           "tags": [
@@ -8422,7 +8527,7 @@
         {
           "name": "rorkai/App-Store-Connect-CLI",
           "url": "https://github.com/rorkai/App-Store-Connect-CLI",
-          "stars": 7642,
+          "stars": 7663,
           "language": "Go",
           "description": "Fast, scriptable CLI for the App Store Connect API. Automate TestFlight, builds, submissions, signing, analytics, screenshots, subscriptions, and more",
           "tags": [
@@ -8463,7 +8568,7 @@
         {
           "name": "win-acme/win-acme",
           "url": "https://github.com/win-acme/win-acme",
-          "stars": 5806,
+          "stars": 5807,
           "language": "C#",
           "description": "Automate SSL/TLS certificates on Windows with ease",
           "tags": [
@@ -8482,7 +8587,7 @@
         {
           "name": "Pagefind/pagefind",
           "url": "https://github.com/Pagefind/pagefind",
-          "stars": 5493,
+          "stars": 5497,
           "language": "Rust",
           "description": "Static low-bandwidth search at scale",
           "tags": []
@@ -8490,7 +8595,7 @@
         {
           "name": "niespodd/browser-fingerprinting",
           "url": "https://github.com/niespodd/browser-fingerprinting",
-          "stars": 5146,
+          "stars": 5147,
           "language": "JavaScript",
           "description": "Analysis of Bot Protection systems with available countermeasures 🚿. How to defeat anti-bot system 👻 and get around browser fingerprinting scripts 🕵️‍♂️ when scraping the web?",
           "tags": [
@@ -8525,7 +8630,7 @@
         {
           "name": "pester/Pester",
           "url": "https://github.com/pester/Pester",
-          "stars": 3352,
+          "stars": 3353,
           "language": "PowerShell",
           "description": "Pester is the ubiquitous test and mock framework for PowerShell.",
           "tags": [
@@ -8545,7 +8650,7 @@
         {
           "name": "rdegges/ipify-api",
           "url": "https://github.com/rdegges/ipify-api",
-          "stars": 1998,
+          "stars": 1999,
           "language": "Go",
           "description": "A public IP API service.",
           "tags": []
@@ -8597,7 +8702,7 @@
         {
           "name": "AnswerDotAI/fastsetup",
           "url": "https://github.com/AnswerDotAI/fastsetup",
-          "stars": 482,
+          "stars": 483,
           "language": "Shell",
           "description": "Setup all the things",
           "tags": []
@@ -8627,7 +8732,7 @@
         {
           "name": "mvt-project/mvt",
           "url": "https://github.com/mvt-project/mvt",
-          "stars": 15183,
+          "stars": 15221,
           "language": "Python",
           "description": "MVT (Mobile Verification Toolkit) helps with conducting forensics of mobile devices in order to find signs of a potential compromise.",
           "tags": [
@@ -8642,7 +8747,7 @@
         {
           "name": "volatilityfoundation/volatility",
           "url": "https://github.com/volatilityfoundation/volatility",
-          "stars": 8059,
+          "stars": 8058,
           "language": "Python",
           "description": "An advanced memory forensics framework",
           "tags": [
@@ -8671,7 +8776,7 @@
         {
           "name": "volatilityfoundation/volatility3",
           "url": "https://github.com/volatilityfoundation/volatility3",
-          "stars": 4456,
+          "stars": 4459,
           "language": "Python",
           "description": "Volatility 3.0 development",
           "tags": [
@@ -8689,7 +8794,7 @@
         {
           "name": "log2timeline/plaso",
           "url": "https://github.com/log2timeline/plaso",
-          "stars": 2167,
+          "stars": 2168,
           "language": "Python",
           "description": "Super timeline all the things",
           "tags": [
@@ -8726,7 +8831,7 @@
         {
           "name": "tclahr/uac",
           "url": "https://github.com/tclahr/uac",
-          "stars": 1474,
+          "stars": 1477,
           "language": "Shell",
           "description": "UAC is a powerful and extensible incident response tool designed for forensic investigators, security analysts, and IT professionals. It automates the collection of artifacts from a wide range of Unix-like systems, including AIX, ESXi, FreeBSD, Linux, macOS, NetBSD, NetScaler, OpenBSD and Solaris.",
           "tags": [
@@ -8763,7 +8868,7 @@
         {
           "name": "emalderson/ThePhish",
           "url": "https://github.com/emalderson/ThePhish",
-          "stars": 1371,
+          "stars": 1372,
           "language": "Python",
           "description": "ThePhish: an automated phishing email analysis tool",
           "tags": [
@@ -8792,7 +8897,7 @@
         {
           "name": "microsoft/avml",
           "url": "https://github.com/microsoft/avml",
-          "stars": 1123,
+          "stars": 1122,
           "language": "Rust",
           "description": "AVML - Acquire Volatile Memory for Linux",
           "tags": [
@@ -8812,7 +8917,7 @@
         {
           "name": "keydet89/RegRipper3.0",
           "url": "https://github.com/keydet89/RegRipper3.0",
-          "stars": 721,
+          "stars": 722,
           "language": "Perl",
           "description": "RegRipper3.0",
           "tags": []
@@ -8857,7 +8962,7 @@
         {
           "name": "ANSSI-FR/ADTimeline",
           "url": "https://github.com/ANSSI-FR/ADTimeline",
-          "stars": 533,
+          "stars": 534,
           "language": "PowerShell",
           "description": "Timeline of Active Directory changes with replication metadata",
           "tags": [
@@ -9031,7 +9136,7 @@
         {
           "name": "shadcn-ui/ui",
           "url": "https://github.com/shadcn-ui/ui",
-          "stars": 125053,
+          "stars": 125136,
           "language": "TypeScript",
           "description": "Composable, accessible components with thoughtful defaults. Build your own component library with code you can customize, extend, and make your own.",
           "tags": [
@@ -9053,7 +9158,7 @@
         {
           "name": "florinpop17/app-ideas",
           "url": "https://github.com/florinpop17/app-ideas",
-          "stars": 97926,
+          "stars": 97947,
           "language": null,
           "description": "A Collection of application ideas which can be used to improve your coding skills.",
           "tags": [
@@ -9071,7 +9176,7 @@
         {
           "name": "realworld-apps/realworld",
           "url": "https://github.com/realworld-apps/realworld",
-          "stars": 84252,
+          "stars": 84258,
           "language": "TypeScript",
           "description": "\"The mother of all demo apps\" — Exemplary fullstack Medium.com clone powered by React, Angular, Node, Django, and many more",
           "tags": []
@@ -9093,7 +9198,7 @@
         {
           "name": "calcom/cal.diy",
           "url": "https://github.com/calcom/cal.diy",
-          "stars": 48841,
+          "stars": 48869,
           "language": "TypeScript",
           "description": "Scheduling infrastructure for absolutely everyone.",
           "tags": [
@@ -9113,7 +9218,7 @@
         {
           "name": "reactive-resume/reactive-resume",
           "url": "https://github.com/reactive-resume/reactive-resume",
-          "stars": 43725,
+          "stars": 43810,
           "language": "TypeScript",
           "description": "A one-of-a-kind resume builder that keeps your privacy in mind. Completely secure, customizable, portable, open-source and free forever. Try it out today!",
           "tags": [
@@ -9132,7 +9237,7 @@
         {
           "name": "PostHog/posthog",
           "url": "https://github.com/PostHog/posthog",
-          "stars": 40122,
+          "stars": 40145,
           "language": "Python",
           "description": ":hedgehog: PostHog is the leading platform for building self-driving products. Our developer tools – AI observability, analytics, session replay, flags, experiments, error tracking, logs, and more – capture all the context agents need to diagnose problems, uncover opportunities, and ship fixes. Steer it all from Slack, web, desktop, or the MCP.",
           "tags": [
@@ -9156,7 +9261,7 @@
         {
           "name": "medusajs/medusa",
           "url": "https://github.com/medusajs/medusa",
-          "stars": 36575,
+          "stars": 36599,
           "language": "TypeScript",
           "description": "The world's most flexible commerce platform for agents and developers",
           "tags": [
@@ -9176,7 +9281,7 @@
         {
           "name": "badges/shields",
           "url": "https://github.com/badges/shields",
-          "stars": 27236,
+          "stars": 27241,
           "language": "JavaScript",
           "description": "Concise, consistent, and legible badges in SVG and raster format",
           "tags": [
@@ -9192,7 +9297,7 @@
         {
           "name": "zulip/zulip",
           "url": "https://github.com/zulip/zulip",
-          "stars": 25986,
+          "stars": 25995,
           "language": "Python",
           "description": "Zulip server and web application. Open-source team chat that helps teams stay productive and focused.",
           "tags": [
@@ -9213,7 +9318,7 @@
         {
           "name": "simple-icons/simple-icons",
           "url": "https://github.com/simple-icons/simple-icons",
-          "stars": 25955,
+          "stars": 25965,
           "language": "JavaScript",
           "description": "SVG icons for popular brands",
           "tags": [
@@ -9241,7 +9346,7 @@
         {
           "name": "rahuldkjain/github-profile-readme-generator",
           "url": "https://github.com/rahuldkjain/github-profile-readme-generator",
-          "stars": 24447,
+          "stars": 24449,
           "language": "TypeScript",
           "description": "🚀 Generate GitHub profile README easily with the latest add-ons like visitors count, GitHub stats, etc using minimal UI.",
           "tags": [
@@ -9257,7 +9362,7 @@
         {
           "name": "CapSoftware/Cap",
           "url": "https://github.com/CapSoftware/Cap",
-          "stars": 23017,
+          "stars": 23056,
           "language": "Rust",
           "description": "Open source Loom alternative. Beautiful, shareable screen recordings.",
           "tags": [
@@ -9286,7 +9391,7 @@
         {
           "name": "tandpfun/skill-icons",
           "url": "https://github.com/tandpfun/skill-icons",
-          "stars": 13210,
+          "stars": 13216,
           "language": "SVG",
           "description": "Showcase your skills on your Github readme or resumé with ease ✨",
           "tags": [
@@ -9299,7 +9404,7 @@
         {
           "name": "openreplay/openreplay",
           "url": "https://github.com/openreplay/openreplay",
-          "stars": 12936,
+          "stars": 12938,
           "language": "TypeScript",
           "description": "Session replay, cobrowsing and product analytics you can self-host. Best for reproducing issues and iterating on your product.",
           "tags": [
@@ -9324,7 +9429,7 @@
         {
           "name": "papermark/papermark",
           "url": "https://github.com/papermark/papermark",
-          "stars": 9235,
+          "stars": 9236,
           "language": "TypeScript",
           "description": "Papermark is the open-source DocSend alternative  and secure data rooms with built-in analytics and custom domains.",
           "tags": [
@@ -9385,7 +9490,7 @@
         {
           "name": "MengTo/threeui",
           "url": "https://github.com/MengTo/threeui",
-          "stars": 6408,
+          "stars": 6443,
           "language": "HTML",
           "description": "Open-source ThreeUI Community catalog with live interactive components and complete Community source.",
           "tags": [
@@ -9417,7 +9522,7 @@
         {
           "name": "Codehagen/Badget",
           "url": "https://github.com/Codehagen/Badget",
-          "stars": 2778,
+          "stars": 2777,
           "language": "TypeScript",
           "description": "Badget aims to simplify financial management with a user-friendly interface and robust backend",
           "tags": [
@@ -9434,7 +9539,7 @@
         {
           "name": "kyechan99/capsule-render",
           "url": "https://github.com/kyechan99/capsule-render",
-          "stars": 1838,
+          "stars": 1839,
           "language": "TypeScript",
           "description": "🌈 Dynamic Coloful Image Render",
           "tags": [
@@ -9486,7 +9591,7 @@
         {
           "name": "shadcn-labs/emailcn",
           "url": "https://github.com/shadcn-labs/emailcn",
-          "stars": 314,
+          "stars": 321,
           "language": "TypeScript",
           "description": "Beautiful email components, built on React Email, MJML React and JSX Email. 100% Free, Zero config, one command setup.",
           "tags": [
@@ -9508,7 +9613,7 @@
         {
           "name": "sherlock-project/sherlock",
           "url": "https://github.com/sherlock-project/sherlock",
-          "stars": 93188,
+          "stars": 93260,
           "language": "Python",
           "description": "Hunt down social media accounts by username across social networks",
           "tags": [
@@ -9533,7 +9638,7 @@
         {
           "name": "soxoj/maigret",
           "url": "https://github.com/soxoj/maigret",
-          "stars": 38223,
+          "stars": 38324,
           "language": "Python",
           "description": "🕵️‍♂️ Collect a dossier on a person by username from 6K websites",
           "tags": [
@@ -9562,7 +9667,7 @@
         {
           "name": "laramies/theHarvester",
           "url": "https://github.com/laramies/theHarvester",
-          "stars": 17770,
+          "stars": 17844,
           "language": "Python",
           "description": "E-mails, subdomains and names Harvester - OSINT",
           "tags": [
@@ -9581,7 +9686,7 @@
         {
           "name": "HunxByts/GhostTrack",
           "url": "https://github.com/HunxByts/GhostTrack",
-          "stars": 16819,
+          "stars": 17098,
           "language": "Python",
           "description": "Useful tool to track location or mobile number",
           "tags": [
@@ -9609,7 +9714,7 @@
         {
           "name": "simplifaisoul/osiris",
           "url": "https://github.com/simplifaisoul/osiris",
-          "stars": 10420,
+          "stars": 10476,
           "language": "TypeScript",
           "description": "Open Source Global Intelligence Platform - Real-Time OSINT Dashboard - A Palantir Alternative -                            2nZNHm3Lr9umG3DVrzYwHgktwkuKuJRXqqRqs3ewpump",
           "tags": []
@@ -9617,7 +9722,7 @@
         {
           "name": "reconurge/flowsint",
           "url": "https://github.com/reconurge/flowsint",
-          "stars": 9106,
+          "stars": 9166,
           "language": "TypeScript",
           "description": "A modern platform for visual, flexible, and extensible graph-based investigations. For cybersecurity analysts and investigators.",
           "tags": [
@@ -9630,7 +9735,7 @@
         {
           "name": "antoniaci/blackbird",
           "url": "https://github.com/antoniaci/blackbird",
-          "stars": 8827,
+          "stars": 8942,
           "language": "Python",
           "description": "An OSINT tool to search for accounts by username and email in social networks.",
           "tags": [
@@ -9643,7 +9748,7 @@
         {
           "name": "apurvsinghgautam/robin",
           "url": "https://github.com/apurvsinghgautam/robin",
-          "stars": 7408,
+          "stars": 7423,
           "language": "Python",
           "description": "AI-Powered Dark Web OSINT Tool",
           "tags": [
@@ -9659,7 +9764,7 @@
         {
           "name": "lanmaster53/recon-ng",
           "url": "https://github.com/lanmaster53/recon-ng",
-          "stars": 5955,
+          "stars": 5968,
           "language": "Python",
           "description": "Open Source Intelligence gathering tool aimed at reducing the time spent harvesting information from open sources.",
           "tags": [
@@ -9669,7 +9774,7 @@
         {
           "name": "EFForg/rayhunter",
           "url": "https://github.com/EFForg/rayhunter",
-          "stars": 5916,
+          "stars": 5919,
           "language": "Rust",
           "description": "Rust tool to detect cell site simulators on an orbic mobile hotspot",
           "tags": []
@@ -9690,7 +9795,7 @@
         {
           "name": "arxhr007/Aliens_eye",
           "url": "https://github.com/arxhr007/Aliens_eye",
-          "stars": 4234,
+          "stars": 4252,
           "language": "Python",
           "description": "Hunt down 840+ social media accounts using AI",
           "tags": [
@@ -9726,7 +9831,7 @@
         {
           "name": "AdguardTeam/AdGuardDNS",
           "url": "https://github.com/AdguardTeam/AdGuardDNS",
-          "stars": 961,
+          "stars": 962,
           "language": "Go",
           "description": "Public DNS resolver that protects you from ad trackers",
           "tags": [
@@ -9745,7 +9850,7 @@
         {
           "name": "elm1nst3r/GHOST-osint-crm",
           "url": "https://github.com/elm1nst3r/GHOST-osint-crm",
-          "stars": 897,
+          "stars": 901,
           "language": "JavaScript",
           "description": "GHOST - Global Human Operations & Surveillance Tracking:  Open-source investigation management platform for tracking people, connections, and intelligence data. Because Excel spreadsheets are for accountants, not investigators. Non-commercial license.",
           "tags": [
@@ -9757,7 +9862,7 @@
         {
           "name": "GrapheneOS/grapheneos.org",
           "url": "https://github.com/GrapheneOS/grapheneos.org",
-          "stars": 759,
+          "stars": 762,
           "language": "HTML",
           "description": "Servers for our website, HTTP/HTTPS connectivity checks, HTTPS network time, NTP (for Qualcomm XTRA), Broadcom PSDS cache, Samsung PSDS cache, Qualcomm PSDS (XTRA) cache, SUPL proxy, attestation key provisioning proxy, Vanadium component update check/download proxy, network location proxy and geocoding proxy. Also app and OS updates via an include.",
           "tags": [
@@ -9843,7 +9948,7 @@
         {
           "name": "TauricResearch/TradingAgents",
           "url": "https://github.com/TauricResearch/TradingAgents",
-          "stars": 109619,
+          "stars": 109828,
           "language": "Python",
           "description": "TradingAgents: Multi-Agents LLM Financial Trading Framework",
           "tags": [
@@ -9857,7 +9962,7 @@
         {
           "name": "virattt/ai-hedge-fund",
           "url": "https://github.com/virattt/ai-hedge-fund",
-          "stars": 63842,
+          "stars": 63851,
           "language": "Python",
           "description": "An AI Hedge Fund Team",
           "tags": []
@@ -9865,7 +9970,7 @@
         {
           "name": "maybe-finance/maybe",
           "url": "https://github.com/maybe-finance/maybe",
-          "stars": 54248,
+          "stars": 54243,
           "language": "Ruby",
           "description": "The personal finance app for everyone",
           "tags": [
@@ -9882,7 +9987,7 @@
         {
           "name": "Fincept-Corporation/FinceptTerminal",
           "url": "https://github.com/Fincept-Corporation/FinceptTerminal",
-          "stars": 32158,
+          "stars": 32197,
           "language": "C++",
           "description": "FinceptTerminal is a modern finance application offering advanced market analytics, investment research, and economic data tools, designed for interactive exploration and data-driven decision-making in a user-friendly environment.",
           "tags": [
@@ -9908,7 +10013,7 @@
         {
           "name": "vas3k/TaxHacker",
           "url": "https://github.com/vas3k/TaxHacker",
-          "stars": 6729,
+          "stars": 6731,
           "language": "TypeScript",
           "description": "Self-hosted AI accounting app. LLM analyzer for receipts, invoices, transactions with custom prompts and categories",
           "tags": [
@@ -9929,7 +10034,7 @@
         {
           "name": "The-Swarm-Corporation/AutoHedge",
           "url": "https://github.com/The-Swarm-Corporation/AutoHedge",
-          "stars": 6227,
+          "stars": 6235,
           "language": "Python",
           "description": "Build your autonomous hedge fund in minutes. AutoHedge harnesses the power of swarm intelligence and AI agents to automate market analysis, risk management, and trade execution.",
           "tags": [
@@ -10016,7 +10121,7 @@
         {
           "name": "iptv-org/iptv",
           "url": "https://github.com/iptv-org/iptv",
-          "stars": 140219,
+          "stars": 140342,
           "language": "TypeScript",
           "description": "Collection of publicly available IPTV channels from all over the world",
           "tags": [
@@ -10030,7 +10135,7 @@
         {
           "name": "harry0703/MoneyPrinterTurbo",
           "url": "https://github.com/harry0703/MoneyPrinterTurbo",
-          "stars": 128238,
+          "stars": 128552,
           "language": "Python",
           "description": "利用 AI 大模型和自动化工作流，根据主题或关键词一键生成高清短视频。Generate HD short videos from a topic or keyword with an automated AI workflow.",
           "tags": [
@@ -10053,7 +10158,7 @@
         {
           "name": "OpenBMB/VoxCPM",
           "url": "https://github.com/OpenBMB/VoxCPM",
-          "stars": 38287,
+          "stars": 38323,
           "language": "Python",
           "description": "VoxCPM2: Tokenizer-Free TTS for Multilingual Speech Generation, Creative Voice Design, and True-to-Life Cloning",
           "tags": [
@@ -10076,7 +10181,7 @@
         {
           "name": "Anil-matcha/Open-Generative-AI",
           "url": "https://github.com/Anil-matcha/Open-Generative-AI",
-          "stars": 29578,
+          "stars": 29649,
           "language": "JavaScript",
           "description": "Unrestricted Open-source alternative to AI video platforms — Free AI image & video generation studio with 600+ models (Flux, Midjourney, Kling, Sora, Veo). No content filters. Self-hosted, MIT licensed.",
           "tags": [
@@ -10105,7 +10210,7 @@
         {
           "name": "Free-TV/IPTV",
           "url": "https://github.com/Free-TV/IPTV",
-          "stars": 20903,
+          "stars": 20934,
           "language": "Python",
           "description": "M3U Playlist for free TV channels",
           "tags": [
@@ -10116,7 +10221,7 @@
         {
           "name": "meituan-longcat/LongCat-Video",
           "url": "https://github.com/meituan-longcat/LongCat-Video",
-          "stars": 8702,
+          "stars": 8957,
           "language": "Python",
           "description": null,
           "tags": []
@@ -10171,7 +10276,7 @@
         {
           "name": "kleampa/not-paid",
           "url": "https://github.com/kleampa/not-paid",
-          "stars": 15700,
+          "stars": 15699,
           "language": "JavaScript",
           "description": "Client did not pay? Add opacity to the body tag and decrease it every day until their site completely fades away",
           "tags": []
@@ -10179,7 +10284,7 @@
         {
           "name": "satnaing/shadcn-admin",
           "url": "https://github.com/satnaing/shadcn-admin",
-          "stars": 15555,
+          "stars": 15586,
           "language": "TypeScript",
           "description": "Admin Dashboard UI built with Shadcn and Vite.",
           "tags": [
@@ -10193,7 +10298,7 @@
         {
           "name": "donlon/cloudflare-error-page",
           "url": "https://github.com/donlon/cloudflare-error-page",
-          "stars": 5741,
+          "stars": 5756,
           "language": "HTML",
           "description": "✅Browser ❌Cloudflare ✅Host — Generator for customized Cloudflare error pages. (unofficial)",
           "tags": []
@@ -10267,7 +10372,7 @@
         {
           "name": "duo-labs/cloudmapper",
           "url": "https://github.com/duo-labs/cloudmapper",
-          "stars": 6289,
+          "stars": 6288,
           "language": "JavaScript",
           "description": "CloudMapper helps you analyze your Amazon Web Services (AWS) environments.",
           "tags": [
@@ -10280,7 +10385,7 @@
         {
           "name": "madhuakula/kubernetes-goat",
           "url": "https://github.com/madhuakula/kubernetes-goat",
-          "stars": 5885,
+          "stars": 5895,
           "language": "HTML",
           "description": "Kubernetes Goat is a \"Vulnerable by Design\" cluster environment to learn and practice Kubernetes security using an interactive hands-on playground 🚀",
           "tags": [
@@ -10318,7 +10423,7 @@
         {
           "name": "DataDog/stratus-red-team",
           "url": "https://github.com/DataDog/stratus-red-team",
-          "stars": 2417,
+          "stars": 2419,
           "language": "Go",
           "description": ":cloud: :zap: Granular, Actionable Adversary Emulation for the Cloud",
           "tags": [
@@ -10381,7 +10486,7 @@
         {
           "name": "massgravel/Microsoft-Activation-Scripts",
           "url": "https://github.com/massgravel/Microsoft-Activation-Scripts",
-          "stars": 193164,
+          "stars": 193412,
           "language": "Batchfile",
           "description": "Open-source Windows and Office activator featuring HWID, Ohook, TSforge, and Online KMS activation methods, along with advanced troubleshooting.",
           "tags": [
@@ -10406,7 +10511,7 @@
         {
           "name": "Raphire/Win11Debloat",
           "url": "https://github.com/Raphire/Win11Debloat",
-          "stars": 57883,
+          "stars": 57973,
           "language": "PowerShell",
           "description": "A simple, lightweight PowerShell script that allows you to remove pre-installed apps, disable telemetry, as well as perform various other changes to declutter and customize your Windows experience. Win11Debloat works for both Windows 10 and Windows 11.",
           "tags": [
@@ -10435,7 +10540,7 @@
         {
           "name": "eythaann/Seelen-UI",
           "url": "https://github.com/eythaann/Seelen-UI",
-          "stars": 17940,
+          "stars": 17951,
           "language": "Rust",
           "description": "The Fully Customizable Desktop Environment for Windows 10/11.",
           "tags": [
@@ -10463,7 +10568,7 @@
         {
           "name": "phw/peek",
           "url": "https://github.com/phw/peek",
-          "stars": 10552,
+          "stars": 10551,
           "language": "Vala",
           "description": "Simple animated GIF screen recorder with an easy to use interface",
           "tags": [
@@ -10482,7 +10587,7 @@
         {
           "name": "undergroundwires/privacy.sexy",
           "url": "https://github.com/undergroundwires/privacy.sexy",
-          "stars": 6080,
+          "stars": 6079,
           "language": "TypeScript",
           "description": "Open-source tool to enforce privacy & security best-practices on Windows, macOS and Linux, because privacy is sexy",
           "tags": [
@@ -10511,7 +10616,7 @@
         {
           "name": "microsoft/azurelinux",
           "url": "https://github.com/microsoft/azurelinux",
-          "stars": 5345,
+          "stars": 5348,
           "language": "Python",
           "description": "General purpose Linux OS for Azure",
           "tags": []
@@ -10519,7 +10624,7 @@
         {
           "name": "flectar/mail",
           "url": "https://github.com/flectar/mail",
-          "stars": 1217,
+          "stars": 1236,
           "language": "Rust",
           "description": "Built from the ground up for speed. Flectar Mail delivers native performance, instant startup, and as little as 20 MB of RAM.",
           "tags": [
@@ -10554,7 +10659,7 @@
         {
           "name": "microsoft/markitdown",
           "url": "https://github.com/microsoft/markitdown",
-          "stars": 188192,
+          "stars": 188556,
           "language": "Python",
           "description": "Python tool for converting files and office documents to Markdown.",
           "tags": [
@@ -10570,7 +10675,7 @@
         {
           "name": "freedomofpress/dangerzone",
           "url": "https://github.com/freedomofpress/dangerzone",
-          "stars": 5776,
+          "stars": 5779,
           "language": "Python",
           "description": "Take potentially dangerous PDFs, office documents, or images and convert them to safe PDFs",
           "tags": []
