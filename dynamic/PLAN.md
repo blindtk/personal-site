@@ -398,11 +398,15 @@
     browser reveals locally (screen, timezone, cores, theme) in the
     other. `GET /api/mirror` endpoint **with no visitor input** (not a
     proxy), **with no state writes at all** (only rate limiting touches
-    KV), and that **never returns the IP** (visible to the Worker, but
-    never echoed or stored). Pure logic in
-    `dynamic/worker/src/lib/mirror.js` (`serverView`), tested — including
-    a hard guarantee that the IP never appears in the body. Rate limit
-    30/min per client; per-request response (`no-store`).
+    KV). It **returns the visitor's own IP to the visitor only** (a
+    "what is my IP"; owner decision 2026-10-05, ADR 0023 — it was withheld
+    until then), validated fail-closed (`normalizeIp`) and **never stored
+    or logged**; the page keeps it hidden until the visitor clicks "show",
+    so it doesn't leak into a screenshot or screen share. Pure logic in
+    `dynamic/worker/src/lib/mirror.js` (`serverView`, `normalizeIp`),
+    tested — including that nothing in KV ever contains the IP. Rate limit
+    30/min per client; per-request response (`no-store`, so no shared
+    cache can serve one visitor's IP to another).
 
   - **Passkey Lab** (`/ferramentas/passkeys/`, **100% client-side**) —
     *removed 2026-10-02 with the encoder and the password generator, at the

@@ -2531,6 +2531,7 @@ main > section > p:not([class]), main > p:not([class]) {
 /* --muted e não --faint: é um valor real (ex. IP não mostrado), não
    decoração — de-ênfase é do design, não deve ser ilegibilidade. */
 .mirror-kv .v.dim { color: var(--muted); }
+.mirror-kv .mirror-ip-toggle { margin-left: 0.6rem; vertical-align: middle; }
 
 .mirror-foot {
   margin-top: 0.9rem;

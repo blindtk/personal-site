@@ -64,6 +64,34 @@ const jsStrings = s;
     container.append(div);
   }
 
+  // Linha do IP: escondido por omissão, para não ir parar a uma captura de
+  // ecrã ou partilha de ecrã sem o visitante dar por isso. Nunca sai daqui.
+  function ipRow(ip: string | null, version: number | null) {
+    if (!ip) {
+      row(serverEl, S.sIp, S.none, 'dim');
+      return;
+    }
+    const shown = `${ip} (IPv${version})${S.ipNote}`;
+    row(serverEl, S.sIp, S.ipHidden, 'dim');
+    const v = serverEl.lastElementChild!.querySelector('.v') as HTMLElement;
+    const text = document.createElement('span');
+    text.textContent = S.ipHidden;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn ghost small mirror-ip-toggle';
+    btn.textContent = S.ipShow;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.addEventListener('click', () => {
+      const show = btn.getAttribute('aria-pressed') !== 'true';
+      btn.setAttribute('aria-pressed', String(show));
+      btn.textContent = show ? S.ipHide : S.ipShow;
+      text.textContent = show ? shown : S.ipHidden;
+      v.classList.toggle('hl', show);
+      v.classList.toggle('dim', !show);
+    });
+    v.replaceChildren(text, btn);
+  }
+
   // ---- painel local: lido no browser, nunca enviado ----
   function renderLocal() {
     const dpr = window.devicePixelRatio || 1;
@@ -106,7 +134,7 @@ const jsStrings = s;
     const geo = `${d.country}${d.asn ? ` · AS${d.asn}${org}` : ''}`;
     row(serverEl, S.sGeo, geo);
     if (d.colo) row(serverEl, S.sColo, d.colo);
-    row(serverEl, S.sIp, S.ipValue, 'dim');
+    ipRow(d.ip, d.ipVersion);
     if (d.userAgent) row(serverEl, S.sUa, d.userAgent);
     if (d.acceptLanguage) row(serverEl, S.sLang, d.acceptLanguage + S.langNote, 'warn');
     if (d.acceptEncoding) row(serverEl, S.sEncoding, d.acceptEncoding);
