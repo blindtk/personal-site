@@ -64,23 +64,27 @@
     // programática de que o @astrojs/check/@astrojs/language-server dependem
     // (erro "does not expose the programmatic API that `astro check` relies
     // on"). Major bump prematuro por dependência upstream — ver PR #159 e
-    // https://github.com/withastro/roadmap/discussions/1321. Reativar quando
-    // o @astrojs/check seguir o TS7.
+    // https://github.com/withastro/roadmap/discussions/1321. Em vez de
+    // desativar, fica a aguardar aprovação no Dependency Dashboard (issue do
+    // Renovate): não abre PR, mas o major continua visível lá. Quando o
+    // @astrojs/check seguir o TS7, marcar a checkbox para criar o PR.
     {
       matchPackageNames: ['typescript'],
       matchUpdateTypes: ['major'],
-      enabled: false,
+      dependencyDashboardApproval: true,
     },
     // @jazzer.js/core 4.x: os prebuilds nativos são compilados contra glibc
     // 2.38 e a imagem do run_fuzzers (Ubuntu 20.04) só tem a 2.31 — o harness
     // não arranca ("GLIBC_2.32 not found"). O .clusterfuzzlite/build.sh fixa
     // o prebuild do v2.1.0 por URL + SHA-256, que o Renovate não atualiza.
-    // Ver PR #206. Reativar quando a imagem tiver glibc >= 2.38 (e atualizar
-    // o prebuild no build.sh e o CONTRIBUTING.md).
+    // Ver PR #206. Fica a aguardar aprovação no Dependency Dashboard (não
+    // abre PR, mas o major continua visível lá). Quando a imagem tiver
+    // glibc >= 2.38, atualizar o prebuild no build.sh e o CONTRIBUTING.md e
+    // só então marcar a checkbox.
     {
       matchPackageNames: ['@jazzer.js/core'],
       matchUpdateTypes: ['major'],
-      enabled: false,
+      dependencyDashboardApproval: true,
     },
   ],
   // O manager pre-commit vem desligado por omissão — ligá-lo para seguir o
