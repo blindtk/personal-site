@@ -109,6 +109,18 @@
       extractVersionTemplate: '^v(?<version>.*)$',
     },
     {
+      // Imagem do testssl.sh usada num `docker run` dentro de um `run:` em
+      // verify-tls.yml — nenhum manager nativo (nem o dockerfile) a vê.
+      // Tag + digest na mesma linha; o Renovate atualiza os dois.
+      customType: 'regex',
+      description: 'testssl.sh image (tag + digest) in verify-tls.yml',
+      managerFilePatterns: ['/^\\.github/workflows/verify-tls\\.yml$/'],
+      matchStrings: [
+        '(?<depName>drwetter/testssl\\.sh):(?<currentValue>[0-9][^@\\s]*)@(?<currentDigest>sha256:[a-f0-9]{64})',
+      ],
+      datasourceTemplate: 'docker',
+    },
+    {
       customType: 'regex',
       managerFilePatterns: ['/^\\.github/workflows/[^/]+\\.ya?ml$/'],
       matchStrings: ['pipx install (?<depName>[a-z0-9._-]+)==(?<currentValue>\\S+)'],
