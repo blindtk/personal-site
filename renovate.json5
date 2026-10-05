@@ -71,6 +71,17 @@
       matchUpdateTypes: ['major'],
       enabled: false,
     },
+    // @jazzer.js/core 4.x: os prebuilds nativos são compilados contra glibc
+    // 2.38 e a imagem do run_fuzzers (Ubuntu 20.04) só tem a 2.31 — o harness
+    // não arranca ("GLIBC_2.32 not found"). O .clusterfuzzlite/build.sh fixa
+    // o prebuild do v2.1.0 por URL + SHA-256, que o Renovate não atualiza.
+    // Ver PR #206. Reativar quando a imagem tiver glibc >= 2.38 (e atualizar
+    // o prebuild no build.sh e o CONTRIBUTING.md).
+    {
+      matchPackageNames: ['@jazzer.js/core'],
+      matchUpdateTypes: ['major'],
+      enabled: false,
+    },
   ],
   // O manager pre-commit vem desligado por omissão — ligá-lo para seguir o
   // `rev:` dos hooks (ex.: gitleaks em .pre-commit-config.yaml), que de outra
