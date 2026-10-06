@@ -60,8 +60,8 @@ npm run preview   # serve the build locally
   amber (`--accent-2`) for the Lab/warnings. Mobile-first.
 - European Portuguese (not Brazilian) in all `content/` editorial copy —
   the site's PT pages, blog posts, and page copy. Documentation in `docs/`,
-  `dynamic/PLAN.md`, and this file are in English; see the note in
-  `README.md`'s Contributing section for the reasoning.
+  `dynamic/PLAN.md`, `README.md` and this file are in English, because
+  the repository is public (see `README.md`'s Contributing section).
 
 ## Writing tests
 
