@@ -76,7 +76,7 @@ Cross-Origin-Embedder-Policy: require-corp
 > **other** sites fetch them (previews), never our own pages — hence the
 > `CORP: cross-origin` specific to them.
 
-Exception for the Open Graph images (`/og-image.png`, `/og-image-en.png`),
+Exception for the Open Graph images (`/og-image-v2.png`, `/og-image-en-v2.png`),
 which need to be loadable from other origins (LinkedIn/Slack/etc. previews):
 
 ```text
@@ -137,7 +137,7 @@ server {
     }
 
     # Open Graph images: relaxed CORP + long cache.
-    location ~ ^/og-image(-en)?\.png$ {
+    location ~ ^/og-image(-en)?-v2\.png$ {
         add_header Cross-Origin-Resource-Policy "cross-origin" always;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
         # Reassert the rest: an add_header block inside a location
@@ -181,7 +181,7 @@ danielmala.co {
     }
 
     # Open Graph images: relaxed CORP + long cache (overrides the CORP above).
-    @og path /og-image.png /og-image-en.png
+    @og path /og-image-v2.png /og-image-en-v2.png
     header @og {
         Cross-Origin-Resource-Policy "cross-origin"
         Cache-Control "public, max-age=31536000, immutable"
