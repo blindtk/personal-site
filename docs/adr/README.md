@@ -2,8 +2,8 @@
 
 Short record of architecture decisions with real trade-offs — what was
 chosen, what was rejected, and why. Most of these decisions were already
-documented in code comments, in `dynamic/PLAN.md`, or in the security
-reviews in `docs/`; these files summarize them in a format that doesn't
+documented in code comments, in `dynamic/PLAN.md`, or in security reviews
+that were not published; these files summarize them in a format that doesn't
 require reading hundreds of lines of planning to get the essentials.
 
 Format: Context → Decision → Consequences. No empty sections, no
@@ -17,7 +17,7 @@ existed.
 | [0001](0001-csp-sem-inline.md) | CSP without `unsafe-inline`, without per-block hashes: eliminate inline instead of cataloguing it |
 | [0003](0003-rate-limit-kv-vs-nativo.md) | Rate limiting in KV (fail-closed) as a transition to a native Cloudflare rule |
 | [0004](0004-zero-pii-honeypot.md) | Honeypot and analytics zero-PII by choice, not plan limitation |
-| [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget |
+| [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget (superseded: reporting removed 2026-08-06) |
 | [0006](0006-caps-escrita-diarios.md) | Worker write caps: daily, sized to the budget, not to abuse resistance |
 | [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability (superseded by ADR 0022) |
 | [0020](0020-honeypot-public-ip.md) | Honeypot events record and publish the source IP, for cross-honeypot correlation (superseded by ADR 0022) |
@@ -29,7 +29,7 @@ existed.
 | ADR | Decision |
 | --- | --- |
 | [0002](0002-renovate-dependabot-split.md) | Renovate for version updates, Dependabot only for security updates |
-| [0008](0008-mcp-cloudflare-so-leitura.md) | Cloudflare MCP servers in `.mcp.json`: read-only, no `cloudflare-bindings` |
+| [0008](0008-mcp-cloudflare-so-leitura.md) | Cloudflare MCP servers in `.mcp.json`: read-only, no `cloudflare-bindings` (superseded: `.mcp.json` removed 2026-09-26) |
 | [0009](0009-repositorio-publico.md) | Public repository, not private |
 
 ## CI/CD & security pipeline

@@ -1,12 +1,12 @@
 # ADR 0017 — Prefer the `gh` CLI over third-party Actions for simple GitHub operations
 
-**Status:** accepted and in production (`labeler.yml`, `invariants.yml`).
+**Status:** accepted and in production (`update-pr-labels.yml`, `verify-worker.yml`).
 
 ## Context
 
 Two workflows need ordinary GitHub operations that a marketplace action
-would normally handle: `labeler.yml` applies area labels to a PR based on
-which paths changed; `invariants.yml` opens an Issue on failure, comments
+would normally handle: `update-pr-labels.yml` applies area labels to a PR based on
+which paths changed; `verify-worker.yml` opens an Issue on failure, comments
 on one already open instead of duplicating, and closes it once things
 recover. Both are the kind of task usually reached for a third-party
 Action.
@@ -28,10 +28,10 @@ issue-management Action for either workflow.
 - Two fewer third-party Actions in the dependency surface — nothing to
   pin, nothing for Renovate to update, nothing an upstream maintainer
   could repoint.
-- Labels used by `labeler.yml` are managed by hand and must already exist
+- Labels used by `update-pr-labels.yml` are managed by hand and must already exist
   in the repo before the workflow can apply them; a missing label fails
   the step on purpose, as a signal, instead of silently creating one.
-- `invariants.yml`'s dedup logic (comment on the existing open
+- `verify-worker.yml`'s dedup logic (comment on the existing open
   `automated-alert` Issue instead of opening a new one, close it
   automatically on recovery) is plain shell against `gh`'s JSON output —
   no Action-specific configuration format to learn or audit.

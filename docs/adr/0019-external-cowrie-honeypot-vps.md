@@ -1,6 +1,10 @@
 # ADR 0019 — External Cowrie honeypot + spider trap: separate machine, separate privacy boundary
 
-**Status:** accepted, not yet built.
+**Status:** accepted and built — the sensor runs from the separate
+`honeypot-vps-infra` repository and publishes at
+[`intel.danielmala.co`](https://intel.danielmala.co/); the site links to
+it from `content/projects/*/threat-intel.md`. Since
+[ADR 0022](0022-retire-internal-honeypot.md) it is the only honeypot.
 
 ## Context
 
@@ -89,8 +93,6 @@ Run this as a **second, independent trust boundary**, never touching
   dispute process, risk list — lives in the (private)
   `honeypot-vps-infra` repository, not here: it is implementation
   reference for a deception asset, not a one-time decision record.
-- **Not implemented yet.** Provisioning the Oracle instance is outside
-  this repository's reach; the concrete artifacts (systemd units, Cowrie
-  config, the feed generator script, the project page) are written once
-  the port topology and subdomain name are confirmed against a real
-  instance, not designed speculatively against one that doesn't exist.
+- Provisioning and the concrete artifacts (systemd units, Cowrie config,
+  the feed generator) live in `honeypot-vps-infra`; the only artifact in
+  this repository is the project page.

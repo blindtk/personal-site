@@ -31,7 +31,7 @@ not accidental — see
 | Folder | What it is | Status |
 | --- | --- | --- |
 | `content/` | All editorial content in markdown/JSON (posts, about, projects, links, ATT&CK/detection data) — **the single source of truth** | ✅ active |
-| `static/` | The static site (Astro): blog, 10 security tools, all pages | ✅ active |
+| `static/` | The static site (Astro): blog, 8 security tools, all pages | ✅ active |
 | `dynamic/` | Cloudflare Worker backend (`dynamic/worker/`): Cloudflare/firewall panels, CT watch, Web Vitals, the password-check relay and the mirror | ✅ **in production** — see [`dynamic/worker/README.md`](dynamic/worker/README.md) and [`dynamic/PLAN.md`](dynamic/PLAN.md) |
 
 ## Architecture, threat model, and the four decisions worth reading
@@ -141,8 +141,8 @@ actionlint auditing the workflows themselves, and CodeRabbit for AI-assisted rev
 (calibrated per-folder, not generic — `.coderabbit.yaml`). Production gets
 its own scheduled checks:
 security headers against a versioned allowlist, a TLS/cipher scan, DNS
-hygiene, and a Mozilla Observatory grade. Fuzzing of the two real trust
-boundaries (CSP-report parsing, output sanitizers) is manual-only. Every action is pinned to
+hygiene, and a Mozilla Observatory grade. Fuzzing of the Worker's output
+sanitizers (the real trust boundary) is manual-only. Every action is pinned to
 a commit SHA (Renovate keeps digests current), `permissions: {}` by default,
 `persist-credentials: false` everywhere, and `npm ci --ignore-scripts` in CI.
 
@@ -209,6 +209,8 @@ as-is, even if the logic is correct.
 - [`docs/ci-cd.md`](docs/ci-cd.md) — full CI/CD pipeline, stage by stage
 - [`docs/cloudflare-deploy.md`](docs/cloudflare-deploy.md) — how deploy actually works, incidents included
 - [`docs/catalog-sync.md`](docs/catalog-sync.md) — how the links catalog gets here (bot PR)
+- [`docs/security-headers.md`](docs/security-headers.md) — current header values, portable to nginx/Caddy
+- [`docs/dns-tls.md`](docs/dns-tls.md) — CAA, HTTPS redirect, HSTS preload, DNSSEC
 - [`docs/adr/`](docs/adr/) — every architecture decision, with rejected alternatives
 
 ## Contributing

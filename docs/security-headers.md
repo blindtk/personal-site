@@ -1,9 +1,9 @@
 # Security headers — portable configuration
 
-This site serves the same security headers on **Cloudflare Pages** and on
-a **VPS** (nginx or Caddy). This document is the single source for
-replicating that configuration on any server, so that migrating from
-Pages to a VPS is *copying config*, not rebuilding it.
+The site is served by **Cloudflare Pages**. This document keeps the
+current header values and their equivalent for a **VPS** (nginx or
+Caddy), so that a future move from Pages to a VPS is *copying config*,
+not rebuilding it. The VPS blocks are not deployed anywhere today.
 
 ## How security is split
 
@@ -30,26 +30,13 @@ build-time generation, no per-page `<meta>`.
 > the second hash alongside the first in `script-src` — it grows by
 > *content variant*, not by page.
 >
-> **Violation reporting — removed (2026-08), after two prior forms.** The
-> CSP used to have `report-uri /api/csp-report` + `report-to
-> csp-endpoint` (`Reporting-Endpoints` header): the browser sent a POST on
-> every violation from ANY visitor, no exceptions. That was removed in
-> 2026-07 — every accepted POST cost KV writes on the Worker
-> (`dynamic/worker/`), and Cloudflare's Free plan has a tight daily
-> ceiling, shared with honeypot/vitals/cron — and replaced with a manual
-> pipeline (local capture + a "Report" button on the Evidence page). The
-> manual pipeline was itself removed in 2026-08: most `self`/`self`
-> reports (nominally same-origin violations, which should be impossible
-> under this CSP) were suspected to come from Cloudflare's own managed
-> challenge page intercepting the request, rather than from a build
-> regression or a real injection — never fully confirmed for this
-> browser-reported case, but a detective control that can't tell a real
-> regression from noise on its own highest-severity alert isn't earning
-> its keep either way. The CSP is enforced either way; only the reporting
-> layer on top of it is gone. See `dynamic/PLAN.md`.
+> **Violation reporting:** none. The CSP is enforced, but neither
+> `report-uri`/`report-to` nor the later manual pipeline exist any more —
+> see [ADR 0005](adr/0005-csp-report-manual.md) and `dynamic/PLAN.md`
+> (2026-08-06).
 >
 > The presence of these headers in production is checked automatically by
-> the `Headers` workflow (`.github/workflows/verify-headers.yml`) against the
+> the `verify-headers` workflow (`.github/workflows/verify-headers.yml`) against the
 > versioned list in `.github/expected-headers.json` — after every deploy
 > and on a daily cron.
 

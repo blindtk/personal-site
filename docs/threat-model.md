@@ -123,12 +123,12 @@ largest gap (finding H3).
 
 The repository is public (since 2026-07-31, see `docs/cloudflare-deploy.md`
 §6) — native secret scanning and push protection are available on the Free
-plan for public repos; whether they're actually turned on has **not been
-verified from within this session** (no access to the repository's GitHub
-settings). Until confirmed, treat gitleaks as the only *verified* secret
-control. Actions quota pressure — a real constraint while the repo was
+plan for public repos, but whether they're turned on lives in GitHub's
+settings and is **not yet recorded as confirmed** (open item in
+`docs/cloudflare-deploy.md` §7). Until it is, treat gitleaks as the only
+*verified* secret control. Actions quota pressure — a real constraint while the repo was
 private — no longer applies (public repos get unlimited Actions minutes).
-Branch protection status to be confirmed.
+Branch protection: `main` is behind a ruleset (PR + Code Owners review, required checks — see `docs/catalog-sync.md`).
 
 ## Cloudflare risks
 
@@ -147,35 +147,15 @@ failure — accepted deliberately, the right call for a personal site.
 
 ---
 
-**Last review:** 2026-07-29 (creation of this document, from the same
-day's security review). **2026-07-30:** corrected attack-surface counts
-(12 GET endpoints, not 11; 5 decoy routes, not 6) and the Worker deploy
-description (it's automatic via Cloudflare Workers Builds, not manual —
-finding H3 remains open due to the lack of provenance/reviewer gate, not
-the lack of automation), as part of preparing the repository for going
-public. **2026-08-02 (translation pass):** corrected the "GitHub risks"
-section, which still described the repository as private — it went public
-on 2026-07-31 (`docs/cloudflare-deploy.md` §6); whether secret
-scanning/push protection are actually enabled is unverified from this
-session, noted explicitly rather than assumed. **2026-08-06:** self-scan
-(`/api/scan`) removed — Cloudflare Bot Fight Mode/WAF was intercepting the
-Worker's own same-zone `fetch()` and grading its managed-challenge page
-instead of the real site (see `dynamic/PLAN.md`, 2026-08-06 entry).
-Corrected attack-surface count (11 GET endpoints, not 12) and dropped the
-now-removed `/api/scan`/`fetchSameOrigin` abuse-case entry; CSP violation
-tracking was kept, unaffected. **2026-08-06 (later same day):** CSP
-violation tracking removed too, on reflection by the repo owner — its
-`self`/`self` bucket was suspected to suffer from the same false-signal
-problem as self-scan (the Cloudflare challenge page, not a real
-regression), though unlike self-scan that cause was never confirmed for
-the browser-reported case specifically; unlike self-scan the noise also
-reached real visitors, not just the Worker's own probes. `/api/csp-report`
-and `/api/csp-violations` are gone; the CSP itself is unaffected (still
-enforced, just no longer reported on). Corrected
-attack-surface count again (10 GET endpoints, 1 POST endpoint) and removed
-the A3 finding's CSP half.
+## Review log
 
-**2026-10-02:** internal honeypot retired
-([ADR 0022](adr/0022-retire-internal-honeypot.md)) — no decoy routes, no
-IP list, no `/api/honeypot`/`/api/map`/`/api/ticker`; GET endpoints down to
-7, NVD/CISA KEV no longer upstream, A2 retired.
+Next scheduled review: **2026-10-29** (quarterly).
+
+| Date | Change |
+| --- | --- |
+| 2026-07-29 | Created, from the same day's security review (not published). |
+| 2026-07-30 | Attack-surface counts corrected; Worker deploy described as automatic (Workers Builds), with H3 open for missing provenance/reviewer gate, not for lack of automation. |
+| 2026-08-02 | "GitHub risks" updated: repository public since 2026-07-31; secret scanning/push protection noted as unconfirmed. |
+| 2026-08-06 | Self-scan (`/api/scan`) removed — Cloudflare's challenge page was being graded instead of the site. Later the same day CSP violation reporting (`/api/csp-report`, `/api/csp-violations`) removed too, for a suspected false-signal problem of the same kind; the CSP itself is still enforced. A3 lost its CSP half. |
+| 2026-10-02 | Internal honeypot retired ([ADR 0022](adr/0022-retire-internal-honeypot.md)): no decoy routes, IP list, `/api/honeypot`/`/api/map`/`/api/ticker`; 7 GET endpoints; NVD/CISA KEV no longer upstream; A2 retired. |
+| 2026-10-06 | GitHub risks: branch protection recorded (ruleset on `main`); remaining settings checks tracked in `docs/cloudflare-deploy.md` §7. |

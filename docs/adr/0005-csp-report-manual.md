@@ -1,6 +1,10 @@
 # ADR 0005 — CSP violation reporting: manual instead of automatic
 
-**Status:** accepted and in production.
+**Status:** superseded (2026-08-06) — the manual pipeline was removed
+too: CSP violation reporting no longer exists in any form. The CSP itself
+is still enforced. `csp-report.js`, `CspViolations.astro`,
+`/api/csp-report` and `parseReports()` are gone; see `dynamic/PLAN.md`
+(2026-08-06). Kept as the record of the KV-budget trade-off.
 
 ## Context
 

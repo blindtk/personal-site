@@ -44,6 +44,7 @@ than any single-origin clean code.
   `src/index.js`) become publicly documented — but they're the standard
   paths any commodity scanner already probes blindly, so explaining them
   costs nothing and demonstrates the technique instead of hiding it (see
-  "Why so much for a personal site?" in the README).
+  "Why so much for a personal site?" in the README). The decoys were
+  retired in 2026-10 ([ADR 0022](0022-retire-internal-honeypot.md)).
 - The full reasoning, checklist and risk analysis were a one-off working
   document, kept privately (not a living document).

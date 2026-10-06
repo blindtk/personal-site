@@ -8,11 +8,10 @@
 //
 // Duas classes de achado, por desenho (ver comentário no CAA abaixo):
 //   - regressão de algo já confirmado correto em docs/dns-tls.md (SPF,
-//     DMARC, DNSSEC) → ::error::, falha o job;
-//   - lacuna já conhecida e documentada como por-fazer (CAA, hoje) →
-//     ::warning::, não falha o job por um TODO que já está registado; passa
-//     a ::error:: no dia em que os registos existirem mas não baterem certo
-//     com a lista esperada (isso já seria uma regressão nova).
+//     DMARC, DNSSEC, os 7 registos CAA, uma CA fora da lista) → ::error::,
+//     falha o job;
+//   - CAs extra que a Cloudflare injeta e já são conhecidas
+//     (caa.allowedExtra) → ::warning::, não falha o job.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';

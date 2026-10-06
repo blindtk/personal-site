@@ -1,6 +1,6 @@
 # ADR 0018 — Production-scan tool selection: automate by elimination, don't collect scanners
 
-**Status:** accepted and in production (`tls-check.yml`, `observatory-check.yml`, `dns-check.yml`, and the external-scan list in `docs/ci-cd.md`).
+**Status:** accepted and in production (`verify-tls.yml`, `verify-observatory.yml`, `verify-dns.yml`, and the external-scan list in `docs/ci-cd.md`).
 
 ## Context
 

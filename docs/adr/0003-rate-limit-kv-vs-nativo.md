@@ -57,8 +57,8 @@ Cloudflare dashboard (outside what a code PR can express) — see
   safety net: even under deliberate abuse of the global cap, the worst
   case becomes "routes with visitor input are unavailable until midnight
   UTC", never "rate limiting silently turns off".
-- Public reads with no rate limit (`/api/honeypot`, `/api/map`,
-  `/api/ticker`, `/api/ct`, `/api/cf-stats` without `?refresh=1`) are
+- Public reads with no rate limit (`/api/threat-intel`, `GET /api/vitals`,
+  `/api/ct`, `/api/cf-stats` without `?refresh=1`) are
   unaffected — still served from cache regardless of this cap's state.
 - A regression test in `dynamic/worker/test/logic.test.mjs` ("rate limit:
   daily global cap at ceiling fails closed…") pins this behavior; any
