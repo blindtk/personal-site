@@ -27,30 +27,23 @@ That scale is deliberate; see
 | `osv-scanner.toml`, `.gitleaksignore`, `.pre-commit-config.yaml` | Scanner configuration and the local gitleaks hook |
 | `CLAUDE.md`, `CONTRIBUTING.md`, `LICENSE` | Repository conventions, how to contribute, the code's license |
 
-## What runs on the site
+## Features
 
-**Tools** — `/ferramentas/` (`/en/tools/`). Six run entirely in the
-browser, with no network calls: subnet calculator, hash functions,
-password generator, email-header analyser, EXIF viewer and CSP analyser.
-Two talk to the Worker because the check can't run in a browser: `pwned`
-(k-anonymity breach check) and `mirror` (what the server sees about you).
-Those two carry a "requires server" badge; they're never presented as
-client-side.
-
-**Live demonstrations:**
-
-| Feature | Where | Needs the Worker? |
+| Feature | Page | Uses the Worker |
 | --- | --- | --- |
-| **Cloudflare** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | Yes — `/api/cf-stats`, `/api/threat-intel` |
-| **Performance** — first-party Core Web Vitals (p75), no third-party script | `/este-site/performance/` | Yes — `/api/vitals` |
-| **Certificate Transparency watch** — every certificate issued for the domain, checked against the expected CAs | `/este-site/provas/` | Yes — `/api/ct` |
-| **MITRE ATT&CK heatmap** | `/attack/` | No — static (`content/attack.json`) |
-| **Lab** — a desktop in the browser: a terminal and the site's tools in windows | `/lab/` | No |
-| **Threat Intel** — an SSH/HTTP honeypot and its public feed | [`intel.danielmala.co`](https://intel.danielmala.co/), described on `/projetos/threat-intel/` | No — a separate project (`honeypot-vps-infra`) on its own VPS |
+| **Browser-only tools** — subnet calculator, hashes, password generator, email-header analyser, EXIF viewer, CSP analyser | `/ferramentas/` | No — no network calls |
+| **Password breach check** — k-anonymity: only 5 characters of the hash leave the browser | `/ferramentas/pwned/` | `/api/pwned-range` |
+| **Mirror** — what any server learns about you from a request | `/ferramentas/mirror/` | `/api/mirror` |
+| **Cloudflare panels** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | `/api/cf-stats`, `/api/threat-intel` |
+| **Performance** — first-party Core Web Vitals, no third-party script | `/este-site/performance/` | `/api/vitals` |
+| **Certificate Transparency watch** — certificates issued for the domain, checked against the expected CAs | `/este-site/provas/` | `/api/ct` |
+| **MITRE ATT&CK heatmap** | `/attack/` | No |
+| **Lab** — a terminal and the site's tools in windows | `/lab/` | No |
 
-Every page has an English version under `/en/`. Worker-backed panels show
-a fallback note instead of breaking when the Worker is unreachable. The
-Worker stores no IP address anywhere — see its
+Every page also exists in English under `/en/`. The tools that use the
+Worker carry a "requires server" badge, and Worker-backed panels show a
+fallback note instead of breaking when it's unreachable. The Worker stores
+no IP address anywhere — see its
 [privacy section](dynamic/worker/README.md#privacy).
 
 ## Why so much for a personal site?
