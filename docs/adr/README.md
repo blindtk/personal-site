@@ -16,7 +16,7 @@ existed.
 | --- | --- |
 | [0001](0001-csp-sem-inline.md) | CSP without `unsafe-inline`, without per-block hashes: eliminate inline instead of cataloguing it |
 | [0003](0003-rate-limit-kv-vs-nativo.md) | Rate limiting in KV (fail-closed) as a transition to a native Cloudflare rule |
-| [0004](0004-zero-pii-honeypot.md) | Honeypot and analytics zero-PII by choice, not plan limitation |
+| [0004](0004-zero-pii-honeypot.md) | Honeypot and analytics zero-PII by choice, not plan limitation (honeypot half superseded by 0020, then 0022) |
 | [0005](0005-csp-report-manual.md) | CSP violation reporting: manual instead of automatic, to save the KV write budget (superseded: reporting removed 2026-08-06) |
 | [0006](0006-caps-escrita-diarios.md) | Worker write caps: daily, sized to the budget, not to abuse resistance |
 | [0007](0007-honeypot-managed-challenge.md) | Honeypot decoy paths behind Managed Challenge: protection over full observability (superseded by ADR 0022) |

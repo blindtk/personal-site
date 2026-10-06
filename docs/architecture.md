@@ -13,10 +13,11 @@ flowchart TB
 
     subgraph cf["Cloudflare (trust boundary 1)"]
         direction TB
-        waf["WAF + Access\n(challenge, firewall rules)"]
+        waf["WAF\n(challenge, firewall rules)"]
         pages["Cloudflare Pages\nstatic site (Astro)"]
         worker["Worker\ndynamic/worker/"]
         kv[("KV\naggregated counters,\nSWR cache")]
+        cacheapi[("Cache API\nrate-limit state,\nHIBP + response cache")]
     end
 
     subgraph upstream["External APIs (read-only)"]
@@ -30,6 +31,7 @@ flowchart TB
     waf --> pages
     waf -->|"/api/*"| worker
     worker <--> kv
+    worker <--> cacheapi
     worker --> hibp
     worker --> crtsh
     worker -->|"CF_API_TOKEN (read-only)"| cfgraphql
@@ -54,8 +56,9 @@ site only links to it.
 
 ## Trust boundaries
 
-1. **Internet → Cloudflare.** All inbound traffic passes through WAF/Access
-   before reaching Pages or the Worker. Nothing in the application trusts
+1. **Internet → Cloudflare.** All inbound traffic passes through the zone
+   WAF before reaching Pages or the Worker (Cloudflare Access now covers
+   only the `*.pages.dev` previews — `docs/cloudflare-deploy.md` §3). Nothing in the application trusts
    client headers without validating them (`normalizeCountry`,
    `normalizeAsn`, etc. in `sanitize.js`).
 2. **GitHub → production (Worker and Pages).** Both automatic: a push to

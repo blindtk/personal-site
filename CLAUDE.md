@@ -68,7 +68,7 @@ npm run preview   # serve the build locally
 - A test must fail on a real bug that nothing else catches (the rest of the
   suite, the `verify-*` workflows against production). If you can't name
   that bug, don't write the test.
-- Before writing a guard (`ipguard`, `sanitize`, rate limits, caps), list
+- Before writing a guard (`normalizeIp`, `sanitize`, rate limits, caps), list
   how it can fail; each test covers one failure mode. Pin the **exact
   boundary**: the ms a window ends, a string of exactly `maxLen`, the last
   address of a range. Malformed input that must fail closed gets its own

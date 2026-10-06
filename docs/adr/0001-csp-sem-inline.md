@@ -30,7 +30,7 @@ Eliminate inline instead of cataloguing it. Two levers in `astro.config.mjs`:
 
 With zero inline `<script>`/`<style>` across the whole site, `'self'` is
 already as strict as a hash list — but with a fixed-size header
-(~395 characters) that never grows again as pages or tools are added.
+(~370 characters) that never grows again as pages or tools are added.
 
 **Single exception:** the `<script type="application/ld+json">` (schema.org
 Person structured data) in `BaseLayout.astro`. JSON-LD has no reliable

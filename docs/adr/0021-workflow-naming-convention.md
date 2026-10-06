@@ -46,10 +46,9 @@ string a ruleset's required status check stores. The convention stops at
 the workflow level on purpose.
 
 **Enforced:** `.github/scripts/check-workflow-names.sh`, run as a step of
-the `zizmor` job in `security.yml` (a step, not a new job — this repo is
-over the free Actions minutes quota — see the header of
-`security-supply-chain.yml`). Fails
-closed if it finds no workflow at all.
+the `zizmor` job in `security.yml` (a step, not a new job: it needs the
+same checkout and nothing else). Fails closed if it finds no workflow at
+all.
 
 ### Renames in this repo
 

@@ -48,7 +48,7 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
 3. Run `cd static && npm run build` — it has to pass with no errors or
    new warnings before you open the PR.
 4. If you touched `dynamic/worker/` or the tools in `/ferramentas/`, also
-   run `node --test` and validate the logic with known vectors. This works
+   run `npm test` (in `static/` and/or `dynamic/worker/`) and validate the logic with known vectors. This works
    without a browser or the Cloudflare runtime because the rule is: DOM/network
    glue stays in `.astro` components and `src/index.js`, while anything with
    real logic (parsing, sanitizing, aggregating, rate-limit math) lives in a
