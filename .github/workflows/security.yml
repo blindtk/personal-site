@@ -21,11 +21,14 @@ concurrency:
 
 jobs:
   # Dependências com vulnerabilidades conhecidas (base OSV.dev, inclui as
-  # advisories do GitHub). Analisa os DOIS lockfiles do repo (static/ e
+  # advisories do GitHub). Analisa os lockfiles do repo (static/ e
   # dynamic/worker/ — este 2.º só entrou em 2026-07, revisão de segurança:
   # antes disso, o wrangler/miniflare/sharp do Worker não era coberto por
   # nada aqui) e falha o CI se houver vuln (o osv-scanner sai com código
-  # ≠0; sem vuln sai 0 e o job passa).
+  # ≠0; sem vuln sai 0 e o job passa). O 3.º lockfile, .clusterfuzzlite/
+  # (Jazzer.js e ~170 pacotes que o `npm ci` instala dentro da imagem do
+  # ci-fuzzing.yml), ficou de fora até 2026-10-07 — nem o osv-scanner nem o
+  # npm audit do ci.yml o viam; só o Dependency Review, e só no diff.
   #
   # Chamamos a *action* diretamente em vez do workflow reutilizável oficial:
   # esse workflow, por dentro, usa actions/download-artifact e
@@ -57,6 +60,7 @@ jobs:
             --config=./osv-scanner.toml
             --lockfile=./static/package-lock.json
             --lockfile=./dynamic/worker/package-lock.json
+            --lockfile=./.clusterfuzzlite/package-lock.json
 
   # Segredos committados (tokens Cloudflare, chaves privadas, …). Corre
   # sobre a história completa (fetch-depth: 0) para apanhar segredos

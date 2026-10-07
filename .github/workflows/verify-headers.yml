@@ -1,12 +1,20 @@
 # Headers de segurança como garantia testada, não prometida: verifica a
-# produção depois de cada deploy do Cloudflare Pages (evento
-# deployment_status, criado pela integração GitHub da Cloudflare), num cron
-# diário de rede de segurança, e à mão (workflow_dispatch, com URL opcional).
-# A lista de headers esperados é versionada em .github/expected-headers.json.
+# produção depois de cada deploy do Cloudflare Pages para a main (check run
+# "Cloudflare Pages" concluído), num cron diário de rede de segurança, e à
+# mão (workflow_dispatch, com URL opcional). A lista de headers esperados é
+# versionada em .github/expected-headers.json.
+#
+# check_run, não deployment_status: este workflow ouviu deployment_status
+# desde julho e nunca correu por esse evento (0 execuções até 2026-10-07) —
+# a integração GitHub da Cloudflare publica um check run por deploy, não um
+# Deployment, por isso a promessa "depois de cada deploy" só era cumprida
+# pelo cron. O check_run corre sempre o workflow da branch por omissão
+# (main), nunca o do commit que disparou o evento.
 name: verify-headers
 
 on:
-  deployment_status:
+  check_run:
+    types: [completed]
   schedule:
     - cron: '17 6 * * *'
   workflow_dispatch:
@@ -20,8 +28,14 @@ permissions: {}
 
 jobs:
   check:
-    # em deployment_status só corre quando o deploy teve sucesso
-    if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
+    # check_run dispara para TODOS os check runs concluídos que não venham
+    # do próprio Actions (CodeQL, Cloudflare Pages dos previews, …) — só o
+    # deploy de produção com sucesso interessa; os outros ficam "skipped".
+    if: >-
+      github.event_name != 'check_run' ||
+      (github.event.check_run.name == 'Cloudflare Pages' &&
+       github.event.check_run.conclusion == 'success' &&
+       github.event.check_run.check_suite.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -35,7 +49,6 @@ jobs:
           # valores externos entram por env e nunca interpolados no run: —
           # evita injeção de template (auditado pelo zizmor)
           TARGET_URL: ${{ inputs.url }}
-          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
           # Opcionais — Access Service Token (ver docs/cloudflare-deploy.md
           # e o comentário no topo de check-headers.mjs). Secrets em falta
           # chegam como string vazia, sem quebrar o comportamento atual.
@@ -43,17 +56,11 @@ jobs:
           ACCESS_CLIENT_SECRET: ${{ secrets.ACCESS_CLIENT_SECRET }}
           # Segredo do bypass da regra WAF "CI headers check" (docs/
           # cloudflare-deploy.md §5, regra 2) — substitui o match por
-          # User-Agent, que era uma string pública e spoofable.
-          #
-          # Fora das execuções deployment_status (auditoria de segurança
-          # 2026-09-25, não publicada): nesse evento o
-          # código que corre (workflow + script) é o do commit do deploy, não
-          # o da main, e o alvo é o URL do deploy em *.pages.dev — fora da
-          # zona, onde o token não serve para nada. O token só é preciso no
-          # cron/dispatch contra a produção, que correm o código da main.
-          # Isto não fecha sozinho o caso de um commit de fork alterar este
-          # ficheiro (o workflow também vem desse commit): isso resolve-se
-          # nas definições — secrets num Environment restrito à main e sem
-          # builds de forks no Pages (docs/cloudflare-deploy.md §6).
-          CI_WAF_TOKEN: ${{ github.event_name != 'deployment_status' && secrets.CI_WAF_TOKEN || '' }}
+          # User-Agent, que era uma string pública e spoofable. Os três
+          # eventos correm o código da main contra a produção (o check_run
+          # não tem URL de deploy: o alvo é sempre PROD_URL), por isso já não
+          # há caso em que o token tenha de ficar de fora — antes ficava no
+          # deployment_status, que corria o código do commit do deploy contra
+          # *.pages.dev (auditoria de segurança 2026-09-25, não publicada).
+          CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
         run: node .github/scripts/check-headers.mjs
