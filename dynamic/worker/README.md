@@ -20,7 +20,7 @@ Cloudflare Worker + one KV namespace.
 | --- | --- | --- | --- |
 | `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser; a range over 20 000 entries (or an empty one) is a 502, never a silently truncated list | 24 h per prefix (data-center Cache API — never KV) | 20/min per client |
 | `GET /api/threat-intel` | The zone firewall's 7-day breakdown (`firewall7d`: by action, source, country, ASN, and per day), from the cron's daily snapshots — never an IP. The name dates from when it also served the honeypot dashboards | 6 h | — |
-| `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (429 past this limit) + global daily write budget of 300 writes = 150 samples (silently dropped past the cap, still 204) |
+| `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (429 past this limit) + global cap of 1000 samples per UTC day, enforced atomically by the `VITALS` Durable Object (silently dropped past the cap, still 204) |
 | `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s (data-center Cache API, then KV) | — |
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
@@ -116,7 +116,11 @@ dash.cloudflare.com → My Profile → API Tokens, with the scopes:
   (stays at 24h). A separate request on purpose: a schema drift here
   should never wipe out the action/origin/country tables that already
   work. `clientIP` is available in this same dataset but is never
-  requested or processed — zero-PII by the site's own choice.
+  requested or processed — zero-PII by the site's own choice. A URL or
+  user-agent is only published when it was seen at least
+  `CF_FIREWALL_MIN_COUNT` (5) times in the window (weighted by
+  `sampleInterval`, inclusive cut): a rare one can identify a single
+  visitor. Networks (ASN) are coarse enough to have no threshold.
 
 Without the first group's vars/secret, the route returns 502 and the
 panel shows the fallback — the same pattern as the CT watcher without
@@ -150,7 +154,6 @@ of puts the event makes, including its own counter):
 
 | Budget | Writes/day | Covers |
 | --- | --- | --- |
-| `VITALS_WRITE_CAP` | 300 | RUM samples (2 puts each) — 150 samples |
 | `CACHE_WRITE_CAP` | 80 | KV cache refreshes triggered by public GETs (2 puts each) |
 | `REFRESH_WRITE_CAP` | 40 | `/api/cf-stats?refresh=1` (2 puts each) |
 | cron (fixed rate) | ~16 (≤ 48 worst case) | cache warm-up every 30 min, firewall snapshot — one write per distinct `cache:cfstats` fetch, so request-driven refreshes can add a few (the legacy-honeypot clean-up writes only once) |
@@ -237,7 +240,8 @@ enough — nothing to change.
 
 | Name | Type | Where | For |
 | --- | --- | --- | --- |
-| `KV` | binding | wrangler.toml | single namespace (vitals histograms, firewall snapshots, caches, write budgets) |
+| `KV` | binding | wrangler.toml | single namespace (firewall snapshots, caches, write budgets) |
+| `VITALS` | Durable Object binding | wrangler.toml (`[[durable_objects.bindings]]` + `[[migrations]]`, `new_sqlite_classes`) | `VitalsCounter`: Web Vitals histograms and the 1000 samples/day cap, updated atomically (`src/lib/vitals-counter.js`). The class migration is applied by the first `wrangler deploy`. |
 | `RATE_SALT` | secret, **mandatory** | `wrangler secret put` | rate-limit hash; the secret itself is rotated manually WEEKLY (invalidates accumulated limits on purpose) — the *effective* rate-limit key derived from it already changes daily (see Privacy section above). **Unresolved risk:** if unset, the Worker logs `rate_salt_missing` but doesn't fail closed — it falls back to the public, hardcoded `'rotate-me'` string (`dailySalt` in `src/lib/ratelimit.js`), so rate-limiting continues to "work" with a predictable salt instead of stopping. Fixing this (reject requests when the secret is absent) is tracked as a separate Worker change, not a docs fix. |
 | `CF_API_TOKEN` | secret | `wrangler secret put` | Analytics:Read (zone + account) + Firewall/WAF:Read (zone + account) token, for `/api/cf-stats` — see the "Cloudflare Status" section above |
 | `ALLOWED_ORIGINS` | var | wrangler.toml | CORS (mode 2b only) |

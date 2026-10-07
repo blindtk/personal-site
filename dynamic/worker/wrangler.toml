@@ -37,6 +37,19 @@ binding = "KV"
 id = "d8c992d39f464bca85135f014d3ca37b"
 preview_id = "6ecf59e3f7a742748e4cc22c229543c3"
 
+# Durable Object dos Core Web Vitals (src/lib/vitals-counter.js): dono dos
+# histogramas diários e do teto de amostras/dia, com leitura-soma-escrita
+# atómica (no KV, amostras concorrentes perdiam-se). Classe com storage
+# SQLite — a única que o plano Free permite. Tabelas (`[[...]]`) antes do
+# [vars], pela mesma razão do aviso acima sobre chaves soltas em TOML.
+[[durable_objects.bindings]]
+name = "VITALS"
+class_name = "VitalsCounter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["VitalsCounter"]
+
 [vars]
 # Origens autorizadas a chamar a API por CORS (só necessário quando o
 # frontend está noutra origem, ex.: *.pages.dev a chamar *.workers.dev).

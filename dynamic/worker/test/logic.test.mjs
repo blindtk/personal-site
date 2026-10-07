@@ -16,10 +16,13 @@ import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
   DEFAULT_EXPECTED_ISSUERS, MAX_CERTS,
 } from '../src/lib/ct.js';
-import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames } from '../src/lib/cf-analytics.js';
+import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames, CF_FIREWALL_MIN_COUNT } from '../src/lib/cf-analytics.js';
 import { serverView, normalizeIp } from '../src/lib/mirror.js';
 import { edgeKey, edgeGetJSON, edgePutJSON } from '../src/lib/edgecache.js';
 import worker from '../src/index.js';
+import {
+  VitalsCounter, VITALS_MAX_SAMPLES_PER_DAY, vitalsDayKey,
+} from '../src/lib/vitals-counter.js';
 
 test('escapeHtml cobre os cinco caracteres', () => {
   assert.equal(escapeHtml(`<img src=x onerror="a">'&`), '&lt;img src=x onerror=&quot;a&quot;&gt;&#39;&amp;');
@@ -245,6 +248,35 @@ function fakeKV() {
     },
     async put(key, value) { store.set(key, value); },
     async delete(key) { store.delete(key); },
+  };
+}
+
+// Durable Object VITALS: a classe REAL (VitalsCounter) sobre um storage em
+// memória — só o storage e o binding (a borda) são simulados. A atomicidade
+// (input gates) é garantia da plataforma e não se testa aqui.
+function fakeDoStorage() {
+  const map = new Map();
+  return {
+    map,
+    async get(k) {
+      if (Array.isArray(k)) return new Map(k.filter((x) => map.has(x)).map((x) => [x, structuredClone(map.get(x))]));
+      return map.has(k) ? structuredClone(map.get(k)) : undefined;
+    },
+    async put(k, v) { map.set(k, structuredClone(v)); },
+    async delete(k) { for (const x of Array.isArray(k) ? k : [k]) map.delete(x); },
+    async list({ prefix = '' } = {}) {
+      return new Map([...map].filter(([k]) => k.startsWith(prefix)).sort(([a], [b]) => (a < b ? -1 : 1)));
+    },
+  };
+}
+function fakeVitalsNamespace() {
+  const storage = fakeDoStorage();
+  const counter = new VitalsCounter({ storage });
+  return {
+    storage,
+    counter,
+    idFromName: (name) => name,
+    get: () => ({ fetch: (url, init) => counter.fetch(new Request(url, init)) }),
   };
 }
 
@@ -815,19 +847,27 @@ test('firewallDetailBreakdown: agrega por URL, user-agent e ASN, pesado por samp
     { clientRequestPath: '/.env', userAgent: 'Mozilla/5.0', clientAsn: 4837 },
   ]);
   const fw = firewallDetailBreakdown(raw);
-  assert.deepEqual(fw.firewallByPath, [
-    { key: '/wp-login.php', count: 10 },
-    { key: '/.env', count: 2 },
-  ]);
-  assert.deepEqual(fw.firewallByUserAgent, [
-    { key: 'curl/8.0', count: 10 },
-    { key: 'python-requests/2.31', count: 1 },
-    { key: 'Mozilla/5.0', count: 1 },
-  ]);
+  // /.env (peso 2) e os UAs de peso 1 ficam abaixo do limiar k: não saem.
+  assert.deepEqual(fw.firewallByPath, [{ key: '/wp-login.php', count: 10 }]);
+  assert.deepEqual(fw.firewallByUserAgent, [{ key: 'curl/8.0', count: 10 }]);
+  // O ASN é um agregado grosso: não tem limiar, conta tudo.
   assert.deepEqual(fw.firewallByAsn, [
     { key: 'AS64512', count: 11 },
     { key: 'AS4837', count: 1 },
   ]);
+});
+
+test('firewallDetailBreakdown: limiar k exato — peso k-1 não sai, peso k sai (path e user-agent)', () => {
+  assert.equal(CF_FIREWALL_MIN_COUNT, 5);
+  const fw = firewallDetailBreakdown(firewallFixture([
+    { clientRequestPath: '/k-menos-1', userAgent: 'ua-k-menos-1', sampleInterval: CF_FIREWALL_MIN_COUNT - 1 },
+    { clientRequestPath: '/k-exato', userAgent: 'ua-k-exato', sampleInterval: CF_FIREWALL_MIN_COUNT },
+    // 4 + 1 = 5: o limiar aplica-se ao total agregado, não a cada evento.
+    { clientRequestPath: '/soma-k', userAgent: 'ua-soma-k', sampleInterval: 4 },
+    { clientRequestPath: '/soma-k', userAgent: 'ua-soma-k' },
+  ]));
+  assert.deepEqual(fw.firewallByPath.map((r) => r.key).sort(), ['/k-exato', '/soma-k']);
+  assert.deepEqual(fw.firewallByUserAgent.map((r) => r.key).sort(), ['ua-k-exato', 'ua-soma-k']);
 });
 
 test('firewallDetailBreakdown: clientAsn em string (como a Cloudflare o devolve) conta na mesma', () => {
@@ -846,8 +886,8 @@ test('firewallDetailBreakdown: clientAsn em string (como a Cloudflare o devolve)
 
 test('firewallDetailBreakdown: nunca processa clientIP (mesmo se viesse na resposta), sanitiza path/UA e ignora ASN inválido', () => {
   const fw = firewallDetailBreakdown(firewallFixture([
-    { clientIP: '203.0.113.7', clientRequestPath: '/<script>x</script>', userAgent: 'a'.repeat(200), clientAsn: -1 },
-    { clientRequestPath: '', userAgent: '', clientAsn: 0 },
+    { clientIP: '203.0.113.7', clientRequestPath: '/<script>x</script>', userAgent: 'a'.repeat(200), clientAsn: -1, sampleInterval: 5 },
+    { clientRequestPath: '', userAgent: '', clientAsn: 0, sampleInterval: 5 },
   ]));
   assert.ok(!JSON.stringify(fw).includes('203.0.113.7'));
   assert.equal(fw.firewallByPath[0].key, '/scriptx/script'); // <> removidos por sanitizeText
@@ -945,8 +985,9 @@ test('/api/cf-stats: o 3.º pedido (firewall detail) preenche firewallByPath/Use
     const query = JSON.parse(init.body).query;
     if (query.includes('CfFirewallDetail')) {
       return { ok: true, json: async () => firewallFixture([
-        { clientRequestPath: '/wp-login.php', userAgent: 'curl/8.0', clientAsn: 64512 },
-        { clientRequestPath: '/wp-login.php', userAgent: 'curl/8.0', clientAsn: 64512 },
+        { clientRequestPath: '/wp-login.php', userAgent: 'curl/8.0', clientAsn: 64512, sampleInterval: 5 },
+        { clientRequestPath: '/wp-login.php', userAgent: 'curl/8.0', clientAsn: 64512, sampleInterval: 5 },
+        { clientRequestPath: '/raro', userAgent: 'ua-raro/1.0', clientAsn: 64512 }, // 1 evento: abaixo de k
       ]) };
     }
     if (query.includes('firewallEventsAdaptive')) {
@@ -958,9 +999,9 @@ test('/api/cf-stats: o 3.º pedido (firewall detail) preenche firewallByPath/Use
     const res = await runFetch(fakeRequest('/api/cf-stats'), env);
     assert.equal(res.status, 200);
     const data = await res.json();
-    assert.deepEqual(data.zone.firewallByPath, [{ key: '/wp-login.php', count: 2 }]);
-    assert.deepEqual(data.zone.firewallByUserAgent, [{ key: 'curl/8.0', count: 2 }]);
-    assert.deepEqual(data.zone.firewallByAsn, [{ key: 'AS64512', count: 2 }]);
+    assert.deepEqual(data.zone.firewallByPath, [{ key: '/wp-login.php', count: 10 }]);
+    assert.deepEqual(data.zone.firewallByUserAgent, [{ key: 'curl/8.0', count: 10 }]);
+    assert.deepEqual(data.zone.firewallByAsn, [{ key: 'AS64512', count: 11 }]);
     // O 2.º pedido continua intacto — os dois pedidos de firewall são independentes.
     assert.deepEqual(data.zone.firewallByAction, [{ key: 'block', count: 1 }]);
   } finally {
@@ -1862,12 +1903,12 @@ const vitalsPost = (body) => new Request('https://danielmala.co/api/vitals', {
 });
 
 test('POST /api/vitals: corpo de exatamente 2048 bytes é aceite e 2049 dá 413', async () => {
-  const ok = { KV: fakeKV() };
+  const ok = { KV: fakeKV(), VITALS: fakeVitalsNamespace() };
   assert.equal((await runFetch(vitalsPost(vitalsJson(2048)), ok)).status, 204);
-  assert.ok([...ok.KV.store.keys()].some((k) => k.startsWith('vit:')), 'a amostra foi registada');
-  const big = { KV: fakeKV() };
+  assert.ok([...ok.VITALS.storage.map.keys()].some((k) => k.startsWith('vit:')), 'a amostra foi registada');
+  const big = { KV: fakeKV(), VITALS: fakeVitalsNamespace() };
   assert.equal((await runFetch(vitalsPost(vitalsJson(2049)), big)).status, 413);
-  assert.ok(![...big.KV.store.keys()].some((k) => k.startsWith('vit:')));
+  assert.equal(big.VITALS.storage.map.size, 0);
 });
 
 test('POST /api/vitals: Content-Length acima do teto recusa sem ler o corpo', async () => {
@@ -1979,18 +2020,99 @@ test('/api/ct: um emissor inesperado empurrado para fora das MAX_CERTS mais rece
   }
 });
 
-test('POST /api/vitals: com o orçamento do dia esgotado só lê o contador (1 leitura, 0 escritas)', async () => {
-  const kv = fakeKV();
+test('POST /api/vitals: grava no Durable Object e não escreve nada de vitals no KV', async () => {
+  const env = { KV: fakeKV(), VITALS: fakeVitalsNamespace(), RATE_SALT: 'sal' };
+  assert.equal((await runFetch(vitalsPost(vitalsJson(60)), env)).status, 204);
+  const [key] = [...env.VITALS.storage.map.keys()];
+  assert.equal(key, vitalsDayKey(Date.now()));
+  assert.equal(env.VITALS.storage.map.get(key).count, 1);
+  assert.deepEqual([...env.KV.store.keys()].filter((k) => k.startsWith('vit')), []);
+});
+
+test('POST /api/vitals: DO indisponível dá o 204 uniforme e regista o erro', async () => {
+  const logs = [];
+  const origError = console.error;
+  console.error = (...a) => logs.push(a.map(String).join(' '));
+  try {
+    const res = await runFetch(vitalsPost(vitalsJson(60)), { KV: fakeKV(), RATE_SALT: 'sal' }); // sem binding VITALS
+    assert.equal(res.status, 204);
+    assert.ok(logs.some((l) => l.includes('vitals_write_failed')));
+  } finally {
+    console.error = origError;
+  }
+});
+
+test('GET /api/vitals: lê do Durable Object; dia que o DO não tem cai para o KV legado', async () => {
+  const env = { KV: fakeKV(), VITALS: fakeVitalsNamespace() };
   const now = Date.now();
-  kv.store.set(`vitcap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 300, windowStart: now }));
-  const gets = [];
-  const get = kv.get.bind(kv);
-  kv.get = async (key, type) => { gets.push(key); return get(key, type); };
-  const puts = [];
-  const put = kv.put.bind(kv);
-  kv.put = async (key, ...rest) => { puts.push(key); return put(key, ...rest); };
-  const res = await runFetch(vitalsPost(vitalsJson(60)), { KV: kv, RATE_SALT: 'sal' });
-  assert.equal(res.status, 204);
-  assert.equal(gets.filter((k) => k.startsWith('vit:')).length, 0, 'não leu o histograma');
-  assert.equal(puts.filter((k) => k.startsWith('vit')).length, 0);
+  await env.VITALS.counter.record({ lcp: 1000 }, now);
+  const legacy = emptyVitalsBucket();
+  for (let i = 0; i < 4; i++) addVitals(legacy, { lcp: 3000 });
+  env.KV.store.set(vitalsDayKey(now - 86400_000), JSON.stringify(legacy)); // ontem, só no KV
+  const res = await runFetch(fakeRequest('/api/vitals'), env);
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).samples, 5); // 1 do DO (hoje) + 4 do KV (ontem)
+});
+
+test('GET /api/vitals: DO em baixo não dá 500 — serve o KV legado', async () => {
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    const env = { KV: fakeKV() }; // sem binding
+    const res = await runFetch(fakeRequest('/api/vitals'), env);
+    assert.equal(res.status, 200);
+  } finally {
+    console.error = origError;
+  }
+});
+
+// ---------- VitalsCounter (Durable Object) ----------
+
+test('VitalsCounter: o teto é exato — a amostra MAX entra, a MAX+1 é descartada', async () => {
+  const { counter, storage } = fakeVitalsNamespace();
+  const now = Date.UTC(2026, 9, 7, 12);
+  for (let i = 0; i < VITALS_MAX_SAMPLES_PER_DAY; i++) {
+    assert.equal(await counter.record({ lcp: 1000 }, now), true, `amostra ${i + 1}`);
+  }
+  assert.equal(await counter.record({ lcp: 1000 }, now), false);
+  assert.equal(storage.map.get(vitalsDayKey(now)).count, VITALS_MAX_SAMPLES_PER_DAY);
+});
+
+test('VitalsCounter: o dia UTC vira à meia-noite exata e cada dia tem o seu teto', async () => {
+  const { counter, storage } = fakeVitalsNamespace();
+  const lastMs = Date.UTC(2026, 9, 7, 23, 59, 59, 999);
+  const firstMs = Date.UTC(2026, 9, 8, 0, 0, 0, 0);
+  for (let i = 0; i < VITALS_MAX_SAMPLES_PER_DAY; i++) await counter.record({ lcp: 1000 }, lastMs);
+  assert.equal(await counter.record({ lcp: 1000 }, lastMs), false);
+  assert.equal(await counter.record({ lcp: 1000 }, firstMs), true); // dia seguinte: teto novo
+  assert.equal(storage.map.get('vit:2026-10-07').count, VITALS_MAX_SAMPLES_PER_DAY);
+  assert.equal(storage.map.get('vit:2026-10-08').count, 1);
+});
+
+test('VitalsCounter: histogramas com mais de 9 dias são apagados; o do 9.º dia fica', async () => {
+  const { counter, storage } = fakeVitalsNamespace();
+  const now = Date.UTC(2026, 9, 20, 12);
+  const day = (n) => vitalsDayKey(now - n * 86400_000);
+  for (const n of [8, 9]) storage.map.set(day(n), emptyVitalsBucket()); // 8 dias atrás: fica; 9: sai
+  await counter.record({ lcp: 1000 }, now); // 1.º registo do dia dispara a limpeza
+  assert.ok(storage.map.has(day(8)));
+  assert.ok(!storage.map.has(day(9)));
+  assert.ok(storage.map.has(day(0)));
+});
+
+test('VitalsCounter.read: hoje primeiro, 7 dias, null onde não há dados', async () => {
+  const { counter } = fakeVitalsNamespace();
+  const now = Date.UTC(2026, 9, 7, 12);
+  await counter.record({ lcp: 1000 }, now);
+  await counter.record({ lcp: 1000 }, now - 2 * 86400_000);
+  const buckets = await counter.read(now);
+  assert.equal(buckets.length, 7);
+  assert.deepEqual(buckets.map((b) => b?.count ?? null), [1, null, 1, null, null, null, null]);
+});
+
+test('VitalsCounter: `now` inválido falha fechado em vez de gravar numa chave NaN', async () => {
+  const { counter, storage } = fakeVitalsNamespace();
+  await assert.rejects(counter.record({ lcp: 1000 }, Number('x')), /vitals_bad_now/);
+  await assert.rejects(counter.read(Number('x')), /vitals_bad_now/);
+  assert.equal(storage.map.size, 0);
 });

@@ -242,6 +242,27 @@ each, with the full original entries kept in this file's git history.
   that key). The same reasoning is in the `[triggers]` comment in
   `wrangler.toml`.
 
+- **2026-10 — k threshold on the firewall URL/user-agent tables, and a
+  Durable Object for Web Vitals** (both left open by the 2026-10 security
+  audit; decided and requested by the repo owner):
+  1. `/api/cf-stats` only publishes a firewall URL or user-agent seen at
+     least `CF_FIREWALL_MIN_COUNT` = 5 times in the 24h window (weighted by
+     `sampleInterval`; the cut is inclusive). A rare path/UA can identify a
+     single visitor (an exact-version UA, a token in a URL) and the panel is
+     public. Actions, origins, countries and ASNs are coarse aggregates and
+     have no threshold. The page says so (`firewallMinNote`, intro).
+  2. `/api/vitals` keeps its histograms and the per-day sample cap in a
+     **Durable Object** (`VITALS`, class `VitalsCounter`, SQLite storage —
+     the only kind the Free plan allows). The KV read-modify-write lost
+     concurrent samples and its cap overshot (`underCap` is not atomic);
+     the DO serialises both, so each accepted sample counts exactly once and
+     the cap (1000 samples/day, per UTC day) is exact. Side effect: vitals no
+     longer spend the KV write budget (the 300/day line is gone). It is the
+     Worker's only new product surface: one object (`idFromName('global')`),
+     no public route, reachable only through the binding. Reads fall back to
+     the legacy `vit:<day>` KV keys (they expire in 9 days) if the DO is
+     down or lacks a day; that fallback can be deleted after the transition.
+
 ## Removed features and reverted decisions
 
 One line each; the full entries are in this file's git history.
