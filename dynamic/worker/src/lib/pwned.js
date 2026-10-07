@@ -43,6 +43,14 @@ export function parseRanges(text, limit = 2000) {
 
 const RANGE_URL = 'https://api.pwnedpasswords.com/range/';
 
+// Teto de entradas aceites de uma resposta do HIBP. Uma gama real tem
+// centenas a poucos milhares de linhas (e o corpus só cresce); passar deste
+// teto é anómalo. O que NÃO se pode fazer é cortar em silêncio: o cliente lê
+// "sufixo ausente" como "password não encontrada", por isso uma lista truncada
+// transformava passwords comprometidas em "seguras". Acima do teto a rota
+// falha (502) e o cliente mostra "indisponível".
+export const MAX_RANGE_ENTRIES = 20_000;
+
 /**
  * Busca e faz parse dos sufixos de um prefixo. `Add-Padding: true` pede ao
  * HIBP que injete entradas falsas (contagem 0) para que o tamanho da resposta
@@ -56,8 +64,16 @@ export async function fetchRange(prefix, { timeoutMs = 5000 } = {}) {
       'add-padding': 'true',
     },
     signal: AbortSignal.timeout(timeoutMs),
+    // Destino fixo e de confiança: um redirect não é esperado, e seguir um
+    // levaria o pedido (e a resposta) para fora do URL fixado acima.
+    redirect: 'error',
     cf: { cacheTtl: 86400 },
   });
   if (!res.ok) throw new Error(`hibp_status_${res.status}`);
-  return parseRanges(await res.text());
+  const entries = parseRanges(await res.text(), MAX_RANGE_ENTRIES + 1);
+  if (entries.length > MAX_RANGE_ENTRIES) throw new Error('hibp_range_too_large');
+  // Com Add-Padding uma gama real nunca é vazia: vazia = resposta partida, que
+  // não pode ser guardada 24h como se fosse "nenhum sufixo" (=> "segura").
+  if (entries.length === 0) throw new Error('hibp_range_empty');
+  return entries;
 }

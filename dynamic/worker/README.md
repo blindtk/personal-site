@@ -18,7 +18,7 @@ Cloudflare Worker + one KV namespace.
 
 | Route | What it does | Cache | Rate limit |
 | --- | --- | --- | --- |
-| `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser | 24 h per prefix (data-center Cache API — never KV) | 20/min per client |
+| `GET /api/pwned-range` | k-anonymity proxy to the Have I Been Pwned range API (the `pwned` tool) — only the 5-character hash prefix leaves the browser; a range over 20 000 entries (or an empty one) is a 502, never a silently truncated list | 24 h per prefix (data-center Cache API — never KV) | 20/min per client |
 | `GET /api/threat-intel` | The zone firewall's 7-day breakdown (`firewall7d`: by action, source, country, ASN, and per day), from the cron's daily snapshots — never an IP. The name dates from when it also served the honeypot dashboards | 6 h | — |
 | `POST /api/vitals` | Web Vitals receiver (LCP/CLS/etc.) — unauthenticated first-party beacon, the Worker's only public POST endpoint | — | 30/min per client (429 past this limit) + global daily write budget of 300 writes = 150 samples (silently dropped past the cap, still 204) |
 | `GET /api/vitals` | Web Vitals aggregates (p75 + rating, per histogram) | 120 s (data-center Cache API, then KV) | — |
@@ -98,8 +98,10 @@ dash.cloudflare.com → My Profile → API Tokens, with the scopes:
   only one accessible on the Free plan) and aggregates by
   action/origin/country (`CF_FIREWALL_QUERY`/`firewallBreakdown` in
   `src/lib/cf-analytics.js`). A daily cron (`scheduled()` in
-  `src/index.js`) snapshots that result into KV and merges 7 days
-  (`snapshotFirewall`/`readFirewall7d`) — that's what feeds the
+  `src/index.js`) snapshots whatever `cache:cfstats` currently holds — no
+  matter whether the cron, `?refresh=1` or a stale-while-revalidate GET
+  refreshed it; the snapshot is idempotent per fetch — into KV and merges
+  7 days (`snapshotFirewall`/`readFirewall7d`) — that's what feeds the
   firewall-by-action/origin/country (7d) and mitigation-per-day panels
   on the Cloudflare page (`/api/threat-intel`).
   Without these three scopes, the request fails silently (it's
@@ -151,7 +153,7 @@ of puts the event makes, including its own counter):
 | `VITALS_WRITE_CAP` | 300 | RUM samples (2 puts each) — 150 samples |
 | `CACHE_WRITE_CAP` | 80 | KV cache refreshes triggered by public GETs (2 puts each) |
 | `REFRESH_WRITE_CAP` | 40 | `/api/cf-stats?refresh=1` (2 puts each) |
-| cron (fixed rate) | ~16 | cache warm-up every 30 min, firewall snapshot (the legacy-honeypot clean-up writes only once) |
+| cron (fixed rate) | ~16 (≤ 48 worst case) | cache warm-up every 30 min, firewall snapshot — one write per distinct `cache:cfstats` fetch, so request-driven refreshes can add a few (the legacy-honeypot clean-up writes only once) |
 
 Total ≈ 440/day, leaving headroom for the overshoot concurrent requests can
 cause (the counters are best-effort read-then-write on an eventually

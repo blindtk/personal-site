@@ -105,9 +105,11 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # A cada 30 min: aquece ct/cf-stats/threat-intel (para as visitas caírem
 # sempre em cache) e apaga o que o honeypot interno deixou no KV, enquanto
 # houver (ADR 0022). O snapshot da firewall (fw:<dia>, para acumular 7
-# dias a partir do dataset cru do Free, que só retém 24h) só é fotografado
-# quando o cf-stats É DE FACTO refrescado (TTL 6h, ~4×/dia) — não em cada um
-# dos 48 ticks. TTLs de threat-intel/cf-stats/ct alinhados a 6h (≥
+# dias a partir do dataset cru do Free, que só retém 24h) fotografa o que a
+# cache `cache:cfstats` tiver — quem quer que a tenha refrescado (o cron, um
+# `?refresh=1` ou um GET) — e só ESCREVE quando há um fetch novo (TTL 6h,
+# ~4×/dia), não em cada um dos 48 ticks: um tick sem dados novos custa uma
+# leitura. TTLs de threat-intel/cf-stats/ct alinhados a 6h (≥
 # intervalo do cron): abaixo disso, cada tick encontrava a cache sempre
 # "stale" e repetia leituras caras ao KV (2026-07, alerta real de 50% do teto
 # diário do plano Free com o site ainda nem publicado — ver dynamic/PLAN.md).

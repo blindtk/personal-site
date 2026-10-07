@@ -308,6 +308,11 @@ function topCountryAction(byCountryAction, limit) {
     .map(({ country, action, count }) => ({ country, action, count }));
 }
 
+// `action` e `source` são enums da Cloudflare, mas passam pelo mesmo
+// sanitizeText que o resto do que vem de fora (nada externo chega ao cliente
+// sem isso) — o teto é largo para o maior valor real.
+const CF_FIREWALL_ENUM_MAXLEN = 40;
+
 /**
  * Agrega os eventos crus do `firewallEventsAdaptive` (CF_FIREWALL_QUERY) por
  * **ação** (o que a Cloudflare fez: managed_challenge, block, js_challenge…),
@@ -330,8 +335,8 @@ export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
   const bySource = new Map();
   const byCountryAction = new Map(); // country -> Map<action, weight>
   for (const e of Array.isArray(events) ? events : []) {
-    const action = typeof e?.action === 'string' && e.action.length > 0 ? e.action : 'unknown';
-    const source = typeof e?.source === 'string' && e.source.length > 0 ? e.source : 'unknown';
+    const action = sanitizeText(e?.action, CF_FIREWALL_ENUM_MAXLEN) || 'unknown';
+    const source = sanitizeText(e?.source, CF_FIREWALL_ENUM_MAXLEN) || 'unknown';
     const weight = Math.max(1, Number(e?.sampleInterval) || 1);
     byAction.set(action, (byAction.get(action) ?? 0) + weight);
     bySource.set(source, (bySource.get(source) ?? 0) + weight);

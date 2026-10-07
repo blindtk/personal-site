@@ -125,9 +125,18 @@ const fwDayKey = (ms) => `fw:${new Date(ms).toISOString().slice(0, 10)}`; // fw:
  * (ação mais comum vinda de cada país, nesse dia) e por rede (ASN, do
  * `firewallDetailBreakdown`) — nunca IP.
  */
-async function snapshotFirewall(env, stats, now) {
+async function snapshotFirewall(env, stats) {
   const zone = stats?.zone;
-  if (!zone) return;
+  const fetchedAt = Number(stats?.fetchedAt);
+  if (!zone || !Number.isFinite(fetchedAt)) return;
+  // Idempotente por fetch: o cron passa aqui em todos os ticks, mas só grava
+  // quando `stats` é mais recente do que a fotografia do dia — quem quer que
+  // tenha refrescado `cache:cfstats` (cron, ?refresh=1 ou um GET com
+  // stale-while-revalidate). O dia é o do fetch, não o do tick: um fetch das
+  // 23:50 visto num tick das 00:00 não duplica as mesmas 24h no dia seguinte.
+  const key = fwDayKey(fetchedAt);
+  const prev = await getJSON(env, key);
+  if (Number(prev?.fetchedAt) >= fetchedAt) return;
   const toMap = (list) => Object.fromEntries((Array.isArray(list) ? list : []).map((r) => [r.key, r.count]));
   const byCountry = Object.fromEntries(
     (Array.isArray(zone.firewallByCountry) ? zone.firewallByCountry : [])
@@ -135,6 +144,7 @@ async function snapshotFirewall(env, stats, now) {
       .map((r) => [r.country, { action: r.action, count: r.count }]),
   );
   const snap = {
+    fetchedAt,
     byAction: toMap(zone.firewallByAction),
     bySource: toMap(zone.firewallBySource),
     byCountry,
@@ -146,7 +156,7 @@ async function snapshotFirewall(env, stats, now) {
     Object.keys(snap.byCountry).length === 0 &&
     Object.keys(snap.byAsn).length === 0
   ) return;
-  await env.KV.put(fwDayKey(now), JSON.stringify(snap), { expirationTtl: 8 * 86400 });
+  await env.KV.put(key, JSON.stringify(snap), { expirationTtl: 8 * 86400 });
 }
 
 /**
@@ -350,6 +360,42 @@ async function edgeCached(request, key, ttlSec, compute) {
   return data;
 }
 
+// ---------- corpo do pedido com teto ----------
+
+/**
+ * Lê o corpo do pedido como texto, mas nunca mais de `maxBytes`. Devolve null
+ * se o corpo passar do teto — sem o ler todo: recusa logo pelo Content-Length
+ * declarado e, num corpo em streaming, cancela a leitura assim que o teto é
+ * ultrapassado. `request.text()` sozinho puxava o corpo inteiro (um pedido de
+ * vários MiB) antes de o teto de 2 KB ser sequer consultado.
+ */
+async function readBodyCapped(request, maxBytes) {
+  const declared = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) return null;
+  const reader = request.body?.getReader?.();
+  if (!reader) {
+    // Sem stream (testes/runtimes sem body): o texto já está em memória.
+    const text = await request.text();
+    return new TextEncoder().encode(text).length > maxBytes ? null : text;
+  }
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) { bytes.set(c, offset); offset += c.byteLength; }
+  return new TextDecoder().decode(bytes);
+}
+
 // ---------- respostas ----------
 
 // Cabeçalhos de segurança de TODAS as respostas do Worker. O _headers do
@@ -361,6 +407,9 @@ async function edgeCached(request, key, ttlSec, compute) {
 const RESPONSE_SECURITY_HEADERS = {
   'x-content-type-options': 'nosniff',
   'content-security-policy': "default-src 'none'",
+  // Só o próprio site (mesma origem) pode incluir estas respostas em modo
+  // no-cors; o /api/mirror leva o IP de quem pede.
+  'cross-origin-resource-policy': 'same-origin',
   // O _headers do Pages cobre o conteúdo estático; sem isto, as respostas
   // da API do Worker saíam sem HSTS — inofensivo hoje (a
   // zona já força HTTPS), mas um scanner externo assinala a ausência, e
@@ -437,11 +486,11 @@ export default {
       }
       let text;
       try {
-        text = await request.text();
+        text = await readBodyCapped(request, VITALS_MAX_BODY);
       } catch {
         return new Response(null, { status: 204, headers: RESPONSE_SECURITY_HEADERS });
       }
-      if (text.length > VITALS_MAX_BODY) {
+      if (text === null) {
         return json({ error: 'payload_too_large' }, request, env, { status: 413 });
       }
       let sample = null;
@@ -564,7 +613,7 @@ export default {
           }
           const data = await fetchCfStats(env);
           await env.KV.put('cache:cfstats', JSON.stringify({ data, exp: Date.now() + 6 * HOUR_MS }), {
-            expirationTtl: 6 * 3600 + 60,
+            expirationTtl: 6 * 3600 + STALE_GRACE_SEC,
           });
           // A cópia do data center também passa a ser a fresca — senão os GET
           // normais seguintes neste colo continuavam a ver a antiga até 30 min.
@@ -625,18 +674,16 @@ export default {
 
         await Promise.all([
           cached(env, ctx, 'cache:ct', 6 * 3600, () => fetchCtWatch(env), { capped: false }).catch(() => {}),
-          // Estado da Cloudflare + snapshot diário da firewall (acumula 7d).
-          // O snapshot vive dentro do producer do `cached()` — corre só
-          // quando o cfstats É DE FACTO REFRESCADO (~4×/dia, TTL 6h), não em
-          // cada um dos 48 ticks do cron: como `cached()` devolve o mesmo
-          // valor em cache nos ticks intermédios, fotografar nesses ticks só
-          // reescrevia a mesma coisa em KV sem qualquer ganho de frescura (o
-          // dado só muda quando o próprio fetchCfStats corre).
-          cached(env, ctx, 'cache:cfstats', 6 * 3600, async () => {
-            const stats = await fetchCfStats(env);
-            await snapshotFirewall(env, stats, Date.now()).catch(() => {});
-            return stats;
-          }, { capped: false }).catch(() => {}),
+          // Estado da Cloudflare + snapshot diário da firewall (acumula 7d). O
+          // snapshot NÃO vive no producer do cached(): `cache:cfstats` também é
+          // refrescado por pedidos (?refresh=1 e GET com stale-while-revalidate)
+          // e então o producer do cron nem corre. Em vez disso, cada tick
+          // fotografa o que a cache tiver de mais recente — snapshotFirewall é
+          // idempotente por fetch, por isso um tick sem dados novos custa só
+          // uma leitura e nenhuma escrita.
+          cached(env, ctx, 'cache:cfstats', 6 * 3600, () => fetchCfStats(env), { capped: false })
+            .then((stats) => snapshotFirewall(env, stats))
+            .catch(() => {}),
           // Firewall 7d: aquece-se aqui para as visitas caírem sempre em
           // cache (TTL 6h, ver a rota /api/threat-intel).
           cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({

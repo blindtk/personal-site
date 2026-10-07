@@ -25,9 +25,16 @@ export function edgeCache() {
   return globalThis.caches?.default ?? null;
 }
 
-/** URL-chave de uma entrada, na origem do pedido. */
+/**
+ * URL-chave de uma entrada, no host do pedido. Esquema e porta são fixados
+ * (https, 443): a Cache API chaveia pelo URL completo, por isso derivá-los do
+ * pedido deixava `https://host:8443/…` (ou `http://`, se chegasse ao Worker)
+ * ter um balde de rate limit e uma cache próprios — multiplicando o limite
+ * por cliente pelo número de portas HTTPS servidas pela zona.
+ */
 export function edgeKey(requestUrl, key) {
-  return new URL(`/api/__cache/${encodeURIComponent(key)}`, requestUrl).href;
+  const { hostname } = new URL(requestUrl);
+  return new URL(`https://${hostname}/api/__cache/${encodeURIComponent(key)}`).href;
 }
 
 /** Lê uma entrada JSON; null se não existe ou se o corpo não é JSON válido. */
