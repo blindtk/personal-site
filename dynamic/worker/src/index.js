@@ -14,9 +14,8 @@
 // deixou. Ver README.md para deploy (routes no domínio) e secrets.
 
 import { mergeFirewall7d } from './lib/firewall.js';
-import {
-  normalizeVitals, emptyVitalsBucket, addVitals, vitalsStats,
-} from './lib/vitals.js';
+import { normalizeVitals, vitalsStats } from './lib/vitals.js';
+import { vitalsDayKey } from './lib/vitals-counter.js';
 import { nextState, clientHash, dailySalt } from './lib/ratelimit.js';
 import { underCap } from './lib/kvcap.js';
 import { normalizePrefix, fetchRange } from './lib/pwned.js';
@@ -25,6 +24,9 @@ import { fetchCfStats } from './lib/cf-analytics.js';
 import { serverView } from './lib/mirror.js';
 import { edgeCache, edgeKey, edgeGetJSON, edgePutJSON } from './lib/edgecache.js';
 
+// A classe do Durable Object tem de sair do módulo principal (wrangler.toml).
+export { VitalsCounter } from './lib/vitals-counter.js';
+
 const HOUR_MS = 3600_000;
 const DAY_MS = 86400_000;
 
@@ -32,17 +34,11 @@ const DAY_MS = 86400_000;
 // deixar um alvo lento pendurar o pedido.
 const UPSTREAM_TIMEOUT_MS = 5000;
 
-// RUM de Core Web Vitals: corpo minúsculo (4 números), teto de escritas POR
-// DIA (o plano Free tem ~1.000 escritas/dia para a conta inteira). Só agregados; ver
-// lib/vitals.js. 150 amostras/dia × 2 escritas = 300/dia: o valor antigo
-// (5.000/hora) media a resiliência a abuso, não o orçamento real do plano
-// Free — tráfego orgânico normal já bastava para estourar o teto diário
-// muito antes de qualquer flood malicioso.
+// RUM de Core Web Vitals: corpo minúsculo (4 números). Só agregados; ver
+// lib/vitals.js. O histograma e o teto diário de amostras vivem no Durable
+// Object VITALS (lib/vitals-counter.js), que os atualiza de forma atómica e
+// não gasta o orçamento de escritas do KV.
 const VITALS_MAX_BODY = 2 * 1024;
-// Em escritas (2 por amostra: histograma + contador) — as mesmas 150
-// amostras/dia de antes.
-const VITALS_WRITE_CAP = { windowMs: DAY_MS, max: 300 };
-const VITALS_WRITE_COST = 2;
 
 // ---------- helpers de tempo/KV ----------
 
@@ -84,33 +80,41 @@ const THREAT_INTEL_CACHE = { kv: 'cache:firewall7d', edge: 'firewall7d' };
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
 
-const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; // vit:2026-07-24
+const vitalsStub = (env) => env.VITALS.get(env.VITALS.idFromName('global'));
 
 /**
- * Acumula uma amostra de Web Vitals já normalizada no histograma diário. Só
- * agregados — nenhum valor individual, IP ou UA é persistido. Cap global de
- * escritas por janela.
+ * Acumula uma amostra de Web Vitals já normalizada no histograma diário (no
+ * Durable Object, que também aplica o teto de amostras/dia). Só agregados —
+ * nenhum valor individual, IP ou UA é persistido. Lança se o DO falhar; o
+ * chamador regista e responde 204 na mesma.
  */
 async function recordVitals(env, sample, now) {
-  const capKey = `vitcap:${dayKey(now)}`;
-  const dayK = vitalsDayKey(now);
-  // O contador primeiro: com o orçamento do dia esgotado (o estado normal
-  // durante um flood) o beacon custa 1 leitura em vez de 2, e o IP que enche o
-  // orçamento deixa de gastar também a quota de leituras da conta.
-  const { allowed, state } = underCap(await getJSON(env, capKey), { now, cost: VITALS_WRITE_COST, ...VITALS_WRITE_CAP });
-  if (!allowed) return;
-  const bucket = await getJSON(env, dayK, emptyVitalsBucket());
-  addVitals(bucket, sample);
-  await Promise.all([
-    env.KV.put(dayK, JSON.stringify(bucket), { expirationTtl: 9 * 86400 }),
-    env.KV.put(capKey, JSON.stringify(state), { expirationTtl: Math.ceil(VITALS_WRITE_CAP.windowMs / 1000) + 60 }),
-  ]);
+  const res = await vitalsStub(env).fetch('https://vitals.internal/record', {
+    method: 'POST',
+    body: JSON.stringify({ sample, now }),
+  });
+  if (!res.ok) throw new Error(`vitals_do_${res.status}`);
 }
 
-/** Lê os 7 histogramas diários de Web Vitals (hoje primeiro). */
+/**
+ * Lê os 7 histogramas diários de Web Vitals (hoje primeiro). Do Durable
+ * Object; se este falhar (ou o binding faltar), cai para as chaves `vit:<dia>`
+ * do KV — onde os histogramas viviam antes do DO, e que expiram sozinhas em 9
+ * dias — para a página não ficar vazia. Também preenche, durante a
+ * transição, os dias que o DO ainda não tem.
+ */
 async function readVitalsBuckets(env, now) {
-  const keys = Array.from({ length: 7 }, (_, i) => vitalsDayKey(now - i * DAY_MS));
-  return Promise.all(keys.map((k) => getJSON(env, k)));
+  let fromDo = [];
+  try {
+    const res = await vitalsStub(env).fetch(`https://vitals.internal/read?now=${now}`);
+    if (!res.ok) throw new Error(`vitals_do_${res.status}`);
+    fromDo = (await res.json()).buckets;
+  } catch (err) {
+    console.error('vitals_read_failed', err?.message ?? String(err));
+  }
+  return Promise.all(
+    Array.from({ length: 7 }, (_, i) => fromDo[i] ?? getJSON(env, vitalsDayKey(now - i * DAY_MS))),
+  );
 }
 
 // ---------- Firewall Cloudflare: acumulação diária (24h → 7d) ----------
@@ -192,9 +196,9 @@ const STALE_GRACE_SEC = 86400;
 
 // Orçamento diário (em escritas) dos refresh de cache vindos de pedidos. Cada
 // refresh aceite custa 2 (valor + contador). Soma dos orçamentos diários do
-// Worker: vitals 300 + cache 80 + refresh manual 40 + cron (~16:
+// Worker: cache 80 + refresh manual 40 + cron (~16:
 // ct/cfstats/fw/threatintel; a limpeza do honeypot antigo só escreve uma
-// vez) ≈ 440 — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
+// vez) ≈ 140 — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
 // pedidos concorrentes conseguem (underCap não é atómico, ver lib/kvcap.js).
 // O rate limiter já não entra nesta conta: vive na Cache API (ver rateLimit).
 const CACHE_WRITE_CAP = { windowMs: DAY_MS, max: 80 };

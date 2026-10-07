@@ -62,7 +62,8 @@ data); a possible mitigation (per-ASN sub-cap) is recorded as a
 ### A3 — Metric poisoning (Vitals)
 **Status: accepted residual risk, out of necessity.** The POST endpoint
 is unauthenticated by nature (that's what makes it useful). An attacker
-can submit fabricated LCP/CLS values within the cap. Impact:
+can submit fabricated LCP/CLS values within the cap (1000 samples per UTC
+day, enforced atomically by the `VITALS` Durable Object). Impact:
 cosmetic/reputational — mitigation: be explicit on the page that this is
 an unauthenticated first-party beacon.
 
