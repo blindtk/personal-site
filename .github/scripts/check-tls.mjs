@@ -8,6 +8,7 @@
 // direto) viram ::warning::; INFO/OK/DEBUG só aparecem no log. Mesmo padrão
 // hard/soft de check-invariants.mjs, aqui por severidade em vez de contagem.
 import { readFileSync } from 'node:fs';
+import { sanitizeForLog } from './lib/log.mjs';
 
 const jsonPath = process.argv[2];
 if (!jsonPath) {
@@ -21,7 +22,7 @@ try {
   findings = JSON.parse(raw);
   if (!Array.isArray(findings)) throw new Error('esperava um array (formato --jsonfile "flat")');
 } catch (err) {
-  console.error(`::error::check-tls: não consegui ler/parsear ${jsonPath} — ${err?.message ?? err}`);
+  console.error(`::error::check-tls: não consegui ler/parsear ${sanitizeForLog(jsonPath)} — ${sanitizeForLog(err?.message ?? err)}`);
   process.exit(1);
 }
 
@@ -47,7 +48,8 @@ let softFailures = 0;
 
 for (const f of findings) {
   const severity = String(f.severity ?? '').toUpperCase();
-  const label = `${f.id ?? '?'}: ${f.finding ?? ''}${f.cve ? ` (${f.cve})` : ''}`;
+  // testssl.sh imprime texto apresentado pelo servidor sob teste: nunca confiar nele.
+  const label = sanitizeForLog(`${f.id ?? '?'}: ${f.finding ?? ''}${f.cve ? ` (${f.cve})` : ''}`, 500);
   if (HARD.has(severity)) {
     console.error(`::error::[${severity}] ${label}`);
     hardFailures += 1;
