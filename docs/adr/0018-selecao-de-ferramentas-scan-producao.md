@@ -1,6 +1,6 @@
 # ADR 0018 — Production-scan tool selection: automate by elimination, don't collect scanners
 
-**Status:** accepted and in production (`tls-check.yml`, `observatory-check.yml`, `dns-check.yml`, and the external-scan list in `docs/ci-cd.md`).
+**Status:** accepted and in production (`verify-tls.yml`, `verify-observatory.yml`, `verify-dns.yml`, and the external-scan list in `docs/ci-cd.md`).
 
 ## Context
 
@@ -20,9 +20,9 @@ link the SSL Labs report: **to not depend on a third-party service being
 up, or on waiting for its cache**, when the check can run self-contained
 against production directly. Monthly, not weekly or daily: the TLS
 surface (ciphers, protocol, certificate) changes rarely — more frequent
-runs wouldn't detect anything sooner, they'd only spend more of the
-GitHub Actions Free-plan minutes the repository is already close to the
-edge of.
+runs wouldn't detect anything sooner. (When this was decided the
+repository was private and short of Actions minutes; public repositories
+have no minute limit, but the reasoning about cadence stands.)
 
 **Observatory check.** Mozilla HTTP Observatory was picked over two
 alternatives that were live candidates, each rejected for a specific,

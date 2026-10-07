@@ -11,8 +11,8 @@
 # fuzzing, não substituir os testes com vetores conhecidos já existentes
 # (node --test).
 #
-# SEM CRON, só workflow_dispatch — de propósito, não é o plano original.
-# Falhava sempre por duas causas, ambas resolvidas em .clusterfuzzlite/
+# Semanal + à mão. Esteve só em workflow_dispatch enquanto falhava sempre,
+# por duas causas, ambas resolvidas em .clusterfuzzlite/
 # (2026-10-01, reproduzidas localmente com as mesmas imagens):
 # 1. sanitizer: coverage faz o compile do OSS-Fuzz copiar $SRC para
 #    $OUT/src, incluindo o honggfuzz da imagem base; o run_fuzzers
@@ -24,11 +24,16 @@
 #    nem arrancava ("GLIBC_2.32 not found"). Fixado no 2.1.0 com o
 #    prebuild verificado por SHA-256 (ver build.sh, incluindo a limitação
 #    de cobertura com ESM).
-# O cron pode voltar quando houver algumas execuções manuais verdes.
+# O cron voltou depois de 4 execuções manuais verdes seguidas (runs #2–#5,
+# 2026-10-01). O Renovate retém o major do @jazzer.js/core até a imagem do
+# run_fuzzers ter glibc >= 2.38 (renovate.json5).
 
 name: ci-fuzzing
 
 on:
+  schedule:
+    # Domingo de madrugada — fora da janela dos outros crons semanais.
+    - cron: '20 4 * * 0'
   workflow_dispatch: {}
 
 permissions: {}
@@ -36,6 +41,7 @@ permissions: {}
 jobs:
   fuzz:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:

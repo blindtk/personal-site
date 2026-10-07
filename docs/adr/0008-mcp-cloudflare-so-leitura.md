@@ -1,6 +1,11 @@
 # ADR 0008 — Cloudflare MCP servers in `.mcp.json`: read-only, no `cloudflare-bindings`
 
-**Status:** accepted and in production (`.mcp.json`, repo root).
+**Status:** superseded (2026-09-26, PR #185) — `.mcp.json` was removed
+altogether: the five read-only servers were loaded on every turn of every
+session for little use. No MCP server is versioned in this repository any
+more; anyone who needs one adds it as a personal connector, which is the
+option this ADR already recorded for write access. Kept as the record of
+why a project-scoped write server was rejected.
 
 ## Context
 
@@ -50,4 +55,4 @@ operations (e.g. `workers_builds_cancel_build`), not just reads. Removed
 from `.mcp.json`; the remaining five (`cloudflare-audit-logs`,
 `cloudflare-graphql-analytics`, `cloudflare-dns-analytics`,
 `cloudflare-observability`, `cloudflare-docs`) are the read-only set.
-See `dynamic/PLAN.md` for the full record.
+The full record is in the git history of `dynamic/PLAN.md`.

@@ -1,6 +1,11 @@
 # ADR 0006 — Worker write caps: daily, sized to the budget, not to abuse resistance
 
-**Status:** accepted and in production.
+**Status:** accepted and in production. The honeypot and CSP caps
+described below no longer exist (CSP reporting removed 2026-08-06, the
+honeypot retired by [ADR 0022](0022-retire-internal-honeypot.md)); the
+current budgets are `VITALS_WRITE_CAP` 300, `CACHE_WRITE_CAP` 80 and
+`REFRESH_WRITE_CAP` 40, about 440 writes/day with the cron — see
+`dynamic/worker/README.md` (KV write budget).
 
 ## Context
 

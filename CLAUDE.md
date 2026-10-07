@@ -60,15 +60,15 @@ npm run preview   # serve the build locally
   amber (`--accent-2`) for the Lab/warnings. Mobile-first.
 - European Portuguese (not Brazilian) in all `content/` editorial copy —
   the site's PT pages, blog posts, and page copy. Documentation in `docs/`,
-  `dynamic/PLAN.md`, and this file are in English; see the note in
-  `README.md`'s Contributing section for the reasoning.
+  `dynamic/PLAN.md`, `README.md` and this file are in English, because
+  the repository is public (see `README.md`'s Contributing section).
 
 ## Writing tests
 
 - A test must fail on a real bug that nothing else catches (the rest of the
   suite, the `verify-*` workflows against production). If you can't name
   that bug, don't write the test.
-- Before writing a guard (`ipguard`, `sanitize`, rate limits, caps), list
+- Before writing a guard (`normalizeIp`, `sanitize`, rate limits, caps), list
   how it can fail; each test covers one failure mode. Pin the **exact
   boundary**: the ms a window ends, a string of exactly `maxLen`, the last
   address of a range. Malformed input that must fail closed gets its own

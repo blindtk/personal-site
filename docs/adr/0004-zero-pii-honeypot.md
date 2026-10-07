@@ -1,14 +1,12 @@
 # ADR 0004 — Zero-PII in the honeypot and analytics, by choice, not plan limitation
 
 **Status:** accepted and in production for the Cloudflare Status/firewall
-panel (`cf-analytics.js`) — that half is unchanged. The honeypot itself
-was retired on 2026-10-02 ([ADR 0022](0022-retire-internal-honeypot.md)). **Superseded for the
-honeypot half by [ADR 0020](0020-honeypot-public-ip.md):** the repo owner
-decided the honeypot itself should record and publish the source IP, to
-correlate hits with the external Cowrie honeypot (ADR 0019). The
-reasoning below stayed valid for over a year and is kept as the record of
-why zero-IP was the right default to start from — it just no longer
-describes what `recordHoneypot` does.
+panels (`cf-analytics.js`). The honeypot half no longer applies: it was
+superseded by [ADR 0020](0020-honeypot-public-ip.md) (the honeypot
+published source IPs) and the honeypot itself was retired by
+[ADR 0022](0022-retire-internal-honeypot.md) (2026-10-02). Since then the
+Worker stores no IP address at all. The honeypot parts below are kept as
+the record of why zero-IP was the default to start from.
 
 ## Context
 
@@ -46,9 +44,11 @@ it's a deliberate choice, made even when the data was within easy reach.
   the goal is to show attack *patterns* (country, ASN, technique, path,
   time of day), not build a per-attacker dossier.
 - Reinforces the site's privacy posture: no visitor — hostile or
-  legitimate — has their IP persisted anywhere in the Worker.
-- Accepted residual risk (see the 2026-07-29 security review, not published,
-  finding A2): without a stable per-attacker identifier, an adversary can
+  legitimate — has their IP persisted anywhere in the Worker. (Since
+  [ADR 0023](0023-mirror-echoes-client-ip.md) the Mirror *echoes* a
+  visitor's own IP back to them, never stored.)
+- Accepted residual risk while the honeypot existed (finding A2 of the
+  2026-07-29 security review, not published; retired with ADR 0022): without a stable per-attacker identifier, an adversary can
   fill the honeypot's daily write budget with trivial requests and skew
   the public dashboard. A possible future mitigation (per-ASN sub-cap) is
   recorded as a *nice-to-have*, not implemented — the cost of doing it

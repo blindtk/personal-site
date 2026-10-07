@@ -12,6 +12,13 @@ on:
 # Nada por omissão — cada job declara o mínimo de que precisa.
 permissions: {}
 
+# Um push novo num PR cancela a execução anterior desse PR (o resultado já
+# não interessa). Fora de PRs o grupo é o próprio run (run_id): pushes para
+# main e crons nunca se cancelam nem ficam à espera uns dos outros.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # Dependências com vulnerabilidades conhecidas (base OSV.dev, inclui as
   # advisories do GitHub). Analisa os DOIS lockfiles do repo (static/ e
@@ -33,6 +40,7 @@ jobs:
   # SARIF diretamente.)
   osv-scanner:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -57,6 +65,7 @@ jobs:
   # Conta pessoal: GITLEAKS_LICENSE não é necessária.
   gitleaks:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       # a gitleaks-action enumera os commits do PR pela API em eventos
@@ -77,6 +86,7 @@ jobs:
   # ferramentas client-side, no terminal do Lab e nos Workers futuros.
   semgrep:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -140,6 +150,7 @@ jobs:
   # injeção de template em run:, credenciais persistidas, tags impostoras.
   zizmor:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:

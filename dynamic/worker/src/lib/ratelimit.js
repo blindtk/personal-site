@@ -1,8 +1,10 @@
 // Rate limiting de janela fixa, puro e testável. O estado (contagem +
-// início da janela) é guardado no KV pelo index; aqui está só a transição.
-// A chave por-cliente é um hash truncado e salteado do IP (salt roda ao
-// dia) — nunca é associada aos eventos do honeypot nem persistida além da
-// TTL da janela. É o único uso de qualquer valor derivado de IP.
+// início da janela) é guardado pelo index na Cache API (KV só como
+// reserva); aqui está só a transição. A chave por-cliente é um hash
+// truncado e salteado do IP (salt roda ao dia) — nunca é associada a
+// nenhum evento nem persistida além da TTL da janela. É o único valor
+// derivado do IP que o Worker guarda (o /api/mirror devolve o IP ao
+// próprio pedido, sem o guardar — ADR 0023).
 
 /**
  * Calcula o próximo estado da janela.

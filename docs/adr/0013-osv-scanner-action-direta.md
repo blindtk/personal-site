@@ -37,5 +37,5 @@ otherwise reject.
   public, there was a second reason to avoid the reusable workflow — SARIF
   upload to Security → Code scanning required GitHub Advanced Security,
   unavailable on a private repo. That stopped applying once the repo went
-  public ([ADR 0009](0009-repositorio-publico.md)); `codeql.yml` and
-  `scorecard.yml` now publish SARIF directly.
+  public ([ADR 0009](0009-repositorio-publico.md)); `security-codeql.yml`
+  and `security-scorecard.yml` now publish SARIF directly.

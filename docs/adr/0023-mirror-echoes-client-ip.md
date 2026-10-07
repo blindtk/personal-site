@@ -34,8 +34,9 @@ response ends up, not the echo itself:
   leading zeros) or RFC 4291 IPv6. Anything else, including lists, ports,
   zone IDs and HTML, becomes `null`. The page renders with `textContent`
   anyway.
-- Nothing is persisted. The only KV write is the rate-limit key, which is
-  a salted hash. A test asserts that no KV key or value contains the IP.
+- Nothing is persisted. The only state the request touches is the
+  rate-limit key, a salted hash (Cache API, with KV as fallback). A test
+  asserts that no KV key or value contains the IP.
 - The page shows the IP hidden (`•••`) until the visitor clicks "show".
 
 A separate tool was rejected: the IP belongs in "what the server sees",

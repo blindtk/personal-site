@@ -11,6 +11,25 @@ monorepo's three areas — `content/`, `static/`, `dynamic/` —, the PT/EN
 bilingual rule, where UI strings live, etc.). A change that doesn't follow
 those conventions won't be accepted as-is, even if the logic is correct.
 
+## Running it locally
+
+Requires [Node.js](https://nodejs.org) 22.12+ (CI uses Node 24).
+
+```bash
+cd static
+npm install        # first time only
+npm run dev        # http://localhost:4321, hot-reloads static/src/ and content/
+npm run build      # → static/dist/
+npm run preview    # serve dist/ locally
+```
+
+The Worker (`dynamic/worker/`) has its own instructions in
+[`dynamic/worker/README.md`](dynamic/worker/README.md#development).
+Content rules (PT/EN pairs with the same filename, personal data only in
+`static/src/config.ts`) are in `CLAUDE.md`; a new blog post is just a new
+file in `content/blog/pt/` and `content/blog/en/`, with `draft: true` until
+it's ready.
+
 ## Reporting a bug
 
 Open an [Issue](https://github.com/blindtk/personal-site/issues) with:
@@ -29,7 +48,7 @@ process in [`.github/SECURITY.md`](.github/SECURITY.md).
 3. Run `cd static && npm run build` — it has to pass with no errors or
    new warnings before you open the PR.
 4. If you touched `dynamic/worker/` or the tools in `/ferramentas/`, also
-   run `node --test` and validate the logic with known vectors. This works
+   run `npm test` (in `static/` and/or `dynamic/worker/`) and validate the logic with known vectors. This works
    without a browser or the Cloudflare runtime because the rule is: DOM/network
    glue stays in `.astro` components and `src/index.js`, while anything with
    real logic (parsing, sanitizing, aggregating, rate-limit math) lives in a

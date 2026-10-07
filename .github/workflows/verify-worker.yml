@@ -10,8 +10,8 @@ name: verify-worker
 
 on:
   schedule:
-    # Uma vez por dia, num horário diferente do cron do Headers (17 6) e do
-    # Supply chain (0 6 * seg) — não há razão para colidir.
+    # Uma vez por dia, num horário diferente do verify-headers (17 6) e do
+    # security-supply-chain (0 6 * * 1) — não há razão para colidir.
     - cron: '43 7 * * *'
   workflow_dispatch:
     inputs:
@@ -30,6 +30,7 @@ env:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       issues: write

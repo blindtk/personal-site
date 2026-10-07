@@ -1,9 +1,8 @@
-# Verificações de supply-chain de baixa frequência: não correm em cada PR de
-# propósito (achado da revisão de segurança 2026-07-29,
-# revisão de segurança de 2026-07-29 (não publicada) — o repositório está hoje ACIMA da
-# quota de minutos do plano Free do GitHub Actions com 7 jobs por PR ×
-# ~100 PRs/mês; acrescentar mais passos ao caminho de cada PR piora isso).
-# Em vez disso: semanal + à mão. Cobre os dois lockfiles (static/ e
+# Verificações de supply-chain de baixa frequência: semanal + à mão, não em
+# cada PR. Nasceu assim quando o repositório era privado e estava acima da
+# quota de minutos do Actions; público já não tem quota, mas a deriva de
+# assinaturas e do SBOM não precisa de granularidade por PR (docs/ci-cd.md,
+# "Cadence"). Cobre os dois lockfiles (static/ e
 # dynamic/worker/), mesma lógica de "dois jobs" do osv-scanner/ci.yml.
 name: security-supply-chain
 
@@ -20,6 +19,7 @@ permissions: {}
 jobs:
   static:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:
@@ -57,6 +57,7 @@ jobs:
 
   worker:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:

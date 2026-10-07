@@ -17,16 +17,24 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Segunda de madrugada, antes do Supply chain (0 6 * * 1) e depois da
-    # janela do Headers (17 6) — scan completo com security-extended, mais
+    # Segunda de madrugada, antes do security-supply-chain (0 6 * * 1) e do
+    # verify-headers (17 6) — scan completo com security-extended, mais
     # lento do que o gate de PR/push (que usa o pack por omissão).
     - cron: '30 5 * * 1'
 
 permissions: {}
 
+# Um push novo num PR cancela a execução anterior desse PR (o resultado já
+# não interessa). Fora de PRs o grupo é o próprio run (run_id): pushes para
+# main e crons nunca se cancelam nem ficam à espera uns dos outros.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       security-events: write

@@ -23,6 +23,7 @@ jobs:
     # em deployment_status só corre quando o deploy teve sucesso
     if: github.event_name != 'deployment_status' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:

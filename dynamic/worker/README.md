@@ -1,6 +1,6 @@
 # personal-site-worker
 
-Backend for the site's security features (Block 3): the Cloudflare/firewall
+Backend for the site's security features: the Cloudflare/firewall
 panels, CT watch, Web Vitals, the HIBP range relay and the mirror. A single
 Cloudflare Worker + one KV namespace.
 
@@ -12,7 +12,7 @@ Cloudflare Worker + one KV namespace.
 
 > **Why it lives here and not in `static/`:** the monorepo rule is that
 > `static/` is 100% client, no backend. Anything that needs a server
-> belongs in `dynamic/` — this is that area's first real code.
+> belongs in `dynamic/`.
 
 ## Endpoints
 
@@ -49,7 +49,7 @@ queries: apex and `%.domain`, because a certificate issued only for a
 subdomain would never show up in the apex query), deduplicates
 precert/leaf by serial, and compares every issuance against the
 `CT_EXPECTED_ISSUERS` allowlist — anything that doesn't match shows up as
-**unexpected** on the Security page panel.
+**unexpected** on the Evidence page panel (`/este-site/provas/`).
 
 No visitor input (the query is fixed, derived from `SCAN_TARGET`) — not
 reusable as a proxy and doesn't need its own rate limit. crt.sh is
@@ -64,7 +64,8 @@ test).
 
 ## Cloudflare Status (`/api/cf-stats`)
 
-Panel on the Evidence page with real metrics for this zone/Worker —
+Panels on the Cloudflare page (`/este-site/cloudflare/`, also read by
+the Performance page) with real metrics for this zone/Worker —
 requests, cache rate, threats blocked by Cloudflare's edge (with a table
 of the origin countries with the most blocked threats over the last 7
 days), and this Worker's own invocations and errors — via the
@@ -99,8 +100,8 @@ dash.cloudflare.com → My Profile → API Tokens, with the scopes:
   `src/lib/cf-analytics.js`). A daily cron (`scheduled()` in
   `src/index.js`) snapshots that result into KV and merges 7 days
   (`snapshotFirewall`/`readFirewall7d`) — that's what feeds the
-  "Firewall by action/origin/country (7d)" panel on the Analytics'
-  Threat Intel tab and the "Managed challenges" card on the Overview.
+  firewall-by-action/origin/country (7d) and mitigation-per-day panels
+  on the Cloudflare page (`/api/threat-intel`).
   Without these three scopes, the request fails silently (it's
   *best-effort*, never takes down the core) and those panels stay stuck
   at zero — with no visible error, because that's exactly the intended
@@ -108,8 +109,8 @@ dash.cloudflare.com → My Profile → API Tokens, with the scopes:
   **second, separate request**
   (`CF_FIREWALL_DETAIL_QUERY`/`firewallDetailBreakdown`, same raw
   dataset, `clientRequestPath`/`userAgent`/`clientAsn` fields) that
-  powers the "Most targeted URLs", "Most seen user-agents", and "Most
-  seen networks" tables on the Traffic tab — no 7-day accumulation
+  powers the most-targeted-URLs, user-agents and networks tables on the
+  same page — no 7-day accumulation
   (stays at 24h). A separate request on purpose: a schema drift here
   should never wipe out the action/origin/country tables that already
   work. `clientIP` is available in this same dataset but is never
@@ -182,7 +183,7 @@ npx wrangler dev  # local Worker with in-memory KV
 ```
 
 The modules in `src/lib/` are pure and covered by `test/logic.test.mjs`
-(aggregation, sanitization, rate limiting, feed parsing, header note)
+(aggregation, sanitization, rate limiting, CT, mirror, write budgets)
 with known vectors.
 
 ## Deploy
@@ -202,7 +203,8 @@ with known vectors.
 ```bash
 npx wrangler kv namespace create HONEYPOT
 npx wrangler kv namespace create HONEYPOT --preview
-# paste the ids into wrangler.toml (id / preview_id)
+# paste the ids into wrangler.toml (id / preview_id). The namespace name
+# predates ADR 0022; the binding the code reads is `KV`.
 
 npx wrangler secret put RATE_SALT     # any long random string
 ```
