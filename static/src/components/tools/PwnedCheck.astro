@@ -12,6 +12,8 @@ const jsStrings = {
   empty: p.empty,
   checking: p.checking,
   check: p.check,
+  show: p.show,
+  hide: p.hide,
   hashLabel: p.hashLabel,
   kept: p.kept,
   rangeQuery: p.rangeQuery,
@@ -53,7 +55,7 @@ const jsStrings = {
 </div>
 
 <script>
-  import { sha1Hex, splitHash, matchCount } from '../../scripts/pwned.js';
+  import { sha1Hex, splitHash, rangeVerdict } from '../../scripts/pwned.js';
 
   const root = document.getElementById('pwned-tool')!;
   const base = root.dataset.api ?? '';
@@ -131,14 +133,15 @@ const jsStrings = {
       return;
     }
 
-    // 3) Sufixos recebidos + nota de k-anonimato; correspondência local.
-    const suffixes = Array.isArray(data?.suffixes) ? data.suffixes : [];
-    line({ text: `${fmt(suffixes.length)} ${S.received}` });
+    // 3) Sufixos recebidos + nota de k-anonimato; correspondência local. Uma
+    // lista vazia/ausente nunca vira "segura" (ver rangeVerdict).
+    const v = rangeVerdict(data, suffix);
+    if (v.kind === 'unavailable') { verdict(S.unavailable, 'bad'); return; }
+    line({ text: `${fmt(v.received)} ${S.received}` });
     line({ text: `  ${S.bucketsNote}`, cls: 'dim' });
 
-    const count = matchCount(suffixes, suffix);
-    if (count > 0) {
-      verdict(`${S.pwned}: ${fmt(count)} ${S.occurrences}`, 'bad');
+    if (v.kind === 'pwned') {
+      verdict(`${S.pwned}: ${fmt(v.count)} ${S.occurrences}`, 'bad');
     } else {
       verdict(S.safe, 'good');
     }

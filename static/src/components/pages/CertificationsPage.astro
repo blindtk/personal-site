@@ -6,12 +6,16 @@ import { routes } from '../../i18n/routes';
 // content/ é a fonte de verdade (ver CLAUDE.md): os badges vêm daqui; o estado
 // (válido/expirado) é derivado no build a partir das datas, não escrito à mão.
 import certs from '../../../../content/certs.json';
+import { assertHttpsUrls } from '../../scripts/safe-url.js';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const dict = t(lang);
 const c = dict.certs;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// href de dados que não são código: só https (a CSP não deve ser a única barreira).
+assertHttpsUrls(certs.items.flatMap((i) => ('url' in i && i.url ? [i.url] : [])), 'content/certs.json');
 
 type Cert = { name: string; full?: string; issuer: string; group: string; expires?: string; issued?: string; url?: string; verified?: boolean };
 

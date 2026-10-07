@@ -136,3 +136,12 @@ test('createTerminal (en): mensagens em inglês e "about.md" em vez de "sobre.md
   assert.deepEqual(await exec('cat about.md'), { lines: ['Titulo', '', 'Texto sobre.'] });
   assert.deepEqual(await exec('zzz'), { lines: ["command not found: zzz (try 'help')"] });
 });
+
+test('createTerminal: chaves herdadas de Object.prototype não são algoritmos nem formatos', async () => {
+  const { exec } = createTerminal(ctxPt);
+  for (const key of ['toString', 'constructor', '__proto__', 'hasOwnProperty']) {
+    assert.deepEqual(await exec(`hash ${key} abc`), { lines: ['algoritmo desconhecido. usa: md5 | sha1 | sha256 | sha512'] }, key);
+    assert.deepEqual(await exec(`encode ${key} abc`), { lines: ['uso: encode <base64|url|hex> <texto>'] }, key);
+    assert.deepEqual(await exec(`decode ${key} abc`), { lines: ['uso: decode <base64|url|hex> <texto>'] }, key);
+  }
+});

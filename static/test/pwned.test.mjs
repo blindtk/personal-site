@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sha1Hex, splitHash, matchCount } from '../src/scripts/pwned.js';
+import { sha1Hex, splitHash, matchCount, rangeVerdict } from '../src/scripts/pwned.js';
 
 // Vetores de teste SHA-1 conhecidos (confirmados contra crypto.createHash
 // do Node): "" e "abc" são os vetores oficiais FIPS 180; "password" é o
@@ -42,4 +42,16 @@ test('matchCount: não encontrado ou contagem inválida devolve 0', () => {
   assert.equal(matchCount([['AAAA', -1]], 'AAAA'), 0); // negativo é inválido
   assert.equal(matchCount(null, 'AAAA'), 0);
   assert.equal(matchCount([], 'AAAA'), 0);
+});
+
+test('rangeVerdict: lista ausente, inválida ou vazia é "indisponível", nunca "segura"', () => {
+  for (const data of [null, undefined, {}, { suffixes: null }, { suffixes: 'x' }, { suffixes: [] }]) {
+    assert.equal(rangeVerdict(data, 'AAAA').kind, 'unavailable', JSON.stringify(data));
+  }
+});
+
+test('rangeVerdict: pwned só com contagem > 0; padding (0) e ausência dão safe', () => {
+  assert.deepEqual(rangeVerdict({ suffixes: [['AAAA', 7], ['BBBB', 0]] }, 'aaaa'), { kind: 'pwned', received: 2, count: 7 });
+  assert.equal(rangeVerdict({ suffixes: [['AAAA', 7], ['BBBB', 0]] }, 'BBBB').kind, 'safe');
+  assert.equal(rangeVerdict({ suffixes: [['AAAA', 7]] }, 'CCCC').kind, 'safe');
 });
