@@ -41,13 +41,21 @@ jobs:
           TARGET_URL: ${{ inputs.url }}
         run: |
           set -e
-          url="${TARGET_URL:-$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('.github/expected-headers.json','utf8')).url)")}"
-          if [[ "$url" == SET-ME* ]]; then
+          # O alvo por omissão é a constante PROD_URL de target.mjs, como em
+          # check-headers/check-invariants/check-observatory — não o `url` do
+          # JSON, para que o ficheiro de dados não decida para onde vai o scan.
+          # O JSON só serve de interruptor "produção já é verificável".
+          cfg_url="$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('.github/expected-headers.json','utf8')).url)")"
+          if [ -z "$TARGET_URL" ] && [[ "$cfg_url" == SET-ME* ]]; then
             echo "::warning::tls-check: URL de produção por definir em .github/expected-headers.json — verificação IGNORADA (nada foi verificado nesta execução)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          url="$(node --input-type=module -e "import { resolveTarget } from './.github/scripts/lib/target.mjs'; const u = resolveTarget(process.argv[1]); if (!u) { console.error('::error::tls-check: o alvo não é um URL válido.'); process.exit(1); } console.log(u.href)" "$TARGET_URL")"
           host="$(node -e "console.log(new URL(process.argv[1]).host)" "$url")"
+          # $HOST é o último argumento posicional do testssl.sh: um host a
+          # começar por "-" seria lido como opção.
+          case "$host" in -*) echo "::error::tls-check: host inválido."; exit 1 ;; esac
           # O CI_WAF_TOKEN só vai para a origem de produção — a mesma regra
           # de check-headers/check-invariants (isProductionTarget em
           # .github/scripts/lib/target.mjs). Antes ia para qualquer host
@@ -111,6 +119,24 @@ jobs:
       - name: Avaliar achados
         if: steps.target.outputs.skip == 'false'
         run: node .github/scripts/check-tls.mjs tls-report/testssl.json
+
+      # O artefacto fica público 90 dias e o scan leva o CI_WAF_TOKEN em
+      # --reqheader. O formato "flat" do --jsonfile não deve incluir a linha de
+      # comando, mas isso não é verificável daqui: se o relatório contiver o
+      # nome do header ou o valor do segredo, apaga-o e falha em vez de o
+      # publicar.
+      - name: Garantir que o relatório não contém o segredo
+        if: always() && steps.target.outputs.skip == 'false'
+        env:
+          CI_WAF_TOKEN: ${{ secrets.CI_WAF_TOKEN }}
+        run: |
+          [ -f tls-report/testssl.json ] || exit 0
+          if grep -qiF -e 'x-ci-waf-token' tls-report/testssl.json \
+            || { [ -n "$CI_WAF_TOKEN" ] && grep -qF -e "$CI_WAF_TOKEN" tls-report/testssl.json; }; then
+            rm -f tls-report/testssl.json
+            echo "::error::tls-check: o relatório do testssl.sh continha o header/segredo do bypass WAF — apagado, não foi publicado."
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always() && steps.target.outputs.skip == 'false'

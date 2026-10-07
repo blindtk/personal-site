@@ -30,18 +30,75 @@ export function unfoldHeaders(raw) {
   return headers;
 }
 
-/** Remove comentários (…) do RFC 5322, com suporte a aninhamento. */
+/**
+ * Índice da aspa que fecha a quoted-string aberta em `start`, ou -1 se não
+ * fecha. Uma aspa sem par é tratada pelos chamadores como caractere literal —
+ * senão um valor malformado engolia o resto do cabeçalho (e, com ele, os
+ * resultados verdadeiros do fornecedor).
+ */
+function quotedEnd(value, start) {
+  for (let i = start + 1; i < value.length; i++) {
+    if (value[i] === '\\') { i++; continue; }
+    if (value[i] === '"') return i;
+  }
+  return -1;
+}
+
+/**
+ * Remove comentários (…) do RFC 5322, com suporte a aninhamento. Dentro de
+ * uma quoted-string ("…") os parênteses são texto, não comentário: o
+ * local-part do remetente é escolhido por quem envia (`"x("@dominio` é um
+ * endereço válido) e o fornecedor copia-o para o Authentication-Results.
+ */
 export function stripComments(value) {
   let out = '';
   let depth = 0;
   for (let i = 0; i < value.length; i++) {
     const c = value[i];
-    if (c === '\\' && depth > 0) { i++; continue; }
+    if (depth > 0) {
+      if (c === '\\') i++;
+      else if (c === '(') depth++;
+      else if (c === ')') depth--;
+      continue;
+    }
+    if (c === '"') {
+      const end = quotedEnd(value, i);
+      if (end !== -1) { out += value.slice(i, end + 1); i = end; continue; }
+    }
     if (c === '(') { depth++; continue; }
-    if (c === ')' && depth > 0) { depth--; continue; }
-    if (depth === 0) out += c;
+    out += c;
   }
   return out.replace(/\s+/g, ' ').trim();
+}
+
+/** Divide por `sep` ignorando os que estão dentro de uma quoted-string. */
+function splitOutsideQuotes(value, sep) {
+  const parts = [];
+  let start = 0;
+  for (let i = 0; i < value.length; i++) {
+    if (value[i] === '"') {
+      const end = quotedEnd(value, i);
+      if (end !== -1) { i = end; continue; }
+    } else if (value[i] === sep) {
+      parts.push(value.slice(start, i));
+      start = i + 1;
+    }
+  }
+  parts.push(value.slice(start));
+  return parts;
+}
+
+/** Troca o conteúdo de cada quoted-string por `_` (mesmo comprimento). */
+function maskQuoted(value) {
+  let out = '';
+  for (let i = 0; i < value.length; i++) {
+    if (value[i] === '"') {
+      const end = quotedEnd(value, i);
+      if (end !== -1) { out += `"${'_'.repeat(end - i - 1)}"`; i = end; continue; }
+    }
+    out += value[i];
+  }
+  return out;
 }
 
 /** Extrai o addr-spec de "Nome <a@b>" / "a@b (Nome)" / "a@b". */
@@ -148,7 +205,7 @@ export function parseReceived(value) {
  */
 export function parseAuthResults(value) {
   const clean = stripComments(value);
-  const parts = clean.split(';').map((p) => p.trim()).filter(Boolean);
+  const parts = splitOutsideQuotes(clean, ';').map((p) => p.trim()).filter(Boolean);
   if (!parts.length) return { authserv: null, results: [] };
   const authserv = parts[0].split(/\s/)[0] || null;
   const results = [];
@@ -156,8 +213,14 @@ export function parseAuthResults(value) {
     const m = part.match(/^([a-z0-9-]+)\s*=\s*([a-z0-9]+)/i);
     if (!m) continue;
     const props = {};
-    for (const pm of part.matchAll(/([a-z]+)\.([a-z]+)\s*=\s*("[^"]*"|[^\s;]+)/gi)) {
-      props[`${pm[1].toLowerCase()}.${pm[2].toLowerCase()}`] = pm[3].replace(/^"|"$/g, '');
+    // As propriedades procuram-se na cópia com as quoted-strings mascaradas:
+    // um valor como smtp.mailfrom="x header.d=evil.example"@y não pode
+    // acrescentar uma propriedade `header.d` própria.
+    for (const pm of maskQuoted(part).matchAll(/([a-z]+)\.([a-z]+)\s*=\s*("[^"]*"|[^\s;]+)/gi)) {
+      const valueStart = pm.index + pm[0].length - pm[3].length;
+      props[`${pm[1].toLowerCase()}.${pm[2].toLowerCase()}`] = part
+        .slice(valueStart, valueStart + pm[3].length)
+        .replace(/^"|"$/g, '');
     }
     results.push({ method: m[1].toLowerCase(), result: m[2].toLowerCase(), props });
   }

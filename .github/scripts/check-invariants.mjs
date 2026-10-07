@@ -22,6 +22,7 @@ import {
   isProductionTarget,
   resolveTarget,
 } from './lib/target.mjs';
+import { sanitizeForLog } from './lib/log.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
@@ -151,10 +152,10 @@ for (const r of results) {
     }
     console.log(`ok  ${r.path} (HTTP ${r.status}${r.note ? `, ${r.note}` : ''})`);
   } else if (isCritical) {
-    console.error(`::error::${r.path} (critical): ${r.note}`);
+    console.error(`::error::${r.path} (critical): ${sanitizeForLog(r.note)}`);
     hardFailures += 1;
   } else {
-    console.log(`::warning::${r.path}: ${r.note}`);
+    console.log(`::warning::${r.path}: ${sanitizeForLog(r.note)}`);
     softFailures += 1;
   }
 }

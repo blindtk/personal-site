@@ -9,12 +9,12 @@ import { mergeFirewall7d } from '../src/lib/firewall.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
 } from '../src/lib/vitals.js';
-import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
+import { nextState, dailySalt, clientHash, rateLimitIdentity } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
-import { normalizePrefix, parseRanges } from '../src/lib/pwned.js';
+import { normalizePrefix, parseRanges, fetchRange, MAX_RANGE_ENTRIES } from '../src/lib/pwned.js';
 import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
-  DEFAULT_EXPECTED_ISSUERS,
+  DEFAULT_EXPECTED_ISSUERS, MAX_CERTS,
 } from '../src/lib/ct.js';
 import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames } from '../src/lib/cf-analytics.js';
 import { serverView, normalizeIp } from '../src/lib/mirror.js';
@@ -1745,4 +1745,252 @@ test('threat-intel/ct/cf-stats também passam pela Cache API (sem KV em pedidos 
     assert.equal(reads, readsAfterFirst, '2.º pedido servido pela Cache API, sem ler o KV');
     assert.ok([...cache.store.keys()].some((k) => k.endsWith('/api/__cache/ct')));
   });
+});
+
+// ---------- revisão de segurança (auditoria cloudflare/security-audit-skill) ----------
+
+const CF_ENV = {
+  CF_API_TOKEN: 'tok', CF_ZONE_TAG: 'zone123', CF_ACCOUNT_ID: 'acc456', CF_WORKER_SCRIPT: 'personal-site-worker',
+};
+
+/** fetch falso do GraphQL da Cloudflare: núcleo + um evento de firewall `block`. */
+function stubCfGraphql() {
+  return async (_url, init) => {
+    const isFw = JSON.parse(init.body).query.includes('firewallEventsAdaptive');
+    if (isFw) return { ok: true, json: async () => firewallFixture([{ action: 'block', source: 'firewallCustom' }]) };
+    return { ok: true, json: async () => graphqlFixture({ zoneRows: [{ sum: { requests: 10, threats: 1 } }] }) };
+  };
+}
+
+test('scheduled: um refresh de cache:cfstats feito por um pedido não impede o snapshot fw:<dia>', async () => {
+  // Antes, o snapshot só corria dentro do producer do cron: um `?refresh=1`
+  // anónimo (~4×/dia, dentro de todos os limites) mantinha a cache sempre
+  // fresca, o cron nunca corria o producer e o painel de 7 dias ficava vazio.
+  const orig = globalThis.fetch;
+  globalThis.fetch = stubCfGraphql();
+  try {
+    await withClock(Date.parse('2026-10-05T03:00:00Z'), async ({ advance }) => {
+      const env = { KV: countingKV(), RATE_SALT: 'sal', ...CF_ENV };
+      const res = await runFetch(fakeRequest('/api/cf-stats?refresh=1', { ip: '203.0.113.9' }), env);
+      assert.equal(res.status, 200);
+      advance(30 * 60_000); // próximo tick do cron: a cache ainda é fresca (6h)
+      await runScheduled(env);
+      assert.deepEqual(JSON.parse(env.KV.store.get('fw:2026-10-05')).byAction, { block: 1 });
+    });
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('scheduled: o snapshot é do dia do fetch, e um tick sem dados novos não volta a escrever', async () => {
+  const orig = globalThis.fetch;
+  globalThis.fetch = stubCfGraphql();
+  try {
+    await withClock(Date.parse('2026-10-05T23:50:00Z'), async ({ advance }) => {
+      const env = { KV: countingKV(), ...CF_ENV };
+      await runScheduled(env); // fetch às 23:50
+      assert.equal(env.KV.puts.fw, 1);
+      advance(10 * 60_000); // 00:00 do dia seguinte, mesma cache
+      await runScheduled(env);
+      assert.equal(env.KV.puts.fw, 1, 'sem fetch novo não há escrita');
+      assert.equal(env.KV.store.has('fw:2026-10-06'), false, 'as mesmas 24h não se duplicam no dia seguinte');
+    });
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('/api/cf-stats?refresh=1 guarda cache:cfstats com a mesma retenção (com stale grace) que um GET normal', async () => {
+  // Sem a janela stale, a cópia desaparecia ~1 min depois de expirar e, com o
+  // orçamento de escrita esgotado, cada GET passava a chamar o GraphQL.
+  const ttlOf = async (path) => {
+    const kv = fakeKV();
+    let ttl = null;
+    const put = kv.put.bind(kv);
+    kv.put = async (key, value, opts) => { if (key === 'cache:cfstats') ttl = opts?.expirationTtl; return put(key, value, opts); };
+    await runFetch(fakeRequest(path, { ip: '203.0.113.9' }), { KV: kv, RATE_SALT: 'sal', ...CF_ENV });
+    return ttl;
+  };
+  const orig = globalThis.fetch;
+  globalThis.fetch = stubCfGraphql();
+  try {
+    const viaGet = await ttlOf('/api/cf-stats');
+    const viaRefresh = await ttlOf('/api/cf-stats?refresh=1');
+    assert.ok(viaGet > 6 * 3600, 'o GET normal já guarda mais do que o TTL lógico');
+    assert.equal(viaRefresh, viaGet);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('fetchRange: acima do teto falha em vez de truncar em silêncio (limite exato)', async () => {
+  const body = (n) => Array.from({ length: n }, (_, i) => `${i.toString(16).toUpperCase().padStart(35, '0')}:1`).join('\r\n');
+  const orig = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({ ok: true, text: async () => body(MAX_RANGE_ENTRIES) });
+    assert.equal((await fetchRange('ABCDE')).length, MAX_RANGE_ENTRIES);
+    globalThis.fetch = async () => ({ ok: true, text: async () => body(MAX_RANGE_ENTRIES + 1) });
+    await assert.rejects(fetchRange('ABCDE'), /hibp_range_too_large/);
+    // gama vazia = resposta partida, não "nenhum sufixo"
+    globalThis.fetch = async () => ({ ok: true, text: async () => '' });
+    await assert.rejects(fetchRange('ABCDE'), /hibp_range_empty/);
+    globalThis.fetch = async () => ({ ok: true, text: async () => body(MAX_RANGE_ENTRIES + 1) });
+    // pela rota: 502 (o cliente mostra "indisponível"), nunca uma lista cortada
+    const res = await runFetch(fakeRequest('/api/pwned-range?prefix=ABCDE', { ip: '203.0.113.80' }), { KV: fakeKV(), RATE_SALT: 'sal' });
+    assert.equal(res.status, 502);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('edgeKey: esquema e porta do pedido não mudam a chave (um só balde de rate limit por host)', () => {
+  const k = edgeKey('https://danielmala.co/api/mirror', 'rl:mirror:abc');
+  assert.equal(edgeKey('https://danielmala.co:8443/api/mirror?x=1', 'rl:mirror:abc'), k);
+  assert.equal(edgeKey('http://danielmala.co/api/mirror', 'rl:mirror:abc'), k);
+  assert.notEqual(edgeKey('https://outro.example/api/mirror', 'rl:mirror:abc'), k);
+});
+
+// POST /api/vitals: o teto de 2 KB tem de valer ANTES de o corpo ser lido.
+const vitalsJson = (bytes) => {
+  const core = '{"lcp":1200,"cls":0.05,"inp":150,"ttfb":300';
+  return `${core}${' '.repeat(bytes - core.length - 1)}}`; // JSON válido de `bytes` bytes
+};
+const vitalsPost = (body) => new Request('https://danielmala.co/api/vitals', {
+  method: 'POST',
+  headers: { 'cf-connecting-ip': '203.0.113.71', 'content-type': 'text/plain' },
+  body,
+});
+
+test('POST /api/vitals: corpo de exatamente 2048 bytes é aceite e 2049 dá 413', async () => {
+  const ok = { KV: fakeKV() };
+  assert.equal((await runFetch(vitalsPost(vitalsJson(2048)), ok)).status, 204);
+  assert.ok([...ok.KV.store.keys()].some((k) => k.startsWith('vit:')), 'a amostra foi registada');
+  const big = { KV: fakeKV() };
+  assert.equal((await runFetch(vitalsPost(vitalsJson(2049)), big)).status, 413);
+  assert.ok(![...big.KV.store.keys()].some((k) => k.startsWith('vit:')));
+});
+
+test('POST /api/vitals: Content-Length acima do teto recusa sem ler o corpo', async () => {
+  const req = {
+    ...fakeRequest('/api/vitals', { method: 'POST', ip: '203.0.113.72' }),
+    headers: { get: (k) => ({ 'cf-connecting-ip': '203.0.113.72', 'content-length': '2049' })[String(k).toLowerCase()] ?? null },
+    text: async () => { throw new Error('o corpo não devia ser lido'); },
+  };
+  assert.equal((await runFetch(req, { KV: fakeKV() })).status, 413);
+});
+
+test('POST /api/vitals: corpo em streaming sem Content-Length é cortado perto do teto', async () => {
+  let pulled = 0;
+  const stream = new ReadableStream({
+    pull(controller) {
+      pulled += 1024;
+      controller.enqueue(new Uint8Array(1024).fill(0x20));
+      if (pulled >= 4 * 1024 * 1024) controller.close();
+    },
+  });
+  const req = new Request('https://danielmala.co/api/vitals', {
+    method: 'POST',
+    headers: { 'cf-connecting-ip': '203.0.113.73', 'content-type': 'text/plain' },
+    body: stream,
+    duplex: 'half',
+  });
+  assert.equal((await runFetch(req, { KV: fakeKV() })).status, 413);
+  assert.ok(pulled <= 8 * 1024, `leu ${pulled} bytes de um corpo de 4 MiB`);
+});
+
+test('mergeFirewall7d: chaves iguais a membros de Object.prototype contam como quaisquer outras', () => {
+  // As chaves vêm do KV (JSON.parse cria `__proto__` como chave própria).
+  const snap = JSON.parse('{"byAction":{"toString":2,"constructor":1,"__proto__":5},"byCountry":{"NL":{"action":"hasOwnProperty","count":3}}}');
+  const out = mergeFirewall7d([{ date: '2026-10-05', snap }, { date: '2026-10-04', snap }]);
+  assert.deepEqual(out.byAction, [
+    { key: '__proto__', count: 10 },
+    { key: 'toString', count: 4 },
+    { key: 'constructor', count: 2 },
+  ]);
+  assert.deepEqual(out.byCountry, [{ country: 'NL', action: 'hasOwnProperty', count: 6 }]);
+});
+
+test('firewallBreakdown: ação/origem passam por sanitizeText (controlo, tags e teto de 40 exato)', () => {
+  const fw = firewallBreakdown(firewallFixture([
+    { action: 'bl\x00ock<b>', source: 'a'.repeat(40) },
+    { action: 'x'.repeat(41), source: '<>' },
+  ]));
+  assert.deepEqual(fw.firewallByAction.map((r) => r.key).sort(), [`${'x'.repeat(39)}…`, 'bl ockb'].sort());
+  assert.deepEqual(fw.firewallBySource.map((r) => r.key).sort(), ['a'.repeat(40), 'unknown']);
+});
+
+test('respostas da API trazem Cross-Origin-Resource-Policy same-origin (200 e 404)', async () => {
+  const env = { KV: fakeKV() };
+  for (const path of ['/api/health', '/api/nope']) {
+    const res = await runFetch(fakeRequest(path), env);
+    assert.equal(res.headers.get('cross-origin-resource-policy'), 'same-origin', path);
+  }
+});
+
+test('rateLimitIdentity: IPv6 conta pelo /64, IPv4 e não-IPs ficam como estão', () => {
+  const a = rateLimitIdentity('2001:db8:1:2:aaaa:bbbb:cccc:dddd');
+  assert.equal(a, '2001:db8:1:2::/64');
+  assert.equal(rateLimitIdentity('2001:DB8:1:2::1'), a); // forma comprimida e maiúsculas
+  assert.equal(rateLimitIdentity('2001:db8:1:0002:0:0:0:ffff'), a); // zeros à esquerda
+  assert.notEqual(rateLimitIdentity('2001:db8:1:3::1'), a); // outro /64
+  assert.equal(rateLimitIdentity('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(rateLimitIdentity('::1'), '0:0:0:0::/64');
+  for (const same of ['203.0.113.7', 'unknown', '::ffff:203.0.113.7', '1:2:3', '2001:db8::1::2', 'zz::1']) {
+    assert.equal(rateLimitIdentity(same), same, same);
+  }
+  assert.equal(rateLimitIdentity(null), 'unknown');
+});
+
+test('clientHash: dois IPv6 do mesmo /64 partilham balde; IPv4 distintos continuam distintos', async () => {
+  const salt = dailySalt('s', Date.parse('2026-07-16T12:00:00Z'));
+  assert.equal(await clientHash('2001:db8:1:2::1', salt), await clientHash('2001:db8:1:2:ffff::9', salt));
+  assert.notEqual(await clientHash('2001:db8:1:2::1', salt), await clientHash('2001:db8:1:3::1', salt));
+  assert.notEqual(await clientHash('203.0.113.7', salt), await clientHash('203.0.113.8', salt));
+});
+
+test('rate limit: rodar o sufixo IPv6 dentro do mesmo /64 não dá balde novo', async () => {
+  const env = { KV: fakeKV(), RATE_SALT: 'sal' };
+  const suffix = (n) => `2001:db8:5:5:${n.toString(16)}::1`;
+  const statuses = [];
+  for (let i = 0; i < 25; i++) statuses.push((await runFetch(fakeRequest('/api/pwned-range?prefix=ABCDE', { ip: suffix(i + 1) }), env)).status);
+  // pwned: 20/min por cliente — os pedidos 21+ têm de dar 429 mesmo com sufixos sempre diferentes
+  assert.equal(statuses.filter((s) => s === 429).length, 5);
+});
+
+test('/api/ct: um emissor inesperado empurrado para fora das MAX_CERTS mais recentes continua no alerta', async () => {
+  const recent = (daysAgo, i, over = {}) => {
+    const d = (ms) => new Date(ms).toISOString().replace(/Z$/, '');
+    const t = Date.now() - daysAgo * 86400_000;
+    return crtshEntry({ id: i, serial_number: `aa${i.toString(16).padStart(8, '0')}`, entry_timestamp: d(t), not_before: d(t - 3600_000), not_after: d(t + 89 * 86400_000), ...over });
+  };
+  // MAX_CERTS emissões esperadas mais recentes + 1 inesperada, mais antiga (fora da lista mostrada)
+  const entries = Array.from({ length: MAX_CERTS }, (_, i) => recent(0.01 * (i + 1), i + 1));
+  entries.push(recent(5, 9999, { issuer_name: 'C=US, O=Emissor Estranho, CN=Evil CA' }));
+  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => entries });
+  try {
+    const data = await (await runFetch(fakeRequest('/api/ct'), env)).json();
+    assert.equal(data.certs.length, MAX_CERTS);
+    assert.ok(data.certs.every((c) => c.expected), 'o inesperado não está na lista mostrada');
+    assert.equal(data.summary.unexpected, 1);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('POST /api/vitals: com o orçamento do dia esgotado só lê o contador (1 leitura, 0 escritas)', async () => {
+  const kv = fakeKV();
+  const now = Date.now();
+  kv.store.set(`vitcap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 300, windowStart: now }));
+  const gets = [];
+  const get = kv.get.bind(kv);
+  kv.get = async (key, type) => { gets.push(key); return get(key, type); };
+  const puts = [];
+  const put = kv.put.bind(kv);
+  kv.put = async (key, ...rest) => { puts.push(key); return put(key, ...rest); };
+  const res = await runFetch(vitalsPost(vitalsJson(60)), { KV: kv, RATE_SALT: 'sal' });
+  assert.equal(res.status, 204);
+  assert.equal(gets.filter((k) => k.startsWith('vit:')).length, 0, 'não leu o histograma');
+  assert.equal(puts.filter((k) => k.startsWith('vit')).length, 0);
 });

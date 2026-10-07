@@ -28,12 +28,31 @@ export function nextState(prev, { now, windowMs, max }) {
 }
 
 /**
+ * Identidade de rate limit de um IP: o próprio IPv4, ou o /64 de um IPv6.
+ * Um cliente IPv6 recebe, no mínimo, um /64 inteiro (2^64 endereços) — com o
+ * endereço completo como chave, rodar o sufixo dava-lhe um balde novo a cada
+ * pedido e o limite por cliente deixava de limitar. Entrada que não é um IPv6
+ * reconhecível (incluindo 'unknown') passa sem alteração.
+ */
+export function rateLimitIdentity(ip) {
+  if (typeof ip !== 'string' || !ip.includes(':') || ip.includes('.') || !/^[0-9a-fA-F:]+$/.test(ip)) return ip ?? 'unknown';
+  const halves = ip.toLowerCase().split('::');
+  if (halves.length > 2) return ip;
+  const head = halves[0] === '' ? [] : halves[0].split(':');
+  const tail = halves.length === 2 ? (halves[1] === '' ? [] : halves[1].split(':')) : [];
+  if (halves.length === 1 ? head.length !== 8 : head.length + tail.length > 7) return ip;
+  const groups = halves.length === 1 ? head : [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail];
+  if (!groups.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return ip;
+  return `${groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, '')).join(':')}::/64`;
+}
+
+/**
  * Hash truncado e salteado de um identificador (IP) para chave de rate
  * limit. Usa WebCrypto (disponível no Worker e no Node moderno). O salt
  * diário deve vir de fora (env + data) para rodar. Devolve hex de 16 chars.
  */
 export async function clientHash(ip, dailySalt) {
-  const data = new TextEncoder().encode(`${dailySalt}:${ip ?? 'unknown'}`);
+  const data = new TextEncoder().encode(`${dailySalt}:${rateLimitIdentity(ip)}`);
   const buf = await crypto.subtle.digest('SHA-256', data);
   return [...new Uint8Array(buf)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
 }

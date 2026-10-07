@@ -116,7 +116,8 @@ export function createTerminal(ctx) {
         const a = alg.toLowerCase();
         if (a === 'md5') return { lines: [md5(new TextEncoder().encode(text))] };
         const map = { sha1: 'SHA-1', sha256: 'SHA-256', sha512: 'SHA-512' };
-        if (!map[a]) return { lines: [t.unknownAlg] };
+        // hasOwn: `hash toString x` não pode resolver para Object.prototype.toString
+        if (!Object.hasOwn(map, a)) return { lines: [t.unknownAlg] };
         return { lines: [await sha(map[a], text)] };
       }
 
@@ -130,7 +131,8 @@ export function createTerminal(ctx) {
         // nunca como markup — não há sink de HTML neste caminho.
         // nosemgrep: javascript.lang.security.html-in-template-string
         if (!fmt || !text) return { lines: [t.usage(`${cmd} <base64|url|hex> <texto>`)] };
-        const codec = codecs[fmt.toLowerCase()];
+        const key = fmt.toLowerCase();
+        const codec = Object.hasOwn(codecs, key) ? codecs[key] : undefined;
         // nosemgrep: javascript.lang.security.html-in-template-string -- ver acima
         if (!codec) return { lines: [t.usage(`${cmd} <base64|url|hex> <texto>`)] };
         try {

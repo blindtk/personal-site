@@ -46,3 +46,17 @@ export function matchCount(suffixes, suffix) {
   }
   return 0;
 }
+
+/**
+ * Veredicto a partir do corpo devolvido pelo Worker. Uma lista ausente, não
+ * array ou vazia NÃO é prova de que a password está limpa: uma gama real do
+ * HIBP nunca é vazia (o Add-Padding enche-a), por isso isso só pode ser uma
+ * resposta partida — e "ausente da lista" só vale como "segura" se a lista
+ * for utilizável. Devolve { kind: 'unavailable' } nesse caso, em vez de 'safe'.
+ */
+export function rangeVerdict(data, suffix) {
+  const suffixes = data?.suffixes;
+  if (!Array.isArray(suffixes) || suffixes.length === 0) return { kind: 'unavailable', received: 0, count: 0 };
+  const count = matchCount(suffixes, suffix);
+  return { kind: count > 0 ? 'pwned' : 'safe', received: suffixes.length, count };
+}

@@ -34,10 +34,13 @@ function topPairs(m, limit = 10) {
  * em duas linguagens.
  */
 export function mergeFirewall7d(entries) {
-  const byAction = {};
-  const bySource = {};
-  const byAsn = {};
-  const byCountry = {}; // country -> { action -> count }
+  // Objetos sem protótipo: as chaves (ação/origem/país) vêm do KV, que por sua
+  // vez as recebeu da API da Cloudflare — uma chave como `toString` ou
+  // `constructor` não pode resolver para Object.prototype.
+  const byAction = Object.create(null);
+  const bySource = Object.create(null);
+  const byAsn = Object.create(null);
+  const byCountry = Object.create(null); // country -> { action -> count }
   for (const { snap } of entries) {
     if (!snap) continue;
     mergeInto(byAction, snap.byAction);
@@ -47,7 +50,7 @@ export function mergeFirewall7d(entries) {
       const action = entry?.action;
       const count = Number(entry?.count) || 0;
       if (!action || count <= 0) continue;
-      byCountry[country] ??= {};
+      byCountry[country] ??= Object.create(null);
       byCountry[country][action] = (byCountry[country][action] ?? 0) + count;
     }
   }

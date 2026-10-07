@@ -10,3 +10,10 @@ dist/
 
 # sistema
 .DS_Store
+
+# chaves e credenciais locais (rede de segurança além do gitleaks, que é opt-in)
+*.pem
+*.key
+*.p12
+credentials*.json
+.dev.vars

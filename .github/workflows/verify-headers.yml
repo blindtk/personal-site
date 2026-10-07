@@ -31,9 +31,15 @@ jobs:
     # check_run dispara para TODOS os check runs concluídos que não venham
     # do próprio Actions (CodeQL, Cloudflare Pages dos previews, …) — só o
     # deploy de produção com sucesso interessa; os outros ficam "skipped".
+    # O nome e o branch são texto que qualquer app instalada com checks:write
+    # (ou um check suite num branch chamado "main") pode produzir; a app
+    # Cloudflare Workers and Pages (id 85455, slug cloudflare-workers-and-pages,
+    # lido dos check runs reais dos commits da main) é quem está de facto
+    # autorizado a disparar uma execução com os segredos.
     if: >-
       github.event_name != 'check_run' ||
-      (github.event.check_run.name == 'Cloudflare Pages' &&
+      (github.event.check_run.app.id == 85455 &&
+       github.event.check_run.name == 'Cloudflare Pages' &&
        github.event.check_run.conclusion == 'success' &&
        github.event.check_run.check_suite.head_branch == 'main')
     runs-on: ubuntu-latest

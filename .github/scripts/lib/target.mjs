@@ -74,7 +74,14 @@ export function configUrlMismatch(cfgUrl) {
 export function isTrustedTarget(url) {
   if (url.protocol !== 'https:' || url.port !== '') return false;
   if (url.origin === PROD_ORIGIN) return true;
-  return url.hostname === PAGES_PROJECT_HOST || url.hostname.endsWith(`.${PAGES_PROJECT_HOST}`);
+  if (url.hostname === PAGES_PROJECT_HOST) return true;
+  // Previews do projeto: UM só rótulo à frente (<hash>.<projeto>.pages.dev ou
+  // o alias de branch). Dois ou mais níveis (a.b.<projeto>.pages.dev) não são
+  // um preview que o Pages crie, por isso não recebem credenciais.
+  const suffix = `.${PAGES_PROJECT_HOST}`;
+  if (!url.hostname.endsWith(suffix)) return false;
+  const label = url.hostname.slice(0, -suffix.length);
+  return label.length > 0 && !label.includes('.');
 }
 
 /**

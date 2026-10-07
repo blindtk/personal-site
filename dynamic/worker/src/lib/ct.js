@@ -114,12 +114,23 @@ export function normalizeCtEntry(raw, { domain, expectedIssuers }) {
  * antigo. Aceita a concatenação das respostas das duas queries (apex e
  * %.domínio), que se sobrepõem — a deduplicação também trata disso.
  */
-export function parseCtEntries(entries, {
+export function parseCtEntries(entries, { limit = MAX_CERTS, ...opts } = {}) {
+  // o serial serve só à deduplicação — não precisa de ir para o cliente
+  return collectCtEntries(entries, opts).slice(0, limit).map(({ serial, ...cert }) => cert);
+}
+
+/**
+ * Todas as emissões da janela, deduplicadas e ordenadas (mais recente
+ * primeiro), SEM o corte de MAX_CERTS e ainda com o serial. É daqui que sai a
+ * contagem de emissores inesperados: calculada só sobre as MAX_CERTS mais
+ * recentes, um certificado inesperado empurrado para fora pelas emissões
+ * esperadas posteriores desaparecia do alerta.
+ */
+export function collectCtEntries(entries, {
   domain,
   expectedIssuers = DEFAULT_EXPECTED_ISSUERS,
   now = Date.now(),
   windowDays = CT_WINDOW_DAYS,
-  limit = MAX_CERTS,
 } = {}) {
   const list = Array.isArray(entries) ? entries : [];
   const cutoff = now - windowDays * DAY_MS;
@@ -135,8 +146,7 @@ export function parseCtEntries(entries, {
     out.push(cert);
   }
   out.sort((a, b) => b.loggedAt - a.loggedAt);
-  // o serial serve só à deduplicação — não precisa de ir para o cliente
-  return out.slice(0, limit).map(({ serial, ...cert }) => cert);
+  return out;
 }
 
 /** Sumário para os stats do painel. */
@@ -182,13 +192,16 @@ export async function fetchCtWatch(env, { timeoutMs = 8000, now = Date.now() } =
   if (results.every((r) => r === null)) throw new Error('crtsh_unavailable');
 
   const merged = results.flatMap((r) => (Array.isArray(r) ? r : []));
-  const certs = parseCtEntries(merged, { domain, expectedIssuers, now });
+  const opts = { domain, expectedIssuers, now };
+  const certs = parseCtEntries(merged, opts);
+  // `unexpected` conta a janela inteira; os restantes números, a lista mostrada.
+  const unexpected = collectCtEntries(merged, opts).filter((c) => !c.expected).length;
   return {
     domain,
     windowDays: CT_WINDOW_DAYS,
     expectedIssuers,
     certs,
-    summary: ctStats(certs),
+    summary: { ...ctStats(certs), unexpected },
     fetchedAt: now,
   };
 }

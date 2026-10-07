@@ -123,6 +123,57 @@ test('parseAuthResults: RFC 8601 com props e comentários', () => {
   assert.equal(dkim.props['header.d'], 'example.org');
 });
 
+// O local-part do remetente é escolhido por quem envia e o fornecedor copia-o
+// para smtp.mailfrom: um `"x;dmarc=pass"@dominio` (quoted-string válida) não
+// pode acrescentar um resultado `dmarc=pass` nem um `"x("@dominio` engolir o
+// `dmarc=fail` verdadeiro que vem a seguir.
+const AR_DMARC_FAIL = 'dmarc=fail header.from=bank.example';
+
+test('parseAuthResults: ";" dentro de uma quoted-string não cria resultado novo', () => {
+  const a = parseAuthResults(
+    `mx.provider.example; dkim=none; spf=pass smtp.mailfrom="x;dmarc=pass"@attacker.example; ${AR_DMARC_FAIL}`,
+  );
+  assert.deepEqual(a.results.map((r) => r.method), ['dkim', 'spf', 'dmarc']);
+  assert.equal(a.results.find((r) => r.method === 'dmarc').result, 'fail');
+  assert.equal(a.results.find((r) => r.method === 'spf').props['smtp.mailfrom'], 'x;dmarc=pass');
+});
+
+test('parseAuthResults: "(" dentro de uma quoted-string não abre comentário', () => {
+  const a = parseAuthResults(`mx.provider.example; spf=pass smtp.mailfrom="x("@attacker.example; ${AR_DMARC_FAIL}`);
+  assert.equal(a.results.find((r) => r.method === 'dmarc')?.result, 'fail');
+});
+
+test('parseAuthResults: aspa sem par é literal e não engole os resultados seguintes', () => {
+  const a = parseAuthResults(`mx.provider.example; spf=pass smtp.mailfrom=x"@attacker.example; ${AR_DMARC_FAIL}`);
+  assert.equal(a.results.find((r) => r.method === 'dmarc')?.result, 'fail');
+});
+
+test('parseAuthResults: propriedade dentro de uma quoted-string não substitui a verdadeira', () => {
+  const a = parseAuthResults(
+    'mx.provider.example; dkim=pass header.d=real.example header.i=a"b header.d=evil.example"@x.example',
+  );
+  assert.equal(a.results[0].props['header.d'], 'real.example');
+});
+
+test('stripComments: parênteses numa quoted-string ficam; fora dela continuam a ser comentário', () => {
+  assert.equal(stripComments('"Bob (Sales)" (comentário) <b@example.org>'), '"Bob (Sales)" <b@example.org>');
+  assert.equal(stripComments('a "(" b'), 'a "(" b');
+});
+
+test('analyze: smtp.mailfrom com ";" ou "(" não apaga o dmarc=fail nem a bandeira authFail', () => {
+  for (const mailfrom of ['"x;dmarc=pass"@attacker.example', '"x("@attacker.example']) {
+    const raw = [
+      'Received: from bad.example.xyz (bad.example.xyz [203.0.113.99]) by mx.example.net with ESMTP id z1; Tue, 1 Jul 2025 10:00:00 +0000',
+      `Authentication-Results: mx.example.net; dkim=none; spf=pass smtp.mailfrom=${mailfrom}; ${AR_DMARC_FAIL}`,
+      'From: "O Teu Banco" <alerta@bank.example>',
+      'Message-ID: <1@bad.example.xyz>',
+    ].join('\n');
+    const r = analyze(raw);
+    assert.equal(r.auth.dmarc.class, 'fail', mailfrom);
+    assert.ok(r.flags.some((f) => f.id === 'authFail' && f.params.method === 'DMARC'), mailfrom);
+  }
+});
+
 // ---------------------------------------------------------------- analyze
 
 const LEGIT = [

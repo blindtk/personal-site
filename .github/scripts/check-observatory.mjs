@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configUrlMismatch, isProductionConfigured, resolveTarget } from './lib/target.mjs';
+import { sanitizeForLog } from './lib/log.mjs';
 
 const cfgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'expected-headers.json');
 const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'));
@@ -53,10 +54,10 @@ async function requestScan(attempt = 1) {
     res = await fetch(API_URL, { method: 'POST', signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   } catch (err) {
     if (attempt < 2) {
-      console.log(`::warning::check-observatory: request failed on attempt ${attempt} (${err?.message ?? err}) — retrying…`);
+      console.log(`::warning::check-observatory: request failed on attempt ${attempt} (${sanitizeForLog(err?.message ?? err)}) — retrying…`);
       return requestScan(attempt + 1);
     }
-    console.error(`::error::check-observatory: API request failed — ${err?.message ?? err}`);
+    console.error(`::error::check-observatory: API request failed — ${sanitizeForLog(err?.message ?? err)}`);
     process.exit(1);
   }
   // Only retries on 5xx — a 4xx (e.g. invalid host) is final, the request
@@ -81,7 +82,7 @@ const result = await res.json();
 if (result.error) {
   // The Observatory itself could not evaluate the target (e.g. DNS, timeout)
   // — this is a real check failure, not a "low grade".
-  console.error(`::error::check-observatory: the Observatory could not evaluate ${host} — ${result.error}`);
+  console.error(`::error::check-observatory: the Observatory could not evaluate ${host} — ${sanitizeForLog(result.error)}`);
   process.exit(1);
 }
 
@@ -99,11 +100,11 @@ if (result.status_code && result.status_code !== 200) {
 // not urgent).
 const band = grade[0];
 if (band === 'D' || band === 'F') {
-  console.error(`::error::Observatory grade ${grade} for ${host} — see ${result.details_url}.`);
+  console.error(`::error::Observatory grade ${grade} for ${host} — see ${sanitizeForLog(result.details_url)}.`);
   process.exit(1);
 }
 if (band === 'B' || band === 'C') {
-  console.log(`::warning::Observatory grade ${grade} for ${host} (below A) — see ${result.details_url}.`);
+  console.log(`::warning::Observatory grade ${grade} for ${host} (below A) — see ${sanitizeForLog(result.details_url)}.`);
 }
 
 console.log('Observatory check complete.');

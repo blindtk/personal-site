@@ -22,8 +22,10 @@ const projects = defineCollection({
     title: z.string(),
     description: z.string(),
     tags: z.array(z.string()).default([]),
-    repo: z.url().optional(),
-    demo: z.url().optional(),
+    // https only: z.url() aceita qualquer esquema (inclui javascript:), e estes
+    // campos vão para um href.
+    repo: z.url({ protocol: /^https$/ }).optional(),
+    demo: z.url({ protocol: /^https$/ }).optional(),
     order: z.number().default(99),
   }),
 });
