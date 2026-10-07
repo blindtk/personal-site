@@ -31,8 +31,8 @@ each, with the full original entries kept in this file's git history.
   (its ATT&CK tagging only served the decoy correlation) and the site's
   Honeypot page. `/api/threat-intel` keeps only `firewall7d`. The cron's
   `purgeLegacyHoneypotKeys` deletes the leftover KV keys, reading first so
-  later ticks write nothing. Write budget: ~810 → ~440/day. Owner-side
-  follow-ups: delete WAF rule 3 and the `NVD_API_KEY` secret.
+  later ticks write nothing. Write budget: ~810 → ~440/day. The owner
+  deleted WAF rule 3 and the `NVD_API_KEY` secret on 2026-10-07.
 
 - **2026-09-25 — Fixes for the security audit run with Cloudflare's
   `security-audit` skill** (requested by the repo owner; the report is

@@ -123,10 +123,12 @@ largest gap (finding H3).
 
 The repository is public (since 2026-07-31, see `docs/cloudflare-deploy.md`
 §6) — native secret scanning and push protection are available on the Free
-plan for public repos, but whether they're turned on lives in GitHub's
-settings and is **not yet recorded as confirmed** (open item in
-`docs/cloudflare-deploy.md` §7). Until it is, treat gitleaks as the only
-*verified* secret control. Actions quota pressure — a real constraint while the repo was
+plan for public repos, and the owner confirmed on 2026-10-07 that secret
+scanning, push protection and approval for fork-PR workflows are on
+(`docs/cloudflare-deploy.md` §6–§7), alongside gitleaks in CI. The CI
+secrets that production checks use (`CI_WAF_TOKEN`, `ACCESS_CLIENT_*`)
+are still repository-level, not in a `main`-only Environment — an open
+item there. Actions quota pressure — a real constraint while the repo was
 private — no longer applies (public repos get unlimited Actions minutes).
 Branch protection: `main` is behind a ruleset (PR + Code Owners review, required checks — see `docs/catalog-sync.md`).
 
@@ -159,3 +161,4 @@ Next scheduled review: **2026-10-29** (quarterly).
 | 2026-08-06 | Self-scan (`/api/scan`) removed — Cloudflare's challenge page was being graded instead of the site. Later the same day CSP violation reporting (`/api/csp-report`, `/api/csp-violations`) removed too, for a suspected false-signal problem of the same kind; the CSP itself is still enforced. A3 lost its CSP half. |
 | 2026-10-02 | Internal honeypot retired ([ADR 0022](adr/0022-retire-internal-honeypot.md)): no decoy routes, IP list, `/api/honeypot`/`/api/map`/`/api/ticker`; 7 GET endpoints; NVD/CISA KEV no longer upstream; A2 retired. |
 | 2026-10-06 | GitHub risks: branch protection recorded (ruleset on `main`); remaining settings checks tracked in `docs/cloudflare-deploy.md` §7. |
+| 2026-10-07 | Owner confirmed secret scanning, push protection and fork-PR workflow approval in GitHub; WAF rule 3 and `NVD_API_KEY` deleted. Open: `main`-only Environment for the CI secrets, and Pages not building fork PRs. |

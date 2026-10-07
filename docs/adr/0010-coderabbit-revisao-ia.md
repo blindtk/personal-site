@@ -1,6 +1,8 @@
 # ADR 0010 — CodeRabbit for AI PR review, not Copilot Code Review or Strix in CI
 
-**Status:** accepted and in production (`.coderabbit.yaml`).
+**Status:** accepted and in production (`.coderabbit.yaml`), with one
+change since: reviews are on request, not automatic (see the note at the
+end).
 
 ## Context
 
@@ -28,7 +30,7 @@ real payoff — but there are three options with very different profiles:
 
 ## Decision
 
-Enable CodeRabbit on every PR (free on a public repo), with
+Enable CodeRabbit on PRs (free on a public repo), with
 `.coderabbit.yaml` calibrated per folder instead of generic —
 `path_instructions` that remind it of the KV write budget in
 `dynamic/worker/`, PT/EN key parity in `i18n/`, the ban on DOM XSS sinks
@@ -48,3 +50,10 @@ an experiment rather than a recurring control.
   content, not code, per the CLAUDE.md rule.
 - Full reasoning behind the three-way comparison in
   §5 of the 2026-07-29 security review (not published).
+
+**Update (2026-10-07):** CodeRabbit's free tier doesn't review
+automatically on repositories with fewer than 10 stars — it posts a
+"Trigger review" checkbox on each PR instead. So reviews here are always
+on request, and the calibration in `.coderabbit.yaml` applies when the
+owner triggers one. Nothing in the pipeline depends on it: it was never a
+blocking gate, and the required checks are the CI and security jobs.

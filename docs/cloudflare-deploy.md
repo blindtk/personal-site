@@ -167,8 +167,10 @@ work with a private repo (the GitHub App is granted access explicitly,
 public repo). **Update: the repository is now public** (2026-07-31). The
 checklist that goes with that — full-history secret scan, Actions
 permissions for fork PRs, secret scanning and push protection — lives in
-GitHub's settings, not in the code; its confirmation is tracked in
-section 7. (`main` is already behind a ruleset — `docs/catalog-sync.md`.)
+GitHub's settings, not in the code. The owner confirmed secret scanning,
+push protection and approval for fork-PR workflows on 2026-10-07; what's
+still open is tracked in section 7. (`main` is behind a ruleset —
+`docs/catalog-sync.md`.)
 
 **Deployment-triggered workflows and fork PRs (2026-09-25 security
 audit).** `verify-headers.yml` runs on `deployment_status`. For that event GitHub
@@ -200,16 +202,18 @@ signed header instead of a public User-Agent, section 5); WAF design
 decisions confirmed as deliberate, not forgotten (section 5);
 `.github/expected-headers.json` now points at real production instead of
 `SET-ME`; email alias (`me@danielmala.co`) in `static/src/config.ts` and
-`docs/dns-tls.md` (2026-07-30); public repository (section 6).
+`docs/dns-tls.md` (2026-07-30); public repository (section 6), with
+secret scanning, push protection and approval for fork-PR workflows
+confirmed in GitHub's settings (2026-10-07); the honeypot's leftovers
+removed — WAF rule 3 and the `NVD_API_KEY` secret (2026-10-07).
 
 **Left to do:**
 
-- [ ] Confirm in GitHub's settings, and record the date here: secret
-  scanning + push protection on, approval required for fork-PR workflows
-  (section 6).
 - [ ] Move `CI_WAF_TOKEN`, `ACCESS_CLIENT_ID` and `ACCESS_CLIENT_SECRET`
-  into a `main`-only Environment, and keep Pages from building fork PRs
-  (section 6).
+  into a `main`-only GitHub Environment (`production-checks`) and add
+  `environment: production-checks` to the jobs that use them (section 6).
+- [ ] Keep Cloudflare Pages from building pull requests from forks
+  (Pages → Settings → Builds; section 6) — not yet confirmed.
 - [ ] HSTS preload — CAA and DNSSEC are done (see
   [`docs/dns-tls.md`](dns-tls.md)); preload is the one item still pending
   there.

@@ -69,9 +69,9 @@ this site.
 - **Manual steps for the owner** (outside the repository):
   - the WAF custom rule that challenged the decoy paths (ADR 0007, rule 3)
     can be deleted — harmless if left, since those paths are now plain
-    404s from Pages;
+    404s from Pages (**done 2026-10-07**);
   - the `NVD_API_KEY` Worker secret is unused and can be deleted
-    (`npx wrangler secret delete NVD_API_KEY`);
+    (`npx wrangler secret delete NVD_API_KEY`) (**done 2026-10-07**);
   - after the first deploy, `/api/threat-intel` should show only
     `firewall7d`, and `iplist` should no longer exist in KV
     (`npx wrangler kv key get iplist --binding KV --remote` → not found).

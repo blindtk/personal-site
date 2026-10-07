@@ -9,7 +9,7 @@ this table is the full version.
 | Check | Where | What it guarantees |
 | --- | --- | --- |
 | **Build + `npm audit`** | `ci.yml` | The site builds with no errors, no high/critical advisories in dependencies. |
-| **CodeRabbit** | GitHub App (`.coderabbit.yaml`), not a workflow | AI-assisted PR review, free on a public repo. Not a blocking gate — a comment, not pass/fail. Calibrated with per-folder `path_instructions` (e.g. reminds it of the KV write budget in `dynamic/worker/`, PT/EN parity in `i18n/`, thin routes in `pages/`) instead of generic. |
+| **CodeRabbit** | GitHub App (`.coderabbit.yaml`), not a workflow | AI-assisted PR review, free on a public repo, run **on request** (the free tier doesn't review automatically below 10 stars). Not a blocking gate — a comment, not pass/fail. Calibrated with per-folder `path_instructions` (e.g. reminds it of the KV write budget in `dynamic/worker/`, PT/EN parity in `i18n/`, thin routes in `pages/`) instead of generic. |
 | **Dependency Review** | `security-dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
 | **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
 | **gitleaks** | `security.yml` + local hook | Scans for secrets (Cloudflare tokens, keys) matching its configured rules — detection, not a guarantee against every possible secret. Locally: `pipx install pre-commit && pre-commit install`. |

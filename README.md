@@ -68,8 +68,9 @@ headers, TLS, DNS and Mozilla Observatory grade. Stage-by-stage detail and
 the external scanner reports are in [`docs/ci-cd.md`](docs/ci-cd.md).
 
 Implementation is AI-assisted: Claude Code writes most changes, CodeRabbit
-reviews them with per-folder instructions (`.coderabbit.yaml`), and every
-PR is approved by hand before merge. Architecture, threat model and
+reviews them on request (per-folder instructions in `.coderabbit.yaml`;
+the free tier doesn't review automatically below 10 stars), and every PR
+is approved by hand before merge. Architecture, threat model and
 security trade-offs are mine — the ADRs record what was rejected and why —
 and the repository's conventions live in [`CLAUDE.md`](CLAUDE.md).
 
