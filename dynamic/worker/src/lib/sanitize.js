@@ -18,7 +18,7 @@ export function normalizeCountry(input) {
 /**
  * Normaliza um ASN para inteiro positivo dentro do espaço válido
  * (1..4_294_967_294, 32-bit) ou null. Duas fontes com tipos diferentes:
- *   · `request.cf.asn` (honeypot) — número;
+ *   · `request.cf.asn` (o pedido em si, ex.: /api/mirror) — número;
  *   · `clientAsn` do `firewallEventsAdaptive` (GraphQL da Cloudflare) —
  *     **string** de dígitos.
  * Só se aceitava número, por isso o `firewallDetailBreakdown` descartava
@@ -70,7 +70,7 @@ export function sanitizeText(input, maxLen = 160) {
     // o C1 inclui o CSI (U+009B), que um terminal interpreta como ESC [
     .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
     // controlos bidi (LRM/RLM/ALM, embeddings/overrides, isolates): um
-    // U+202E num path do honeypot ou num user-agent inverte visualmente o
+    // U+202E num path ou num user-agent da firewall inverte visualmente o
     // resto do texto no painel. São invisíveis, por isso saem sem espaço.
     .replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '')
     // tira sinais de tag por precaução (o texto legítimo não os tem)

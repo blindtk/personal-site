@@ -19,6 +19,13 @@ on:
 # Nada por omissão — o job declara só o que precisa (ver ci.yml).
 permissions: {}
 
+# Um push novo num PR cancela a execução anterior desse PR (o resultado já
+# não interessa). Fora de PRs o grupo é o próprio run (run_id): pushes para
+# main e crons nunca se cancelam nem ficam à espera uns dos outros.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   label:
     # Só PRs deste repo (forks têm token read-only e falhariam) e não do
@@ -28,6 +35,7 @@ jobs:
       github.event.pull_request.head.repo.full_name == github.repository &&
       !startsWith(github.event.pull_request.user.login, 'renovate')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read         # gh pr diff --name-only lê o diff do PR
       pull-requests: write   # aplicar labels ao PR

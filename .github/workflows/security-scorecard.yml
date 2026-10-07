@@ -13,8 +13,8 @@ name: security-scorecard
 on:
   schedule:
     # Sábado de madrugada — fora da janela de PRs da semana, sem colidir
-    # com Headers (17 6 diário), Invariants (43 7 diário), Supply chain
-    # (0 6 * * 1) ou CodeQL (30 5 * * 1).
+    # com verify-headers (17 6 diário), verify-worker (43 7 diário),
+    # security-supply-chain (0 6 * * 1) ou security-codeql (30 5 * * 1).
     - cron: '30 5 * * 6'
   workflow_dispatch: {}
 
@@ -23,6 +23,7 @@ permissions: {}
 jobs:
   analysis:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       security-events: write

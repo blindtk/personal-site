@@ -23,7 +23,7 @@ this table is the full version.
 | **TLS/cipher/vuln scan in production** | `verify-tls.yml` (monthly + manual) | Runs [testssl.sh](https://testssl.sh) against production; findings are classified by testssl.sh's own severity — CRITICAL/HIGH (weak protocols, known vulnerabilities like Heartbleed/POODLE, an invalid/expired cert) fail the workflow, MEDIUM/LOW only warn. |
 | **DNS hygiene in production** | `verify-dns.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against `.github/expected-dns.json` — any regression fails the workflow, including a missing CAA record or a CA outside the list; only the extra CAs Cloudflare is known to inject (Universal SSL) warn. |
 | **Mozilla Observatory grade in production** | `verify-observatory.yml` (weekly + manual) | Calls the free [Mozilla HTTP Observatory](https://github.com/mdn/mdn-http-observatory) API — a second, independent grading rubric (cookies, redirect chain, cross-origin isolation) on top of the exact-header checks in `verify-headers.yml`. Grade D/F fails the workflow, B/C only warns. |
-| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `ci-fuzzing.yml` (manual only — see note below) | One harness (`sanitize_fuzz.js`) fuzzes the Worker's output sanitizers `sanitizeText()`/`escapeHtml()`, which handle untrusted upstream data — unlike the client-side tools, a real trust boundary. |
+| **Fuzzing** ([ClusterFuzzLite](https://google.github.io/clusterfuzzlite/) + Jazzer.js) | `ci-fuzzing.yml` (weekly + manual — see note below) | One harness (`sanitize_fuzz.js`) fuzzes the Worker's output sanitizers `sanitizeText()`/`escapeHtml()`, which handle untrusted upstream data — unlike the client-side tools, a real trust boundary. |
 | **OpenSSF Scorecard** | `security-scorecard.yml` (weekly + manual) | Scores supply-chain practices (pins, permissions, branch protection, dangerous triggers) and publishes the result as SARIF and on the public [Scorecard dashboard](https://securityscorecards.dev/viewer/?uri=github.com/blindtk/personal-site) — guards against regressing work already done by hand, not a bug finder. |
 | **PR labels** | `update-pr-labels.yml` (on PR) | Not a security check: labels each PR by area (`content`, `static`, `dynamic`, `documentation`, `ci`, `claude`) with the runner's `gh`, no third-party action ([ADR 0017](adr/0017-gh-cli-em-vez-de-actions-terceiras.md)). |
 | **Signed releases** | `release.yml` (on `v*` tag + manual) | Builds `static/dist` and a dry-run Worker bundle, generates a CycloneDX SBOM for both, and signs their provenance with Sigstore ([`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance)) before attaching everything to a GitHub Release. Doesn't touch the real deploy — that's automatic via Cloudflare (Pages + Workers Builds on push to `main`), outside this workflow. |
@@ -60,22 +60,18 @@ unlimited Actions minutes, but the weekly cadence stayed — SBOM drift and
 signature checks don't need per-PR granularity, and there was no reason
 to change a schedule that was already working.
 
-**Fuzzing has no cron.** `ci-fuzzing.yml` has no cron for now — `language:
-javascript` + `sanitizer: coverage` (the only `SANITIZER` value accepted
-by both the OSS-Fuzz compile script and the ClusterFuzzLite action's own
-validator for JS) makes `google/clusterfuzzlite/actions/build_fuzzers`
-compile unrelated honggfuzz/AFL compiler-wrapper binaries alongside the
-real JS targets, and `run_fuzzers` treats them as fuzz targets, failing
-instantly. Confirmed independent of the pinned commit — it and the
-action's current `main` both resolve to the same floating
-`gcr.io/oss-fuzz-base/clusterfuzzlite-build-fuzzers:v1` Docker image, so
-the bug lives there, not in this repo. The workflow stays
-`workflow_dispatch`-only until upstream fixes it. That floating tag is an
-accepted residual risk, not an oversight: it's resolved entirely inside
-Google's own action (this repo has no way to pin it to a digest without
-forking the action), the workflow only runs on manual dispatch (never
-automatically on untrusted input), and it's revisited whenever upstream
-changes the tag's behavior enough to unblock the JS sanitizer bug above.
+**Fuzzing — weekly, back from manual-only.** `ci-fuzzing.yml` ran only on
+manual dispatch while it failed on every run, for two reasons fixed in
+`.clusterfuzzlite/` on 2026-10-01: the OSS-Fuzz compile step copied the
+base image's honggfuzz compiler wrappers into `$OUT`, where `run_fuzzers`
+took them for fuzz targets (the Dockerfile now deletes them), and
+Jazzer.js 4.x needs glibc 2.38 while the `run_fuzzers` image has 2.31
+(pinned to Jazzer.js 2.1.0, with its prebuild checked by SHA-256; Renovate
+holds the major). After four green manual runs in a row the weekly cron
+came back. The ClusterFuzzLite images are still floating tags resolved
+inside Google's action, which this repo can't pin without forking it — an
+accepted residual risk, limited by the workflow having only
+`contents: read` and running on this repository's own code.
 
 ## External scans (manual)
 

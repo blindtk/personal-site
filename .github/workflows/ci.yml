@@ -12,9 +12,17 @@ on:
 # do repo (que pode ser read-write) se o GITHUB_TOKEN for usado por engano.
 permissions: {}
 
+# Um push novo num PR cancela a execução anterior desse PR (o resultado já
+# não interessa). Fora de PRs o grupo é o próprio run (run_id): pushes para
+# main e crons nunca se cancelam nem ficam à espera uns dos outros.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     defaults:
@@ -38,8 +46,8 @@ jobs:
       # 2026-07-29): nem o build/check/test do Astro nem `npm test` +
       # `wrangler deploy --dry-run` do Worker precisam de scripts de
       # instalação — só `wrangler dev`/`deploy` reais precisam (para obter o
-      # binário do workerd), e esses continuam a correr manualmente fora
-      # daqui (ver dynamic/PLAN.md). Se uma dependência futura passar a
+      # binário do workerd), e esses correm fora daqui (o deploy real é do
+      # Workers Builds da Cloudflare, ADR 0011). Se uma dependência futura passar a
       # exigir um postinstall real para o build/test funcionar, este passo
       # falha alto e explicitamente — nunca corre silenciosamente sem o
       # `--ignore-scripts` "por engano".
@@ -52,11 +60,11 @@ jobs:
       # de propósito no Astro, tal como tsc build vs. tsc --noEmit). Ninguém
       # corria isto: apanhou 37 erros reais na primeira vez que se ligou —
       # incluindo strings de i18n em falta que ficavam "undefined" no HTML de
-      # produção (ToolPage.astro, self-scan) e chaves i18n corretas mas
+      # produção (ToolPage.astro) e chaves i18n corretas mas
       # referenciadas do objeto errado (dict.security em vez de dict.evidence).
       - run: npm run check
 
-      # Lógica pura (SubnetCalc, EXIF, MD5, encoding, geo, password, …) já
+      # Lógica pura (SubnetCalc, EXIF, MD5, encoding, password, …) já
       # tinha testes escritos (node --test) que nenhum workflow corria — só
       # o pull_request_template.md pedia ao humano que confirmasse à mão.
       # Descoberto numa revisão de segurança (2026-07): um controlo que
@@ -77,6 +85,7 @@ jobs:
     # separados do static — mesma lógica do osv-scanner (2 lockfiles) e do
     # labeler (área "dynamic" própria).
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     defaults:
@@ -96,10 +105,10 @@ jobs:
       # --ignore-scripts: mesma proteção do job `build` (bloqueia postinstall
       # arbitrário). `npm test` e `wrangler deploy --dry-run` (abaixo) não
       # precisam de scripts de instalação — só `wrangler dev`/`deploy` reais
-      # precisam (o binário do workerd), e esses continuam manuais.
+      # precisam (o binário do workerd), e esses correm fora do CI.
       - run: npm ci --ignore-scripts
 
-      # Lógica pura do Worker (sanitize, ratelimit, kvcap, aggregate, …) e
+      # Lógica pura do Worker (sanitize, ratelimit, kvcap, firewall, …) e
       # os testes de integração do fetch() sem rede — mesma lacuna do job
       # `build`, mesma correção.
       - run: npm test
@@ -110,6 +119,6 @@ jobs:
       # válido (nenhum binding em falta, nenhuma chave TOML engolida por
       # engano — já aconteceu neste ficheiro) e o bundle fica dentro do
       # limite de tamanho, SEM precisar do token da Cloudflare no CI. Não
-      # substitui o deploy real (continua manual, ver dynamic/PLAN.md) — é
-      # só o gate de "isto pelo menos monta-se" antes de chegar lá.
+      # substitui o deploy real (Workers Builds, no push para main — ADR
+      # 0011) — é só o gate de "isto pelo menos monta-se" antes de lá chegar.
       - run: npx wrangler deploy --dry-run

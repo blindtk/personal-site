@@ -19,6 +19,7 @@ permissions: {}
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -27,9 +28,10 @@ jobs:
           persist-credentials: false
 
       # dig não vem garantido nas imagens ubuntu-latest (ao contrário do
-      # Docker, usado no verify-tls.yml) — instalar em vez de assumir.
-      - name: Instalar dnsutils
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dnsutils
+      # Docker, usado no verify-tls.yml) — instalar só se faltar, em vez de
+      # assumir (e sem pagar o apt-get update quando já lá está).
+      - name: Garantir dig
+        run: command -v dig >/dev/null || { sudo apt-get update && sudo apt-get install -y --no-install-recommends dnsutils; }
 
       - name: Verificar higiene DNS de produção
         run: node .github/scripts/check-dns.mjs
