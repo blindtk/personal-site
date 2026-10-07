@@ -55,6 +55,10 @@ const workflows = readdirSync(workflowsDir)
 const scanners = [
   { label: ev.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
   { label: ev.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
+  { label: ev.verifySslLabs, href: `https://www.ssllabs.com/ssltest/analyze.html?d=${host}` },
+  { label: ev.verifyImmuniweb, href: `https://www.immuniweb.com/websec/${host}/` },
+  { label: ev.verifyDnsviz, href: `https://dnsviz.net/d/${host}/dnssec/` },
+  { label: ev.verifyAgentReady, href: `https://isitagentready.com/${host}` },
 ];
 ---
 
