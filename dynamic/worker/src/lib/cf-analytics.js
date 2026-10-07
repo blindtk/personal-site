@@ -277,9 +277,13 @@ function blockedByStatus(groups, limit = CF_STATS_TOP_STATUSES) {
     .slice(0, limit);
 }
 
-/** Ordena um Map<chave,contagem> em [{key,count}] decrescente, top `limit`. */
-function topEntries(map, limit) {
+/**
+ * Ordena um Map<chave,contagem> em [{key,count}] decrescente, top `limit`.
+ * `minCount` descarta as entradas com contagem abaixo do limiar.
+ */
+function topEntries(map, limit, minCount = 0) {
   return [...map.entries()]
+    .filter(([, count]) => count >= minCount)
     .map(([key, count]) => ({ key, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
@@ -360,6 +364,15 @@ export function firewallBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
 const CF_FIREWALL_PATH_MAXLEN = 120;
 const CF_FIREWALL_UA_MAXLEN = 140;
 
+// Limiar k das tabelas de URL e user-agent: uma entrada vista menos vezes do
+// que isto não é publicada. Um path ou UA raro pode identificar um único
+// visitante (um UA com versão exata, um URL com um token no caminho), e o
+// painel é público — com k = 5 cada linha mostrada descreve, no mínimo,
+// 5 eventos (pesados por sampleInterval). Só path/UA: ação, origem, país e
+// ASN são agregados grossos, sem este risco. O corte é inclusivo: uma
+// entrada com peso exatamente k aparece.
+export const CF_FIREWALL_MIN_COUNT = 5;
+
 /**
  * Agrega os eventos crus do `firewallEventsAdaptive` (CF_FIREWALL_DETAIL_QUERY)
  * por **URL** (`clientRequestPath`), **user-agent** e **ASN** (`clientAsn`) —
@@ -367,7 +380,9 @@ const CF_FIREWALL_UA_MAXLEN = 140;
  * mesmo dataset CRU já usado por `firewallBreakdown`, só que com campos
  * diferentes. Mesma amostragem por peso (`sampleInterval`) que `firewallBreakdown`.
  * `clientIP` não é pedido nem processado aqui — decisão de produto (zero-PII),
- * não limitação da API. Função pura e defensiva: nunca lança.
+ * não limitação da API. URL e user-agent só saem com pelo menos
+ * CF_FIREWALL_MIN_COUNT eventos (limiar k, ver acima). Função pura e
+ * defensiva: nunca lança.
  */
 export function firewallDetailBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
   const zones = raw?.data?.viewer?.zones;
@@ -388,8 +403,8 @@ export function firewallDetailBreakdown(raw, limit = CF_STATS_TOP_STATUSES) {
     }
   }
   return {
-    firewallByPath: topEntries(byPath, limit),
-    firewallByUserAgent: topEntries(byUserAgent, limit),
+    firewallByPath: topEntries(byPath, limit, CF_FIREWALL_MIN_COUNT),
+    firewallByUserAgent: topEntries(byUserAgent, limit, CF_FIREWALL_MIN_COUNT),
     firewallByAsn: topEntries(byAsn, limit),
   };
 }

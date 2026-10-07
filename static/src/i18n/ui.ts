@@ -124,6 +124,8 @@ export const ui = {
       wFirewallPaths: 'URLs mais visadas (firewall · 24h)',
       wFirewallUserAgents: 'User-agents mais vistos (firewall · 24h)',
       wFirewallAsns: 'Redes mais vistas (firewall · 24h)',
+      // O 5 espelha CF_FIREWALL_MIN_COUNT em dynamic/worker/src/lib/cf-analytics.js.
+      firewallMinNote: 'só com 5+ eventos',
       countryUnknown: 'Desconhecido',
       countriesEmpty: 'Sem ameaças registadas por país na janela.',
       firewallEmpty: 'Sem eventos de firewall nesta janela.',
@@ -134,7 +136,7 @@ export const ui = {
       // tabs, remove a etiqueta errada em vez de a manter) -----
       cloudflareMetaTitle: 'Cloudflare: o que a zona vê e trava, ao vivo',
       cloudflareTitle: 'Cloudflare',
-      cloudflareIntro: 'O que a Cloudflare vê e trava em toda a zona deste site: pedidos, ameaças classificadas e o que a firewall bloqueou ou desafiou. Só metadados agregados, nunca IPs.',
+      cloudflareIntro: 'O que a Cloudflare vê e trava em toda a zona deste site: pedidos, ameaças classificadas e o que a firewall bloqueou ou desafiou. Só metadados agregados, nunca IPs; URLs e user-agents só aparecem quando foram vistos pelo menos 5 vezes, para que nenhuma linha descreva um único visitante.',
       // ----- Performance -----
       perfMetaTitle: 'Performance: tráfego, cache e Core Web Vitals',
       perfTitle: 'Performance',
@@ -900,6 +902,7 @@ export const ui = {
       wFirewallPaths: 'Most-targeted URLs (firewall · 24h)',
       wFirewallUserAgents: 'Most-seen user-agents (firewall · 24h)',
       wFirewallAsns: 'Most-seen networks (firewall · 24h)',
+      firewallMinNote: 'only with 5+ events',
       countryUnknown: 'Unknown',
       countriesEmpty: 'No threats recorded by country in the window.',
       firewallEmpty: 'No firewall events in this window.',
@@ -910,7 +913,7 @@ export const ui = {
       // boundary removes the wrong label instead of keeping it) -----
       cloudflareMetaTitle: 'Cloudflare: what the zone sees and stops, live',
       cloudflareTitle: 'Cloudflare',
-      cloudflareIntro: 'What Cloudflare sees and stops across this site’s whole zone: requests, classified threats and what the firewall blocked or challenged. Aggregated metadata only, never IPs.',
+      cloudflareIntro: 'What Cloudflare sees and stops across this site’s whole zone: requests, classified threats and what the firewall blocked or challenged. Aggregated metadata only, never IPs; URLs and user-agents only appear once they have been seen at least 5 times, so no row describes a single visitor.',
       // ----- Performance -----
       perfMetaTitle: 'Performance: traffic, cache and Core Web Vitals',
       perfTitle: 'Performance',
