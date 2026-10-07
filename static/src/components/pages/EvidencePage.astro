@@ -52,11 +52,15 @@ const workflows = readdirSync(workflowsDir)
   .filter((f) => f.endsWith('.yml') || f.endsWith('.yaml'))
   .sort();
 
+// O Hardenize só abre relatórios com o ID da análise; sem ele redireciona para a home.
+const HARDENIZE_REPORT_ID = '1785606965';
+
 const scanners = [
   { label: ev.verifyHeadersScan, href: `https://securityheaders.com/?q=${host}&followRedirects=on` },
   { label: ev.verifyObservatory, href: `https://developer.mozilla.org/en-US/observatory/analyze?host=${host}` },
   { label: ev.verifySslLabs, href: `https://www.ssllabs.com/ssltest/analyze.html?d=${host}` },
   { label: ev.verifyImmuniweb, href: `https://www.immuniweb.com/websec/${host}/` },
+  { label: ev.verifyHardenize, href: `https://www.hardenize.com/report/${host}/${HARDENIZE_REPORT_ID}` },
   { label: ev.verifyDnsviz, href: `https://dnsviz.net/d/${host}/dnssec/` },
   { label: ev.verifyAgentReady, href: `https://isitagentready.com/${host}` },
 ];
