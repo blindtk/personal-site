@@ -170,7 +170,7 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-verify">{ev.verifyTitle}</h2>
     </div>
-    <ul class="ev-links mono">
+    <ul class="ev-links ev-links-inline mono">
       {scanners.map((l) => (
         <li><a href={l.href} rel="noopener">→ {l.label}</a></li>
       ))}
@@ -195,7 +195,7 @@ const scanners = [
   .ev-links a:hover {
     text-decoration: underline;
   }
-  /* Lista de workflows: em linha e a quebrar, não uma coluna de 14 ligações. */
+  /* Listas de workflows e scanners: em linha e a quebrar, não uma coluna de 14 ligações. */
   .ev-links-inline {
     flex-direction: row;
     flex-wrap: wrap;
