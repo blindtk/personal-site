@@ -17,8 +17,8 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    # Segunda de madrugada, antes do security-supply-chain (0 6 * * 1) e do
-    # verify-headers (17 6) — scan completo com security-extended, mais
+    # Semanal (segunda; hora nominal — os crons arrancam horas depois,
+    # docs/ci-cd.md "Cadence") — scan completo com security-extended, mais
     # lento do que o gate de PR/push (que usa o pack por omissão).
     - cron: '30 5 * * 1'
 

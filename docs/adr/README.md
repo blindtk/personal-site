@@ -42,10 +42,11 @@ existed.
 | [0013](0013-osv-scanner-action-direta.md) | OSV-Scanner called directly, not via the official reusable workflow |
 | [0014](0014-astro-check-node-test-obrigatorios-ci.md) | `astro check` and `node --test` as required CI gates, not a human-confirmed checklist item |
 | [0015](0015-semgrep-severidade-e-rulesets-nao-pinaveis.md) | Semgrep: gated at ERROR and WARNING, with retry logic that never masks a real finding |
-| [0016](0016-check-npm-audit-wrapper.md) | A custom `check-npm-audit.mjs` wrapper instead of raw `npm audit` |
+| [0016](0016-check-npm-audit-wrapper.md) | A custom `check-npm-audit.mjs` wrapper instead of raw `npm audit` (superseded by 0024) |
 | [0017](0017-gh-cli-em-vez-de-actions-terceiras.md) | Prefer the `gh` CLI over third-party Actions for simple GitHub operations |
 | [0018](0018-selecao-de-ferramentas-scan-producao.md) | Production-scan tool selection: automate by elimination, don't collect scanners |
 | [0021](0021-workflow-naming-convention.md) | Workflow naming: `<family>[-<object>].yml`, `name:` equal to the file name — same convention in every repo of the account |
+| [0024](0024-osv-scanner-single-vulnerability-gate.md) | OSV-Scanner as the single full-lockfile vulnerability gate; `npm audit` retired from CI |
 
 ## External / research infrastructure
 

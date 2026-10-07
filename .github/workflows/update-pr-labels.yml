@@ -5,6 +5,9 @@
 #   - dynamic        → dynamic/**   (Worker)
 #   - documentation  → docs/** ou *.md na raiz
 #   - ci             → .github/**   (workflows, config)
+# As labels de área seguem o diff completo do PR a cada push: uma área que o
+# PR deixou de tocar (ex.: alteração revertida) perde a label. `claude` e
+# labels postas à mão (dependencies, security, …) nunca são removidas.
 # Sem action externa (usa o gh do runner) para não acrescentar digests a pinar.
 # As labels são geridas à mão: têm de existir no repo antes de o labeler as
 # poder aplicar. As que faltam hoje: content, static, dynamic, ci
@@ -61,14 +64,27 @@ jobs:
           if grep -q  '^\.github/'         <<<"$files"; then labels+=(ci);            fi
           if grep -qE '^docs/|^[^/]+\.md$' <<<"$files"; then labels+=(documentation); fi
 
-          if [ ${#labels[@]} -eq 0 ]; then
-            echo "Sem labels a aplicar."
+          # Labels de área já no PR que o diff atual já não justifica.
+          current=$(gh pr view "$PR" --repo "$REPO" --json labels --jq '.labels[].name')
+          # Sem pipe para o grep -q: com pipefail, o SIGPIPE do lado de
+          # quem escreve faria o teste mentir.
+          wanted=" ${labels[*]} "
+          stale=()
+          for area in content static dynamic ci documentation; do
+            if grep -qxF "$area" <<<"$current" && [[ "$wanted" != *" $area "* ]]; then
+              stale+=("$area")
+            fi
+          done
+
+          if [ ${#labels[@]} -eq 0 ] && [ ${#stale[@]} -eq 0 ]; then
+            echo "Sem labels a aplicar nem a remover."
             exit 0
           fi
-          echo "A aplicar: ${labels[*]}"
+          echo "A aplicar: ${labels[*]:-—}; a remover: ${stale[*]:-—}"
           # Um argumento por label, sem word splitting (SC2046, apanhado pelo
           # actionlint a 2026-09-25): as labels de hoje não têm espaços, mas
           # a forma anterior partia-se na primeira que tivesse.
           args=()
           for label in "${labels[@]}"; do args+=(--add-label "$label"); done
+          for label in "${stale[@]}"; do args+=(--remove-label "$label"); done
           gh pr edit "$PR" --repo "$REPO" "${args[@]}"

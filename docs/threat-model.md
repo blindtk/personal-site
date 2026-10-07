@@ -67,8 +67,9 @@ cosmetic/reputational — mitigation: be explicit on the page that this is
 an unauthenticated first-party beacon.
 
 ### A4 — Dependency compromise via npm
-**Status: mitigated in depth.** `minimumReleaseAge: 3 days`, OSV-Scanner,
-`npm audit`, `npm audit signatures` (verifies registry signatures),
+**Status: mitigated in depth.** `minimumReleaseAge: 3 days`, OSV-Scanner
+(every lockfile, on every PR), `npm audit signatures` (verifies registry
+signatures, on lockfile PRs and weekly),
 `npm ci --ignore-scripts` (no arbitrary postinstall runs in CI). Residual
 risk: a compromised package with only scripts *required* to function (no
 known case in this repo today).

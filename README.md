@@ -19,7 +19,7 @@ That scale is deliberate; see
 | `static/` | The static site (Astro): every page, the 8 tools, the Lab; security headers in `static/public/_headers` |
 | `dynamic/` | The Cloudflare Worker backend (`dynamic/worker/`) and its decision log (`dynamic/PLAN.md`) |
 | `docs/` | Architecture, threat model, CI/CD, deploy, headers, DNS/TLS, and the ADRs (`docs/adr/`) |
-| `.github/` | Workflows, the scripts behind the production checks (`scripts/`), their expected values (`expected-headers.json`, `expected-dns.json`, `npm-audit-allowlist.json`), `CODEOWNERS`, `SECURITY.md` and the PR template |
+| `.github/` | Workflows, the scripts behind the production checks (`scripts/`), their expected values (`expected-headers.json`, `expected-dns.json`), `CODEOWNERS`, `SECURITY.md` and the PR template |
 | `.semgrep/` | Custom Semgrep rules for DOM-XSS sinks in `.astro` components |
 | `.clusterfuzzlite/` | Fuzzing harness for the Worker's output sanitizers (Jazzer.js) |
 | `renovate.json5` | Dependency and action-digest updates |
@@ -59,12 +59,13 @@ meant to survive being asked about.
 
 The build chain is treated as attack surface. Every PR goes through the
 production build, type checking, tests in `static/` and `dynamic/worker/`,
-`npm audit`, Dependency Review, OSV-Scanner, gitleaks, CodeQL, Semgrep
+Dependency Review, OSV-Scanner, gitleaks, CodeQL, Semgrep
 (with custom `.astro` DOM-XSS rules), and zizmor + actionlint on the
 workflows themselves. Every action is pinned to a commit SHA,
 `permissions: {}` is the default, and CI installs with
-`npm ci --ignore-scripts`. Production gets scheduled checks of its
-headers, TLS, DNS and Mozilla Observatory grade. Stage-by-stage detail and
+`npm ci --ignore-scripts`. Production gets its headers and the Worker's
+read routes checked after every deploy, plus scheduled checks of headers,
+TLS, DNS and Mozilla Observatory grade. Stage-by-stage detail and
 the external scanner reports are in [`docs/ci-cd.md`](docs/ci-cd.md).
 
 Implementation is AI-assisted: Claude Code writes most changes, CodeRabbit

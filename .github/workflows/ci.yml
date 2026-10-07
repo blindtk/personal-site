@@ -71,14 +71,10 @@ jobs:
       # depende de disciplina não é um controlo.
       - run: npm run test
 
-      # Falha em advisories high/critical (o que nos apanhou desatualizados
-      # da última vez); moderate/low com fix indisponível não bloqueiam CI.
-      # Passa por check-npm-audit.mjs (não pelo `npm audit` cru): o npm
-      # audit não tem mecanismo de exceção próprio, e um único falso
-      # positivo (GHSA-hpcx-pg6g-x697/MAL-2026-10726, astro 7.1.0 —
-      # descoberto ao ligar este mesmo passo) bloqueava todos os PRs sem
-      # forma declarativa de o ignorar. Ver .github/npm-audit-allowlist.json.
-      - run: node ../.github/scripts/check-npm-audit.mjs .
+      # Sem `npm audit` aqui: as advisories dos lockfiles são o
+      # osv-scanner (security.yml) — a mesma base (GHSA + OpenSSF
+      # malicious-packages), mais estrito (qualquer severidade) e com um só
+      # ficheiro de exceções (osv-scanner.toml). ADR 0024.
 
   worker:
     # Job próprio: package.json/lockfile e runtime (Cloudflare Workers)
@@ -112,8 +108,6 @@ jobs:
       # os testes de integração do fetch() sem rede — mesma lacuna do job
       # `build`, mesma correção.
       - run: npm test
-
-      - run: node ../../.github/scripts/check-npm-audit.mjs .
 
       # Gate sem segredos: valida que o Worker compila, o wrangler.toml é
       # válido (nenhum binding em falta, nenhuma chave TOML engolida por

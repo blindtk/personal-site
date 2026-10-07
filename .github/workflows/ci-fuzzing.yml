@@ -71,7 +71,16 @@ jobs:
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Mesma linguagem do build_fuzzers (o default desta action é
+          # c++). O sanitizer fica no default (address) de propósito: aqui
+          # só nomeia a pasta dos artefactos e as opções do libFuzzer, que o
+          # Jazzer.js ignora — e 'coverage' neste passo liga caminhos do
+          # modo de cobertura do ClusterFuzzLite que nunca foram testados
+          # com este harness.
+          language: javascript
           # 1 harness (sanitize_fuzz).
           fuzz-seconds: 120
           mode: 'batch'
-          output-sarif: true
+          # Sem output-sarif: o SARIF não era enviado para lado nenhum (o
+          # job só tem contents: read). Um crash já falha o job e fica nos
+          # artefactos da execução.

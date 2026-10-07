@@ -1,6 +1,6 @@
 # ADR 0016 — A custom `check-npm-audit.mjs` wrapper instead of raw `npm audit`
 
-**Status:** accepted and in production (`.github/scripts/check-npm-audit.mjs`, called from `ci.yml`).
+**Status:** superseded by [ADR 0024](0024-osv-scanner-single-vulnerability-gate.md) (2026-10-07) — `npm audit`, this wrapper and its allowlist were removed from CI; OSV-Scanner is the single full-lockfile gate.
 
 ## Context
 
