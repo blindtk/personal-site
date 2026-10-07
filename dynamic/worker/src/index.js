@@ -94,12 +94,12 @@ const vitalsDayKey = (ms) => `vit:${new Date(ms).toISOString().slice(0, 10)}`; /
 async function recordVitals(env, sample, now) {
   const capKey = `vitcap:${dayKey(now)}`;
   const dayK = vitalsDayKey(now);
-  const [bucket, capPrev] = await Promise.all([
-    getJSON(env, dayK, emptyVitalsBucket()),
-    getJSON(env, capKey),
-  ]);
-  const { allowed, state } = underCap(capPrev, { now, cost: VITALS_WRITE_COST, ...VITALS_WRITE_CAP });
+  // O contador primeiro: com o orçamento do dia esgotado (o estado normal
+  // durante um flood) o beacon custa 1 leitura em vez de 2, e o IP que enche o
+  // orçamento deixa de gastar também a quota de leituras da conta.
+  const { allowed, state } = underCap(await getJSON(env, capKey), { now, cost: VITALS_WRITE_COST, ...VITALS_WRITE_CAP });
   if (!allowed) return;
+  const bucket = await getJSON(env, dayK, emptyVitalsBucket());
   addVitals(bucket, sample);
   await Promise.all([
     env.KV.put(dayK, JSON.stringify(bucket), { expirationTtl: 9 * 86400 }),

@@ -9,12 +9,12 @@ import { mergeFirewall7d } from '../src/lib/firewall.js';
 import {
   normalizeVitals, emptyVitalsBucket, addVitals, mergeVitalsBuckets, vitalsStats,
 } from '../src/lib/vitals.js';
-import { nextState, dailySalt, clientHash } from '../src/lib/ratelimit.js';
+import { nextState, dailySalt, clientHash, rateLimitIdentity } from '../src/lib/ratelimit.js';
 import { underCap } from '../src/lib/kvcap.js';
 import { normalizePrefix, parseRanges, fetchRange, MAX_RANGE_ENTRIES } from '../src/lib/pwned.js';
 import {
   issuerLabel, isExpectedIssuer, parseExpectedIssuers, normalizeCtEntry, parseCtEntries, ctStats,
-  DEFAULT_EXPECTED_ISSUERS,
+  DEFAULT_EXPECTED_ISSUERS, MAX_CERTS,
 } from '../src/lib/ct.js';
 import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames } from '../src/lib/cf-analytics.js';
 import { serverView, normalizeIp } from '../src/lib/mirror.js';
@@ -1925,4 +1925,72 @@ test('respostas da API trazem Cross-Origin-Resource-Policy same-origin (200 e 40
     const res = await runFetch(fakeRequest(path), env);
     assert.equal(res.headers.get('cross-origin-resource-policy'), 'same-origin', path);
   }
+});
+
+test('rateLimitIdentity: IPv6 conta pelo /64, IPv4 e não-IPs ficam como estão', () => {
+  const a = rateLimitIdentity('2001:db8:1:2:aaaa:bbbb:cccc:dddd');
+  assert.equal(a, '2001:db8:1:2::/64');
+  assert.equal(rateLimitIdentity('2001:DB8:1:2::1'), a); // forma comprimida e maiúsculas
+  assert.equal(rateLimitIdentity('2001:db8:1:0002:0:0:0:ffff'), a); // zeros à esquerda
+  assert.notEqual(rateLimitIdentity('2001:db8:1:3::1'), a); // outro /64
+  assert.equal(rateLimitIdentity('2001:db8::1'), '2001:db8:0:0::/64');
+  assert.equal(rateLimitIdentity('::1'), '0:0:0:0::/64');
+  for (const same of ['203.0.113.7', 'unknown', '::ffff:203.0.113.7', '1:2:3', '2001:db8::1::2', 'zz::1']) {
+    assert.equal(rateLimitIdentity(same), same, same);
+  }
+  assert.equal(rateLimitIdentity(null), 'unknown');
+});
+
+test('clientHash: dois IPv6 do mesmo /64 partilham balde; IPv4 distintos continuam distintos', async () => {
+  const salt = dailySalt('s', Date.parse('2026-07-16T12:00:00Z'));
+  assert.equal(await clientHash('2001:db8:1:2::1', salt), await clientHash('2001:db8:1:2:ffff::9', salt));
+  assert.notEqual(await clientHash('2001:db8:1:2::1', salt), await clientHash('2001:db8:1:3::1', salt));
+  assert.notEqual(await clientHash('203.0.113.7', salt), await clientHash('203.0.113.8', salt));
+});
+
+test('rate limit: rodar o sufixo IPv6 dentro do mesmo /64 não dá balde novo', async () => {
+  const env = { KV: fakeKV(), RATE_SALT: 'sal' };
+  const suffix = (n) => `2001:db8:5:5:${n.toString(16)}::1`;
+  const statuses = [];
+  for (let i = 0; i < 25; i++) statuses.push((await runFetch(fakeRequest('/api/pwned-range?prefix=ABCDE', { ip: suffix(i + 1) }), env)).status);
+  // pwned: 20/min por cliente — os pedidos 21+ têm de dar 429 mesmo com sufixos sempre diferentes
+  assert.equal(statuses.filter((s) => s === 429).length, 5);
+});
+
+test('/api/ct: um emissor inesperado empurrado para fora das MAX_CERTS mais recentes continua no alerta', async () => {
+  const recent = (daysAgo, i, over = {}) => {
+    const d = (ms) => new Date(ms).toISOString().replace(/Z$/, '');
+    const t = Date.now() - daysAgo * 86400_000;
+    return crtshEntry({ id: i, serial_number: `aa${i.toString(16).padStart(8, '0')}`, entry_timestamp: d(t), not_before: d(t - 3600_000), not_after: d(t + 89 * 86400_000), ...over });
+  };
+  // MAX_CERTS emissões esperadas mais recentes + 1 inesperada, mais antiga (fora da lista mostrada)
+  const entries = Array.from({ length: MAX_CERTS }, (_, i) => recent(0.01 * (i + 1), i + 1));
+  entries.push(recent(5, 9999, { issuer_name: 'C=US, O=Emissor Estranho, CN=Evil CA' }));
+  const env = { KV: fakeKV(), SCAN_TARGET: 'https://danielmala.co/' };
+  const orig = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => entries });
+  try {
+    const data = await (await runFetch(fakeRequest('/api/ct'), env)).json();
+    assert.equal(data.certs.length, MAX_CERTS);
+    assert.ok(data.certs.every((c) => c.expected), 'o inesperado não está na lista mostrada');
+    assert.equal(data.summary.unexpected, 1);
+  } finally {
+    globalThis.fetch = orig;
+  }
+});
+
+test('POST /api/vitals: com o orçamento do dia esgotado só lê o contador (1 leitura, 0 escritas)', async () => {
+  const kv = fakeKV();
+  const now = Date.now();
+  kv.store.set(`vitcap:d:${new Date(now).toISOString().slice(0, 10)}`, JSON.stringify({ count: 300, windowStart: now }));
+  const gets = [];
+  const get = kv.get.bind(kv);
+  kv.get = async (key, type) => { gets.push(key); return get(key, type); };
+  const puts = [];
+  const put = kv.put.bind(kv);
+  kv.put = async (key, ...rest) => { puts.push(key); return put(key, ...rest); };
+  const res = await runFetch(vitalsPost(vitalsJson(60)), { KV: kv, RATE_SALT: 'sal' });
+  assert.equal(res.status, 204);
+  assert.equal(gets.filter((k) => k.startsWith('vit:')).length, 0, 'não leu o histograma');
+  assert.equal(puts.filter((k) => k.startsWith('vit')).length, 0);
 });
