@@ -247,6 +247,11 @@ export const ui = {
       verifyTitle: 'Verifica tu mesmo',
       verifyHeadersScan: 'Scan em securityheaders.com',
       verifyObservatory: 'Scan no Mozilla Observatory',
+      verifySslLabs: 'Teste TLS no Qualys SSL Labs',
+      verifyImmuniweb: 'Teste de segurança web no ImmuniWeb',
+      verifyHardenize: 'Configuração DNS/TLS/email no Hardenize',
+      verifyDnsviz: 'Validação DNSSEC no DNSViz',
+      verifyAgentReady: 'Prontidão para agentes de IA (Cloudflare)',
     },
     certs: {
       title: 'Certificações',
@@ -1020,6 +1025,11 @@ export const ui = {
       verifyTitle: 'Check for yourself',
       verifyHeadersScan: 'Scan on securityheaders.com',
       verifyObservatory: 'Scan on Mozilla Observatory',
+      verifySslLabs: 'TLS test on Qualys SSL Labs',
+      verifyImmuniweb: 'Web security test on ImmuniWeb',
+      verifyHardenize: 'DNS/TLS/email configuration on Hardenize',
+      verifyDnsviz: 'DNSSEC validation on DNSViz',
+      verifyAgentReady: 'AI-agent readiness (Cloudflare)',
     },
     certs: {
       title: 'Certifications',
