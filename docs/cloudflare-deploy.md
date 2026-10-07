@@ -171,14 +171,17 @@ GitHub's settings, not in the code; its confirmation is tracked in
 section 7. (`main` is already behind a ruleset — `docs/catalog-sync.md`.)
 
 **Deployment-triggered workflows and fork PRs (2026-09-25 security
-audit).** `verify-headers.yml` runs on `deployment_status`. For that event GitHub
-runs the workflow file and checks out the code from the **deployment's
-commit**, not from `main`. So if the Pages project ever deploys a commit
-from a fork PR, that PR's own version of the workflow runs, with whatever
-repository secrets it asks for. The code no longer sends `CI_WAF_TOKEN` on
-those runs, and only ever sends it to `https://danielmala.co`. A modified
-workflow file can still ask for the secret, and only settings can close
-that:
+audit; trigger changed 2026-10-07).** `verify-headers.yml` used to run on
+`deployment_status`, an event for which GitHub runs the workflow file and
+checks out the code from the **deployment's commit**, not from `main` — a
+fork PR deployed by Pages would have run its own version of the workflow,
+with whatever repository secrets it asked for. In practice that event
+never fired (Cloudflare's GitHub integration posts a check run per deploy,
+not a Deployment), so the workflow now runs on `check_run` (the
+"Cloudflare Pages" check on `main`), which always runs the workflow from
+the default branch. The settings below are still worth keeping as defence
+in depth — any future workflow on a commit-scoped event reopens the same
+gap:
 
 - **Pages → Settings → Builds:** make sure pull requests from forks are
   not built. Preview deployments for this project's own branches are

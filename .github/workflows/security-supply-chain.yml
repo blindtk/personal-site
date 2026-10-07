@@ -1,20 +1,37 @@
-# Verificações de supply-chain de baixa frequência: semanal + à mão, não em
-# cada PR. Nasceu assim quando o repositório era privado e estava acima da
-# quota de minutos do Actions; público já não tem quota, mas a deriva de
-# assinaturas e do SBOM não precisa de granularidade por PR (docs/ci-cd.md,
-# "Cadence"). Cobre os dois lockfiles (static/ e
-# dynamic/worker/), mesma lógica de "dois jobs" do osv-scanner/ci.yml.
+# Verificações de supply-chain: semanal + à mão, e também nos PRs que mexem
+# num dos lockfiles (os do Renovate, quase sempre). Semanal sozinho deixava
+# um pacote servido sem assinatura válida entrar na main e só ser apanhado
+# até 7 dias depois — o PR que muda o lockfile é exatamente o momento em que
+# `npm audit signatures` tem algo novo para verificar. PRs sem lockfile não
+# o correm (paths); o SBOM só é guardado fora de PRs (docs/ci-cd.md,
+# "Cadence"). Cobre os dois lockfiles (static/ e dynamic/worker/), mesma
+# lógica de "dois jobs" do osv-scanner/ci.yml.
 name: security-supply-chain
 
 on:
   schedule:
-    # Segunda de madrugada, antes da janela do Renovate (before 8am on
-    # monday) — se o Renovate tiver mexido em algo no fim de semana, este
-    # workflow já corre sobre o lockfile atualizado.
+    # Segunda de manhã, semanal. A hora é nominal: os crons deste repo
+    # arrancam 5–8 h depois do agendado (docs/ci-cd.md, "Cadence") — não
+    # há ordem garantida face à janela do Renovate; as alterações de
+    # lockfile do Renovate já são verificadas no próprio PR (abaixo).
     - cron: '0 6 * * 1'
+  # Nunca o tornar check obrigatório no ruleset: com `paths`, um PR que não
+  # mexe em lockfiles ficava à espera de um check que nunca chega.
+  pull_request:
+    branches: [main]
+    paths:
+      - 'static/package-lock.json'
+      - 'dynamic/worker/package-lock.json'
   workflow_dispatch: {}
 
 permissions: {}
+
+# Um push novo num PR cancela a execução anterior desse PR (o resultado já
+# não interessa). Fora de PRs o grupo é o próprio run (run_id): pushes para
+# main e crons nunca se cancelam nem ficam à espera uns dos outros.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   static:
@@ -48,8 +65,10 @@ jobs:
       # SBOM (CycloneDX) do que está de facto instalado. `npm sbom` lê o
       # lockfile + node_modules, por isso corre depois do `npm ci` acima.
       - name: Gerar SBOM
+        if: github.event_name != 'pull_request'
         run: npm sbom --sbom-format cyclonedx > sbom-static.cdx.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.event_name != 'pull_request'
         with:
           name: sbom-static
           path: static/sbom-static.cdx.json
@@ -76,8 +95,10 @@ jobs:
       - name: npm audit signatures
         run: npm audit signatures
       - name: Gerar SBOM
+        if: github.event_name != 'pull_request'
         run: npm sbom --sbom-format cyclonedx > sbom-worker.cdx.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.event_name != 'pull_request'
         with:
           name: sbom-worker
           path: dynamic/worker/sbom-worker.cdx.json

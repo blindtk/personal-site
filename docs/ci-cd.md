@@ -8,18 +8,18 @@ this table is the full version.
 
 | Check | Where | What it guarantees |
 | --- | --- | --- |
-| **Build + `npm audit`** | `ci.yml` | The site builds with no errors, no high/critical advisories in dependencies. |
+| **Build + type check + tests** | `ci.yml` | The site builds with no errors, `astro check` passes, the `node --test` suites in `static/` and `dynamic/worker/` pass, and the Worker bundles (`wrangler deploy --dry-run`). Dependency advisories are OSV-Scanner's job below (`npm audit` was retired, [ADR 0024](adr/0024-osv-scanner-single-vulnerability-gate.md)). |
 | **CodeRabbit** | GitHub App (`.coderabbit.yaml`), not a workflow | AI-assisted PR review, free on a public repo. Not a blocking gate — a comment, not pass/fail. Calibrated with per-folder `path_instructions` (e.g. reminds it of the KV write budget in `dynamic/worker/`, PT/EN parity in `i18n/`, thin routes in `pages/`) instead of generic. |
 | **Dependency Review** | `security-dependency-review.yml` | Blocks PRs that introduce a new dependency with a known vulnerability, scoped to the PR's diff (GitHub Dependency Graph) — the fast gate, complementary to the full-lockfile OSV-Scanner sweep below. |
-| **OSV-Scanner** | `security.yml` | `package-lock.json` has no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA); fails CI on any known advisory. |
+| **OSV-Scanner** | `security.yml` | The three lockfiles (`static/`, `dynamic/worker/`, `.clusterfuzzlite/`) have no known vulnerabilities ([OSV.dev](https://osv.dev), includes GHSA and the OpenSSF malicious-packages feed); fails CI on any known advisory. The single full-lockfile vulnerability gate, with its exceptions in `osv-scanner.toml` ([ADR 0024](adr/0024-osv-scanner-single-vulnerability-gate.md)). |
 | **gitleaks** | `security.yml` + local hook | Scans for secrets (Cloudflare tokens, keys) matching its configured rules — detection, not a guarantee against every possible secret. Locally: `pipx install pre-commit && pre-commit install`. |
 | **CodeQL** | `security-codeql.yml` | Semantic SAST for JavaScript/TypeScript — a different analysis class from Semgrep's pattern-matching, run separately. |
 | **Semgrep** | `security.yml` | SAST via `p/typescript`/`p/javascript` plus custom rules for DOM-XSS sinks in `.astro` components (`.semgrep/`) — public rulesets don't parse that file type. |
 | **zizmor** | `security.yml` | Audits the workflows themselves: missing pins, excessive permissions, template injection, persisted credentials. |
 | **actionlint** | `security.yml` (step of the `zizmor` job) | Different failure class than zizmor: the workflow YAML against GitHub's schema (bad `if:` expressions, typo'd contexts) and shellcheck on every embedded `run:` block. Pinned release + sha256; fails if shellcheck is missing instead of silently skipping. Found SC2046 in `update-pr-labels.yml` on its first run (2026-09-25), fixed with it. |
-| **Headers in production** | `verify-headers.yml` | After every deploy (and a daily cron), production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. |
-| **`npm audit signatures` + SBOM** | `security-supply-chain.yml` (weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) and generates a CycloneDX SBOM for both lockfiles, as an artifact. |
-| **Production invariants** | `verify-worker.yml` (daily + manual) | Checks `/api/health` and the Worker's read routes; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the Worker-backed panels otherwise leave open — they're pull-only, so nothing would alert anyone without someone looking. |
+| **Headers in production** | `verify-headers.yml` | After every production deploy (the "Cloudflare Pages" check run on `main` completing, via `check_run`) and on a daily cron, production is checked against `.github/expected-headers.json` — a missing or regressed security header fails the workflow. Until 2026-10-07 the post-deploy trigger was `deployment_status`, which never fired: Cloudflare posts a check run per deploy, not a GitHub Deployment. |
+| **`npm audit signatures` + SBOM** | `security-supply-chain.yml` (PRs that change a lockfile + weekly + manual) | Verifies npm registry signatures (catches a package served without its expected signature) on the PR that changes the lockfile, before it reaches `main`; the weekly run also generates a CycloneDX SBOM for both lockfiles, as an artifact. |
+| **Production invariants** | `verify-worker.yml` (after every Worker deploy + daily + manual) | Checks `/api/health` and the Worker's read routes right after a deploy (the "Workers Builds" check run on `main` completing, via `check_run`) and once a day; opens an Issue if something is genuinely broken (self-closes when it recovers). Closes the loop the Worker-backed panels otherwise leave open — they're pull-only, so nothing would alert anyone without someone looking. |
 | **TLS/cipher/vuln scan in production** | `verify-tls.yml` (monthly + manual) | Runs [testssl.sh](https://testssl.sh) against production; findings are classified by testssl.sh's own severity — CRITICAL/HIGH (weak protocols, known vulnerabilities like Heartbleed/POODLE, an invalid/expired cert) fail the workflow, MEDIUM/LOW only warn. |
 | **DNS hygiene in production** | `verify-dns.yml` (weekly + manual) | Checks SPF, DMARC, CAA, and the DNSSEC trust chain (`AD` flag from two independent resolvers) against `.github/expected-dns.json` — any regression fails the workflow, including a missing CAA record or a CA outside the list; only the extra CAs Cloudflare is known to inject (Universal SSL) warn. |
 | **Mozilla Observatory grade in production** | `verify-observatory.yml` (weekly + manual) | Calls the free [Mozilla HTTP Observatory](https://github.com/mdn/mdn-http-observatory) API — a second, independent grading rubric (cookies, redirect chain, cross-origin isolation) on top of the exact-header checks in `verify-headers.yml`. Grade D/F fails the workflow, B/C only warns. |
@@ -53,12 +53,23 @@ a `readFileSync`.
 
 ## Cadence
 
-**SBOM/signature verification — weekly, not per-PR.** This cadence
-predates the repository going public, when Actions minutes were metered
-against the private-repo free tier (2,000 min/month). Public repos get
-unlimited Actions minutes, but the weekly cadence stayed — SBOM drift and
-signature checks don't need per-PR granularity, and there was no reason
-to change a schedule that was already working.
+**SBOM/signature verification — weekly, plus PRs that change a
+lockfile.** The weekly-only cadence predates the repository going public,
+when Actions minutes were metered against the private-repo free tier
+(2,000 min/month). Since 2026-10-07 the signature check also runs on PRs
+that touch `static/package-lock.json` or `dynamic/worker/package-lock.json`
+(almost always Renovate's): weekly alone let a package served without a
+valid signature reach `main` and sit there for up to a week. The SBOM is
+still only kept from the weekly/manual runs. The workflow must not become
+a required check: with a `paths` filter, a PR that doesn't touch a
+lockfile would wait forever for it.
+
+**Scheduled runs start hours late.** Measured over September–October
+2026, every cron in this repo started 5–8 hours after its scheduled time
+(e.g. `verify-headers` at `17 6 * * *` ran between 10:38 and 14:47 UTC).
+GitHub queues scheduled runs behind other load; nothing here depends on
+the exact time, so don't add ordering assumptions between crons (e.g.
+"runs before Renovate's window") — they won't hold.
 
 **Fuzzing — weekly, back from manual-only.** `ci-fuzzing.yml` ran only on
 manual dispatch while it failed on every run, for two reasons fixed in

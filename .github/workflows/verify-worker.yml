@@ -6,9 +6,16 @@
 # partido, abre (ou atualiza) uma Issue — que chega ao dono do repo por
 # email/notificação do GitHub sem ele ter de ir espreitar o dashboard.
 # Quando a verificação volta a passar, a Issue fecha-se sozinha.
+#
+# Corre também logo depois de cada deploy do Worker para a main (check run
+# "Workers Builds…" da Cloudflare concluído com sucesso) — antes disso, um
+# deploy partido só era apanhado no cron do dia seguinte. Mesmo padrão do
+# verify-headers.yml com o check "Cloudflare Pages".
 name: verify-worker
 
 on:
+  check_run:
+    types: [completed]
   schedule:
     # Uma vez por dia, num horário diferente do verify-headers (17 6) e do
     # security-supply-chain (0 6 * * 1) — não há razão para colidir.
@@ -29,6 +36,22 @@ env:
 
 jobs:
   check:
+    # check_run dispara para TODOS os check runs concluídos que não venham
+    # do próprio Actions — só o deploy do Worker na main interessa. Prefixo
+    # e não nome exato: os PRs não têm este check (só a main faz deploy do
+    # Worker), por isso o nome completo ainda não foi visto aqui, e a
+    # Cloudflare pode acrescentar-lhe o nome do Worker ("Workers Builds: …").
+    if: >-
+      github.event_name != 'check_run' ||
+      (startsWith(github.event.check_run.name, 'Workers Builds') &&
+       github.event.check_run.conclusion == 'success' &&
+       github.event.check_run.check_suite.head_branch == 'main')
+    # Ao nível do job (não do workflow), para os check_run ignorados não
+    # entrarem no grupo: duas execuções reais em simultâneo (cron + deploy)
+    # podiam ambas não encontrar a Issue aberta e criar duas.
+    concurrency:
+      group: verify-worker-alert-issue
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

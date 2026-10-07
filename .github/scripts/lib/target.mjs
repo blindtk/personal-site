@@ -94,7 +94,7 @@ export function isProductionTarget(url) {
 
 /**
  * Resolves the target in order of priority, skipping empty candidates:
- * workflow inputs (TARGET_URL/DEPLOY_URL) first, PROD_URL by default.
+ * workflow inputs (TARGET_URL) first, PROD_URL by default.
  * Returns null if an explicit candidate is not a valid URL — a mistyped
  * manual input used to produce a Node stack trace instead of a message.
  */

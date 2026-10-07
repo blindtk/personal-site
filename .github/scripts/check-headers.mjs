@@ -2,8 +2,7 @@
 // (.github/expected-headers.json) and fails if any is missing or regressed.
 // Target, in order of priority:
 //   1. TARGET_URL  — manual workflow_dispatch input
-//   2. DEPLOY_URL  — environment_url of the deployment_status event (Pages)
-//   3. PROD_URL    — constant in scripts/lib/target.mjs (no longer the `url`
+//   2. PROD_URL    — constant in scripts/lib/target.mjs (no longer the `url`
 //      from expected-headers.json: the request target, and the allowlist that
 //      authorises sending secrets to it, must not both come out of the same
 //      data file — see the comment at the top of that module)
@@ -112,7 +111,7 @@ if (mismatch) {
   process.exit(1);
 }
 
-const explicitTarget = process.env.TARGET_URL || process.env.DEPLOY_URL || '';
+const explicitTarget = process.env.TARGET_URL || '';
 if (!explicitTarget && !isProductionConfigured(cfg.url)) {
   // ::warning:: (not ::notice::) on purpose — finding from the 2026-07
   // security review (round 4, N3): this path ran in production for 13 days
@@ -138,15 +137,12 @@ if (!explicitTarget && !isProductionConfigured(cfg.url)) {
 
 // Secrets only go out over HTTPS and to the production origin or a preview
 // of this site's Cloudflare Pages project — allowlist in
-// scripts/lib/target.mjs (isTrustedTarget). This matters mostly for
-// DEPLOY_URL, which comes from deployment_status.environment_url: an event
-// normally created only by Cloudflare Pages' GitHub integration, but which
-// the Deployments API lets any app/token with `deployments: write` on the
-// repo fire with whatever environment_url it likes. fetchSameOrigin above
-// covers the redirect hops; this covers the initial target.
-const targetUrl = resolveTarget(process.env.TARGET_URL, process.env.DEPLOY_URL);
+// scripts/lib/target.mjs (isTrustedTarget). This matters for TARGET_URL,
+// the free-text workflow_dispatch input. fetchSameOrigin above covers the
+// redirect hops; this covers the initial target.
+const targetUrl = resolveTarget(process.env.TARGET_URL);
 if (targetUrl === null) {
-  console.error('::error::check-headers: target is not a valid URL (TARGET_URL/DEPLOY_URL).');
+  console.error('::error::check-headers: target is not a valid URL (TARGET_URL).');
   process.exit(1);
 }
 const target = targetUrl.href;
