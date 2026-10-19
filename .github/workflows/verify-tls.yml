@@ -112,7 +112,7 @@ jobs:
           docker run --rm \
             -u "$(id -u):$(id -g)" \
             -v "$PWD/tls-report:/data" \
-            drwetter/testssl.sh:3.2@sha256:c1a54a31bb596e09f79f91823468512e9c0794eb522340ff228875971514695c \
+            drwetter/testssl.sh:3.2@sha256:e5827c54b65fb4effd06878b4ff1577ef27385252cfa033d311281be23925587 \
             "${args[@]}" \
             "$HOST"
 
@@ -138,7 +138,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always() && steps.target.outputs.skip == 'false'
         with:
           name: testssl-report
