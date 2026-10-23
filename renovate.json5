@@ -20,8 +20,10 @@
   timezone: 'Europe/Lisbon',
   // Janela semanal única: segunda-feira de madrugada.
   schedule: ['before 8am on monday'],
-  // Respeita os ranges semver do package.json (não os reescreve).
-  rangeStrategy: 'preserve',
+  // Respeita os ranges semver do package.json: dentro do range só atualiza o
+  // lock file; fora do range (ex.: major) alarga/substitui o range. ('preserve'
+  // não é um valor válido — o Renovate rejeitava a config, ver #225.)
+  rangeStrategy: 'update-lockfile',
   // Espera 3 dias antes de propor uma versão nova — janela de segurança
   // contra pacotes comprometidos publicados e retirados pouco depois.
   minimumReleaseAge: '3 days',
