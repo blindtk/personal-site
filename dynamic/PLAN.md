@@ -15,6 +15,18 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
+- **2026-10-30 — The attack map moves into "This site"** (decision by the
+  repo owner, same day as the entry below). Once its default tab became
+  this zone's own firewall data, the page is about the site, unlike ATT&CK
+  and Certifications. It is now the section's sixth page, after
+  Cloudflare: PT `/este-site/mapa-de-ataques/`, EN
+  `/en/this-site/attack-map/`, in the section tabs (`SiteLayers`), the
+  "This site" nav group and the footer. The old URLs 301 to the new ones
+  (`static/public/_redirects`). The World tab (Cloudflare Radar) stays as
+  context; putting only the bubble globe on the Cloudflare page was
+  considered and dropped, because it would split the two globes and that
+  page is already dense.
+
 - **2026-10-30 — Attack map: this site's firewall and Cloudflare Radar on
   a globe** (approved by the repo owner). A new page, PT `/mapa-de-ataques/`
   and EN `/en/attack-map/` (kept clear of `/attack/`, the MITRE ATT&CK

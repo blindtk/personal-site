@@ -1,4 +1,4 @@
-// Globo de ataques (/mapa-de-ataques/) — matemática pura, sem DOM: máscara de
+// Globo de ataques (/este-site/mapa-de-ataques/) — matemática pura, sem DOM: máscara de
 // terra, projeção ortográfica, arcos de grande círculo (Radar, mundo) e
 // bolhas por país de origem (firewall deste site), com tamanho por valor.
 // O desenho (canvas 2D) vive em src/components/attack-map/globe-canvas.ts.

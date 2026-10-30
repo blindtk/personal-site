@@ -16,9 +16,12 @@ export const routes = {
   security: { pt: '/este-site/seguranca/', en: '/en/this-site/security/' },
   cloudflare: { pt: '/este-site/cloudflare/', en: '/en/this-site/cloudflare/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
-  // Globo de ataques globais (Cloudflare Radar). Slugs longe de /attack/ (a
-  // matriz ATT&CK) de propósito: /ataques/ e /attacks/ eram fáceis de confundir.
-  attackMap: { pt: '/mapa-de-ataques/', en: '/en/attack-map/' },
+  // Mapa de ataques (firewall desta zona + Cloudflare Radar), na secção Este
+  // site desde 2026-10-30 — o separador principal é sobre o site. Slugs longe
+  // de /attack/ (a matriz ATT&CK) de propósito: /ataques/ e /attacks/ eram
+  // fáceis de confundir. Os URLs antigos (/mapa-de-ataques/, /en/attack-map/)
+  // redirecionam em public/_redirects.
+  attackMap: { pt: '/este-site/mapa-de-ataques/', en: '/en/this-site/attack-map/' },
   evidence: { pt: '/este-site/provas/', en: '/en/this-site/evidence/' },
   certifications: { pt: '/certificacoes/', en: '/en/certifications/' },
 } as const;

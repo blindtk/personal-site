@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Tabs from '../site/Tabs.astro';
+import SiteLayers from '../SiteLayers.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -33,7 +34,8 @@ const jsStrings = {
 };
 ---
 
-<BaseLayout lang={lang} title={m.metaTitle} altUrl={routes.attackMap[other]}>
+<BaseLayout lang={lang} title={m.metaTitle} altUrl={routes.attackMap[other]} active="attackMap">
+  <SiteLayers lang={lang} current="attackMap" />
   <div class="page-head">
     <h1>{m.title} <span class="badge amber am-badge">{m.serverBadge}</span></h1>
     <p class="intro">{m.intro}</p>
