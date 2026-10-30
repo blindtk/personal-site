@@ -5,7 +5,8 @@ Personal site monorepo. Three areas with rigid responsibilities:
 - `content/` — markdown/JSON content. **Never** put code here.
 - `static/` — Astro static site. Reads `content/` via loaders (`glob`, JSON import).
 - `dynamic/` — backend (Cloudflare Worker in `dynamic/worker/`:
-  Cloudflare/firewall panels, CT watch, Web Vitals, HIBP relay, mirror).
+  Cloudflare/firewall panels, CT watch, Web Vitals, HIBP relay, mirror,
+  Cloudflare Radar attack globe).
   The honeypot is a separate project (`honeypot-vps-infra`, ADR 0022). Pure logic in `src/lib/*` tested with
   `node --test` (run before any PR that touches this). New tools only with
   an explicit decision from the repo owner (see `dynamic/PLAN.md`).

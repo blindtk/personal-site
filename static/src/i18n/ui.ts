@@ -57,6 +57,7 @@ export const ui = {
       performance: 'Performance real deste site: pedidos ao longo do tempo, cache e Core Web Vitals (LCP, INP, CLS, TTFB) medidos em visitas reais.',
       evidence: 'Provas verificáveis deste site, geradas no build ou lidas ao vivo: último commit, cabeçalhos, Certificate Transparency e workflows de CI.',
       attack: 'Heatmap pessoal do MITRE ATT&CK: as técnicas que cubro defensivamente, tática a tática, e o que as cobre.',
+      attackMap: 'Mapa de ataques em globo: os países de onde vêm os ataques a este site e os ataques da última hora no mundo, com dados da Cloudflare Radar.',
       certifications: 'Certificações de Daniel Malaco (Fortinet, SANS, Microsoft, CyberDefenders e outras), com verificação independente no Credly.',
       radar: 'Radar de cibersegurança: alertas do CNCS, CERT-EU, NCSC UK e CISA KEV e notícias do setor, agregados por RSS a cada 6 horas.',
     },
@@ -203,7 +204,7 @@ export const ui = {
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas que correm no browser (subnets, hashes, gerador de passwords, cabeçalhos de email, EXIF, análise de CSP, jogo dos links falsos) não enviam nada para lado nenhum. As duas que falam com o Worker (verificador de passwords comprometidas e espelho) dizem-no na própria página e têm um badge no índice de ferramentas. A Cloudflare, que serve o site, regista por omissão os dados de ligação de cada pedido (IP, User-Agent). Não é algo que este site acrescente, mas também não o escondo: acontece com qualquer site atrás de uma CDN.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas que correm no browser (subnets, hashes, gerador de passwords, cabeçalhos de email, EXIF, análise de CSP e os dois jogos de phishing) não enviam nada para lado nenhum. As duas que falam com o Worker (verificador de passwords comprometidas e espelho) dizem-no na própria página e têm um badge no índice de ferramentas. A Cloudflare, que serve o site, regista por omissão os dados de ligação de cada pedido (IP, User-Agent). Não é algo que este site acrescente, mas também não o escondo: acontece com qualquer site atrás de uma CDN.',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -290,6 +291,57 @@ export const ui = {
       notCovered: 'Sem cobertura direta no meu percurso.',
       countsLabel: 'técnicas mapeadas',
       scrollHint: '← scroll para ver as 14 táticas →',
+      seeMap: 'Do outro lado, ao vivo: o mapa de ataques, a este site e no mundo →',
+    },
+    attackMap: {
+      metaTitle: 'Mapa de ataques',
+      title: 'Mapa de ataques',
+      serverBadge: 'requer servidor',
+      intro:
+        'Os ataques vistos de dois lados: os que chegam a este site, por país de origem, e os que atravessam a rede inteira da Cloudflare na última hora, de país para país.',
+      tabsLabel: 'Fonte dos dados',
+      tabSelf: 'Este site · 7 dias',
+      tabWorld: 'Mundo · última hora',
+      // ----- Este site (firewall da zona, /api/threat-intel) -----
+      selfNote:
+        'Eventos de firewall na zona deste site nos últimos 7 dias. Cada bolha é um país de origem: o tamanho é o número de eventos e a cor é a ação mais comum. Não há arcos porque o site não tem um lugar no mapa: é servido pela rede anycast da Cloudflare, a partir do data center mais perto de quem pede. Detalhe na página',
+      selfLink: 'Cloudflare',
+      legendBlocked: 'bloqueado',
+      legendChallenged: 'desafiado',
+      legendAllowed: 'deixado passar',
+      selfGlobeLabel: 'Globo com os países de origem dos eventos de firewall deste site, os mesmos da tabela abaixo.',
+      selfTableTitle: 'Países com mais eventos',
+      selfTableCaption: 'Países de origem dos eventos de firewall deste site nos últimos 7 dias',
+      colCountry: 'País',
+      colAction: 'Ação mais comum',
+      colEvents: 'Eventos',
+      selfEmpty: 'Sem eventos de firewall nos últimos 7 dias.',
+      selfUnavailable: 'Os dados da firewall deste site não estão disponíveis agora. Volta a tentar mais tarde.',
+      // ----- Mundo (Cloudflare Radar, /api/radar-attacks) -----
+      worldNote:
+        'Dados globais da Cloudflare Radar, de toda a rede da Cloudflare: não são ataques a este site. Cada arco liga o país de origem ao país alvo dos ataques de camada 7 (HTTP) mitigados na última hora; quanto mais grosso, maior a fatia do total. Os países são os de faturação das redes envolvidas, não a localização exata de quem ataca. Atualizado a cada 30 minutos.',
+      windowLabel: 'Janela',
+      legendOrigin: 'origem',
+      legendTarget: 'alvo',
+      legendDomestic: 'origem e alvo no mesmo país',
+      globeLabel: 'Globo com os pares de países origem → alvo da tabela abaixo.',
+      tableTitle: 'Pares mais ativos',
+      tableCaption: 'Pares de países origem → alvo, por fatia dos ataques de camada 7 da última hora',
+      colRank: '#',
+      colOrigin: 'Origem',
+      colTarget: 'Alvo',
+      colShare: '% do total',
+      unavailable:
+        'Os dados da Cloudflare Radar não estão disponíveis agora. Volta a tentar mais tarde.',
+      // ----- Comum -----
+      dragHint: 'Arrasta para rodar o globo.',
+      pause: 'Pausar rotação',
+      play: 'Rodar globo',
+      loading: 'A carregar…',
+      countryUnknown: 'Desconhecido',
+      attributionPrefix: 'Fonte do separador Mundo:',
+      attributionLicense: 'licença CC BY-NC 4.0',
+      seeAttack: '← A matriz MITRE ATT&CK: o que cubro do lado defensivo',
     },
     ctwatch: {
       title: 'Vigia de Certificate Transparency',
@@ -983,6 +1035,7 @@ export const ui = {
       performance: 'This site’s real performance: requests over time, cache, and Core Web Vitals (LCP, INP, CLS, TTFB) measured on real visits.',
       evidence: 'Verifiable evidence for this site, generated at build or read live: latest commit, headers, Certificate Transparency and CI workflows.',
       attack: 'Personal MITRE ATT&CK heatmap: the techniques I cover defensively, tactic by tactic, and what covers them.',
+      attackMap: 'Attack map on a globe: the countries attacks on this site come from, and the last hour of attacks worldwide, with Cloudflare Radar data.',
       certifications: 'Daniel Malaco’s certifications (Fortinet, SANS, Microsoft, CyberDefenders and others), independently verifiable on Credly.',
       radar: 'Cybersecurity radar: alerts from CNCS, CERT-EU, NCSC UK and CISA KEV plus industry news, aggregated from RSS every 6 hours.',
     },
@@ -1123,7 +1176,7 @@ export const ui = {
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
       privacyBody:
-        'There are no cookies, no analytics and no third-party scripts. The tools that run in the browser (subnets, hashes, password generator, email headers, EXIF, CSP analysis, the fake-links game) send nothing anywhere. The two that talk to the Worker (breached-password checker and mirror) say so on their own page and carry a badge on the tools index. Cloudflare, which serves the site, logs the connection data of every request by default (IP, User-Agent). This site does not add that, but I do not hide it either: it happens with any site behind a CDN.',
+        'There are no cookies, no analytics and no third-party scripts. The tools that run in the browser (subnets, hashes, password generator, email headers, EXIF, CSP analysis and the two phishing games) send nothing anywhere. The two that talk to the Worker (breached-password checker and mirror) say so on their own page and carry a badge on the tools index. Cloudflare, which serves the site, logs the connection data of every request by default (IP, User-Agent). This site does not add that, but I do not hide it either: it happens with any site behind a CDN.',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -1210,6 +1263,56 @@ export const ui = {
       notCovered: 'No direct coverage in my track record.',
       countsLabel: 'techniques mapped',
       scrollHint: '← scroll to see all 14 tactics →',
+      seeMap: 'The other side, live: the attack map, on this site and worldwide →',
+    },
+    attackMap: {
+      metaTitle: 'Attack map',
+      title: 'Attack map',
+      serverBadge: 'needs server',
+      intro:
+        'Attacks seen from two sides: the ones that reach this site, by origin country, and the ones crossing the whole Cloudflare network in the last hour, country to country.',
+      tabsLabel: 'Data source',
+      tabSelf: 'This site · 7 days',
+      tabWorld: 'World · last hour',
+      // ----- This site (zone firewall, /api/threat-intel) -----
+      selfNote:
+        'Firewall events on this site’s zone over the last 7 days. Each bubble is an origin country: its size is the number of events and its colour is the most common action. There are no arcs because the site has no place on the map: it is served by Cloudflare’s anycast network, from the data center closest to whoever asks. Details on the',
+      selfLink: 'Cloudflare page',
+      legendBlocked: 'blocked',
+      legendChallenged: 'challenged',
+      legendAllowed: 'let through',
+      selfGlobeLabel: 'Globe showing the origin countries of this site’s firewall events, the same as in the table below.',
+      selfTableTitle: 'Countries with the most events',
+      selfTableCaption: 'Origin countries of this site’s firewall events over the last 7 days',
+      colCountry: 'Country',
+      colAction: 'Most common action',
+      colEvents: 'Events',
+      selfEmpty: 'No firewall events in the last 7 days.',
+      selfUnavailable: 'This site’s firewall data is not available right now. Try again later.',
+      // ----- World (Cloudflare Radar, /api/radar-attacks) -----
+      worldNote:
+        'Global data from Cloudflare Radar, across the whole Cloudflare network: these are not attacks on this site. Each arc joins the origin country to the target country of the layer 7 (HTTP) attacks mitigated in the last hour; the thicker it is, the bigger its share of the total. Countries are the billing countries of the networks involved, not the exact location of the attacker. Updated every 30 minutes.',
+      windowLabel: 'Window',
+      legendOrigin: 'origin',
+      legendTarget: 'target',
+      legendDomestic: 'origin and target in the same country',
+      globeLabel: 'Globe showing the origin → target country pairs from the table below.',
+      tableTitle: 'Most active pairs',
+      tableCaption: 'Origin → target country pairs, by share of the last hour of layer 7 attacks',
+      colRank: '#',
+      colOrigin: 'Origin',
+      colTarget: 'Target',
+      colShare: '% of total',
+      unavailable: 'Cloudflare Radar data is not available right now. Try again later.',
+      // ----- Shared -----
+      dragHint: 'Drag to rotate the globe.',
+      pause: 'Pause rotation',
+      play: 'Rotate globe',
+      loading: 'Loading…',
+      countryUnknown: 'Unknown',
+      attributionPrefix: 'Source for the World tab:',
+      attributionLicense: 'CC BY-NC 4.0 licence',
+      seeAttack: '← The MITRE ATT&CK matrix: what I cover on the defensive side',
     },
     ctwatch: {
       title: 'Certificate Transparency watch',

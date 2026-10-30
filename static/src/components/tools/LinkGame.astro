@@ -21,7 +21,7 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
 ---
 
 <div
-  class="tool-panel lg"
+  class="tool-panel game lg"
   id="lg"
   data-scenarios={JSON.stringify(scenarios)}
   data-strings={JSON.stringify(s)}
@@ -35,7 +35,7 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
   </section>
 
   <section id="lg-round" hidden>
-    <div class="lg-meta">
+    <div class="game-meta">
       <span id="lg-count"></span>
       <span id="lg-score"></span>
     </div>
@@ -50,11 +50,11 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
 
   <section id="lg-done" hidden>
     <h2 class="lg-prompt" id="lg-done-title" tabindex="-1">{s.doneTitle}</h2>
-    <p class="lg-final" id="lg-final"></p>
+    <p class="game-final" id="lg-final"></p>
     <p id="lg-rating"></p>
     <p class="note" id="lg-best" hidden></p>
     <h3>{s.rulesTitle}</h3>
-    <ol class="lg-rules">
+    <ol class="game-rules">
       {s.rules.map((rule) => <li>{rule}</li>)}
     </ol>
     <div class="btn-row">
@@ -70,11 +70,11 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
     ROUNDS,
     pickRounds,
     rate,
-    parseBest,
     parseUrl,
     toUnicodeHost,
     nonAsciiChars,
   } from '../../scripts/link-game.js';
+  import { loadBest, saveBest } from '../../scripts/game-kit.js';
 
   const root = document.getElementById('lg')!;
   const S = JSON.parse(root.dataset.strings!);
@@ -90,20 +90,12 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
   const nextBtn = $('lg-next');
 
   const BEST_KEY = 'link-game:best';
-  const loadBest = (): number | null => {
-    try {
-      return parseBest(localStorage.getItem(BEST_KEY));
-    } catch {
-      return null;
-    }
-  };
-  const saveBest = (n: number) => {
-    try {
-      localStorage.setItem(BEST_KEY, String(n));
-    } catch {
-      /* sem localStorage (modo privado, bloqueado): o jogo funciona na mesma */
-    }
-  };
+  let storage: Storage | null = null;
+  try {
+    storage = window.localStorage;
+  } catch {
+    /* sem localStorage (modo privado, bloqueado): o jogo funciona na mesma */
+  }
 
   const fmt = (tpl: string, vars: Record<string, string | number>) =>
     tpl.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
@@ -189,7 +181,7 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
       annotate(b, round.options[j]);
     });
 
-    const verdict = el('p', 'lg-verdict', ok ? S.right : S.wrong);
+    const verdict = el('p', 'game-verdict', ok ? S.right : S.wrong);
     verdict.dataset.ok = String(ok);
     const parts: Node[] = [verdict];
     if (!ok) {
@@ -218,16 +210,14 @@ const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
 
   function finish() {
     phase = 'done';
-    const previous = loadBest();
-    if (previous === null || score > previous) saveBest(score);
-    const best = loadBest();
+    const { previous, record, best } = saveBest(storage, BEST_KEY, score, ROUNDS);
 
     $('lg-final').textContent = fmt(S.scoreLine, { score, total: rounds.length });
     $('lg-rating').textContent = S.rating[rate(score, rounds.length)];
     const bestEl = $('lg-best');
     bestEl.hidden = best === null;
     if (best !== null) {
-      const isRecord = previous !== null && score > previous;
+      const isRecord = previous !== null && record;
       bestEl.textContent = `${fmt(S.best, { n: `${best}/${rounds.length}` })}${isRecord ? ` · ${S.newBest}` : ''}`;
     }
     roundEl.hidden = true;

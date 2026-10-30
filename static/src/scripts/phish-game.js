@@ -2,12 +2,13 @@
  * «Phishing ou legítimo?» — lógica do jogo, sem DOM, relógio e RNG injetáveis.
  */
 
+import { shuffle } from './game-kit.js';
+
 export const LIVES = 3;
 export const PER_LEVEL = 5;
 export const BASE_TIME_MS = 20000;
 export const TIME_STEP_MS = 2500;
 export const MIN_TIME_MS = 7500;
-export const BEST_KEY = 'phish-best';
 
 /** Nível da pergunta que se segue a `answered` respostas: sobe à 5.ª, 10.ª, … */
 export function levelFor(answered) {
@@ -16,16 +17,6 @@ export function levelFor(answered) {
 
 export function timeLimitMs(level) {
   return Math.max(MIN_TIME_MS, BASE_TIME_MS - (level - 1) * TIME_STEP_MS);
-}
-
-/** Fisher-Yates sobre uma cópia; `rng` devolve [0, 1). */
-export function shuffle(items, rng = Math.random) {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
 }
 
 /**
@@ -143,25 +134,4 @@ export function segments(text, marks) {
   }
   if (pos < text.length) out.push({ text: text.slice(pos) });
   return out;
-}
-
-/** Melhor pontuação; localStorage pode lançar (modo privado, bloqueado). */
-export function loadBest(storage) {
-  try {
-    const n = Number.parseInt(storage.getItem(BEST_KEY), 10);
-    return Number.isSafeInteger(n) && n > 0 ? n : 0;
-  } catch {
-    return 0;
-  }
-}
-
-/** Grava só se for recorde. Devolve true se for. */
-export function saveBest(storage, score) {
-  if (score <= loadBest(storage)) return false;
-  try {
-    storage.setItem(BEST_KEY, String(score));
-  } catch {
-    // sem persistência: o jogo continua a funcionar
-  }
-  return true;
 }
