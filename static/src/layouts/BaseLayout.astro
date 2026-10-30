@@ -53,10 +53,11 @@ const currentPath = Astro.url.pathname;
 // bloqueia estilos inline. Só aparece onde há .page-head (global.css).
 const promptPath = currentPath.replace(/\/$/, '');
 
-// "Este site" agrupa na nav as cinco páginas da secção, pela mesma ordem
-// dos separadores no topo de cada uma (SiteLayers.astro). Cloudflare (o que
-// acontece ao vivo) vem antes de Provas (commit, cabeçalhos, CI): primeiro o
-// que está a acontecer, depois o "não acredites, verifica".
+// "Este site" agrupa na nav as seis páginas da secção, pela mesma ordem
+// dos separadores no topo de cada uma (SiteLayers.astro). Cloudflare e o
+// Mapa de ataques (o que acontece ao vivo) vêm antes de Provas (commit,
+// cabeçalhos, CI): primeiro o que está a acontecer, depois o "não acredites,
+// verifica".
 // ATT&CK e Certificações ficam de fora de propósito: não são sobre o site,
 // são sobre credenciais e percurso pessoais. O sítio natural para as duas é
 // o Sobre, que já as liga em prosa; continuam também acessíveis pelo rodapé.
@@ -64,6 +65,7 @@ const siteGroup: { href: string; label: string }[] = [
   { href: routes.siteOverview[lang], label: dict.nav.overview },
   { href: routes.security[lang], label: dict.nav.security },
   { href: routes.cloudflare[lang], label: dict.nav.cloudflare },
+  { href: routes.attackMap[lang], label: dict.layers.attackMap },
   { href: routes.evidence[lang], label: dict.footer.evidence },
   { href: routes.performance[lang], label: dict.nav.performance },
 ];
@@ -220,6 +222,7 @@ const personSchema = {
           {dict.footer.thisSiteLabel}{' '}
           <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
           <a href={routes.cloudflare[lang]}>{dict.footer.cloudflare}</a> ·{' '}
+          <a href={routes.attackMap[lang]}>{dict.layers.attackMap}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
         </span>
         <span class="footer-group">

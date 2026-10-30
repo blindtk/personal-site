@@ -4,7 +4,7 @@ import { t } from '../i18n/ui';
 import { routes } from '../i18n/routes';
 
 /**
- * Separadores da secção "Este site", no topo de cada uma das cinco páginas,
+ * Separadores da secção "Este site", no topo de cada uma das seis páginas,
  * com a atual marcada. Substitui a lista "por camadas" que se repetia no fim
  * de cada página: a navegação fica num sítio só e a descrição de cada página
  * vive uma vez, na Visão geral.
@@ -14,7 +14,7 @@ import { routes } from '../i18n/routes';
  * de fora: são sobre o percurso pessoal, não sobre o site (ver a nota no
  * BaseLayout.astro).
  */
-type LayerKey = 'overview' | 'security' | 'cloudflare' | 'evidence' | 'performance';
+type LayerKey = 'overview' | 'security' | 'cloudflare' | 'attackMap' | 'evidence' | 'performance';
 
 interface Props {
   lang: Lang;
@@ -27,6 +27,7 @@ const items: { key: LayerKey; href: string; label: string }[] = [
   { key: 'overview', href: routes.siteOverview[lang], label: dict.overview },
   { key: 'security', href: routes.security[lang], label: dict.security },
   { key: 'cloudflare', href: routes.cloudflare[lang], label: dict.cloudflare },
+  { key: 'attackMap', href: routes.attackMap[lang], label: dict.attackMap },
   { key: 'evidence', href: routes.evidence[lang], label: dict.evidence },
   { key: 'performance', href: routes.performance[lang], label: dict.performance },
 ];

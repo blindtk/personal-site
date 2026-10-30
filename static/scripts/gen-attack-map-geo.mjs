@@ -1,5 +1,5 @@
 // Gera static/src/data/attack-map-geo.json — os dados geográficos do globo de
-// ataques (/mapa-de-ataques/): centróides por país (ISO 3166-1 alfa-2) e a
+// ataques (/este-site/mapa-de-ataques/): centróides por país (ISO 3166-1 alfa-2) e a
 // máscara de terra em pontos. Corre-se À MÃO, só quando se quiser regenerar;
 // as dependências NÃO entram no package.json do site (são só para isto):
 //

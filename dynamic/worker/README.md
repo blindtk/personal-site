@@ -26,7 +26,7 @@ Cloudflare Worker + one KV namespace.
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, and the requester's own IP — echoed back, **never stored**; ADR 0023) | — (per-request, `no-store`) | 30/min per client |
 | `GET /api/radar` | Radar: cybersecurity alerts and news (`{generated, sources:[{id,name,type,lang,ok}], items:[{t,u,s,d}]}`), read from the document the cron writes to KV (`radar:feed`) — **never fetches a feed on a visitor's request** | 30 min (data-center Cache API, then KV; its own cron, `13 */6 * * *`, rewrites it every 6 h) | 60/min per client |
-| `GET /api/radar-attacks` | Attack globe (`/mapa-de-ataques/`): the last hour's top 30 layer 7 attack pairs, origin country → target country, in % — **global** Cloudflare Radar data, not attacks on this site. Only reads what the cron stored (`radar:attacks`); any failure is `{ ok: false }` | 5 min (data-center Cache API); KV value refreshed every 30 min by the cron | — (no visitor input, no upstream call) |
+| `GET /api/radar-attacks` | Attack map, World tab (`/este-site/mapa-de-ataques/`): the last hour's top 30 layer 7 attack pairs, origin country → target country, in % — **global** Cloudflare Radar data, not attacks on this site. Only reads what the cron stored (`radar:attacks`); any failure is `{ ok: false }` | 5 min (data-center Cache API); KV value refreshed every 30 min by the cron | — (no visitor input, no upstream call) |
 | `GET /api/health` | Liveness | — | — |
 
 ## Privacy
