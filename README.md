@@ -31,7 +31,7 @@ That scale is deliberate; see
 
 | Feature | Page | Uses the Worker |
 | --- | --- | --- |
-| **Browser-only tools** — subnet calculator, hashes, password generator, email-header analyser, EXIF viewer, CSP analyser | `/ferramentas/` | No — no network calls |
+| **Browser-only tools** — subnet calculator, hashes, password generator, email-header analyser, EXIF viewer, CSP analyser, fake-links game | `/ferramentas/` | No — no network calls |
 | **Password breach check** — k-anonymity: only 5 characters of the hash leave the browser | `/ferramentas/pwned/` | `/api/pwned-range` |
 | **Mirror** — what any server learns about you from a request | `/ferramentas/mirror/` | `/api/mirror` |
 | **Cloudflare panels** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | `/api/cf-stats`, `/api/threat-intel` |

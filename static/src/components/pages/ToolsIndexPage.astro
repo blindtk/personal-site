@@ -19,7 +19,7 @@ const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug] }));
     <p class="intro">{dict.tools.intro}</p>
   </div>
 
-  {/* O mesmo mosaico de glifos da Home, aqui com as 8 (4×2 em desktop) e o
+  {/* O mesmo mosaico de glifos da Home, aqui com as 9 (3×3 em desktop) e o
      badge client-side/servidor no fundo de cada mosaico. */}
   <div class="tool-tiles tool-tiles-index">
     {tools.map((tool) => (
@@ -61,9 +61,6 @@ const tools = TOOLS.map((tool) => ({ ...tool, ...dict.tools[tool.slug] }));
     border-radius: 50%;
     background: currentColor;
     vertical-align: 0.1em;
-  }
-  @media (min-width: 960px) {
-    .tool-tiles-index { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (max-width: 639px) {
     .tool-tiles-index a { grid-template-rows: none; }
