@@ -2751,6 +2751,7 @@ main > section > p:not([class]), main > p:not([class]) {
   color: var(--muted);
 }
 .ph-timer { display: flex; align-items: center; gap: 0.8rem; margin: 0.5rem 0 1rem; }
+.ph-timer[hidden] { display: none; }
 .ph-timer .meter { flex: 1; margin-top: 0; }
 .ph-timer .fill { width: 100%; transition: none; }
 #ph-card { outline: none; }
