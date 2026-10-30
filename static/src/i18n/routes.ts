@@ -16,6 +16,9 @@ export const routes = {
   security: { pt: '/este-site/seguranca/', en: '/en/this-site/security/' },
   cloudflare: { pt: '/este-site/cloudflare/', en: '/en/this-site/cloudflare/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
+  // Globo de ataques globais (Cloudflare Radar). Slugs longe de /attack/ (a
+  // matriz ATT&CK) de propósito: /ataques/ e /attacks/ eram fáceis de confundir.
+  attackMap: { pt: '/mapa-de-ataques/', en: '/en/attack-map/' },
   evidence: { pt: '/este-site/provas/', en: '/en/this-site/evidence/' },
   certifications: { pt: '/certificacoes/', en: '/en/certifications/' },
 } as const;

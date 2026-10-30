@@ -15,6 +15,61 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
+- **2026-10-30 — Attack map: this site's firewall and Cloudflare Radar on
+  a globe** (approved by the repo owner). A new page, PT `/mapa-de-ataques/`
+  and EN `/en/attack-map/` (kept clear of `/attack/`, the MITRE ATT&CK
+  matrix; the two pages link to each other), with a "requires server"
+  badge and two tabs, one globe each:
+    1. **This site · 7 days** (default; the owner's original idea): this
+       zone's firewall events by origin country, from `/api/threat-intel`.
+       **Bubbles, not arcs**: size = events, colour = the most common action
+       (blocked `--danger`, challenged `--accent-2`, let through
+       `--accent`). An arc needs a target, and the site has no place on the
+       map (anycast) — arcs converging on Portugal would have suggested
+       something untrue. `firewall7d.byCountry` gained a `total` per country
+       for the bubble size (a lower bound: each daily snapshot keeps only
+       that day's dominant action).
+    2. **World · last hour** (context, and never empty): global Radar data,
+       not attacks on this site — the tab says so, with attribution to
+       Cloudflare Radar (CC BY-NC 4.0). Details below. Unrelated to the
+       `/radar/` page (RSS alerts and news, `radar:feed`), despite the name.
+    - **Source:** `GET /radar/attacks/layer7/top/attacks`, origin → target
+      country pairs as a % of mitigated layer 7 attacks. `dateRange` only
+      takes `<n>d`/`<n>w` (1 day minimum), so the last hour is asked for with
+      `dateStart`/`dateEnd`, aligned to 15 minutes (Radar floors both to the
+      quarter hour), `limit=30`. Layer 3 (`/radar/attacks/layer3/top/attacks`)
+      was evaluated and left out: it only returns the origin country, so
+      it can't draw arcs.
+    - **Backend:** the existing `*/30` cron fetches it with `CF_API_TOKEN`
+      (needs **Account → Radar → Read**) and stores
+      `{ ok, window, start, end, fetched, pairs: [[origin, target, pct], …] }`
+      in KV (`radar:attacks`, TTL 3 h). `GET /api/radar-attacks` only reads
+      that key (5 min data-center Cache API): no visitor input, no upstream
+      call, no KV write, no rate limit needed. On 401/403 the cron logs
+      `radar_attacks_forbidden`, writes `{ ok: false }` once, and the page
+      shows a message; transient errors keep the last good value. It runs
+      isolated from the other cron jobs, so it never stops them. Pure
+      validation in `src/lib/radar-attacks.js` (assigned ISO 3166-1 alpha-2
+      codes + XK, finite % in [0, 100], duplicates and junk dropped, 30-pair
+      cap), tested. **Write budget:** +48/day (one per tick), ≈ 190/day
+      in total with the RSS Radar's 4.
+    - **Frontend:** a small canvas-2D globe of our own
+      (`static/src/scripts/attack-globe.js`, pure and tested;
+      `components/attack-map/globe-canvas.ts`, loaded lazily), not cobe or
+      globe.gl. cobe 2.0.1 loads its map texture from a `data:` URI (blocked
+      by `img-src 'self' blob:`), injects an inline `<style>` (blocked by
+      `style-src 'self'`) and has one arc width for all arcs; globe.gl pulls
+      in three.js, well past the ~150 KB gz limit. The page's JS is ~2 KB gz
+      up front plus ~5 KB gz lazy (renderer + country centroids and land
+      mask from Natural Earth, `static/scripts/gen-attack-map-geo.mjs`), and
+      the CSP is unchanged. Arc width follows the %, colours come from
+      `--accent-2` (origin) and `--accent` (target), rotation starts paused
+      under `prefers-reduced-motion` and has a pause button, and an
+      accessible "most active pairs" table is the text alternative.
+      Country names come from `Intl.DisplayNames`.
+    - Each tab has its own globe and an accessible table (countries and
+      events; or origin → target pairs). A globe only loads and animates
+      once its tab is shown.
 - **2026-10-30 — Radar: cybersecurity alerts and news aggregated from RSS**
   (decision by the repo owner). A new page (`/radar/`, `/en/radar/`, with
   the "requires server" badge) lists alerts and news from fixed sources.
