@@ -1,0 +1,268 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import scenariosPt from '../../../../content/link-game/pt/scenarios.json';
+import scenariosEn from '../../../../content/link-game/en/scenarios.json';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools['link-game'];
+
+// Só o que o jogo precisa em runtime. O `trick` declarado de cada isco serve
+// aos testes (a classificação real é feita pela lógica, no browser).
+const scenarios = (lang === 'pt' ? scenariosPt : scenariosEn).map((sc) => ({
+  id: sc.id,
+  prompt: sc.prompt,
+  domain: sc.domain,
+  note: sc.note,
+  legit: sc.legit,
+  decoys: sc.decoys.map((d) => d.url),
+}));
+---
+
+<div
+  class="tool-panel lg"
+  id="lg"
+  data-scenarios={JSON.stringify(scenarios)}
+  data-strings={JSON.stringify(s)}
+>
+  <section id="lg-idle">
+    <p>{s.intro}</p>
+    <p class="note">{s.keysHint}</p>
+    <div class="btn-row">
+      <button type="button" class="btn" id="lg-start">{s.start}</button>
+    </div>
+  </section>
+
+  <section id="lg-round" hidden>
+    <div class="lg-meta">
+      <span id="lg-count"></span>
+      <span id="lg-score"></span>
+    </div>
+    <h2 class="lg-prompt" id="lg-prompt" tabindex="-1"></h2>
+    <div class="lg-options" id="lg-options" role="group" aria-label={s.optionsLabel}></div>
+    <p class="note">{s.keysHint}</p>
+    <div class="lg-feedback" id="lg-feedback" aria-live="polite"></div>
+    <div class="btn-row">
+      <button type="button" class="btn" id="lg-next" hidden></button>
+    </div>
+  </section>
+
+  <section id="lg-done" hidden>
+    <h2 class="lg-prompt" id="lg-done-title" tabindex="-1">{s.doneTitle}</h2>
+    <p class="lg-final" id="lg-final"></p>
+    <p id="lg-rating"></p>
+    <p class="note" id="lg-best" hidden></p>
+    <h3>{s.rulesTitle}</h3>
+    <ol class="lg-rules">
+      {s.rules.map((rule) => <li>{rule}</li>)}
+    </ol>
+    <div class="btn-row">
+      <button type="button" class="btn" id="lg-again">{s.playAgain}</button>
+    </div>
+  </section>
+
+  <p class="note">{s.storageNote}</p>
+</div>
+
+<script>
+  import {
+    ROUNDS,
+    pickRounds,
+    rate,
+    parseBest,
+    parseUrl,
+    toUnicodeHost,
+    nonAsciiChars,
+  } from '../../scripts/link-game.js';
+
+  const root = document.getElementById('lg')!;
+  const S = JSON.parse(root.dataset.strings!);
+  const scenarios = JSON.parse(root.dataset.scenarios!);
+  const $ = (id: string) => document.getElementById(id)!;
+
+  const idleEl = $('lg-idle');
+  const roundEl = $('lg-round');
+  const doneEl = $('lg-done');
+  const promptEl = $('lg-prompt');
+  const optionsEl = $('lg-options');
+  const feedbackEl = $('lg-feedback');
+  const nextBtn = $('lg-next');
+
+  const BEST_KEY = 'link-game:best';
+  const loadBest = (): number | null => {
+    try {
+      return parseBest(localStorage.getItem(BEST_KEY));
+    } catch {
+      return null;
+    }
+  };
+  const saveBest = (n: number) => {
+    try {
+      localStorage.setItem(BEST_KEY, String(n));
+    } catch {
+      /* sem localStorage (modo privado, bloqueado): o jogo funciona na mesma */
+    }
+  };
+
+  const fmt = (tpl: string, vars: Record<string, string | number>) =>
+    tpl.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+
+  function el(tag: string, cls?: string, text?: string) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  type Phase = 'idle' | 'asking' | 'answered' | 'done';
+  let phase: Phase = 'idle';
+  let rounds: any[] = [];
+  let idx = 0;
+  let score = 0;
+
+  function start() {
+    rounds = pickRounds(scenarios, ROUNDS);
+    idx = 0;
+    score = 0;
+    idleEl.hidden = true;
+    doneEl.hidden = true;
+    roundEl.hidden = false;
+    showRound();
+  }
+
+  function showRound() {
+    const round = rounds[idx];
+    phase = 'asking';
+    $('lg-count').textContent = fmt(S.round, { n: idx + 1, total: rounds.length });
+    $('lg-score').textContent = fmt(S.score, { n: score });
+    promptEl.textContent = round.prompt;
+    feedbackEl.replaceChildren();
+    nextBtn.hidden = true;
+
+    optionsEl.replaceChildren(
+      ...round.options.map((opt: any, i: number) => {
+        const btn = el('button', 'lg-opt') as HTMLButtonElement;
+        btn.type = 'button';
+        btn.dataset.i = String(i);
+        const body = el('span', 'lg-body');
+        body.append(el('code', 'lg-url', opt.url));
+        btn.append(el('kbd', 'lg-key', String(i + 1)), body);
+        btn.addEventListener('click', () => choose(i));
+        return btn;
+      }),
+    );
+    promptEl.focus({ preventScroll: true });
+  }
+
+  function annotate(btn: Element, opt: any) {
+    const body = btn.querySelector('.lg-body')!;
+    const info = S.tricks[opt.trick] ?? S.tricks.other;
+    body.append(el('span', 'lg-tag', opt.trick === 'legit' ? S.legitTag : `✗ ${info.name}`));
+
+    const parsed = parseUrl(opt.url);
+    if (!parsed) return;
+    body.append(el('span', 'lg-dest', `${S.destination} ${toUnicodeHost(parsed.hostname)}`));
+    if (opt.trick === 'homograph') {
+      const unicode = toUnicodeHost(parsed.hostname);
+      const chars = nonAsciiChars(unicode).map(
+        (c) => `«${c.char}» ${c.code} (${S.scripts[c.script] ?? S.scripts.other})`,
+      );
+      body.append(
+        el('span', 'lg-dest', `${fmt(S.readsAs, { text: unicode })} ${chars.join(', ')}`),
+      );
+    }
+  }
+
+  function choose(i: number) {
+    if (phase !== 'asking') return;
+    phase = 'answered';
+    const round = rounds[idx];
+    const ok = i === round.answer;
+    if (ok) score++;
+    $('lg-score').textContent = fmt(S.score, { n: score });
+
+    Array.from(optionsEl.children).forEach((btn, j) => {
+      const b = btn as HTMLElement;
+      b.dataset.state = j === round.answer ? 'right' : j === i ? 'wrong' : 'other';
+      b.setAttribute('aria-disabled', 'true');
+      annotate(b, round.options[j]);
+    });
+
+    const verdict = el('p', 'lg-verdict', ok ? S.right : S.wrong);
+    verdict.dataset.ok = String(ok);
+    const parts: Node[] = [verdict];
+    if (!ok) {
+      const info = S.tricks[round.options[i].trick] ?? S.tricks.other;
+      const why = el('p');
+      why.append(el('strong', undefined, `${info.name}. `), document.createTextNode(info.text));
+      parts.push(why);
+    }
+    parts.push(el('p', 'lg-note', round.note));
+    feedbackEl.replaceChildren(...parts);
+
+    nextBtn.textContent = `${idx + 1 < rounds.length ? S.next : S.finish} ⏎`;
+    nextBtn.hidden = false;
+    nextBtn.focus({ preventScroll: true });
+  }
+
+  function next() {
+    if (phase !== 'answered') return;
+    if (idx + 1 < rounds.length) {
+      idx++;
+      showRound();
+    } else {
+      finish();
+    }
+  }
+
+  function finish() {
+    phase = 'done';
+    const previous = loadBest();
+    if (previous === null || score > previous) saveBest(score);
+    const best = loadBest();
+
+    $('lg-final').textContent = fmt(S.scoreLine, { score, total: rounds.length });
+    $('lg-rating').textContent = S.rating[rate(score, rounds.length)];
+    const bestEl = $('lg-best');
+    bestEl.hidden = best === null;
+    if (best !== null) {
+      const isRecord = previous !== null && score > previous;
+      bestEl.textContent = `${fmt(S.best, { n: `${best}/${rounds.length}` })}${isRecord ? ` · ${S.newBest}` : ''}`;
+    }
+    roundEl.hidden = true;
+    doneEl.hidden = false;
+    $('lg-done-title').focus({ preventScroll: true });
+  }
+
+  $('lg-start').addEventListener('click', start);
+  $('lg-again').addEventListener('click', start);
+  nextBtn.addEventListener('click', next);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('input, textarea, select, [contenteditable]')) return;
+    // Ligações da página (nav, rodapé) mantêm o seu Enter.
+    if (target.closest('a')) return;
+    if (target !== document.body && !root.contains(target)) return;
+
+    if (/^[1-4]$/.test(e.key)) {
+      if (phase === 'asking') {
+        e.preventDefault();
+        choose(Number(e.key) - 1);
+      }
+      return;
+    }
+    if (e.key !== 'Enter') return;
+    // Enter premido sem soltar não pode saltar rondas sem as ler.
+    if (e.repeat) {
+      if (phase === 'idle' || phase === 'answered') e.preventDefault();
+      return;
+    }
+    if (phase === 'idle') start();
+    else if (phase === 'answered') next();
+    else return; // 'asking': Enter num botão em foco escolhe-o (clique nativo)
+    e.preventDefault();
+  });
+</script>

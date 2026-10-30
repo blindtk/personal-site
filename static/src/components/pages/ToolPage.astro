@@ -8,12 +8,15 @@ import ExifTool from '../tools/ExifTool.astro';
 import PwnedCheck from '../tools/PwnedCheck.astro';
 import CspLint from '../tools/CspLint.astro';
 import Mirror from '../tools/Mirror.astro';
+import LinkGame from '../tools/LinkGame.astro';
 import PhishGame from '../tools/PhishGame.astro';
 import { type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, toolUrl } from '../../i18n/routes';
 
-type ToolSlug = 'subnets' | 'hashes' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'csp' | 'mirror' | 'phishing';
+type ToolSlug =
+  | 'subnets' | 'hashes' | 'passwords' | 'email-headers' | 'exif' | 'pwned' | 'csp' | 'mirror'
+  | 'phishing' | 'link-game';
 
 // 'server': fala com o Worker (dynamic/) — mostra serverNote em vez de
 // clientSideNote no rodapé da página. Ver dynamic/PLAN.md.
@@ -26,6 +29,7 @@ const KIND: Record<ToolSlug, 'client' | 'server'> = {
   pwned: 'server',
   csp: 'client',
   mirror: 'server',
+  'link-game': 'client',
   phishing: 'client',
 };
 
@@ -47,6 +51,7 @@ const components = {
   pwned: PwnedCheck,
   csp: CspLint,
   mirror: Mirror,
+  'link-game': LinkGame,
   phishing: PhishGame,
 } as const;
 const ToolComponent = components[tool];

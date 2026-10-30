@@ -2656,6 +2656,91 @@ main > section > p:not([class]), main > p:not([class]) {
   .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }
 
+/* ---------- O link verdadeiro (ferramentas/link-game) ---------- */
+.lg [hidden] { display: none; }
+.lg-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.8rem;
+}
+.lg-prompt {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  margin: 0 0 1rem;
+  outline: none;
+}
+.lg-options {
+  display: grid;
+  gap: 0.6rem;
+}
+.lg-opt {
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+.lg-opt:hover,
+.lg-opt:focus-visible {
+  border-color: var(--accent);
+}
+.lg-opt[aria-disabled='true'] { cursor: default; }
+.lg-opt[data-state='right'] { border-color: var(--accent); background: var(--accent-dim); }
+.lg-opt[data-state='wrong'] { border-color: var(--danger); }
+.lg-opt[data-state='other'] { border-color: var(--border); }
+.lg-key {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  text-align: center;
+  color: var(--accent);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.lg-body { display: grid; gap: 0.3rem; min-width: 0; }
+.lg-url {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.lg-tag,
+.lg-dest {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.lg-opt[data-state='right'] .lg-tag { color: var(--accent); }
+.lg-opt[data-state='wrong'] .lg-tag { color: var(--danger); }
+.lg-feedback { margin-top: 1rem; }
+.lg-feedback p { margin: 0.5rem 0; }
+.lg-verdict { font-family: var(--mono); font-weight: 700; }
+.lg-verdict[data-ok='true'] { color: var(--accent); }
+.lg-verdict[data-ok='false'] { color: var(--danger); }
+.lg-note { color: var(--muted); }
+.lg-final {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0.2rem 0 0.4rem;
+}
+.lg-rules { padding-left: 1.2rem; }
+.lg-rules li { margin-bottom: 0.6rem; }
+
 /* ---------- Jogo «Phishing ou legítimo?» ---------- */
 .ph-muted { color: var(--muted); font-size: 0.85rem; }
 .ph-status {
