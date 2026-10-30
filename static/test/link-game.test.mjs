@@ -13,7 +13,6 @@ import {
   buildRound,
   pickRounds,
   rate,
-  parseBest,
 } from '../src/scripts/link-game.js';
 import { ui } from '../src/i18n/ui.ts';
 
@@ -286,15 +285,6 @@ test('rate: fronteiras exatas dos escalões (10, 8, 5)', () => {
   assert.equal(rate(5, 10), 'ok');
   assert.equal(rate(4, 10), 'low');
   assert.equal(rate(0, 10), 'low');
-});
-
-test('parseBest: só aceita um inteiro 0..total; lixo no localStorage vira null', () => {
-  assert.equal(parseBest('0'), 0);
-  assert.equal(parseBest('7'), 7);
-  assert.equal(parseBest('10'), 10);
-  for (const bad of ['11', '-1', '7.5', ' 7', '7 ', '1e1', 'NaN', 'Infinity', '0x7', '', '9999', '{"a":1}', null, undefined, 7]) {
-    assert.equal(parseBest(bad), null, String(bad));
-  }
 });
 
 // ---------- Conteúdo real (content/link-game) ----------

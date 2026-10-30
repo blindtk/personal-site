@@ -12,19 +12,19 @@ const scenarios = lang === 'pt' ? ptScenarios : enScenarios;
 const jsStrings = { ...s, scenarios };
 ---
 
-<div class="tool-panel" id="ph-tool" data-strings={JSON.stringify(jsStrings)}>
+<div class="tool-panel game" id="ph-tool" data-strings={JSON.stringify(jsStrings)}>
   <section id="ph-intro">
     <p>{s.intro}</p>
-    <p class="mono ph-muted">{s.keysHint}</p>
+    <p class="note">{s.keysHint}</p>
     <label class="check-row"><input type="checkbox" id="ph-untimed" /> {s.untimed}</label>
-    <p class="mono ph-muted" id="ph-best-line" hidden></p>
+    <p class="note" id="ph-best-line" hidden></p>
     <div class="btn-row">
       <button type="button" class="btn" id="ph-start">{s.start}</button>
     </div>
   </section>
 
   <section id="ph-play" hidden>
-    <div class="ph-status mono">
+    <div class="game-meta">
       <span id="ph-lives"></span>
       <span id="ph-level"></span>
       <span id="ph-score"></span>
@@ -32,7 +32,7 @@ const jsStrings = { ...s, scenarios };
     </div>
     <div class="ph-timer" id="ph-timer">
       <div class="meter" aria-hidden="true"><div class="fill" id="ph-meter"></div></div>
-      <span class="mono ph-muted" id="ph-seconds"></span>
+      <span class="note" id="ph-seconds"></span>
     </div>
     <div id="ph-card" tabindex="-1"></div>
     <div class="btn-row ph-answers">
@@ -44,10 +44,11 @@ const jsStrings = { ...s, scenarios };
 
   <section id="ph-end" hidden>
     <h2 id="ph-end-title"></h2>
-    <p class="ph-final mono" id="ph-end-score"></p>
-    <p class="mono ph-muted" id="ph-end-best"></p>
+    <p class="game-final" id="ph-end-score"></p>
+    <p id="ph-end-hits"></p>
+    <p class="note" id="ph-end-best"></p>
     <h3>{s.rulesTitle}</h3>
-    <ol class="ph-rules">
+    <ol class="game-rules">
       {s.rules.map((rule) => <li>{rule}</li>)}
     </ol>
     <div class="btn-row">
@@ -57,12 +58,14 @@ const jsStrings = { ...s, scenarios };
 </div>
 
 <script>
-  import { createGame, loadBest, saveBest, fromText, locate, segments, LIVES } from '../../scripts/phish-game.js';
+  import { createGame, fromText, locate, segments, LIVES } from '../../scripts/phish-game.js';
+  import { loadBest, saveBest } from '../../scripts/game-kit.js';
 
   const root = document.getElementById('ph-tool')!;
   const S = JSON.parse(root.dataset.strings!);
   const $ = (id: string) => document.getElementById(id)!;
 
+  const BEST_KEY = 'phish-best';
   let storage: Storage | null = null;
   try { storage = window.localStorage; } catch { /* bloqueado: sem recorde persistente */ }
 
@@ -80,9 +83,9 @@ const jsStrings = { ...s, scenarios };
   let current: any = null;
 
   function refreshBest() {
-    const best = loadBest(storage);
+    const best = loadBest(storage, BEST_KEY);
     const line = $('ph-best-line');
-    line.hidden = best === 0;
+    line.hidden = !best;
     line.textContent = `${S.best}: ${best}`;
   }
 
@@ -182,7 +185,9 @@ const jsStrings = { ...s, scenarios };
     const headline = r.correct
       ? S.resultCorrect.replace('{n}', r.points)
       : r.timedOut ? S.resultTimeout : S.resultWrong;
-    box.append(el('p', 'ph-headline', headline));
+    const verdict = el('p', 'game-verdict', headline);
+    verdict.dataset.ok = String(r.correct);
+    box.append(verdict);
     box.append(el('p', '', r.scenario.verdict === 'phishing' ? S.wasPhishing : S.wasLegit));
     if (r.leveledUp && !r.over) box.append(el('p', 'ph-levelup mono', S.levelUp.replace('{n}', r.level)));
     box.append(el('h3', '', S.signalsTitle));
@@ -215,10 +220,14 @@ const jsStrings = { ...s, scenarios };
     show('ph-play', false);
     show('ph-end', true);
     $('ph-end-title').textContent = st.over === 'deck' ? S.endDeck : S.endLives;
-    $('ph-end-score').textContent = `${S.finalScore}: ${st.score} · ${S.hits}: ${st.correct}/${st.answered}`;
+    $('ph-end-score').textContent = `${S.finalScore}: ${st.score}`;
+    $('ph-end-hits').textContent = `${S.hits}: ${st.correct}/${st.answered}`;
     // Sem limite de tempo não há bónus de rapidez, por isso não compete.
-    const isBest = timed && saveBest(storage, st.score);
-    $('ph-end-best').textContent = isBest ? S.newBest : `${S.best}: ${loadBest(storage)}`;
+    const saved = timed
+      ? saveBest(storage, BEST_KEY, st.score)
+      : { record: false, best: loadBest(storage, BEST_KEY) };
+    $('ph-end-best').textContent =
+      saved.record && st.score > 0 ? S.newBest : saved.best ? `${S.best}: ${saved.best}` : '';
   }
 
   function start() {

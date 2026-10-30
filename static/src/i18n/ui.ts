@@ -203,7 +203,7 @@ export const ui = {
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas que correm no browser (subnets, hashes, gerador de passwords, cabeçalhos de email, EXIF, análise de CSP, jogo dos links falsos) não enviam nada para lado nenhum. As duas que falam com o Worker (verificador de passwords comprometidas e espelho) dizem-no na própria página e têm um badge no índice de ferramentas. A Cloudflare, que serve o site, regista por omissão os dados de ligação de cada pedido (IP, User-Agent). Não é algo que este site acrescente, mas também não o escondo: acontece com qualquer site atrás de uma CDN.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas que correm no browser (subnets, hashes, gerador de passwords, cabeçalhos de email, EXIF, análise de CSP e os dois jogos de phishing) não enviam nada para lado nenhum. As duas que falam com o Worker (verificador de passwords comprometidas e espelho) dizem-no na própria página e têm um badge no índice de ferramentas. A Cloudflare, que serve o site, regista por omissão os dados de ligação de cada pedido (IP, User-Agent). Não é algo que este site acrescente, mas também não o escondo: acontece com qualquer site atrás de uma CDN.',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -1123,7 +1123,7 @@ export const ui = {
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
       privacyBody:
-        'There are no cookies, no analytics and no third-party scripts. The tools that run in the browser (subnets, hashes, password generator, email headers, EXIF, CSP analysis, the fake-links game) send nothing anywhere. The two that talk to the Worker (breached-password checker and mirror) say so on their own page and carry a badge on the tools index. Cloudflare, which serves the site, logs the connection data of every request by default (IP, User-Agent). This site does not add that, but I do not hide it either: it happens with any site behind a CDN.',
+        'There are no cookies, no analytics and no third-party scripts. The tools that run in the browser (subnets, hashes, password generator, email headers, EXIF, CSP analysis and the two phishing games) send nothing anywhere. The two that talk to the Worker (breached-password checker and mirror) say so on their own page and carry a badge on the tools index. Cloudflare, which serves the site, logs the connection data of every request by default (IP, User-Agent). This site does not add that, but I do not hide it either: it happens with any site behind a CDN.',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:

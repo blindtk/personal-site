@@ -6,6 +6,8 @@
 // qualquer regex sobre o texto cru (a abordagem ingénua) discordaria dele
 // em casos como «https://cgd.pt\@evil.com» ou «https://ｃｇｄ.pt».
 
+import { shuffle } from './game-kit.js';
+
 export const ROUNDS = 10;
 
 /** Truques que um link falso pode usar (a ordem é a da UI). */
@@ -260,15 +262,6 @@ export function classify(raw, expectedDomain) {
 
 // ---------- Rondas ----------
 
-function shuffle(items, rng) {
-  const a = [...items];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 /**
  * Uma ronda a partir de um cenário {id, prompt, domain, note, legit, decoys}.
  * Falha (em vez de servir uma ronda sem resposta ou com duas) se os dados
@@ -309,11 +302,4 @@ export function rate(score, total = ROUNDS) {
   if (score >= total * 0.8) return 'good';
   if (score >= total * 0.5) return 'ok';
   return 'low';
-}
-
-/** Lê o melhor resultado guardado; qualquer lixo no localStorage vira null. */
-export function parseBest(raw, total = ROUNDS) {
-  if (typeof raw !== 'string' || !/^\d{1,3}$/.test(raw)) return null;
-  const n = Number(raw);
-  return n <= total ? n : null;
 }

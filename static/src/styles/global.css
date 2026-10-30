@@ -2656,17 +2656,33 @@ main > section > p:not([class]), main > p:not([class]) {
   .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }
 
-/* ---------- O link verdadeiro (ferramentas/link-game) ---------- */
-.lg [hidden] { display: none; }
-.lg-meta {
+/* ---------- Jogos das ferramentas (comum a link-game e phishing) ---------- */
+/* Os componentes usam display:flex/grid; sem isto o atributo hidden perdia. */
+.game [hidden] { display: none; }
+.game-meta {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.4rem 1rem;
   font-family: var(--mono);
   font-size: 0.8rem;
   color: var(--muted);
   margin-bottom: 0.8rem;
 }
+.game-verdict { font-family: var(--mono); font-weight: 700; }
+.game-verdict[data-ok='true'] { color: var(--accent); }
+.game-verdict[data-ok='false'] { color: var(--danger); }
+.game-final {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0.2rem 0 0.4rem;
+}
+.game-rules { padding-left: 1.2rem; }
+.game-rules li { margin-bottom: 0.6rem; }
+
+/* ---------- O link verdadeiro (ferramentas/link-game) ---------- */
 .lg-prompt {
   font-size: 1.1rem;
   line-height: 1.4;
@@ -2727,33 +2743,13 @@ main > section > p:not([class]), main > p:not([class]) {
 .lg-opt[data-state='wrong'] .lg-tag { color: var(--danger); }
 .lg-feedback { margin-top: 1rem; }
 .lg-feedback p { margin: 0.5rem 0; }
-.lg-verdict { font-family: var(--mono); font-weight: 700; }
-.lg-verdict[data-ok='true'] { color: var(--accent); }
-.lg-verdict[data-ok='false'] { color: var(--danger); }
 .lg-note { color: var(--muted); }
-.lg-final {
-  font-family: var(--mono);
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--accent);
-  margin: 0.2rem 0 0.4rem;
-}
-.lg-rules { padding-left: 1.2rem; }
-.lg-rules li { margin-bottom: 0.6rem; }
 
 /* ---------- Jogo «Phishing ou legítimo?» ---------- */
-.ph-muted { color: var(--muted); font-size: 0.85rem; }
-.ph-status {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.4rem;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
 .ph-timer { display: flex; align-items: center; gap: 0.8rem; margin: 0.5rem 0 1rem; }
-.ph-timer[hidden] { display: none; }
 .ph-timer .meter { flex: 1; margin-top: 0; }
 .ph-timer .fill { width: 100%; transition: none; }
+.ph-timer .note { margin: 0; }
 #ph-card { outline: none; }
 .ph-msg {
   background: var(--bg);
@@ -2787,11 +2783,9 @@ main > section > p:not([class]), main > p:not([class]) {
 .ph-n { font-family: var(--mono); font-size: 0.65em; margin-left: 0.15em; }
 .ph-result { border-left: 3px solid var(--accent); padding: 0.2rem 0 0.2rem 1rem; margin-top: 1.2rem; }
 .ph-result.ph-miss { border-left-color: var(--danger); }
-.ph-headline { font-weight: 700; margin: 0 0 0.3rem; }
+.ph-result .game-verdict { margin: 0 0 0.3rem; }
 .ph-levelup { color: var(--accent-2); font-size: 0.85rem; }
 .ph-signals { padding-left: 1.2rem; }
 .ph-signals li { margin-bottom: 0.7rem; }
 .ph-signals p { margin: 0; }
 .ph-why { color: var(--muted); }
-.ph-final { font-size: 1.1rem; }
-.ph-rules li { margin-bottom: 0.6rem; }
