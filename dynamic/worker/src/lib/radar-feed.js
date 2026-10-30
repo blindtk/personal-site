@@ -484,8 +484,11 @@ export async function fetchSource(src, { now = Date.now(), timeoutMs = DEFAULT_T
     signal: AbortSignal.timeout(timeoutMs),
     // URLs fixos e de confiança: um redirect não é esperado, e segui-lo levava
     // o pedido para fora da lista acima. Se um feed mudar de sítio, a fonte
-    // aparece em baixo no painel — o sinal para atualizar o URL aqui.
-    redirect: 'error',
+    // aparece em baixo no painel — o sinal para atualizar o URL aqui. Não é
+    // 'error': o workerd rejeita esse valor ("won't be implemented since it
+    // does not make sense at the edge"), o que derrubava as 8 fontes. Com
+    // 'manual' a resposta 3xx chega cá, e `res.ok` é falso para ela.
+    redirect: 'manual',
   });
   if (!res.ok) throw new Error(`radar_status_${res.status}`);
   const text = await readCapped(res, src.maxBytes ?? DEFAULT_MAX_BYTES);

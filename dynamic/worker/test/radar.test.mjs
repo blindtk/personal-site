@@ -287,11 +287,14 @@ test('collectRadar: uma fonte com erro, outra com 500 e outra pendurada não der
   assert.deepEqual(doc.items.map((it) => [it.s, it.t]), [['ok', 'fine']]);
 });
 
-test('fetchSource: não segue redirects e manda um UA honesto', async () => {
+test('fetchSource: não segue redirects (3xx = fonte em baixo) e manda um UA honesto', async () => {
   let init;
   await withFetch(async (_url, i) => { init = i; return new Response(rss([])); },
     () => fetchSource(RADAR_SOURCES[1], { now: NOW }));
-  assert.equal(init.redirect, 'error');
+  // 'manual', não 'error': o workerd rejeita 'error' e derrubava todas as fontes.
+  assert.equal(init.redirect, 'manual');
+  await withFetch(async () => new Response(null, { status: 301, headers: { location: 'https://evil.example/feed' } }),
+    () => assert.rejects(fetchSource(RADAR_SOURCES[1], { now: NOW }), /radar_status_301/));
   assert.match(init.headers['user-agent'], /^personal-site-worker \(radar/);
 });
 
