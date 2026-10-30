@@ -139,7 +139,41 @@ const INFORMATIONAL = [
   '/api/radar-attacks',
 ];
 
+// HTTP 200 is not enough for the two cron-fed routes: they only read what a
+// cron stored, so a cron that stops completing (e.g. the `13 */6` Radar run
+// going over the Free plan's 10 ms of CPU) still answers 200 — with an empty
+// or ever-older document. Freshness is the only outside signal of that.
+// Radar: 13 h = two missed 6-hourly runs plus margin (one miss is a feed
+// timeout, two in a row is a broken cron). Radar attacks: the Worker already
+// turns anything older than its 3 h KV TTL into { ok: false }.
+const RADAR_MAX_AGE_MS = 13 * 3600_000;
+
+/** Returns null when fresh, or why the cron-fed body is stale; logs the facts either way. */
+function staleness(path, body, now = Date.now()) {
+  if (path === '/api/radar') {
+    const generated = Date.parse(body?.generated);
+    const sources = Array.isArray(body?.sources) ? body.sources : [];
+    const up = sources.filter((s) => s?.ok === true).length;
+    if (!Number.isFinite(generated)) return 'no radar:feed document (the 13 */6 cron has not completed)';
+    const ageH = ((now - generated) / 3600_000).toFixed(1);
+    console.log(`    radar: generated ${new Date(generated).toISOString()} (${ageH} h ago), sources ok ${up}/${sources.length}`);
+    if (now - generated > RADAR_MAX_AGE_MS) {
+      return `radar:feed is ${ageH} h old — the 13 */6 cron is not completing (CPU limit? check Workers Observability)`;
+    }
+  }
+  if (path === '/api/radar-attacks') {
+    if (body?.ok !== true) return '{ ok: false } — no Radar data in the last 3 h (token lacks Account > Radar > Read, or the */30 cron is failing)';
+    console.log(`    radar-attacks: window ${body.start} → ${body.end}, ${Array.isArray(body.pairs) ? body.pairs.length : 0} pairs`);
+  }
+  return null;
+}
+
 const results = await Promise.all([...CRITICAL, ...INFORMATIONAL].map(checkJson));
+for (const r of results) {
+  if (!r.ok || r.status !== 200) continue;
+  const stale = staleness(r.path, r.body);
+  if (stale) Object.assign(r, { ok: false, note: stale });
+}
 
 let hardFailures = 0;
 let softFailures = 0;
