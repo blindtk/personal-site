@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Tabs from '../site/Tabs.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -10,12 +11,25 @@ const dict = t(lang);
 const m = dict.attackMap;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
+// Dois separadores, um globo em cada: "Este site" (firewall da zona,
+// /api/threat-intel, bolhas por país de origem) primeiro, e "Mundo" (Cloudflare
+// Radar, /api/radar-attacks, arcos origem → alvo) como contexto. Ver
+// dynamic/PLAN.md.
+const tabs = [
+  { id: 'self', label: m.tabSelf },
+  { id: 'world', label: m.tabWorld },
+];
+
 const jsStrings = {
   pause: m.pause,
   play: m.play,
   unavailable: m.unavailable,
   selfEmpty: m.selfEmpty,
+  selfUnavailable: m.selfUnavailable,
   countryUnknown: m.countryUnknown,
+  blocked: m.legendBlocked,
+  challenged: m.legendChallenged,
+  allowed: m.legendAllowed,
 };
 ---
 
@@ -25,77 +39,99 @@ const jsStrings = {
     <p class="intro">{m.intro}</p>
   </div>
 
-  <p class="note warn am-scope">{m.scopeNote}</p>
-
   <div id="am-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
-    <p class="hp-loading" id="am-status" role="status">{m.loading}</p>
+    <Tabs tabs={tabs} label={m.tabsLabel}>
+      <div slot="self">
+        <p class="note am-scope">{m.selfNote} <a href={routes.cloudflare[lang]}>{m.selfLink}</a>.</p>
+        <p class="hp-loading" id="am-self-status" role="status">{m.loading}</p>
+        <div id="am-self-body" hidden>
+          <figure class="am-figure" data-globe="self">
+            <canvas class="am-globe" role="img" aria-label={m.selfGlobeLabel}></canvas>
+            <figcaption class="am-caption">
+              <span class="am-legend">
+                <span><i class="am-sw blocked" aria-hidden="true"></i>{m.legendBlocked}</span>
+                <span><i class="am-sw challenged" aria-hidden="true"></i>{m.legendChallenged}</span>
+                <span><i class="am-sw allowed" aria-hidden="true"></i>{m.legendAllowed}</span>
+              </span>
+              <span class="am-controls">
+                <button type="button" class="btn small ghost am-toggle">{m.pause}</button>
+                <span class="note am-hint">{m.dragHint}</span>
+              </span>
+            </figcaption>
+          </figure>
 
-    <div id="am-body" hidden>
-      <figure class="am-figure">
-        <canvas id="am-globe" class="am-globe" role="img" aria-label={m.globeLabel}></canvas>
-        <figcaption class="am-caption">
-          <span class="am-legend">
-            <span><i class="am-sw origin" aria-hidden="true"></i>{m.legendOrigin}</span>
-            <span><i class="am-sw target" aria-hidden="true"></i>{m.legendTarget}</span>
-            <span><i class="am-sw ring" aria-hidden="true"></i>{m.legendDomestic}</span>
-          </span>
-          <span class="am-window mono">{m.windowLabel}: <span id="am-window">—</span></span>
-          <span class="am-controls">
-            <button type="button" class="btn small ghost" id="am-toggle" aria-controls="am-globe">{m.pause}</button>
-            <span class="note am-hint">{m.dragHint}</span>
-          </span>
-        </figcaption>
-      </figure>
-
-      <h2 class="am-h2">{m.tableTitle}</h2>
-      <div class="table-scroll">
-        <table class="result-table am-table">
-          <caption class="visually-hidden">{m.tableCaption}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{m.colRank}</th>
-              <th scope="col">{m.colOrigin}</th>
-              <th scope="col">{m.colTarget}</th>
-              <th scope="col" class="num">{m.colShare}</th>
-            </tr>
-          </thead>
-          <tbody id="am-pairs"></tbody>
-        </table>
+          <h2 class="am-h2">{m.selfTableTitle}</h2>
+          <div class="table-scroll">
+            <table class="result-table am-table">
+              <caption class="visually-hidden">{m.selfTableCaption}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{m.colCountry}</th>
+                  <th scope="col">{m.colAction}</th>
+                  <th scope="col" class="num">{m.colEvents}</th>
+                </tr>
+              </thead>
+              <tbody id="am-self-rows"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <section class="am-self" id="am-self" hidden>
-      <h2 class="am-h2">{m.selfTitle}</h2>
-      <p class="note">{m.selfIntro} <a href={routes.cloudflare[lang]}>{m.selfLink}</a>.</p>
-      <div class="table-scroll">
-        <table class="result-table am-table">
-          <thead>
-            <tr>
-              <th scope="col">{m.colCountry}</th>
-              <th scope="col">{m.colAction}</th>
-              <th scope="col" class="num">{m.colEvents}</th>
-            </tr>
-          </thead>
-          <tbody id="am-self-rows"></tbody>
-        </table>
+      <div slot="world">
+        <p class="note warn am-scope">{m.worldNote}</p>
+        <p class="hp-loading" id="am-world-status" role="status">{m.loading}</p>
+        <div id="am-world-body" hidden>
+          <figure class="am-figure" data-globe="world">
+            <canvas class="am-globe" role="img" aria-label={m.globeLabel}></canvas>
+            <figcaption class="am-caption">
+              <span class="am-legend">
+                <span><i class="am-sw origin" aria-hidden="true"></i>{m.legendOrigin}</span>
+                <span><i class="am-sw target" aria-hidden="true"></i>{m.legendTarget}</span>
+                <span><i class="am-sw ring" aria-hidden="true"></i>{m.legendDomestic}</span>
+              </span>
+              <span class="am-window mono">{m.windowLabel}: <span id="am-window">—</span></span>
+              <span class="am-controls">
+                <button type="button" class="btn small ghost am-toggle">{m.pause}</button>
+                <span class="note am-hint">{m.dragHint}</span>
+              </span>
+            </figcaption>
+          </figure>
+
+          <h2 class="am-h2">{m.tableTitle}</h2>
+          <div class="table-scroll">
+            <table class="result-table am-table">
+              <caption class="visually-hidden">{m.tableCaption}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{m.colRank}</th>
+                  <th scope="col">{m.colOrigin}</th>
+                  <th scope="col">{m.colTarget}</th>
+                  <th scope="col" class="num">{m.colShare}</th>
+                </tr>
+              </thead>
+              <tbody id="am-pairs"></tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Atribuição exigida pela licença dos dados da Radar (CC BY-NC 4.0). */}
+        <p class="note">
+          {m.attributionPrefix}{' '}
+          <a href="https://radar.cloudflare.com/security/application-layer" rel="noopener">Cloudflare Radar</a>
+          {' · '}
+          <a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener license">{m.attributionLicense}</a>
+        </p>
       </div>
-    </section>
+    </Tabs>
   </div>
-
-  {/* Atribuição exigida pela licença dos dados da Radar (CC BY-NC 4.0). */}
-  <p class="note">
-    {m.attributionPrefix}{' '}
-    <a href="https://radar.cloudflare.com/security/application-layer" rel="noopener">Cloudflare Radar</a>
-    {' · '}
-    <a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener license">{m.attributionLicense}</a>
-  </p>
 
   <hr class="am-hr" />
   <a href={routes.attack[lang]} class="mono">{m.seeAttack}</a>
 </BaseLayout>
 
 <script>
-  import { formatNumber } from '../../scripts/observability.js';
+  import { formatNumber, firewallActionClass } from '../../scripts/observability.js';
+  import type { GlobeData } from '../attack-map/globe-canvas';
 
   type Pair = [string, string, number];
 
@@ -103,7 +139,6 @@ const jsStrings = {
   const base = root.dataset.api ?? '';
   const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
   const S = JSON.parse(root.dataset.strings ?? '{}');
-  const status = document.getElementById('am-status')!;
 
   const regionNames = (() => {
     try { return new Intl.DisplayNames([locale], { type: 'region' }); } catch { return null; }
@@ -134,31 +169,32 @@ const jsStrings = {
     return td;
   }
 
-  function renderPairs(pairs: Pair[]) {
-    const body = document.getElementById('am-pairs')!;
-    body.replaceChildren(
-      ...pairs.map(([origin, target, pct], i) => {
-        const tr = document.createElement('tr');
-        tr.append(cell(String(i + 1)), countryCell(origin), countryCell(target), cell(`${pctFmt.format(pct)} %`, 'num'));
-        return tr;
-      }),
-    );
+  async function getJson(path: string) {
+    const res = await fetch(`${base}${path}`, { headers: { accept: 'application/json' } });
+    const ctype = res.headers.get('content-type') ?? '';
+    if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+    return res.json();
   }
 
-  function renderWindow(start: string, end: string) {
-    const s = new Date(start);
-    const e = new Date(end);
-    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return;
-    // Hora local de quem vê, com o fuso no fim (ex.: "20:00–21:00 WET").
-    document.getElementById('am-window')!.textContent = `${hourFmt.format(s)}–${hourZoneFmt.format(e)}`;
+  function fail(statusId: string, text: string) {
+    const status = document.getElementById(statusId)!;
+    status.className = 'hp-fallback';
+    status.textContent = text;
   }
 
-  // Globo: só se descarrega (import() → chunk próprio, com os dados
-  // geográficos) quando o canvas se aproxima do ecrã.
-  function lazyGlobe(pairs: Pair[]) {
-    const canvas = document.getElementById('am-globe') as HTMLCanvasElement;
-    const toggle = document.getElementById('am-toggle') as HTMLButtonElement;
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function show(prefix: string) {
+    document.getElementById(`${prefix}-status`)!.hidden = true;
+    document.getElementById(`${prefix}-body`)!.hidden = false;
+  }
+
+  // Um globo por separador. Só se descarrega (import() → chunk próprio, com
+  // os dados geográficos) quando o canvas aparece: o do separador escondido
+  // não interseta o ecrã, por isso só monta (e só anima) quando é mostrado.
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function lazyGlobe(name: string, data: GlobeData) {
+    const figure = document.querySelector<HTMLElement>(`[data-globe="${name}"]`)!;
+    const canvas = figure.querySelector('canvas')!;
+    const toggle = figure.querySelector<HTMLButtonElement>('.am-toggle')!;
     // Com movimento reduzido o globo começa parado; o botão continua a
     // deixar pô-lo a rodar, por escolha explícita.
     let playing = !motion.matches;
@@ -172,7 +208,7 @@ const jsStrings = {
       if (!entry.isIntersecting) return;
       io.disconnect();
       const { mountGlobe } = await import('../attack-map/globe-canvas');
-      const globe = mountGlobe(canvas, pairs, { playing });
+      const globe = mountGlobe(canvas, data, { playing });
       if (!globe) {
         canvas.hidden = true;
         toggle.hidden = true;
@@ -194,57 +230,71 @@ const jsStrings = {
     io.observe(canvas);
   }
 
-  async function loadRadar() {
-    try {
-      const res = await fetch(`${base}/api/radar-attacks`, { headers: { accept: 'application/json' } });
-      const ctype = res.headers.get('content-type') ?? '';
-      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
-      const data = await res.json();
-      const pairs: Pair[] = Array.isArray(data?.pairs) ? data.pairs : [];
-      if (data?.ok !== true || pairs.length === 0) throw new Error('no data');
-      renderPairs(pairs);
-      renderWindow(data.start, data.end);
-      status.hidden = true;
-      document.getElementById('am-body')!.hidden = false;
-      lazyGlobe(pairs);
-    } catch {
-      status.className = 'hp-fallback';
-      status.textContent = S.unavailable;
-    }
-  }
-
-  // Opcional: a mesma pergunta para a zona deste site, com os dados de
-  // firewall que a página Cloudflare já usa (/api/threat-intel, 7 dias).
+  // ---------- Este site: firewall da zona, 7 dias (/api/threat-intel) ----------
   async function loadSelf() {
+    let rows: { country: string; action: string; count: number; total?: number }[];
     try {
-      const res = await fetch(`${base}/api/threat-intel`, { headers: { accept: 'application/json' } });
-      const ctype = res.headers.get('content-type') ?? '';
-      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
-      const rows = ((await res.json())?.firewall7d?.byCountry ?? []).slice(0, 5);
-      const body = document.getElementById('am-self-rows')!;
-      if (rows.length === 0) {
-        const tr = document.createElement('tr');
-        const td = cell(S.selfEmpty);
-        td.colSpan = 3;
-        tr.append(td);
-        body.replaceChildren(tr);
-      } else {
-        body.replaceChildren(
-          ...rows.map((r: any) => {
-            const tr = document.createElement('tr');
-            tr.append(countryCell(String(r.country)), cell(String(r.action)), cell(formatNumber(Number(r.count) || 0, locale), 'num'));
-            return tr;
-          }),
-        );
-      }
-      document.getElementById('am-self')!.hidden = false;
+      const raw = (await getJson('/api/threat-intel'))?.firewall7d?.byCountry;
+      rows = Array.isArray(raw) ? raw : [];
     } catch {
-      // Sem Worker: a secção fica escondida — é um extra, não o assunto da página.
+      fail('am-self-status', S.selfUnavailable);
+      return;
     }
+    if (rows.length === 0) {
+      fail('am-self-status', S.selfEmpty);
+      return;
+    }
+    const events = (r: (typeof rows)[number]) => Number(r.total ?? r.count) || 0;
+    rows.sort((a, b) => events(b) - events(a));
+    document.getElementById('am-self-rows')!.replaceChildren(
+      ...rows.map((r) => {
+        const tr = document.createElement('tr');
+        const action = document.createElement('td');
+        action.append(document.createTextNode(`${S[firewallActionClass(r.action)]} `));
+        const raw = document.createElement('span');
+        raw.className = 'am-cc';
+        raw.textContent = String(r.action);
+        action.append(raw);
+        tr.append(countryCell(String(r.country)), action, cell(formatNumber(events(r), locale), 'num'));
+        return tr;
+      }),
+    );
+    show('am-self');
+    lazyGlobe('self', { countries: rows });
   }
 
-  loadRadar();
+  // ---------- Mundo: Cloudflare Radar, última hora (/api/radar-attacks) ----------
+  async function loadWorld() {
+    let data: any;
+    try {
+      data = await getJson('/api/radar-attacks');
+    } catch {
+      data = null;
+    }
+    const pairs: Pair[] = Array.isArray(data?.pairs) ? data.pairs : [];
+    if (data?.ok !== true || pairs.length === 0) {
+      fail('am-world-status', S.unavailable);
+      return;
+    }
+    document.getElementById('am-pairs')!.replaceChildren(
+      ...pairs.map(([origin, target, pct], i) => {
+        const tr = document.createElement('tr');
+        tr.append(cell(String(i + 1)), countryCell(origin), countryCell(target), cell(`${pctFmt.format(pct)} %`, 'num'));
+        return tr;
+      }),
+    );
+    const s = new Date(data.start);
+    const e = new Date(data.end);
+    if (!Number.isNaN(s.getTime()) && !Number.isNaN(e.getTime())) {
+      // Hora local de quem vê, com o fuso no fim (ex.: "20:00–21:00 WET").
+      document.getElementById('am-window')!.textContent = `${hourFmt.format(s)}–${hourZoneFmt.format(e)}`;
+    }
+    show('am-world');
+    lazyGlobe('world', { pairs });
+  }
+
   loadSelf();
+  loadWorld();
 </script>
 
 <style>
@@ -285,8 +335,9 @@ const jsStrings = {
     height: 0.6rem;
     border-radius: 50%;
   }
-  .am-sw.origin { background: var(--accent-2); }
-  .am-sw.target { background: var(--accent); }
+  .am-sw.origin, .am-sw.challenged { background: var(--accent-2); }
+  .am-sw.target, .am-sw.allowed { background: var(--accent); }
+  .am-sw.blocked { background: var(--danger); }
   .am-sw.ring { border: 2px solid var(--accent-2); }
   .am-controls { display: inline-flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
   .am-hint { margin: 0; }
@@ -297,5 +348,5 @@ const jsStrings = {
   .am-table :global(.num) { text-align: right; white-space: nowrap; }
   .am-table :global(.am-cc) { color: var(--muted); font-size: 0.78rem; }
   .am-hr { margin: 1.6rem 0 1.3rem; }
-  #am-body[hidden], #am-self[hidden] { display: none; }
+  #am-self-body[hidden], #am-world-body[hidden] { display: none; }
 </style>

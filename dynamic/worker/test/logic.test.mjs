@@ -1065,8 +1065,8 @@ test('/api/threat-intel: funde snapshots fw:<dia> de vários dias em firewall7d.
   const data = await res.json();
   assert.deepEqual(data.firewall7d.byAction, [{ key: 'block', count: 3 }, { key: 'managed_challenge', count: 2 }]);
   assert.deepEqual(data.firewall7d.byCountry, [
-    { country: 'NL', action: 'block', count: 3 },
-    { country: 'DE', action: 'js_challenge', count: 1 },
+    { country: 'NL', action: 'block', count: 3, total: 5 },
+    { country: 'DE', action: 'js_challenge', count: 1, total: 1 },
   ]);
   // AS1000 apareceu nos dois dias (3 + 2 = 5) — a soma da semana, não só o
   // último dia, é o que decide a ordenação.
@@ -1390,8 +1390,8 @@ test('mergeFirewall7d: tops iguais ao antigo readFirewall7d embutido no index.js
   ]);
   assert.deepEqual(fw.byAction, [{ key: 'block', count: 3 }, { key: 'managed_challenge', count: 2 }]);
   assert.deepEqual(fw.byCountry, [
-    { country: 'NL', action: 'block', count: 3 },
-    { country: 'DE', action: 'js_challenge', count: 1 },
+    { country: 'NL', action: 'block', count: 3, total: 5 },
+    { country: 'DE', action: 'js_challenge', count: 1, total: 1 },
   ]);
   assert.deepEqual(fw.byAsn, [{ key: 'AS1000', count: 5 }, { key: 'AS2000', count: 1 }]);
 });
@@ -1952,7 +1952,7 @@ test('mergeFirewall7d: chaves iguais a membros de Object.prototype contam como q
     { key: 'toString', count: 4 },
     { key: 'constructor', count: 2 },
   ]);
-  assert.deepEqual(out.byCountry, [{ country: 'NL', action: 'hasOwnProperty', count: 6 }]);
+  assert.deepEqual(out.byCountry, [{ country: 'NL', action: 'hasOwnProperty', count: 6, total: 6 }]);
 });
 
 test('firewallBreakdown: ação/origem passam por sanitizeText (controlo, tags e teto de 40 exato)', () => {

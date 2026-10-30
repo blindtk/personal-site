@@ -67,7 +67,10 @@ export function mergeFirewall7d(entries) {
     })
     .sort((a, b) => b.total - a.total)
     .slice(0, 10)
-    .map(({ country, action, count }) => ({ country, action, count }));
+    // `total` (2026-10, globo de ataques): todos os eventos do país na
+    // janela, para o tamanho da bolha. Aproximado por baixo — cada snapshot
+    // diário só guarda a ação dominante desse dia, não as outras.
+    .map(({ country, action, count, total }) => ({ country, action, count, total }));
   const daily = entries
     .map(({ date, snap }) => ({ date, byAction: { ...(snap?.byAction ?? {}) } }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));

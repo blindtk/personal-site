@@ -15,12 +15,23 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
-- **2026-10-30 — Attack globe: "attacks in the last hour" from Cloudflare
-  Radar** (approved by the repo owner). A new page, PT `/mapa-de-ataques/`
+- **2026-10-30 — Attack map: this site's firewall and Cloudflare Radar on
+  a globe** (approved by the repo owner). A new page, PT `/mapa-de-ataques/`
   and EN `/en/attack-map/` (kept clear of `/attack/`, the MITRE ATT&CK
   matrix; the two pages link to each other), with a "requires server"
-  badge. It shows **global** Radar data, not attacks on this site, and the
-  page says so, with attribution to Cloudflare Radar (CC BY-NC 4.0).
+  badge and two tabs, one globe each:
+    1. **This site · 7 days** (default; the owner's original idea): this
+       zone's firewall events by origin country, from `/api/threat-intel`.
+       **Bubbles, not arcs**: size = events, colour = the most common action
+       (blocked `--danger`, challenged `--accent-2`, let through
+       `--accent`). An arc needs a target, and the site has no place on the
+       map (anycast) — arcs converging on Portugal would have suggested
+       something untrue. `firewall7d.byCountry` gained a `total` per country
+       for the bubble size (a lower bound: each daily snapshot keeps only
+       that day's dominant action).
+    2. **World · last hour** (context, and never empty): global Radar data,
+       not attacks on this site — the tab says so, with attribution to
+       Cloudflare Radar (CC BY-NC 4.0). Details below.
     - **Source:** `GET /radar/attacks/layer7/top/attacks`, origin → target
       country pairs as a % of mitigated layer 7 attacks. `dateRange` only
       takes `<n>d`/`<n>w` (1 day minimum), so the last hour is asked for with
@@ -54,8 +65,9 @@ each, with the full original entries kept in this file's git history.
       under `prefers-reduced-motion` and has a pause button, and an
       accessible "most active pairs" table is the text alternative.
       Country names come from `Intl.DisplayNames`.
-    - **Extra:** an "And on this site?" table with the top countries in
-      this zone's own 7-day firewall data, reusing `/api/threat-intel`.
+    - Each tab has its own globe and an accessible table (countries and
+      events; or origin → target pairs). A globe only loads and animates
+      once its tab is shown.
 
 - **2026-10-02 — Remove two tools** (decision by the repo owner): the
   passkey lab and the encoder/decoder. They are generic utilities that

@@ -1,5 +1,6 @@
 // Globo de ataques (/mapa-de-ataques/) — matemática pura, sem DOM: máscara de
-// terra, projeção ortográfica, arcos de grande círculo e espessura por %.
+// terra, projeção ortográfica, arcos de grande círculo (Radar, mundo) e
+// bolhas por país de origem (firewall deste site), com tamanho por valor.
 // O desenho (canvas 2D) vive em src/components/attack-map/globe-canvas.ts.
 //
 // Porquê um globo próprio e não o cobe/globe.gl: o cobe 2.0.1 carrega a
@@ -7,6 +8,8 @@
 // injeta um <style> inline (bloqueado por style-src 'self'), e só tem uma
 // espessura de arco para todos; o globe.gl arrasta o three.js (bem acima dos
 // ~150 KB gz). Isto são ~3 KB gz + ~3 KB gz de dados, sem tocar na CSP.
+
+import { firewallActionClass } from './observability.js';
 
 const DEG = Math.PI / 180;
 
@@ -88,13 +91,14 @@ export function arcPoints(from, to, n = 32) {
 }
 
 /**
- * Espessura do traço (px CSS) para uma %: raiz quadrada (a área visual
- * cresce com a %, não a largura), entre `min` (para o par mais fraco) e
- * `max` (para o mais forte). pct ≤ 0 ou maxPct ≤ 0 → min.
+ * Tamanho visual (px CSS) de um valor — espessura de um arco, raio de uma
+ * bolha: raiz quadrada (a área percebida cresce com o valor, não a largura),
+ * de `min` (valor 0) a `max` (o maior valor, `top`). Valor acima de `top`
+ * fica em `max`; valor ≤ 0, NaN ou top ≤ 0 → min.
  */
-export function strokeWidth(pct, maxPct, { min = 0.75, max = 5 } = {}) {
-  if (!(pct > 0) || !(maxPct > 0)) return min;
-  return min + (max - min) * Math.sqrt(Math.min(1, pct / maxPct));
+export function sqrtScale(value, top, { min, max }) {
+  if (!(value > 0) || !(top > 0)) return min;
+  return min + (max - min) * Math.sqrt(Math.min(1, value / top));
 }
 
 /**
@@ -113,4 +117,24 @@ export function globeShapes(pairs, centroids) {
     else arcs.push({ from, to, pct, origin, target });
   }
   return { arcs, rings };
+}
+
+/**
+ * Linhas de `firewall7d.byCountry` (/api/threat-intel — os eventos de
+ * firewall deste site, por país de origem) → bolhas no centróide de cada
+ * país, com o total de eventos (`total`; `count` em respostas antigas, sem
+ * ele) e a classe da ação mais comum (bloqueado/desafiado/deixado passar).
+ * Não há alvo: o site é servido por anycast, não tem um lugar no mapa.
+ * Países sem centróide (Tor, XX) e contagens ≤ 0 ficam de fora.
+ */
+export function bubbleShapes(rows, centroids) {
+  const out = [];
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const code = typeof row?.country === 'string' ? row.country.toUpperCase() : '';
+    const at = Object.hasOwn(centroids, code) ? centroids[code] : null;
+    const count = Number(row?.total ?? row?.count);
+    if (!at || !(count > 0)) continue;
+    out.push({ at, count, code, cls: firewallActionClass(row.action) });
+  }
+  return out;
 }

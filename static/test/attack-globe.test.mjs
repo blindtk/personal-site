@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  landDots, toVec, rotate, isHidden, arcPoints, strokeWidth, globeShapes,
+  landDots, toVec, rotate, isHidden, arcPoints, sqrtScale, globeShapes, bubbleShapes,
 } from '../src/scripts/attack-globe.js';
 
 const DEG = Math.PI / 180;
@@ -43,13 +43,14 @@ test('arcPoints: pontos coincidentes ou antípodas → [] (não NaN)', () => {
   assert.deepEqual(arcPoints([10, 20], [-10, -160]), []);
 });
 
-test('strokeWidth: min no 0, max no par mais forte, clamp acima; NaN → min', () => {
-  assert.equal(strokeWidth(0, 10), 0.75);
-  assert.equal(strokeWidth(10, 10), 5);
-  assert.equal(strokeWidth(20, 10), 5);
-  assert.equal(strokeWidth(2.5, 10), 0.75 + 4.25 * 0.5);
-  assert.equal(strokeWidth(NaN, 10), 0.75);
-  assert.equal(strokeWidth(5, 0), 0.75);
+test('sqrtScale: min no 0, max no maior valor, clamp acima; NaN → min', () => {
+  const r = { min: 1, max: 5 };
+  assert.equal(sqrtScale(0, 10, r), 1);
+  assert.equal(sqrtScale(10, 10, r), 5);
+  assert.equal(sqrtScale(20, 10, r), 5);
+  assert.equal(sqrtScale(2.5, 10, r), 3); // raiz: 1/4 do valor → metade do caminho
+  assert.equal(sqrtScale(NaN, 10, r), 1);
+  assert.equal(sqrtScale(5, 0, r), 1);
 });
 
 test('landDots: ordem dos bits (LSB primeiro, linhas de norte para sul) e rarefação nos polos', () => {
@@ -71,4 +72,20 @@ test('globeShapes: doméstico vira anel, sem centróide fica de fora', () => {
   assert.deepEqual(arcs, [{ from: c.CN, to: c.US, pct: 6, origin: 'CN', target: 'US' }]);
   assert.deepEqual(rings, [{ at: c.US, pct: 9, code: 'US' }]);
   assert.deepEqual(globeShapes(null, c), { arcs: [], rings: [] });
+});
+
+test('bubbleShapes: total (ou count, sem ele), classe da ação; Tor/XX, protótipo e ≤ 0 saem', () => {
+  const c = { US: [39.9, -98.8], SG: [1.4, 103.8], DE: [51.1, 10.4] };
+  const out = bubbleShapes([
+    { country: 'US', action: 'managed_challenge', count: 500, total: 812 },
+    { country: 'sg', action: 'block', count: 240 }, // resposta antiga, sem total
+    { country: 'DE', action: 'skip', count: 0, total: 0 },
+    { country: 'T1', action: 'block', count: 9, total: 9 },
+    { country: 'constructor', action: 'block', count: 9, total: 9 },
+  ], c);
+  assert.deepEqual(out, [
+    { at: c.US, count: 812, code: 'US', cls: 'challenged' },
+    { at: c.SG, count: 240, code: 'SG', cls: 'blocked' },
+  ]);
+  assert.deepEqual(bubbleShapes(undefined, c), []);
 });

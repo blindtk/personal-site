@@ -5,11 +5,20 @@
 // chunk que só esta página descarrega.
 import geo from '../../data/attack-map-geo.json';
 import {
-  landDots, toVec, rotate, isHidden, arcPoints, strokeWidth, globeShapes,
+  landDots, toVec, rotate, isHidden, arcPoints, sqrtScale, globeShapes, bubbleShapes,
 } from '../../scripts/attack-globe.js';
 
 type Vec = [number, number, number];
 type Pair = [string, string, number];
+
+/**
+ * O que desenhar: `pairs` (Radar: arcos origem → alvo, mundo) ou
+ * `countries` (firewall deste site: bolhas nos países de origem).
+ */
+export interface GlobeData {
+  pairs?: Pair[];
+  countries?: { country: string; action: string; count: number; total?: number }[];
+}
 
 const DEG = Math.PI / 180;
 const SPIN = 0.00012; // rad/ms — uma volta em ~50 s
@@ -20,7 +29,7 @@ export interface GlobeController {
   destroy(): void;
 }
 
-export function mountGlobe(canvas: HTMLCanvasElement, pairs: Pair[], { playing: initial }: { playing: boolean }): GlobeController | null {
+export function mountGlobe(canvas: HTMLCanvasElement, data: GlobeData, { playing: initial }: { playing: boolean }): GlobeController | null {
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
@@ -33,20 +42,34 @@ export function mountGlobe(canvas: HTMLCanvasElement, pairs: Pair[], { playing: 
     land: v('--faint'),
     origin: v('--accent-2'),
     target: v('--accent'),
+    // bolhas: a mesma leitura de cores da página Cloudflare
+    blocked: v('--danger'),
+    challenged: v('--accent-2'),
+    allowed: v('--accent'),
   };
 
   const land = landDots(geo).map(([lat, lon]: number[]) => toVec(lat, lon) as Vec);
+  const pairs = data.pairs ?? [];
   const { arcs, rings } = globeShapes(pairs, geo.centroids);
   const maxPct = pairs.reduce((m, p) => Math.max(m, p[2]), 0);
+  const lineWidth = (pct: number) => sqrtScale(pct, maxPct, { min: 0.75, max: 5 });
   const arcGeo = arcs
     .map((a) => ({
       pts: arcPoints(a.from, a.to, ARC_SEGMENTS) as Vec[],
-      width: strokeWidth(a.pct, maxPct),
+      width: lineWidth(a.pct),
       // fase própria por arco, para os "cometas" não andarem em uníssono
       phase: (a.pct * 7.31) % 1,
     }))
     .filter((a) => a.pts.length > 0);
-  const ringGeo = rings.map((r) => ({ at: toVec(r.at[0], r.at[1]) as Vec, width: strokeWidth(r.pct, maxPct) }));
+  const ringGeo = rings.map((r) => ({ at: toVec(r.at[0], r.at[1]) as Vec, width: lineWidth(r.pct) }));
+  const bubbles = bubbleShapes(data.countries ?? [], geo.centroids);
+  const maxCount = bubbles.reduce((m, b) => Math.max(m, b.count), 0);
+  // Raio em fração do raio do globo, para escalar com o canvas.
+  const bubbleGeo = bubbles.map((b) => ({
+    at: toVec(b.at[0], b.at[1]) as Vec,
+    r: sqrtScale(b.count, maxCount, { min: 0.015, max: 0.09 }),
+    fill: color[b.cls as 'blocked' | 'challenged' | 'allowed'] ?? color.allowed,
+  }));
 
   // Vista inicial: Atlântico Norte ao centro (Américas, Europa e África à vista).
   let phi = 30 * DEG;
@@ -127,6 +150,22 @@ export function mountGlobe(canvas: HTMLCanvasElement, pairs: Pair[], { playing: 
       c.globalAlpha = 1;
       marker(pts[0], color.origin, 2.2);
       marker(pts[pts.length - 1], color.target, 2.6);
+    }
+
+    for (const b of bubbleGeo) {
+      const p = rotate(b.at, phi, theta) as Vec;
+      if (p[2] <= 0) continue;
+      const [x, y] = px(p);
+      c.beginPath();
+      c.arc(x, y, b.r * R, 0, Math.PI * 2);
+      c.fillStyle = b.fill;
+      c.globalAlpha = 0.3;
+      c.fill();
+      c.globalAlpha = 0.95;
+      c.lineWidth = 1.25;
+      c.strokeStyle = b.fill;
+      c.stroke();
+      c.globalAlpha = 1;
     }
 
     for (const r of ringGeo) {
