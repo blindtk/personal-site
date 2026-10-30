@@ -156,7 +156,8 @@ function staleness(path, body, now = Date.now()) {
     const up = sources.filter((s) => s?.ok === true).length;
     if (!Number.isFinite(generated)) return 'no radar:feed document (the 13 */6 cron has not completed)';
     const ageH = ((now - generated) / 3600_000).toFixed(1);
-    console.log(`    radar: generated ${new Date(generated).toISOString()} (${ageH} h ago), sources ok ${up}/${sources.length}`);
+    const down = sources.filter((s) => s?.ok !== true).map((s) => sanitizeForLog(String(s?.id)));
+    console.log(`    radar: generated ${new Date(generated).toISOString()} (${ageH} h ago), sources ok ${up}/${sources.length}${down.length ? ` (down: ${down.join(', ')})` : ''}`);
     if (now - generated > RADAR_MAX_AGE_MS) {
       return `radar:feed is ${ageH} h old — the 13 */6 cron is not completing (CPU limit? check Workers Observability)`;
     }
