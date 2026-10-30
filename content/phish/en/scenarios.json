@@ -1,0 +1,506 @@
+[
+  {
+    "id": "ctt-taxa-sms",
+    "channel": "sms",
+    "from": { "name": "+351 91X XXX 214", "address": "" },
+    "subject": "",
+    "body": ["CTT: your parcel PT48210 is held for a missing €1.99 fee. Pay within 48h or it will be returned: ctt-entregas-pt.top/pagar"],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+351 91X XXX 214", "why": "CTT texts come from the company name, not from an ordinary mobile number." },
+      { "kind": "urgency", "tone": "bad", "quote": "Pay within 48h or it will be returned", "why": "A short deadline with a threat of return is there to make you act without thinking." },
+      { "kind": "link", "tone": "bad", "quote": "ctt-entregas-pt.top/pagar", "why": "The domain is “.top”, not “ctt.pt”. Having CTT’s name inside an address does not make it CTT’s." },
+      { "kind": "data", "tone": "bad", "quote": "missing €1.99 fee", "why": "A tiny fee is the bait: the aim is to capture your card details on the payment page." }
+    ]
+  },
+  {
+    "id": "irs-reembolso-email",
+    "channel": "email",
+    "from": { "name": "Autoridade Tributária", "address": "reembolsos@financas-gov-pt.info" },
+    "subject": "IRS refund available: €412.60",
+    "body": [
+      "Dear taxpayer,",
+      "After reviewing your return we have calculated a refund of €412.60. To receive it, confirm your IBAN and card details in the form below.",
+      "https://financas-gov-pt.info/reembolso/confirmar",
+      "The request expires today at 23:59."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "reembolsos@financas-gov-pt.info", "why": "The domain is “financas-gov-pt.info”. Portuguese government sites end in “.gov.pt”; this only imitates the look." },
+      { "kind": "data", "tone": "bad", "quote": "confirm your IBAN and card details", "why": "To pay a refund, the IBAN already on file is enough. Card details are never needed to receive money." },
+      { "kind": "link", "tone": "bad", "quote": "https://financas-gov-pt.info/reembolso/confirmar", "why": "Same fake domain as the sender. The https padlock only means the connection is encrypted, not that the site is trustworthy." },
+      { "kind": "urgency", "tone": "bad", "quote": "The request expires today at 23:59.", "why": "Refunds do not “expire” after a few hours. The rush is part of the scam." }
+    ]
+  },
+  {
+    "id": "seg-social-suspensao",
+    "channel": "email",
+    "from": { "name": "Segurança Social Direta", "address": "servico@seg-social-acesso.net" },
+    "subject": "Final notice: access suspended",
+    "body": [
+      "Your access to Segurança Social Direta will be suspended due to security inactivity.",
+      "To keep your access, enter your NISS and password at: seg-social-acesso.net/validar",
+      "If you do not do this within 24 hours, you will have to go to a counter in person."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "servico@seg-social-acesso.net", "why": "The official address is “seg-social.pt”. “seg-social-acesso.net” is a different domain that anyone can register." },
+      { "kind": "data", "tone": "bad", "quote": "enter your NISS and password", "why": "No legitimate sender asks for your password by email. Whoever receives it takes over your account." },
+      { "kind": "link", "tone": "bad", "quote": "seg-social-acesso.net/validar", "why": "A fake login page. To sign in, type the official address into your browser instead of clicking." },
+      { "kind": "urgency", "tone": "bad", "quote": "within 24 hours", "why": "The counter threat and the 24 hours push you to click before you check." }
+    ]
+  },
+  {
+    "id": "mbway-engano-wa",
+    "channel": "whatsapp",
+    "from": { "name": "+351 96X XXX 077", "address": "" },
+    "subject": "",
+    "body": [
+      "Good afternoon, sorry to bother you. I sent €85 to your number by mistake.",
+      "Could you send it back by MB WAY? You will get a code by SMS, just tell me the code so I can cancel it and get my money back. Thanks!"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+351 96X XXX 077", "why": "Unknown number, no photo, no history. Nothing links this person to you." },
+      { "kind": "data", "tone": "bad", "quote": "just tell me the code", "why": "The codes you get by SMS authorise operations on your account. Sharing them hands over the key." },
+      { "kind": "urgency", "tone": "bad", "quote": "so I can cancel it and get my money back", "why": "It creates a moral duty and a false technical reason. A mistaken transfer is settled through the bank, not with codes." }
+    ]
+  },
+  {
+    "id": "banco-cartao-sms",
+    "channel": "sms",
+    "from": { "name": "BancoMeridional", "address": "" },
+    "subject": "",
+    "body": ["Banco Meridional: we detected a suspicious purchase of €749.00. If it was not you, validate your card now at meridional-seguro.com/valida to avoid a block."],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "BancoMeridional", "why": "Fake texts can land in the same conversation as real ones, so the sender name proves nothing." },
+      { "kind": "urgency", "tone": "bad", "quote": "validate your card now", "why": "A scare (“suspicious purchase”) and an immediate action. The bank blocks the card by itself; it does not need you to click." },
+      { "kind": "link", "tone": "bad", "quote": "meridional-seguro.com/valida", "why": "The bank uses its usual domain, not one with “seguro” bolted on." }
+    ]
+  },
+  {
+    "id": "operadora-fatura-exe",
+    "channel": "email",
+    "from": { "name": "Apoio Cliente LusoMóvel", "address": "faturacao.lusomovel@mail-clientes.biz" },
+    "subject": "Overdue bill – service cut-off",
+    "body": [
+      "Dear customer,",
+      "We could not debit your October bill. Open the attached document to see the amount due and settle today to avoid the service being cut off."
+    ],
+    "attachment": "Fatura_Outubro_2026.pdf.exe",
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "faturacao.lusomovel@mail-clientes.biz", "why": "“LusoMóvel” is just display text; the real address belongs to “mail-clientes.biz”." },
+      { "kind": "attachment", "tone": "bad", "quote": "Fatura_Outubro_2026.pdf.exe", "why": "This is a program pretending to be a PDF. Bills are not executables." },
+      { "kind": "urgency", "tone": "bad", "quote": "settle today to avoid the service being cut off", "why": "A cut-off threat with a one-day deadline. Real bills have clear due dates and prior warnings." }
+    ]
+  },
+  {
+    "id": "filho-novo-numero-wa",
+    "channel": "whatsapp",
+    "from": { "name": "+351 93X XXX 590", "address": "" },
+    "subject": "",
+    "body": [
+      "Hi mum, this is my new number, my phone fell in the water 😭",
+      "I need to pay a bill today and the bank won’t let me into the app. Can you transfer €640 for me? I’ll explain everything later, I can’t talk right now."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+351 93X XXX 590", "why": "A new number with nothing saved behind it. People who change number usually tell you another way before asking for money." },
+      { "kind": "data", "tone": "bad", "quote": "transfer €640", "why": "Asking for money in the very first conversation is the goal. Call the old number or another relative before paying." },
+      { "kind": "urgency", "tone": "bad", "quote": "I can’t talk right now", "why": "They prevent a phone call, which is exactly the quickest way to expose the lie." }
+    ]
+  },
+  {
+    "id": "encomenda-reagendar-sms",
+    "channel": "sms",
+    "from": { "name": "RapidoExpress", "address": "" },
+    "subject": "",
+    "body": ["We could not deliver your parcel today. Reschedule delivery here: enc.pt-rastreio.cc/9Fq and confirm your address and card for fees."],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "link", "tone": "bad", "quote": "enc.pt-rastreio.cc/9Fq", "why": "Odd domain ending in “.cc”. Real couriers ask for the tracking number on their own site, not through a generic link." },
+      { "kind": "data", "tone": "bad", "quote": "confirm your address and card for fees", "why": "Rescheduling a delivery does not need a card. If you expect a parcel, go to the seller’s or courier’s site yourself." },
+      { "kind": "sender", "tone": "bad", "quote": "RapidoExpress", "why": "It names no parcel you ordered from this courier; the message is generic because it went to thousands of people." }
+    ]
+  },
+  {
+    "id": "webmail-caixa-cheia",
+    "channel": "email",
+    "from": { "name": "System Administrator", "address": "admin@suporte-correio.help" },
+    "subject": "Mailbox full – action required",
+    "body": [
+      "Your mailbox has reached 98% of its capacity. New messages will be rejected within 12 hours.",
+      "Increase your quota for free by signing in here: suporte-correio.help/quota",
+      "IT Services"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "admin@suporte-correio.help", "why": "An “administrator” who is not on your domain or your company’s." },
+      { "kind": "urgency", "tone": "bad", "quote": "within 12 hours", "why": "Fake technical deadlines. When a mailbox fills up you find out when you try to send, or from a notice by the service itself." },
+      { "kind": "link", "tone": "bad", "quote": "suporte-correio.help/quota", "why": "A fake login page to steal your email password, which unlocks all your other accounts." },
+      { "kind": "data", "tone": "bad", "quote": "signing in here", "why": "Signing in from a link in an email is the gesture scams are after." }
+    ]
+  },
+  {
+    "id": "streaming-pagamento-falhou",
+    "channel": "email",
+    "from": { "name": "StreamPT+", "address": "conta@streampt-faturacao.com" },
+    "subject": "Your payment failed – update your card",
+    "body": [
+      "Hello,",
+      "We could not charge your €11.99 subscription. Your account will be suspended on 31 October.",
+      "Update your payment details: https://streampt-faturacao.com/cartao"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "conta@streampt-faturacao.com", "why": "A domain with “faturacao” added: it looks official, but the real service uses the brand’s main domain." },
+      { "kind": "link", "tone": "bad", "quote": "https://streampt-faturacao.com/cartao", "why": "A card form on an alternative domain. If in doubt, open the service’s app directly." },
+      { "kind": "data", "tone": "bad", "quote": "Update your payment details", "why": "Asking for card details by email is the whole point of the message." },
+      { "kind": "urgency", "tone": "bad", "quote": "will be suspended on 31 October", "why": "A date with a threat. The real service usually retries and warns inside the app." }
+    ]
+  },
+  {
+    "id": "portagens-divida-sms",
+    "channel": "sms",
+    "from": { "name": "Portagens PT", "address": "" },
+    "subject": "",
+    "body": ["You have an unpaid toll of €3.40. Avoid a €120 fine: settle today at portagens-liquidar.top"],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "Portagens PT", "why": "Generic name, with no licence plate or route. A real debt says what it is and when it happened." },
+      { "kind": "urgency", "tone": "bad", "quote": "Avoid a €120 fine", "why": "A small amount plus a large fine is the classic combination for making people pay quickly." },
+      { "kind": "link", "tone": "bad", "quote": "portagens-liquidar.top", "why": "A domain unrelated to any toll operator. Only pay through channels you already know." }
+    ]
+  },
+  {
+    "id": "premio-hipermercado",
+    "channel": "email",
+    "from": { "name": "Hipermercado Sol", "address": "premios@hipersol-sorteios.shop" },
+    "subject": "Congratulations! You won a €500 gift card",
+    "body": [
+      "You were one of 3 customers drawn this month and you won a €500 gift card.",
+      "To receive it, just pay €2.50 postage at hipersol-sorteios.shop/premio. You have 30 minutes to claim."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "premios@hipersol-sorteios.shop", "why": "The domain is not the shop’s. Genuine prize draws do not use hyphenated “.shop” domains." },
+      { "kind": "data", "tone": "bad", "quote": "just pay €2.50 postage", "why": "You never pay to receive a prize. The payment exists to harvest your card." },
+      { "kind": "urgency", "tone": "bad", "quote": "You have 30 minutes to claim.", "why": "A real prize does not vanish in half an hour." }
+    ]
+  },
+  {
+    "id": "comprador-anuncio-wa",
+    "channel": "whatsapp",
+    "from": { "name": "Ricardo (buyer)", "address": "" },
+    "subject": "",
+    "body": [
+      "Hi, I saw your bike ad and want to buy it now. I’ll pay with the platform’s protected payment.",
+      "Send me your name, your card details and the confirmation code so I can put the money in your account: pagamento-seguro-anuncios.net/receber"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "link", "tone": "bad", "quote": "pagamento-seguro-anuncios.net/receber", "why": "A fake page imitating the classifieds platform." },
+      { "kind": "data", "tone": "bad", "quote": "your card details and the confirmation code", "why": "To receive money an IBAN is enough. Card details and codes are for taking money out, not putting it in." },
+      { "kind": "urgency", "tone": "bad", "quote": "want to buy it now", "why": "Haste, and willingness to pay without haggling or seeing the bike: a common sign in these scams." }
+    ]
+  },
+  {
+    "id": "chefe-transferencia",
+    "channel": "email",
+    "from": { "name": "Teresa Almeida (Management)", "address": "teresa.almeida@acme-solucoes-pt.com" },
+    "subject": "I need a discreet favour",
+    "body": [
+      "I’m in a meeting and can’t take calls. I need you to make a transfer of €4,800 to a new supplier today.",
+      "I’ll send the IBAN details shortly. Please don’t mention it to anyone else for now, I’ll explain later."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "teresa.almeida@acme-solucoes-pt.com", "why": "The name is the director’s, but the domain only resembles the company’s (“acme-solucoes-pt.com” instead of “acme.pt”)." },
+      { "kind": "urgency", "tone": "bad", "quote": "can’t take calls", "why": "They make sure you cannot confirm by phone." },
+      { "kind": "data", "tone": "bad", "quote": "a transfer of €4,800 to a new supplier", "why": "Money for an unknown supplier, outside the normal approval chain." },
+      { "kind": "urgency", "tone": "bad", "quote": "don’t mention it to anyone else", "why": "The secrecy is so nobody questions the order. Normal payments are not secret." }
+    ]
+  },
+  {
+    "id": "imt-carta-conducao",
+    "channel": "email",
+    "from": { "name": "IMT – Instituto da Mobilidade", "address": "renovacao@imt-cartas-online.org" },
+    "subject": "Your driving licence expires in 7 days",
+    "body": [
+      "Your driving licence is about to expire. To avoid a fine, renew online at imt-cartas-online.org and pay the €34.50 fee.",
+      "We need a photo of your ID document and your card details."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "renovacao@imt-cartas-online.org", "why": "IMT uses government domains (“.pt”). “.org” with “online” is an imitation." },
+      { "kind": "urgency", "tone": "bad", "quote": "To avoid a fine", "why": "The fine is only a threat to speed up your decision." },
+      { "kind": "data", "tone": "bad", "quote": "a photo of your ID document and your card details", "why": "An ID copy plus a card enables identity and payment fraud. A genuine service does not ask for both by email." }
+    ]
+  },
+  {
+    "id": "emprego-remoto-wa",
+    "channel": "whatsapp",
+    "from": { "name": "+44 7XXX XXXXXX", "address": "" },
+    "subject": "",
+    "body": [
+      "Hello! We are a marketing agency looking for remote workers: earn €150 a day liking videos, no experience needed.",
+      "To register, send us a photo of your ID card and your IBAN right now. Limited places for today!"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+44 7XXX XXXXXX", "why": "A foreign contact who has never met you and writes in generic wording." },
+      { "kind": "data", "tone": "bad", "quote": "a photo of your ID card and your IBAN", "why": "Identity and account data for a “registration” with no contract or interview. They are used to open accounts and launder money in your name." },
+      { "kind": "urgency", "tone": "bad", "quote": "Limited places for today!", "why": "Manufactured scarcity. The €150 a day for liking videos is the bait." }
+    ]
+  },
+  {
+    "id": "ctt-levantamento-sms",
+    "channel": "sms",
+    "from": { "name": "CTT", "address": "" },
+    "subject": "",
+    "body": ["CTT: parcel RB123456789PT is now available for collection at CTT Point Mercearia Nova (Rua das Flores, 12). Bring photo ID. Deadline: 7 working days. Details: ctt.pt/rastreio"],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "CTT", "why": "An alphanumeric sender with the company name, not an anonymous mobile number." },
+      { "kind": "link", "tone": "ok", "quote": "ctt.pt/rastreio", "why": "The domain is “ctt.pt” and the path is about tracking. You can still type the address yourself." },
+      { "kind": "urgency", "tone": "ok", "quote": "Deadline: 7 working days", "why": "A real, long deadline with no threat. Nothing urgent or payment is asked of you." }
+    ]
+  },
+  {
+    "id": "financas-notificacao",
+    "channel": "email",
+    "from": { "name": "Portal das Finanças", "address": "no-reply@portaldasfinancas.gov.pt" },
+    "subject": "You have a new notification on the Portal das Finanças",
+    "body": [
+      "We inform you that you have a new notification in your Electronic Mailbox.",
+      "To read it, go to the Portal das Finanças by typing the address into your browser and sign in with your usual credentials.",
+      "This message is automatic and must not be replied to."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "no-reply@portaldasfinancas.gov.pt", "why": "A government domain, “.gov.pt”, and the name of a portal that really exists." },
+      { "kind": "link", "tone": "ok", "quote": "typing the address into your browser", "why": "There is no link to click: it tells you to go to the site yourself, which is exactly the safe habit." },
+      { "kind": "data", "tone": "ok", "quote": "with your usual credentials", "why": "It asks for no data in the email. The password is only used on the official page." }
+    ]
+  },
+  {
+    "id": "mbway-comprovativo-sms",
+    "channel": "sms",
+    "from": { "name": "MBWAY", "address": "" },
+    "subject": "",
+    "body": ["MB WAY: you paid €23.40 to Pastelaria Doce Rua on 28/10 at 15:12. If you do not recognise this operation, contact your bank."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "MBWAY", "why": "An operation notification as the service sends them, tied to your number." },
+      { "kind": "data", "tone": "ok", "quote": "If you do not recognise this operation, contact your bank.", "why": "No codes or links are requested. It sends you to your bank through channels you already know." },
+      { "kind": "urgency", "tone": "ok", "quote": "you paid €23.40 to Pastelaria Doce Rua", "why": "It has an exact amount, merchant and time. If you recognise this afternoon’s coffee, there is nothing to do." }
+    ]
+  },
+  {
+    "id": "banco-codigo-2fa",
+    "channel": "sms",
+    "from": { "name": "BancoMeridional", "address": "" },
+    "subject": "",
+    "body": ["Banco Meridional: code 483920 to confirm the payment of €59.90 at LOJAONLINE. Valid for 5 minutes. Never share it, not even with the bank. Don’t recognise it? Call 21 000 00 00."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "data", "tone": "ok", "quote": "Never share it, not even with the bank.", "why": "The code is for you to enter, without giving it to anyone. The warning is good practice, not a request." },
+      { "kind": "urgency", "tone": "ok", "quote": "Valid for 5 minutes", "why": "A short code validity is normal and asks nothing of you beyond confirming something you started yourself." },
+      { "kind": "link", "tone": "ok", "quote": "Call 21 000 00 00", "why": "No links: just a number to call if it was not you. Ideally you use the number on the back of your card." }
+    ]
+  },
+  {
+    "id": "operadora-fatura-disponivel",
+    "channel": "email",
+    "from": { "name": "LusoMóvel", "address": "faturas@lusomovel.pt" },
+    "subject": "Your October bill is now available",
+    "body": [
+      "Hello, Marta.",
+      "Your October bill (€34.90) is now available in your Customer Area. Payment will be made by direct debit on 10 November.",
+      "You can view it at lusomovel.pt/cliente or in the LusoMóvel app."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "faturas@lusomovel.pt", "why": "The domain is the same as the operator’s website and the message uses your first name." },
+      { "kind": "link", "tone": "ok", "quote": "lusomovel.pt/cliente", "why": "It points to the customer area on the official domain, with no attachments or card forms." },
+      { "kind": "data", "tone": "ok", "quote": "by direct debit on 10 November", "why": "It reports what is already agreed and asks for no new data." }
+    ]
+  },
+  {
+    "id": "livraria-encomenda-enviada",
+    "channel": "email",
+    "from": { "name": "Livraria Fio de Prumo", "address": "encomendas@fiodeprumo.pt" },
+    "subject": "Your order #A-48213 has shipped",
+    "body": [
+      "Good news! Order #A-48213 (2 books) left today and should arrive between Thursday and Friday.",
+      "CTT tracking number: RB987654321PT. You can follow it at fiodeprumo.pt/conta/encomendas.",
+      "Thank you for shopping at Fio de Prumo."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "encomendas@fiodeprumo.pt", "why": "The domain matches the shop where you actually bought." },
+      { "kind": "link", "tone": "ok", "quote": "fiodeprumo.pt/conta/encomendas", "why": "It points to the shop’s account area on the shop’s domain. If you do not recognise the purchase, do not click and go to your account." },
+      { "kind": "data", "tone": "ok", "quote": "#A-48213 (2 books)", "why": "Concrete details of a purchase you can confirm. Fake messages are vague." }
+    ]
+  },
+  {
+    "id": "ss-declaracao-anexo",
+    "channel": "email",
+    "from": { "name": "Segurança Social Direta", "address": "noreply@seg-social.pt" },
+    "subject": "Requested document: contributory status statement",
+    "body": [
+      "In reply to the request you made today on Segurança Social Direta, your contributory status statement is attached.",
+      "Do not reply to this email."
+    ],
+    "attachment": "declaracao-situacao-contributiva.pdf",
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "noreply@seg-social.pt", "why": "The official Segurança Social domain." },
+      { "kind": "attachment", "tone": "ok", "quote": "declaracao-situacao-contributiva.pdf", "why": "It is a genuine PDF and exactly the document you asked for minutes ago. An expected, consistent attachment is normal." },
+      { "kind": "data", "tone": "ok", "quote": "In reply to the request you made today", "why": "The message answers something you did yourself and asks for nothing more." }
+    ]
+  },
+  {
+    "id": "banco-aviso-burlas",
+    "channel": "email",
+    "from": { "name": "Banco Meridional", "address": "seguranca@meridional.pt" },
+    "subject": "Beware of fake texts in the bank’s name",
+    "body": [
+      "Fraudulent messages are circulating in the name of Banco Meridional asking for card details or codes.",
+      "The bank never asks for your PIN, password or confirmation codes by SMS, email or phone.",
+      "More security tips at meridional.pt/seguranca. If in doubt, call the number on the back of your card."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "seguranca@meridional.pt", "why": "The bank’s main domain, with no strange variations." },
+      { "kind": "data", "tone": "ok", "quote": "never asks for your PIN, password or confirmation codes", "why": "The message says the opposite of what a scammer would: it teaches you to refuse requests." },
+      { "kind": "link", "tone": "ok", "quote": "meridional.pt/seguranca", "why": "A link to an information page on the bank’s domain, with no login." }
+    ]
+  },
+  {
+    "id": "amiga-mbway-jantar",
+    "channel": "whatsapp",
+    "from": { "name": "Mariana (Pilates)", "address": "" },
+    "subject": "",
+    "body": [
+      "Hey! I just sent you the MB WAY request for your €12.50 share of last night’s dinner 😄",
+      "Just accept it in the app, the notification should show up now. It was a great night, we have to do it again!"
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "Mariana (Pilates)", "why": "A contact you have saved, with real context. The message fits a dinner you both remember." },
+      { "kind": "link", "tone": "ok", "quote": "Just accept it in the app", "why": "There is no link: the request arrives through the MB WAY app, and you approve it there." },
+      { "kind": "data", "tone": "ok", "quote": "€12.50", "why": "A small, realistic amount you can check against the dinner bill. Still, always confirm the name and amount in the app before accepting." }
+    ]
+  },
+  {
+    "id": "clinica-lembrete-wa",
+    "channel": "whatsapp",
+    "from": { "name": "Clínica Sorriso", "address": "" },
+    "subject": "",
+    "body": [
+      "Hello, Pedro. Reminder: dental appointment tomorrow at 10:30 at Clínica Sorriso, Av. da Liberdade.",
+      "Reply 1 to confirm or 2 to cancel."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "Clínica Sorriso", "why": "A business account you have saved or dealt with before, and the appointment matches a booking you made." },
+      { "kind": "urgency", "tone": "ok", "quote": "tomorrow at 10:30", "why": "The urgency is just the appointment date. No threat attached." },
+      { "kind": "data", "tone": "ok", "quote": "Reply 1 to confirm or 2 to cancel.", "why": "You are only asked for a reply digit. Never personal data or payment." }
+    ]
+  },
+  {
+    "id": "centro-saude-consulta-sms",
+    "channel": "sms",
+    "from": { "name": "SNS", "address": "" },
+    "subject": "",
+    "body": ["SNS: you have an appointment booked at the Health Centre on 4/11 at 9:20. If you cannot attend, cancel on 800 24 24 24 or in the patient area."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "SNS", "why": "A notification of a booking you made, sent by a health service you use." },
+      { "kind": "data", "tone": "ok", "quote": "you have an appointment booked at the Health Centre on 4/11 at 9:20", "why": "A concrete date and place, which you can check in your diary. Fakes avoid verifiable details." },
+      { "kind": "link", "tone": "ok", "quote": "cancel on 800 24 24 24 or in the patient area", "why": "Two ways to act, without a link. If you want to cancel, open the portal yourself." }
+    ]
+  },
+  {
+    "id": "conferencia-bilhetes",
+    "channel": "email",
+    "from": { "name": "CiberLisboa 2026", "address": "bilhetes@ciberlisboa.pt" },
+    "subject": "Last early bird tickets – only until Friday",
+    "body": [
+      "Hi! You subscribed to the CiberLisboa 2026 newsletter and we want to let you know: early bird tickets (€89) end Friday at 23:59.",
+      "Programme and purchase at ciberlisboa.pt/bilhetes. If you do not want more messages, use the unsubscribe link at the end of the email."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "bilhetes@ciberlisboa.pt", "why": "The same domain as the event you signed up to." },
+      { "kind": "urgency", "tone": "ok", "quote": "end Friday at 23:59", "why": "It is marketing with a deadline, and it is pressure. But it is tied to a real price, not a threat or loss of access." },
+      { "kind": "link", "tone": "ok", "quote": "ciberlisboa.pt/bilhetes", "why": "A link on the event’s domain, which you can verify. The unsubscribe option is also a good sign." }
+    ]
+  },
+  {
+    "id": "rh-recibo-vencimento",
+    "channel": "email",
+    "from": { "name": "Human Resources", "address": "rh@estudiopalma.pt" },
+    "subject": "October payslip",
+    "body": [
+      "Hi all,",
+      "The October payslip is now available on the internal portal, under the “Documentos” tab.",
+      "Any questions, come and see us in room 2.04. Thanks, Catarina."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "rh@estudiopalma.pt", "why": "Your company’s domain, sent to everyone, signed by someone you know." },
+      { "kind": "link", "tone": "ok", "quote": "on the internal portal, under the “Documentos” tab", "why": "It tells you where to go without giving you a link, and with no attachment carrying sensitive data." },
+      { "kind": "data", "tone": "ok", "quote": "come and see us in room 2.04", "why": "It directs questions to a real person and place, not to a form." }
+    ]
+  },
+  {
+    "id": "seguro-referencia-mb",
+    "channel": "email",
+    "from": { "name": "Seguradora Atlântica", "address": "clientes@seguradora-atlantica.pt" },
+    "subject": "Car insurance renewal – payment reference",
+    "body": [
+      "Your car policy renews on 15 November. To pay by Multibanco or homebanking use:",
+      "Entity 21999 · Reference 123 456 789 · Amount €214.30",
+      "You can also change the payment method in the customer area, or call your branch."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "clientes@seguradora-atlantica.pt", "why": "The same domain as your insurer’s website." },
+      { "kind": "data", "tone": "ok", "quote": "Entity 21999 · Reference 123 456 789 · Amount €214.30", "why": "A Multibanco reference can only be used to pay, not to withdraw money. Check the amount against your policy." },
+      { "kind": "urgency", "tone": "ok", "quote": "renews on 15 November", "why": "The date comes from the policy you hold, not from a threat." }
+    ]
+  },
+  {
+    "id": "energia-leitura-contador",
+    "channel": "sms",
+    "from": { "name": "Luzoeste", "address": "" },
+    "subject": "",
+    "body": ["Luzoeste: you can submit your meter reading until 30/10 at luzoeste.pt/leitura or on 800 100 200. Without a reading, your next bill will be estimated."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "Luzoeste", "why": "The electricity supplier you have a contract with." },
+      { "kind": "urgency", "tone": "ok", "quote": "until 30/10", "why": "A real deadline, and the consequence is merely an estimated bill, not a cut-off or fine." },
+      { "kind": "link", "tone": "ok", "quote": "luzoeste.pt/leitura", "why": "The supplier’s domain, and the action (submitting a reading) asks for no passwords or card. A phone number is also given." }
+    ]
+  },
+  {
+    "id": "conta-novo-acesso",
+    "channel": "email",
+    "from": { "name": "Contas CorreioLuso", "address": "seguranca@contas.correioluso.pt" },
+    "subject": "New sign-in to your account",
+    "body": [
+      "We detected a new sign-in: Lisbon, Chrome on Windows, today at 08:41.",
+      "If it was you, you do not need to do anything. If you do not recognise it, change your password at contas.correioluso.pt/seguranca. Typing the address into your browser is better than clicking."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "seguranca@contas.correioluso.pt", "why": "A subdomain of “correioluso.pt”, the domain of the email service you use." },
+      { "kind": "data", "tone": "ok", "quote": "Lisbon, Chrome on Windows, today at 08:41", "why": "City, browser and time you can compare with what you did. It does not ask for your password." },
+      { "kind": "urgency", "tone": "ok", "quote": "If it was you, you do not need to do anything.", "why": "The notice only asks for action if it was not you. Someone trying to trick you starts with haste." }
+    ]
+  }
+]

@@ -13,6 +13,7 @@ export const TOOLS = [
   { slug: 'exif', glyph: '◎', kind: 'client' },
   { slug: 'csp', glyph: '{}', kind: 'client' },
   { slug: 'link-game', glyph: '↗', kind: 'client' },
+  { slug: 'phishing', glyph: '⚑', kind: 'client' },
   { slug: 'pwned', glyph: '⊘', kind: 'server' },
   { slug: 'mirror', glyph: '⇄', kind: 'server' },
 ] as const;

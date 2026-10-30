@@ -1,0 +1,506 @@
+[
+  {
+    "id": "ctt-taxa-sms",
+    "channel": "sms",
+    "from": { "name": "+351 91X XXX 214", "address": "" },
+    "subject": "",
+    "body": ["CTT: a sua encomenda PT48210 está retida por falta de 1,99 € de taxa. Pague em 48h ou será devolvida: ctt-entregas-pt.top/pagar"],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+351 91X XXX 214", "why": "Os CTT identificam-se pelo nome no SMS, não por um número de telemóvel comum." },
+      { "kind": "urgency", "tone": "bad", "quote": "Pague em 48h ou será devolvida", "why": "Um prazo curto com ameaça de devolução serve para te fazer agir sem pensar." },
+      { "kind": "link", "tone": "bad", "quote": "ctt-entregas-pt.top/pagar", "why": "O domínio é «.top», não «ctt.pt». O nome dos CTT no meio de um endereço não o torna dos CTT." },
+      { "kind": "data", "tone": "bad", "quote": "falta de 1,99 € de taxa", "why": "Uma taxa pequena é a isca: o objetivo é ficarem com os dados do teu cartão na página de pagamento." }
+    ]
+  },
+  {
+    "id": "irs-reembolso-email",
+    "channel": "email",
+    "from": { "name": "Autoridade Tributária", "address": "reembolsos@financas-gov-pt.info" },
+    "subject": "Reembolso de IRS disponível: 412,60 €",
+    "body": [
+      "Exmo(a). contribuinte,",
+      "Após análise da sua declaração, apurámos um reembolso de 412,60 €. Para o receber, confirme o IBAN e os dados do cartão no formulário seguinte.",
+      "https://financas-gov-pt.info/reembolso/confirmar",
+      "O pedido expira hoje às 23h59."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "reembolsos@financas-gov-pt.info", "why": "O domínio é «financas-gov-pt.info». As páginas do Estado terminam em «.gov.pt»; isto só imita a aparência." },
+      { "kind": "data", "tone": "bad", "quote": "confirme o IBAN e os dados do cartão", "why": "Para te pagar um reembolso basta o IBAN que já consta do sistema. Dados do cartão nunca são precisos para receber dinheiro." },
+      { "kind": "link", "tone": "bad", "quote": "https://financas-gov-pt.info/reembolso/confirmar", "why": "Mesmo domínio falso do remetente. O cadeado do https só diz que a ligação é cifrada, não que o site é de confiança." },
+      { "kind": "urgency", "tone": "bad", "quote": "O pedido expira hoje às 23h59.", "why": "Os reembolsos não «expiram» ao fim de umas horas. A pressa é parte da burla." }
+    ]
+  },
+  {
+    "id": "seg-social-suspensao",
+    "channel": "email",
+    "from": { "name": "Segurança Social Direta", "address": "servico@seg-social-acesso.net" },
+    "subject": "Último aviso: acesso suspenso",
+    "body": [
+      "O seu acesso à Segurança Social Direta vai ser suspenso por inatividade de segurança.",
+      "Para manter o acesso, introduza o NISS e a palavra-passe em: seg-social-acesso.net/validar",
+      "Se não o fizer em 24 horas, terá de se deslocar a um balcão."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "servico@seg-social-acesso.net", "why": "O endereço oficial é «seg-social.pt». «seg-social-acesso.net» é outro domínio, registado por qualquer pessoa." },
+      { "kind": "data", "tone": "bad", "quote": "introduza o NISS e a palavra-passe", "why": "Ninguém legítimo te pede a palavra-passe por e-mail. Quem a recebe fica com a tua conta." },
+      { "kind": "link", "tone": "bad", "quote": "seg-social-acesso.net/validar", "why": "Página de login falsa. Para entrar, escreve tu o endereço oficial no browser em vez de clicares." },
+      { "kind": "urgency", "tone": "bad", "quote": "Se não o fizer em 24 horas", "why": "A ameaça do balcão e as 24 horas empurram-te a clicar antes de verificares." }
+    ]
+  },
+  {
+    "id": "mbway-engano-wa",
+    "channel": "whatsapp",
+    "from": { "name": "+351 96X XXX 077", "address": "" },
+    "subject": "",
+    "body": [
+      "Boa tarde, desculpe incomodar. Enviei 85 € para o seu número por engano.",
+      "Pode devolver por MB WAY? Vai receber um código por SMS, diga-me só o código para eu cancelar e recuperar o dinheiro. Obrigado!"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+351 96X XXX 077", "why": "Número desconhecido, sem foto nem histórico. Não há nada que ligue esta pessoa a ti." },
+      { "kind": "data", "tone": "bad", "quote": "diga-me só o código", "why": "Os códigos que recebes por SMS servem para autorizar operações na tua conta. Partilhá-los é entregar a chave." },
+      { "kind": "urgency", "tone": "bad", "quote": "para eu cancelar e recuperar o dinheiro", "why": "Cria uma obrigação moral e uma razão técnica falsa. Uma transferência enganada resolve-se pelo banco, não por códigos." }
+    ]
+  },
+  {
+    "id": "banco-cartao-sms",
+    "channel": "sms",
+    "from": { "name": "BancoMeridional", "address": "" },
+    "subject": "",
+    "body": ["Banco Meridional: detetámos uma compra suspeita de 749,00 €. Se não foi você, valide já o cartão em meridional-seguro.com/valida para evitar o bloqueio."],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "BancoMeridional", "why": "Os SMS falsos podem aparecer na mesma conversa dos verdadeiros, por isso o nome do remetente não prova nada." },
+      { "kind": "urgency", "tone": "bad", "quote": "valide já o cartão", "why": "Um susto («compra suspeita») e uma ação imediata. O banco bloqueia o cartão sozinho; não precisa que cliques." },
+      { "kind": "link", "tone": "bad", "quote": "meridional-seguro.com/valida", "why": "O banco usa o seu domínio habitual, não um com «seguro» acrescentado." }
+    ]
+  },
+  {
+    "id": "operadora-fatura-exe",
+    "channel": "email",
+    "from": { "name": "Apoio Cliente LusoMóvel", "address": "faturacao.lusomovel@mail-clientes.biz" },
+    "subject": "Fatura em atraso – corte de serviço",
+    "body": [
+      "Caro cliente,",
+      "Não foi possível debitar a sua fatura de outubro. Abra o documento em anexo para ver o valor em dívida e regularize ainda hoje para evitar o corte do serviço."
+    ],
+    "attachment": "Fatura_Outubro_2026.pdf.exe",
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "faturacao.lusomovel@mail-clientes.biz", "why": "O nome «LusoMóvel» é só texto de apresentação; o endereço real pertence a «mail-clientes.biz»." },
+      { "kind": "attachment", "tone": "bad", "quote": "Fatura_Outubro_2026.pdf.exe", "why": "Isto é um programa a fingir que é um PDF. Faturas não são executáveis." },
+      { "kind": "urgency", "tone": "bad", "quote": "regularize ainda hoje para evitar o corte do serviço", "why": "Ameaça de corte e prazo de um dia. As faturas reais têm datas limite claras e avisos prévios." }
+    ]
+  },
+  {
+    "id": "filho-novo-numero-wa",
+    "channel": "whatsapp",
+    "from": { "name": "+351 93X XXX 590", "address": "" },
+    "subject": "",
+    "body": [
+      "Olá mãe, este é o meu novo número, o telemóvel caiu à água 😭",
+      "Preciso de pagar uma fatura hoje e o banco não me deixa entrar na app. Consegues fazer uma transferência de 640 € para mim? Depois explico tudo, não consigo falar agora."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+351 93X XXX 590", "why": "Um número novo sem nada guardado. Quem muda de número costuma avisar de outra forma antes de pedir dinheiro." },
+      { "kind": "data", "tone": "bad", "quote": "fazer uma transferência de 640 €", "why": "O pedido de dinheiro logo na primeira conversa é o objetivo. Liga para o número antigo ou para outro familiar antes de pagar." },
+      { "kind": "urgency", "tone": "bad", "quote": "não consigo falar agora", "why": "Impedem a chamada, que é precisamente a forma mais rápida de desmascarar a mentira." }
+    ]
+  },
+  {
+    "id": "encomenda-reagendar-sms",
+    "channel": "sms",
+    "from": { "name": "RapidoExpress", "address": "" },
+    "subject": "",
+    "body": ["Não conseguimos entregar a sua encomenda hoje. Reagende a entrega aqui: enc.pt-rastreio.cc/9Fq e confirme a sua morada e o cartão para taxas."],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "link", "tone": "bad", "quote": "enc.pt-rastreio.cc/9Fq", "why": "Domínio estranho e «.cc». As transportadoras verdadeiras pedem o número de seguimento no site delas, não um link genérico." },
+      { "kind": "data", "tone": "bad", "quote": "confirme a sua morada e o cartão para taxas", "why": "Reagendar uma entrega não exige um cartão. Se esperavas uma encomenda, vai tu ao site do vendedor ou do transportador." },
+      { "kind": "sender", "tone": "bad", "quote": "RapidoExpress", "why": "Não referes nenhuma encomenda que tenhas feito a este transportador; a mensagem é genérica porque foi enviada a milhares de pessoas." }
+    ]
+  },
+  {
+    "id": "webmail-caixa-cheia",
+    "channel": "email",
+    "from": { "name": "Administrador de Sistema", "address": "admin@suporte-correio.help" },
+    "subject": "Caixa de correio cheia – ação necessária",
+    "body": [
+      "A sua caixa de correio atingiu 98% da capacidade. Novas mensagens serão rejeitadas dentro de 12 horas.",
+      "Aumente a quota gratuitamente iniciando sessão aqui: suporte-correio.help/quota",
+      "Serviços de TI"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "admin@suporte-correio.help", "why": "Um «administrador» que não é do teu domínio nem do da tua empresa." },
+      { "kind": "urgency", "tone": "bad", "quote": "dentro de 12 horas", "why": "Falsos prazos técnicos. Quando uma caixa enche, ficas a saber ao tentar enviar ou ao receber um aviso do próprio serviço." },
+      { "kind": "link", "tone": "bad", "quote": "suporte-correio.help/quota", "why": "Página de login falsa para roubar a palavra-passe do e-mail, que dá acesso a todas as outras contas." },
+      { "kind": "data", "tone": "bad", "quote": "iniciando sessão aqui", "why": "Iniciar sessão a partir de um link num e-mail é o gesto que as burlas procuram." }
+    ]
+  },
+  {
+    "id": "streaming-pagamento-falhou",
+    "channel": "email",
+    "from": { "name": "StreamPT+", "address": "conta@streampt-faturacao.com" },
+    "subject": "O seu pagamento falhou – atualize o cartão",
+    "body": [
+      "Olá,",
+      "Não conseguimos cobrar a sua subscrição de 11,99 €. A sua conta ficará suspensa a 31 de outubro.",
+      "Atualize os dados de pagamento: https://streampt-faturacao.com/cartao"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "conta@streampt-faturacao.com", "why": "Domínio acrescentado com «faturacao»: parece oficial, mas o serviço verdadeiro usa o domínio principal da marca." },
+      { "kind": "link", "tone": "bad", "quote": "https://streampt-faturacao.com/cartao", "why": "Um formulário de cartão num domínio alternativo. Se tens dúvidas, abre a app do serviço diretamente." },
+      { "kind": "data", "tone": "bad", "quote": "Atualize os dados de pagamento", "why": "O pedido de dados do cartão por e-mail é o objetivo da mensagem." },
+      { "kind": "urgency", "tone": "bad", "quote": "ficará suspensa a 31 de outubro", "why": "Uma data com ameaça. Aqui o serviço real costuma tentar de novo e avisar na própria app." }
+    ]
+  },
+  {
+    "id": "portagens-divida-sms",
+    "channel": "sms",
+    "from": { "name": "Portagens PT", "address": "" },
+    "subject": "",
+    "body": ["Tem uma portagem por pagar de 3,40 €. Evite coima de 120 €: regularize hoje em portagens-liquidar.top"],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "Portagens PT", "why": "Nome genérico, sem matrícula nem trajeto. Uma dívida real indica o que e quando foi." },
+      { "kind": "urgency", "tone": "bad", "quote": "Evite coima de 120 €", "why": "Valor baixo mais coima alta é a combinação clássica para fazer pagar depressa." },
+      { "kind": "link", "tone": "bad", "quote": "portagens-liquidar.top", "why": "Domínio sem relação com nenhuma concessionária. Paga só nos canais que já conheces." }
+    ]
+  },
+  {
+    "id": "premio-hipermercado",
+    "channel": "email",
+    "from": { "name": "Hipermercado Sol", "address": "premios@hipersol-sorteios.shop" },
+    "subject": "Parabéns! Ganhou um cartão de 500 €",
+    "body": [
+      "Foi um dos 3 clientes sorteados do mês e ganhou um cartão-presente de 500 €.",
+      "Para o receber, pague apenas 2,50 € de portes em hipersol-sorteios.shop/premio. Tem 30 minutos para reclamar."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "premios@hipersol-sorteios.shop", "why": "O domínio não é o da loja. Quem organiza sorteios a sério não usa «.shop» com hífens." },
+      { "kind": "data", "tone": "bad", "quote": "pague apenas 2,50 € de portes", "why": "Nunca se paga para receber um prémio. O pagamento serve para recolher o teu cartão." },
+      { "kind": "urgency", "tone": "bad", "quote": "Tem 30 minutos para reclamar.", "why": "Um prémio verdadeiro não desaparece em meia hora." }
+    ]
+  },
+  {
+    "id": "comprador-anuncio-wa",
+    "channel": "whatsapp",
+    "from": { "name": "Ricardo (comprador)", "address": "" },
+    "subject": "",
+    "body": [
+      "Boas, vi o seu anúncio da bicicleta e quero comprar já. Pago com pagamento protegido da plataforma.",
+      "Envie-me o seu nome, os dados do cartão e o código de confirmação para eu pôr o dinheiro na sua conta: pagamento-seguro-anuncios.net/receber"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "link", "tone": "bad", "quote": "pagamento-seguro-anuncios.net/receber", "why": "Página falsa que imita a plataforma de anúncios." },
+      { "kind": "data", "tone": "bad", "quote": "os dados do cartão e o código de confirmação", "why": "Para receber dinheiro basta o IBAN. Os dados do cartão e códigos servem para tirar dinheiro, não para pôr." },
+      { "kind": "urgency", "tone": "bad", "quote": "quero comprar já", "why": "Pressa e vontade de pagar sem regatear nem ver a bicicleta: sinal comum nestas burlas." }
+    ]
+  },
+  {
+    "id": "chefe-transferencia",
+    "channel": "email",
+    "from": { "name": "Teresa Almeida (Direção)", "address": "teresa.almeida@acme-solucoes-pt.com" },
+    "subject": "Preciso de um favor discreto",
+    "body": [
+      "Estou em reunião e não posso atender. Preciso que faças hoje uma transferência de 4.800 € para um fornecedor novo.",
+      "Envio já os dados do IBAN. Por favor não comentes com mais ninguém por agora, depois explico."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "teresa.almeida@acme-solucoes-pt.com", "why": "O nome é o da diretora, mas o domínio é parecido com o da empresa («acme-solucoes-pt.com» em vez de «acme.pt»)." },
+      { "kind": "urgency", "tone": "bad", "quote": "não posso atender", "why": "Garantem que não consegues confirmar por telefone." },
+      { "kind": "data", "tone": "bad", "quote": "uma transferência de 4.800 € para um fornecedor novo", "why": "Dinheiro para um fornecedor desconhecido, fora do circuito normal de aprovações." },
+      { "kind": "urgency", "tone": "bad", "quote": "não comentes com mais ninguém", "why": "O sigilo é para ninguém contrariar a ordem. Pagamentos normais não são secretos." }
+    ]
+  },
+  {
+    "id": "imt-carta-conducao",
+    "channel": "email",
+    "from": { "name": "IMT – Instituto da Mobilidade", "address": "renovacao@imt-cartas-online.org" },
+    "subject": "A sua carta de condução expira em 7 dias",
+    "body": [
+      "A sua carta de condução está prestes a expirar. Para evitar coima, renove online em imt-cartas-online.org e pague a taxa de 34,50 €.",
+      "Necessitamos de uma fotografia do documento de identificação e dos dados do cartão."
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "renovacao@imt-cartas-online.org", "why": "O IMT usa domínios do Estado («.pt»). «.org» com «online» é uma imitação." },
+      { "kind": "urgency", "tone": "bad", "quote": "Para evitar coima", "why": "A coima é só ameaça para acelerar a decisão." },
+      { "kind": "data", "tone": "bad", "quote": "uma fotografia do documento de identificação e dos dados do cartão", "why": "Cópia do documento mais cartão dá para fraude de identidade e de pagamentos. Um serviço verdadeiro não pede ambos por e-mail." }
+    ]
+  },
+  {
+    "id": "emprego-remoto-wa",
+    "channel": "whatsapp",
+    "from": { "name": "+44 7XXX XXXXXX", "address": "" },
+    "subject": "",
+    "body": [
+      "Olá! Somos uma agência de marketing e procuramos pessoas para trabalho remoto: ganhe 150 € por dia a gostar de vídeos, sem experiência.",
+      "Para o registo, envie-nos já uma fotografia do cartão de cidadão e o seu IBAN. Vagas limitadas para hoje!"
+    ],
+    "verdict": "phishing",
+    "signals": [
+      { "kind": "sender", "tone": "bad", "quote": "+44 7XXX XXXXXX", "why": "Contacto estrangeiro que nunca te viu e escreve em português genérico." },
+      { "kind": "data", "tone": "bad", "quote": "uma fotografia do cartão de cidadão e o seu IBAN", "why": "Dados de identidade e conta para um «registo» sem contrato nem entrevista. Servem para abrir contas e lavar dinheiro em teu nome." },
+      { "kind": "urgency", "tone": "bad", "quote": "Vagas limitadas para hoje!", "why": "Escassez fabricada. Os 150 € por dia a gostar de vídeos são a isca." }
+    ]
+  },
+  {
+    "id": "ctt-levantamento-sms",
+    "channel": "sms",
+    "from": { "name": "CTT", "address": "" },
+    "subject": "",
+    "body": ["CTT: a encomenda RB123456789PT já está disponível para levantamento no Ponto CTT Mercearia Nova (Rua das Flores, 12). Leve documento de identificação. Prazo: 7 dias úteis. Detalhes: ctt.pt/rastreio"],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "CTT", "why": "Remetente alfanumérico com o nome da empresa, sem número de telemóvel anónimo." },
+      { "kind": "link", "tone": "ok", "quote": "ctt.pt/rastreio", "why": "O domínio é «ctt.pt» e o caminho é de seguimento. Mesmo assim, podes escrever o endereço tu mesmo." },
+      { "kind": "urgency", "tone": "ok", "quote": "Prazo: 7 dias úteis", "why": "Um prazo real e longo, sem ameaça. Não te pedem nada urgente nem pagamento." }
+    ]
+  },
+  {
+    "id": "financas-notificacao",
+    "channel": "email",
+    "from": { "name": "Portal das Finanças", "address": "no-reply@portaldasfinancas.gov.pt" },
+    "subject": "Tem uma nova notificação no Portal das Finanças",
+    "body": [
+      "Informamos que tem uma nova notificação disponível na sua Caixa Postal Eletrónica.",
+      "Para a consultar, aceda ao Portal das Finanças escrevendo o endereço no browser e inicie sessão com as suas credenciais habituais.",
+      "Esta mensagem é automática e não deve ser respondida."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "no-reply@portaldasfinancas.gov.pt", "why": "Domínio do Estado, «.gov.pt», e o nome do portal que de facto existe." },
+      { "kind": "link", "tone": "ok", "quote": "escrevendo o endereço no browser", "why": "Não há link para clicar: manda-te ir tu ao site, que é exatamente o hábito seguro." },
+      { "kind": "data", "tone": "ok", "quote": "com as suas credenciais habituais", "why": "Não pede dados no e-mail. A palavra-passe só é usada na página oficial." }
+    ]
+  },
+  {
+    "id": "mbway-comprovativo-sms",
+    "channel": "sms",
+    "from": { "name": "MBWAY", "address": "" },
+    "subject": "",
+    "body": ["MB WAY: pagou 23,40 € a Pastelaria Doce Rua em 28/10 às 15:12. Se não reconhece esta operação, contacte o seu banco."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "MBWAY", "why": "Notificação de operação tal como o serviço as envia, associada ao teu número." },
+      { "kind": "data", "tone": "ok", "quote": "Se não reconhece esta operação, contacte o seu banco.", "why": "Não te pedem códigos nem links. Mandam-te falar com o banco pelos canais que já conheces." },
+      { "kind": "urgency", "tone": "ok", "quote": "pagou 23,40 € a Pastelaria Doce Rua", "why": "Tem montante, comerciante e hora precisos. Se reconheces o café, não há nada a fazer." }
+    ]
+  },
+  {
+    "id": "banco-codigo-2fa",
+    "channel": "sms",
+    "from": { "name": "BancoMeridional", "address": "" },
+    "subject": "",
+    "body": ["Banco Meridional: código 483920 para confirmar o pagamento de 59,90 € em LOJAONLINE. Válido 5 minutos. Nunca o partilhe, nem com o banco. Não reconhece? Ligue 21 000 00 00."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "data", "tone": "ok", "quote": "Nunca o partilhe, nem com o banco.", "why": "O código é para ti o introduzires, sem o dares a ninguém. O aviso é uma boa prática, não um pedido." },
+      { "kind": "urgency", "tone": "ok", "quote": "Válido 5 minutos", "why": "A validade curta do código é normal e não te pede ação além de confirmares algo que tu mesmo iniciaste." },
+      { "kind": "link", "tone": "ok", "quote": "Ligue 21 000 00 00", "why": "Sem links: só um número para ligares se não foste tu. O ideal é usares o número que está no verso do cartão." }
+    ]
+  },
+  {
+    "id": "operadora-fatura-disponivel",
+    "channel": "email",
+    "from": { "name": "LusoMóvel", "address": "faturas@lusomovel.pt" },
+    "subject": "A sua fatura de outubro já está disponível",
+    "body": [
+      "Olá, Marta.",
+      "A fatura de outubro (34,90 €) já está disponível na sua Área de Cliente. O pagamento será feito por débito direto a 10 de novembro.",
+      "Pode consultá-la em lusomovel.pt/cliente ou na app LusoMóvel."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "faturas@lusomovel.pt", "why": "O domínio é o mesmo do site da operadora e a mensagem usa o teu nome próprio." },
+      { "kind": "link", "tone": "ok", "quote": "lusomovel.pt/cliente", "why": "Remete para a área de cliente no domínio oficial, sem anexos nem formulários de cartão." },
+      { "kind": "data", "tone": "ok", "quote": "por débito direto a 10 de novembro", "why": "Informa do que já está acordado e não te pede nenhum dado novo." }
+    ]
+  },
+  {
+    "id": "livraria-encomenda-enviada",
+    "channel": "email",
+    "from": { "name": "Livraria Fio de Prumo", "address": "encomendas@fiodeprumo.pt" },
+    "subject": "A sua encomenda #A-48213 foi enviada",
+    "body": [
+      "Boas notícias! A encomenda #A-48213 (2 livros) saiu hoje e deve chegar entre quinta e sexta-feira.",
+      "Número de seguimento CTT: RB987654321PT. Pode acompanhar em fiodeprumo.pt/conta/encomendas.",
+      "Obrigado por comprar na Fio de Prumo."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "encomendas@fiodeprumo.pt", "why": "O domínio corresponde ao da loja onde de facto fizeste a compra." },
+      { "kind": "link", "tone": "ok", "quote": "fiodeprumo.pt/conta/encomendas", "why": "Aponta para a conta da loja, no domínio da loja. Se não reconheceres a compra, não cliques e vai à tua conta." },
+      { "kind": "data", "tone": "ok", "quote": "#A-48213 (2 livros)", "why": "Detalhes concretos sobre uma compra que confirmas ter feito. As mensagens falsas são vagas." }
+    ]
+  },
+  {
+    "id": "ss-declaracao-anexo",
+    "channel": "email",
+    "from": { "name": "Segurança Social Direta", "address": "noreply@seg-social.pt" },
+    "subject": "Documento pedido: declaração de situação contributiva",
+    "body": [
+      "Em resposta ao pedido que efetuou hoje na Segurança Social Direta, segue em anexo a sua declaração de situação contributiva.",
+      "Não responda a este e-mail."
+    ],
+    "attachment": "declaracao-situacao-contributiva.pdf",
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "noreply@seg-social.pt", "why": "Domínio oficial da Segurança Social." },
+      { "kind": "attachment", "tone": "ok", "quote": "declaracao-situacao-contributiva.pdf", "why": "É um PDF verdadeiro e é exatamente o documento que pediste há minutos. Um anexo esperado e coerente é normal." },
+      { "kind": "data", "tone": "ok", "quote": "Em resposta ao pedido que efetuou hoje", "why": "A mensagem responde a algo que fizeste tu e não pede mais nada." }
+    ]
+  },
+  {
+    "id": "banco-aviso-burlas",
+    "channel": "email",
+    "from": { "name": "Banco Meridional", "address": "seguranca@meridional.pt" },
+    "subject": "Atenção a falsos SMS em nome do banco",
+    "body": [
+      "Estão a circular mensagens fraudulentas em nome do Banco Meridional a pedir dados de cartão ou códigos.",
+      "O banco nunca lhe pede o PIN, a palavra-passe ou códigos de confirmação por SMS, e-mail ou telefone.",
+      "Mais dicas de segurança em meridional.pt/seguranca. Em caso de dúvida, ligue para o número do verso do seu cartão."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "seguranca@meridional.pt", "why": "Domínio principal do banco, sem variações estranhas." },
+      { "kind": "data", "tone": "ok", "quote": "nunca lhe pede o PIN, a palavra-passe ou códigos de confirmação", "why": "A mensagem diz o contrário do que um burlão diria: ensina-te a recusar pedidos." },
+      { "kind": "link", "tone": "ok", "quote": "meridional.pt/seguranca", "why": "Link para uma página de informação no domínio do banco, que não pede login." }
+    ]
+  },
+  {
+    "id": "amiga-mbway-jantar",
+    "channel": "whatsapp",
+    "from": { "name": "Mariana (Pilates)", "address": "" },
+    "subject": "",
+    "body": [
+      "Ei! Fiz agora o pedido MB WAY dos teus 12,50 € do jantar de ontem 😄",
+      "É só aceitares na app, deve aparecer-te já a notificação. Foi ótima noite, temos de repetir!"
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "Mariana (Pilates)", "why": "Contacto que tens guardado, com contexto real. Mensagem coerente com o jantar de que ambos se lembram." },
+      { "kind": "link", "tone": "ok", "quote": "É só aceitares na app", "why": "Não há link: o pedido chega pela app MB WAY, e és tu que o aprovas lá." },
+      { "kind": "data", "tone": "ok", "quote": "12,50 €", "why": "Valor pequeno, realista e que confirmas contra a conta do jantar. Mas confirma sempre o nome e o montante na app antes de aceitar." }
+    ]
+  },
+  {
+    "id": "clinica-lembrete-wa",
+    "channel": "whatsapp",
+    "from": { "name": "Clínica Sorriso", "address": "" },
+    "subject": "",
+    "body": [
+      "Olá, Pedro. Lembrete: consulta de Dentária amanhã às 10h30 na Clínica Sorriso, Av. da Liberdade.",
+      "Responda 1 para confirmar ou 2 para cancelar."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "Clínica Sorriso", "why": "Conta de empresa que tens guardada ou que já usou contigo antes, e a consulta corresponde a uma marcação tua." },
+      { "kind": "urgency", "tone": "ok", "quote": "amanhã às 10h30", "why": "A urgência é só a data da consulta. Nenhuma ameaça associada." },
+      { "kind": "data", "tone": "ok", "quote": "Responda 1 para confirmar ou 2 para cancelar.", "why": "Só te pedem um número de resposta. Nunca dados pessoais nem pagamento." }
+    ]
+  },
+  {
+    "id": "centro-saude-consulta-sms",
+    "channel": "sms",
+    "from": { "name": "SNS", "address": "" },
+    "subject": "",
+    "body": ["SNS: tem consulta marcada no Centro de Saúde a 4/11 às 9h20. Se não puder comparecer, desmarque pelo 800 24 24 24 ou na área do utente."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "SNS", "why": "Notificação de uma marcação que fizeste, enviada por um serviço de saúde que tens." },
+      { "kind": "data", "tone": "ok", "quote": "tem consulta marcada no Centro de Saúde a 4/11 às 9h20", "why": "Data e local concretos, que confirmas na tua agenda. Os falsos evitam detalhes verificáveis." },
+      { "kind": "link", "tone": "ok", "quote": "desmarque pelo 800 24 24 24 ou na área do utente", "why": "Duas formas de agir, sem link. Se quiseres desmarcar, abre tu o portal." }
+    ]
+  },
+  {
+    "id": "conferencia-bilhetes",
+    "channel": "email",
+    "from": { "name": "CiberLisboa 2026", "address": "bilhetes@ciberlisboa.pt" },
+    "subject": "Últimos bilhetes early bird – só até sexta",
+    "body": [
+      "Olá! Subscreveste a newsletter da CiberLisboa 2026 e queremos avisar-te: os bilhetes early bird (89 €) acabam sexta às 23h59.",
+      "Programa e compra em ciberlisboa.pt/bilhetes. Se não quiseres receber mais mensagens, usa a ligação de cancelamento no fim do e-mail."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "bilhetes@ciberlisboa.pt", "why": "Domínio igual ao do evento a que te inscreveste." },
+      { "kind": "urgency", "tone": "ok", "quote": "acabam sexta às 23h59", "why": "É marketing com prazo, e é pressão. Mas está ligada a um preço real e não a uma ameaça ou perda de acesso." },
+      { "kind": "link", "tone": "ok", "quote": "ciberlisboa.pt/bilhetes", "why": "Link no domínio do evento, que podes confirmar. A opção de cancelar subscrição também é um bom sinal." }
+    ]
+  },
+  {
+    "id": "rh-recibo-vencimento",
+    "channel": "email",
+    "from": { "name": "Recursos Humanos", "address": "rh@estudiopalma.pt" },
+    "subject": "Recibo de vencimento de outubro",
+    "body": [
+      "Olá a todos,",
+      "O recibo de vencimento de outubro já está disponível no portal interno, no separador «Documentos».",
+      "Qualquer dúvida, falem connosco na sala 2.04. Obrigada, Catarina."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "rh@estudiopalma.pt", "why": "Domínio da tua empresa, enviado a todos, assinado por alguém que conheces." },
+      { "kind": "link", "tone": "ok", "quote": "no portal interno, no separador «Documentos»", "why": "Diz-te onde ir sem te pôr um link, e sem anexo com dados sensíveis." },
+      { "kind": "data", "tone": "ok", "quote": "falem connosco na sala 2.04", "why": "Direciona dúvidas para uma pessoa e local reais, não para um formulário." }
+    ]
+  },
+  {
+    "id": "seguro-referencia-mb",
+    "channel": "email",
+    "from": { "name": "Seguradora Atlântica", "address": "clientes@seguradora-atlantica.pt" },
+    "subject": "Renovação do seguro automóvel – referência para pagamento",
+    "body": [
+      "A apólice do seu automóvel renova a 15 de novembro. Para pagar por Multibanco ou homebanking use:",
+      "Entidade 21999 · Referência 123 456 789 · Montante 214,30 €",
+      "Pode também alterar a forma de pagamento na área de cliente, ou ligar para a sua agência."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "clientes@seguradora-atlantica.pt", "why": "Domínio igual ao do site da tua seguradora." },
+      { "kind": "data", "tone": "ok", "quote": "Entidade 21999 · Referência 123 456 789 · Montante 214,30 €", "why": "Uma referência Multibanco só serve para pagar, não para retirar dinheiro. Confirma o montante contra o da tua apólice." },
+      { "kind": "urgency", "tone": "ok", "quote": "renova a 15 de novembro", "why": "A data decorre da apólice que tens, não de uma ameaça." }
+    ]
+  },
+  {
+    "id": "energia-leitura-contador",
+    "channel": "sms",
+    "from": { "name": "Luzoeste", "address": "" },
+    "subject": "",
+    "body": ["Luzoeste: pode comunicar a leitura do seu contador até 30/10 em luzoeste.pt/leitura ou pelo 800 100 200. Sem leitura, a próxima fatura será estimada."],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "Luzoeste", "why": "O fornecedor de eletricidade com quem tens contrato." },
+      { "kind": "urgency", "tone": "ok", "quote": "até 30/10", "why": "Prazo real, e a consequência é só uma fatura estimada, não um corte ou coima." },
+      { "kind": "link", "tone": "ok", "quote": "luzoeste.pt/leitura", "why": "Domínio do fornecedor, e a ação (comunicar a leitura) não pede senhas nem cartão. Há também um telefone." }
+    ]
+  },
+  {
+    "id": "conta-novo-acesso",
+    "channel": "email",
+    "from": { "name": "Contas CorreioLuso", "address": "seguranca@contas.correioluso.pt" },
+    "subject": "Novo início de sessão na sua conta",
+    "body": [
+      "Detetámos um novo início de sessão: Lisboa, Chrome no Windows, hoje às 08:41.",
+      "Se foi você, não precisa de fazer nada. Se não reconhece, altere a palavra-passe em contas.correioluso.pt/seguranca. É melhor escrever o endereço no browser do que clicar."
+    ],
+    "verdict": "legit",
+    "signals": [
+      { "kind": "sender", "tone": "ok", "quote": "seguranca@contas.correioluso.pt", "why": "Subdomínio de «correioluso.pt», o domínio do serviço de e-mail que usas." },
+      { "kind": "data", "tone": "ok", "quote": "Lisboa, Chrome no Windows, hoje às 08:41", "why": "Cidade, browser e hora que podes comparar com o que fizeste. Não pede a palavra-passe." },
+      { "kind": "urgency", "tone": "ok", "quote": "Se foi você, não precisa de fazer nada.", "why": "O aviso só pede ação se não fores tu. Quem te quer enganar começa pela pressa." }
+    ]
+  }
+]
