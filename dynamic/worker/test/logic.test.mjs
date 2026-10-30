@@ -2210,6 +2210,19 @@ test('radarWindow: última hora alinhada ao quarto de hora (o ms em que o quarto
   assert.equal(url.searchParams.get('limit'), '30');
 });
 
+// KV que conta as escritas na chave do globo — o prefixo `radar` é
+// partilhado com `radar:feed` (Radar RSS), que o mesmo tick também escreve.
+function attacksKV() {
+  const kv = fakeKV();
+  kv.attackPuts = 0;
+  const put = kv.put.bind(kv);
+  kv.put = async (key, ...rest) => {
+    if (key === 'radar:attacks') kv.attackPuts += 1;
+    return put(key, ...rest);
+  };
+  return kv;
+}
+
 // Cron + rota: o fetch é a borda. `radar` decide a resposta do Radar; o resto
 // (crt.sh, GraphQL) falha, como num deploy sem esses upstreams.
 async function withRadarFetch(radar, fn) {
@@ -2222,7 +2235,7 @@ async function withRadarFetch(radar, fn) {
 }
 
 test('radar: cron grava a última hora e /api/radar-attacks serve-a', async () => {
-  const env = { KV: countingKV(), CF_API_TOKEN: 't' };
+  const env = { KV: attacksKV(), CF_API_TOKEN: 't' };
   const fixture = radarFixture('radar-layer7-top-attacks.json');
   await withRadarFetch(() => ({ ok: true, status: 200, json: async () => fixture }), () => runScheduled(env));
   const res = await runFetch(fakeRequest('/api/radar-attacks'), env);
@@ -2233,7 +2246,7 @@ test('radar: cron grava a última hora e /api/radar-attacks serve-a', async () =
 });
 
 test('radar: token sem permissão (403) → { ok: false }, regista, grava uma vez só, e o cron segue', async () => {
-  const env = { KV: countingKV(), CF_API_TOKEN: 't' };
+  const env = { KV: attacksKV(), CF_API_TOKEN: 't' };
   const errors = [];
   const origError = console.error;
   console.error = (...args) => errors.push(args.join(' '));
@@ -2245,7 +2258,7 @@ test('radar: token sem permissão (403) → { ok: false }, regista, grava uma ve
     console.error = origError;
   }
   assert.ok(errors.some((e) => e.startsWith('radar_attacks_forbidden')));
-  assert.equal(env.KV.puts.radar, 1);
+  assert.equal(env.KV.attackPuts, 1);
   // o motivo fica nos logs; a rota pública só diz ok:false
   const res = await runFetch(fakeRequest('/api/radar-attacks'), env);
   assert.equal(res.status, 200);
@@ -2253,7 +2266,7 @@ test('radar: token sem permissão (403) → { ok: false }, regista, grava uma ve
 });
 
 test('radar: erro transitório (500) mantém o último valor bom', async () => {
-  const env = { KV: countingKV(), CF_API_TOKEN: 't' };
+  const env = { KV: attacksKV(), CF_API_TOKEN: 't' };
   const fixture = radarFixture('radar-layer7-top-attacks.json');
   await withRadarFetch(() => ({ ok: true, status: 200, json: async () => fixture }), () => runScheduled(env));
   const origError = console.error;
@@ -2263,7 +2276,7 @@ test('radar: erro transitório (500) mantém o último valor bom', async () => {
   } finally {
     console.error = origError;
   }
-  assert.equal(env.KV.puts.radar, 1);
+  assert.equal(env.KV.attackPuts, 1);
   assert.equal((await (await runFetch(fakeRequest('/api/radar-attacks'), env)).json()).ok, true);
 });
 

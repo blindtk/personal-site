@@ -31,7 +31,8 @@ each, with the full original entries kept in this file's git history.
        that day's dominant action).
     2. **World · last hour** (context, and never empty): global Radar data,
        not attacks on this site — the tab says so, with attribution to
-       Cloudflare Radar (CC BY-NC 4.0). Details below.
+       Cloudflare Radar (CC BY-NC 4.0). Details below. Unrelated to the
+       `/radar/` page (RSS alerts and news, `radar:feed`), despite the name.
     - **Source:** `GET /radar/attacks/layer7/top/attacks`, origin → target
       country pairs as a % of mitigated layer 7 attacks. `dateRange` only
       takes `<n>d`/`<n>w` (1 day minimum), so the last hour is asked for with
@@ -50,7 +51,8 @@ each, with the full original entries kept in this file's git history.
       isolated from the other cron jobs, so it never stops them. Pure
       validation in `src/lib/radar-attacks.js` (assigned ISO 3166-1 alpha-2
       codes + XK, finite % in [0, 100], duplicates and junk dropped, 30-pair
-      cap), tested. **Write budget:** +48/day (one per tick), ~140 → ~190.
+      cap), tested. **Write budget:** +48/day (one per tick), ≈ 190/day
+      in total with the RSS Radar's 4.
     - **Frontend:** a small canvas-2D globe of our own
       (`static/src/scripts/attack-globe.js`, pure and tested;
       `components/attack-map/globe-canvas.ts`, loaded lazily), not cobe or
@@ -68,6 +70,51 @@ each, with the full original entries kept in this file's git history.
     - Each tab has its own globe and an accessible table (countries and
       events; or origin → target pairs). A globe only loads and animates
       once its tab is shown.
+- **2026-10-30 — Radar: cybersecurity alerts and news aggregated from RSS**
+  (decision by the repo owner). A new page (`/radar/`, `/en/radar/`, with
+  the "requires server" badge) lists alerts and news from fixed sources.
+  The Worker collects them on a schedule and `GET /api/radar` serves them
+  from KV.
+    - **Sources** (URLs confirmed 2026-10-29). Alerts: CNCS (PT), CERT-EU
+      security advisories, NCSC UK (all-content feed), CISA KEV (JSON).
+      News: The Record, BleepingComputer, SecurityWeek, Dark Reading.
+      **ENISA dropped**: its new website discontinued RSS feeds and the old
+      URLs return 404.
+    - **Every 6 hours, on its own cron trigger** (`13 */6 * * *`, chosen
+      by Claude under the owner's "do it the best way" after the owner
+      asked whether once a day would do). RSS has no "only what's new"
+      request, so every collection downloads each feed whole. Every 6 h
+      means 4 KV writes/day instead of 48 at `*/30`. Items reach the page
+      at most 6 h late, which is fine for a radar. A separate trigger is a
+      separate invocation with its own 10 ms of Free-plan CPU, so the CNCS
+      feed (the Worker's heaviest job, ~4–5 ms in Node) doesn't share a
+      budget with the cache warm-up. Once a day was rejected because news
+      up to 24 h old turns the page into a daily digest. The `*/30` tick
+      only reads `radar:feed`: if the key is missing (first deploy, or 7
+      days without a collection), it collects right away instead of
+      leaving the page empty for up to 6 h.
+    - **Collection, never on request.** All sources are fetched in
+      parallel, each with its own timeout (8 s) and byte cap (1 MiB; 4 MiB
+      for CNCS, whose feed is ~1.7 MB and oldest-first; 64 KiB for KEV,
+      which is newest-first, so the start of the ~1.8 MB catalog is
+      enough). Redirects are refused (`redirect: 'error'`): a moved feed
+      shows up as down instead of being followed off the fixed list. A
+      source that fails is `ok: false` and keeps its items from the
+      previous run; it never takes the others down. The route only reads
+      `radar:feed`, behind the data-center Cache API (30 min) and a 60/min
+      per-client rate limit.
+    - **Pure parsing, no dependencies** (`src/lib/radar-feed.js`): a minimal
+      RSS 2.0/Atom reader that skips CDATA and comments, decodes entities,
+      strips HTML, truncates titles (160), keeps only `https:` links with no
+      credentials, and drops items with an invalid date or one more than
+      1 h in the future. Titles go through `sanitizeText`. Items are sorted
+      by date, deduplicated by URL, capped at 10 per source and 80 in total.
+      Stored shape: `{generated, sources:[{id,name,type,lang,ok}],
+      items:[{t,u,s,d}]}`.
+    - **Budgets.** KV: 4 writes/day, so the Worker's total goes from ~440
+      to ~445/day. CPU: the parser reads dates first and only cleans the
+      newest items. If the Radar's own invocation still hits the limit,
+      drop CNCS's full-history feed.
 
 - **2026-10-02 — Remove two tools** (decision by the repo owner): the
   passkey lab and the encoder/decoder. They are generic utilities that

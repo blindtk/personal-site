@@ -25,6 +25,7 @@ Cloudflare Worker + one KV namespace.
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, and the requester's own IP — echoed back, **never stored**; ADR 0023) | — (per-request, `no-store`) | 30/min per client |
+| `GET /api/radar` | Radar: cybersecurity alerts and news (`{generated, sources:[{id,name,type,lang,ok}], items:[{t,u,s,d}]}`), read from the document the cron writes to KV (`radar:feed`) — **never fetches a feed on a visitor's request** | 30 min (data-center Cache API, then KV; its own cron, `13 */6 * * *`, rewrites it every 6 h) | 60/min per client |
 | `GET /api/radar-attacks` | Attack globe (`/mapa-de-ataques/`): the last hour's top 30 layer 7 attack pairs, origin country → target country, in % — **global** Cloudflare Radar data, not attacks on this site. Only reads what the cron stored (`radar:attacks`); any failure is `{ ok: false }` | 5 min (data-center Cache API); KV value refreshed every 30 min by the cron | — (no visitor input, no upstream call) |
 | `GET /api/health` | Liveness | — | — |
 
@@ -159,8 +160,9 @@ of puts the event makes, including its own counter):
 | `CACHE_WRITE_CAP` | 80 | KV cache refreshes triggered by public GETs (2 puts each) |
 | `REFRESH_WRITE_CAP` | 40 | `/api/cf-stats?refresh=1` (2 puts each) |
 | cron (fixed rate) | ~16 (≤ 48 worst case) | cache warm-up every 30 min, firewall snapshot — one write per distinct `cache:cfstats` fetch, so request-driven refreshes can add a few (the legacy-honeypot clean-up writes only once) |
+| cron: Radar | 4 | `radar:feed`, one put per collection, every 6 h (`src/lib/radar-feed.js`) |
 
-Total ≈ 440/day, leaving headroom for the overshoot concurrent requests can
+Total ≈ 445/day, leaving headroom for the overshoot concurrent requests can
 cause (the counters are best-effort read-then-write on an eventually
 consistent store). Past a budget, the sample is dropped (the beacon still
 returns the same 204) or the cache serves its
@@ -173,7 +175,7 @@ audit both lived in KV, and a single client could exhaust the account's
 daily writes through them in ~16 minutes (the audit report is not
 published).
 Every public cached route (`/api/vitals`, `/api/threat-intel`, `/api/ct`,
-`/api/cf-stats`, `/api/radar-attacks`) is also
+`/api/cf-stats`, `/api/radar`, `/api/radar-attacks`) is also
 cached there first, for as long as its response `max-age`. Repeated
 requests therefore cost no KV operations, and they don't re-run the
 producer even while the KV write budget is exhausted. The Cache API is

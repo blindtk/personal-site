@@ -134,8 +134,15 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # "stale" e repetia leituras caras ao KV (2026-07, alerta real de 50% do teto
 # diário do plano Free com o site ainda nem publicado — ver dynamic/PLAN.md).
 # Ver scheduled() em src/index.js.
+#
+# "13 */6 * * *": o Radar (feeds de alertas/notícias, 1 escrita em radar:feed
+# por recolha, 4/dia). Cron próprio para correr numa invocação à parte, com o
+# seu próprio limite de CPU — o feed do CNCS é o trabalho mais pesado do
+# Worker. /api/radar só lê, nunca vai buscar feeds. Tem de ser igual a
+# RADAR_CRON em src/index.js (é por esta string que scheduled() distingue os
+# dois crons).
 [triggers]
-crons = ["*/30 * * * *"]
+crons = ["*/30 * * * *", "13 */6 * * *"]
 
 # NOTA (2026-07-29): a ronda 4 da revisão de segurança tinha adicionado aqui
 # um bloco [limits] cpu_ms = 10 para tornar explícito o teto que o plano Free
