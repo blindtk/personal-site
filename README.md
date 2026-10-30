@@ -16,7 +16,7 @@ That scale is deliberate; see
 | Path | What it is |
 | --- | --- |
 | `content/` | All editorial content in markdown/JSON (about, projects, blog, links, ATT&CK data) — **the single source of truth**, no code |
-| `static/` | The static site (Astro): every page, the 8 tools, the Lab; security headers in `static/public/_headers` |
+| `static/` | The static site (Astro): every page, the 9 tools, the Lab; security headers in `static/public/_headers` |
 | `dynamic/` | The Cloudflare Worker backend (`dynamic/worker/`) and its decision log (`dynamic/PLAN.md`) |
 | `docs/` | Architecture, threat model, CI/CD, deploy, headers, DNS/TLS, and the ADRs (`docs/adr/`) |
 | `.github/` | Workflows, the scripts behind the production checks (`scripts/`), their expected values (`expected-headers.json`, `expected-dns.json`), `CODEOWNERS`, `SECURITY.md` and the PR template |
@@ -31,7 +31,7 @@ That scale is deliberate; see
 
 | Feature | Page | Uses the Worker |
 | --- | --- | --- |
-| **Browser-only tools** — subnet calculator, hashes, password generator, email-header analyser, EXIF viewer, CSP analyser | `/ferramentas/` | No — no network calls |
+| **Browser-only tools** — subnet calculator, hashes, password generator, email-header analyser, EXIF viewer, CSP analyser, phishing quiz | `/ferramentas/` | No — no network calls |
 | **Password breach check** — k-anonymity: only 5 characters of the hash leave the browser | `/ferramentas/pwned/` | `/api/pwned-range` |
 | **Mirror** — what any server learns about you from a request | `/ferramentas/mirror/` | `/api/mirror` |
 | **Cloudflare panels** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | `/api/cf-stats`, `/api/threat-intel` |

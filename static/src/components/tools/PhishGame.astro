@@ -1,0 +1,248 @@
+---
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import ptScenarios from '../../../../content/phish/pt/scenarios.json';
+import enScenarios from '../../../../content/phish/en/scenarios.json';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const s = t(lang).tools.phishing;
+const scenarios = lang === 'pt' ? ptScenarios : enScenarios;
+
+const jsStrings = { ...s, scenarios };
+---
+
+<div class="tool-panel" id="ph-tool" data-strings={JSON.stringify(jsStrings)}>
+  <section id="ph-intro">
+    <p>{s.intro}</p>
+    <p class="mono ph-muted">{s.keysHint}</p>
+    <label class="check-row"><input type="checkbox" id="ph-untimed" /> {s.untimed}</label>
+    <p class="mono ph-muted" id="ph-best-line" hidden></p>
+    <div class="btn-row">
+      <button type="button" class="btn" id="ph-start">{s.start}</button>
+    </div>
+  </section>
+
+  <section id="ph-play" hidden>
+    <div class="ph-status mono">
+      <span id="ph-lives"></span>
+      <span id="ph-level"></span>
+      <span id="ph-score"></span>
+      <span id="ph-count"></span>
+    </div>
+    <div class="ph-timer" id="ph-timer">
+      <div class="meter" aria-hidden="true"><div class="fill" id="ph-meter"></div></div>
+      <span class="mono ph-muted" id="ph-seconds"></span>
+    </div>
+    <div id="ph-card" tabindex="-1"></div>
+    <div class="btn-row ph-answers">
+      <button type="button" class="btn" id="ph-btn-phishing">1 · {s.phish}</button>
+      <button type="button" class="btn ghost" id="ph-btn-legit">2 · {s.legit}</button>
+    </div>
+    <div id="ph-feedback" aria-live="polite"></div>
+  </section>
+
+  <section id="ph-end" hidden>
+    <h2 id="ph-end-title"></h2>
+    <p class="ph-final mono" id="ph-end-score"></p>
+    <p class="mono ph-muted" id="ph-end-best"></p>
+    <h3>{s.rulesTitle}</h3>
+    <ol class="ph-rules">
+      {s.rules.map((rule) => <li>{rule}</li>)}
+    </ol>
+    <div class="btn-row">
+      <button type="button" class="btn" id="ph-again">{s.again}</button>
+    </div>
+  </section>
+</div>
+
+<script>
+  import { createGame, loadBest, saveBest, fromText, locate, segments, LIVES } from '../../scripts/phish-game.js';
+
+  const root = document.getElementById('ph-tool')!;
+  const S = JSON.parse(root.dataset.strings!);
+  const $ = (id: string) => document.getElementById(id)!;
+
+  let storage: Storage | null = null;
+  try { storage = window.localStorage; } catch { /* bloqueado: sem recorde persistente */ }
+
+  const el = (tag: string, cls = '', text = '') => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text) n.textContent = text;
+    return n;
+  };
+  const show = (id: string, on: boolean) => { $(id).hidden = !on; };
+
+  let game: ReturnType<typeof createGame> | null = null;
+  let timed = true;
+  let timer = 0;
+  let current: any = null;
+
+  function refreshBest() {
+    const best = loadBest(storage);
+    const line = $('ph-best-line');
+    line.hidden = best === 0;
+    line.textContent = `${S.best}: ${best}`;
+  }
+
+  function renderCard(sc: any, reveal: boolean) {
+    const marks: Record<string, any[]> = {};
+    if (reveal) {
+      sc.signals.forEach((sig: any, i: number) => {
+        const loc = locate(sc, sig.quote);
+        if (!loc) return;
+        (marks[`${loc.field}:${loc.para ?? ''}`] ??= []).push({ ...loc, signal: i });
+      });
+    }
+    // Texto → nós; só createElement/textContent, nunca innerHTML.
+    const fill = (parent: HTMLElement, text: string, key: string) => {
+      for (const seg of segments(text, marks[key] ?? [])) {
+        if (seg.signal === undefined) { parent.append(seg.text); continue; }
+        const sig = sc.signals[seg.signal];
+        const mark = el('mark', `ph-sig ph-${sig.tone}`);
+        mark.dataset.kind = sig.kind;
+        mark.append(seg.text);
+        mark.append(el('sup', 'ph-n', String(seg.signal + 1)));
+        parent.append(mark);
+      }
+    };
+    const card = el('article', `ph-msg ph-${sc.channel}`);
+    const head = el('div', 'ph-head');
+    head.append(el('span', 'badge', S.channels[sc.channel]), el('span', 'ph-fict mono', S.fictional));
+    card.append(head);
+    const row = (label: string, text: string, key: string, cls: string) => {
+      const r = el('p', `ph-row ${cls}`);
+      r.append(el('span', 'ph-label mono', label));
+      const v = el('span', 'ph-value');
+      fill(v, text, key);
+      r.append(v);
+      card.append(r);
+    };
+    row(S.fields.from, fromText(sc), 'from:', 'ph-from');
+    if (sc.subject) row(S.fields.subject, sc.subject, 'subject:', 'ph-subject');
+    const body = el('div', 'ph-body');
+    sc.body.forEach((p: string, i: number) => {
+      const para = el('p');
+      fill(para, p, `body:${i}`);
+      body.append(para);
+    });
+    card.append(body);
+    if (sc.attachment) row(S.fields.attachment, sc.attachment, 'attachment:', 'ph-attach');
+    const wrap = $('ph-card');
+    wrap.replaceChildren(card);
+  }
+
+  function renderStatus() {
+    const st = game!.state;
+    $('ph-lives').textContent = `${S.lives}: ${'♥'.repeat(st.lives)}${'·'.repeat(LIVES - st.lives)}`;
+    $('ph-level').textContent = `${S.level}: ${game!.level()}`;
+    $('ph-score').textContent = `${S.score}: ${st.score}`;
+    $('ph-count').textContent = `${S.progress} ${st.number}`;
+  }
+
+  function renderTimer() {
+    if (!timed) { show('ph-timer', false); return; }
+    show('ph-timer', true);
+    const left = game!.remainingMs();
+    const meter = $('ph-meter');
+    meter.style.width = `${(left / game!.limitMs()) * 100}%`;
+    meter.style.backgroundColor = left < 4000 ? 'var(--danger)' : left < 8000 ? 'var(--accent-2)' : 'var(--accent)';
+    $('ph-seconds').textContent = `${S.timeLeft}: ${Math.ceil(left / 1000)} s`;
+  }
+
+  function setAnswers(on: boolean) {
+    for (const id of ['ph-btn-phishing', 'ph-btn-legit']) ($(id) as HTMLButtonElement).disabled = !on;
+  }
+
+  function nextQuestion() {
+    $('ph-feedback').replaceChildren();
+    current = game!.next();
+    if (!current) { finish(); return; }
+    renderCard(current, false);
+    renderStatus();
+    renderTimer();
+    setAnswers(true);
+    $('ph-card').focus();
+    window.clearInterval(timer);
+    timer = window.setInterval(() => {
+      const r = game!.tick();
+      if (r) feedback(r);
+      else renderTimer();
+    }, 100);
+  }
+
+  function feedback(r: any) {
+    window.clearInterval(timer);
+    setAnswers(false);
+    renderCard(r.scenario, true);
+    renderStatus();
+    show('ph-timer', false);
+    const box = el('div', `ph-result ${r.correct ? 'ph-good' : 'ph-miss'}`);
+    const headline = r.correct
+      ? S.resultCorrect.replace('{n}', r.points)
+      : r.timedOut ? S.resultTimeout : S.resultWrong;
+    box.append(el('p', 'ph-headline', headline));
+    box.append(el('p', '', r.scenario.verdict === 'phishing' ? S.wasPhishing : S.wasLegit));
+    if (r.leveledUp && !r.over) box.append(el('p', 'ph-levelup mono', S.levelUp.replace('{n}', r.level)));
+    box.append(el('h3', '', S.signalsTitle));
+    const list = el('ol', 'ph-signals');
+    for (const sig of r.scenario.signals) {
+      const li = el('li');
+      const top = el('p', 'ph-sig-head');
+      top.append(el('strong', '', S.kinds[sig.kind]), ' ', el('span', `badge ${sig.tone === 'bad' ? 'amber' : ''}`, S.tone[sig.tone]));
+      li.append(top, el('p', 'ph-why', sig.why));
+      list.append(li);
+    }
+    box.append(list);
+    const next = el('button', 'btn', r.over ? S.finish : S.next) as HTMLButtonElement;
+    next.type = 'button';
+    next.addEventListener('click', nextQuestion);
+    const nextRow = el('div', 'btn-row');
+    nextRow.append(next);
+    box.append(nextRow);
+    $('ph-feedback').replaceChildren(box);
+    next.focus();
+  }
+
+  function answer(verdict: 'phishing' | 'legit') {
+    const r = game?.answer(verdict);
+    if (r) feedback(r);
+  }
+
+  function finish() {
+    const st = game!.state;
+    show('ph-play', false);
+    show('ph-end', true);
+    $('ph-end-title').textContent = st.over === 'deck' ? S.endDeck : S.endLives;
+    $('ph-end-score').textContent = `${S.finalScore}: ${st.score} · ${S.hits}: ${st.correct}/${st.answered}`;
+    // Sem limite de tempo não há bónus de rapidez, por isso não compete.
+    const isBest = timed && saveBest(storage, st.score);
+    $('ph-end-best').textContent = isBest ? S.newBest : `${S.best}: ${loadBest(storage)}`;
+  }
+
+  function start() {
+    timed = !($('ph-untimed') as HTMLInputElement).checked;
+    game = createGame({ scenarios: S.scenarios, timed });
+    show('ph-intro', false);
+    show('ph-end', false);
+    show('ph-play', true);
+    nextQuestion();
+  }
+
+  $('ph-start').addEventListener('click', start);
+  $('ph-again').addEventListener('click', () => {
+    show('ph-end', false);
+    show('ph-intro', true);
+    refreshBest();
+    $('ph-start').focus();
+  });
+  $('ph-btn-phishing').addEventListener('click', () => answer('phishing'));
+  $('ph-btn-legit').addEventListener('click', () => answer('legit'));
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || $('ph-play').hidden) return;
+    if (e.key === '1') answer('phishing');
+    else if (e.key === '2') answer('legit');
+  });
+  refreshBest();
+</script>
