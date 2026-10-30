@@ -46,7 +46,7 @@ export const ui = {
     metaDesc: {
       about: 'Percurso de Daniel Malaco: de projetos de redes de metro e ferrovia à arquitetura de segurança de infraestrutura rodoviária.',
       projects: 'Projetos de Daniel Malaco: este site como sistema de produção, um honeypot com feed de threat intel, um homelab segmentado e mais.',
-      tools: 'Ferramentas de rede e segurança: subnets, hashes, gerador de passwords, análise de CSP, cabeçalhos de email, EXIF, passwords comprometidas e um jogo de phishing. A maioria corre só no browser.',
+      tools: 'Ferramentas de rede e segurança: subnets, hashes, gerador de passwords, análise de CSP, cabeçalhos de email, EXIF, passwords comprometidas e dois jogos de phishing. A maioria corre só no browser.',
       links: 'Repositórios do GitHub organizados por categoria e as ferramentas externas de rede e segurança que uso no dia a dia.',
       contact: 'Como contactar Daniel Malaco (email, GitHub, LinkedIn e Credly) e a política de divulgação responsável (security.txt).',
       lab: 'Um ambiente de trabalho no browser: terminal e as ferramentas do site em janelas, para explorar sem sair da página.',
@@ -201,7 +201,7 @@ export const ui = {
       // ----- Privacidade e dados -----
       privacyTitle: 'Privacidade e dados',
       privacyBody:
-        'Não há cookies, analytics nem scripts de terceiros. As ferramentas que correm no browser (subnets, hashes, gerador de passwords, cabeçalhos de email, EXIF, análise de CSP) não enviam nada para lado nenhum. As duas que falam com o Worker (verificador de passwords comprometidas e espelho) dizem-no na própria página e têm um badge no índice de ferramentas. A Cloudflare, que serve o site, regista por omissão os dados de ligação de cada pedido (IP, User-Agent). Não é algo que este site acrescente, mas também não o escondo: acontece com qualquer site atrás de uma CDN.',
+        'Não há cookies, analytics nem scripts de terceiros. As ferramentas que correm no browser (subnets, hashes, gerador de passwords, cabeçalhos de email, EXIF, análise de CSP, jogo dos links falsos) não enviam nada para lado nenhum. As duas que falam com o Worker (verificador de passwords comprometidas e espelho) dizem-no na própria página e têm um badge no índice de ferramentas. A Cloudflare, que serve o site, regista por omissão os dados de ligação de cada pedido (IP, User-Agent). Não é algo que este site acrescente, mas também não o escondo: acontece com qualquer site atrás de uma CDN.',
       // ----- Cadeia de entrega (CI) -----
       ciTitle: 'Cadeia de entrega',
       ciBody:
@@ -554,6 +554,82 @@ export const ui = {
           'duplicate-directive': '{dir} aparece mais do que uma vez. Só a primeira conta; as repetidas são ignoradas.',
         },
       },
+      'link-game': {
+        name: 'O link verdadeiro',
+        desc: 'Quatro links, só um é verdadeiro. Dez rondas para treinares o olho contra phishing: subdomínios, @, homógrafos, encurtadores e mais.',
+        intro: 'Em cada ronda vês quatro links para o mesmo serviço e escolhes o verdadeiro. No fim de cada uma digo-te qual era o truque dos falsos.',
+        keysHint: 'Teclas 1–4 escolhem, Enter avança. O rato também serve.',
+        start: 'Começar',
+        round: 'Ronda {n} de {total}',
+        score: 'Pontos: {n}',
+        optionsLabel: 'quatro links, escolhe o verdadeiro',
+        next: 'Seguinte',
+        finish: 'Ver resultado',
+        right: '✓ Certo.',
+        wrong: '✗ Errado. Escolheste um link com este truque:',
+        legitTag: '✓ o link verdadeiro',
+        destination: 'o browser vai para:',
+        readsAs: 'lê-se «{text}», mas tem carateres de outro alfabeto:',
+        scripts: { cyrillic: 'cirílico', greek: 'grego', latin: 'latino', other: 'outro alfabeto' },
+        tricks: {
+          legit: { name: 'Link verdadeiro', text: 'O domínio é o do serviço e o endereço usa https.' },
+          homograph: {
+            name: 'Homógrafo (IDN / punycode)',
+            text: 'Parte do nome usa letras de outro alfabeto que se parecem com as latinas. Por baixo, o browser trabalha com a versão xn-- (punycode), que é um endereço completamente diferente do que a vista lê.',
+          },
+          subdomain: {
+            name: 'Nome verdadeiro dentro de um domínio falso',
+            text: 'Num endereço, quem manda é o fim do domínio, antes da primeira barra. O nome que reconheces está à esquerda, como subdomínio que o dono do domínio da direita escolheu escrever.',
+          },
+          userinfo: {
+            name: '@ no endereço',
+            text: 'Tudo o que vem antes do @ é utilizador e palavra-passe, não o destino. O browser segue para o que vem depois do @.',
+          },
+          typosquat: {
+            name: 'Nome parecido (typosquatting)',
+            text: 'Um nome quase igual: letra trocada, número no lugar de letra, hífen ou palavras acrescentadas. Qualquer pessoa pode registar um domínio assim.',
+          },
+          tld: {
+            name: 'Terminação trocada',
+            text: 'O nome está certo, mas a terminação (.top, .xyz, .com…) é outra, e por isso o dono também é outro.',
+          },
+          http: {
+            name: 'http em vez de https',
+            text: 'O domínio está certo, mas o endereço usa http, sem cifra: quem estiver pelo caminho pode ler ou alterar o que enviares. Um serviço sério usa https.',
+          },
+          path: {
+            name: 'Nome só no caminho',
+            text: 'O nome do serviço aparece depois da primeira barra, no caminho. O caminho é só uma pasta dentro do site de quem controla o domínio, que está à esquerda.',
+          },
+          shortener: {
+            name: 'Encurtador',
+            text: 'Um encurtador esconde o destino até clicares. Para chegar a um banco ou a um serviço público, nunca é boa ideia.',
+          },
+          ip: {
+            name: 'Endereço IP',
+            text: 'Um número no lugar do nome. Os serviços conhecidos têm nome; um IP não diz de quem é o servidor.',
+          },
+          other: { name: 'Domínio sem relação', text: 'O domínio não tem nada a ver com o serviço.' },
+        },
+        doneTitle: 'Resultado',
+        scoreLine: '{score} em {total}',
+        rating: {
+          perfect: 'Pontuação máxima. Nenhum truque te enganou.',
+          good: 'Muito bom. Só escorregaste uma ou duas vezes.',
+          ok: 'Razoável. Os truques mais finos ainda te enganam.',
+          low: 'Estes truques funcionam por uma razão. Lê as 3 regras e joga outra vez.',
+        },
+        best: 'Melhor resultado neste browser: {n}',
+        newBest: 'Novo recorde!',
+        playAgain: 'Jogar outra vez',
+        rulesTitle: '3 regras para reconhecer links falsos',
+        rules: [
+          'Lê o domínio só até à primeira barra, da direita para a esquerda. O dono do link é o último nome antes da terminação (cgd.pt); o que está à esquerda é subdomínio e o que vem depois da barra é só caminho.',
+          'Desconfia de @, de números no lugar do nome, de xn-- e de encurtadores. Um banco ou um serviço público não precisa de nenhum deles num link que te mandam.',
+          'Na dúvida, não cliques: escreve o endereço, usa os favoritos ou a app oficial. O cadeado e o https só garantem que a ligação é cifrada, não que o site é honesto.',
+        ],
+        storageNote: 'Os endereços falsos aparecem só como texto, nunca como ligações. O melhor resultado fica guardado apenas neste browser (localStorage); nada é enviado.',
+      },
       mirror: {
         name: 'Espelho',
         desc: 'O que qualquer servidor sabe sobre ti no instante em que te ligas, antes de cookies e antes de JavaScript. Nada é guardado.',
@@ -872,7 +948,7 @@ export const ui = {
     metaDesc: {
       about: 'Daniel Malaco’s path: from metro and rail network projects to security architecture for road infrastructure.',
       projects: 'Daniel Malaco’s projects: this site run as a production system, a honeypot with a threat-intel feed, a segmented homelab and more.',
-      tools: 'Networking and security tools: subnets, hashes, password generator, CSP analysis, email headers, EXIF, breached-password checks and a phishing game. Most run entirely in your browser.',
+      tools: 'Networking and security tools: subnets, hashes, password generator, CSP analysis, email headers, EXIF, breached-password checks and two phishing games. Most run entirely in your browser.',
       links: 'GitHub repositories organised by category, and the external networking and security tools I use day to day.',
       contact: 'How to reach Daniel Malaco (email, GitHub, LinkedIn and Credly) and the responsible disclosure policy (security.txt).',
       lab: 'A desktop in the browser: a terminal and the site’s tools in windows, to explore without leaving the page.',
@@ -1021,7 +1097,7 @@ export const ui = {
       // ----- Privacy and data -----
       privacyTitle: 'Privacy and data',
       privacyBody:
-        'There are no cookies, no analytics and no third-party scripts. The tools that run in the browser (subnets, hashes, password generator, email headers, EXIF, CSP analysis) send nothing anywhere. The two that talk to the Worker (breached-password checker and mirror) say so on their own page and carry a badge on the tools index. Cloudflare, which serves the site, logs the connection data of every request by default (IP, User-Agent). This site does not add that, but I do not hide it either: it happens with any site behind a CDN.',
+        'There are no cookies, no analytics and no third-party scripts. The tools that run in the browser (subnets, hashes, password generator, email headers, EXIF, CSP analysis, the fake-links game) send nothing anywhere. The two that talk to the Worker (breached-password checker and mirror) say so on their own page and carry a badge on the tools index. Cloudflare, which serves the site, logs the connection data of every request by default (IP, User-Agent). This site does not add that, but I do not hide it either: it happens with any site behind a CDN.',
       // ----- How to report -----
       reportTitle: 'How to report',
       reportBody:
@@ -1361,6 +1437,82 @@ export const ui = {
           'unknown-directive': '{dir} is not a recognised CSP directive and browsers ignore it (typo?).',
           'duplicate-directive': '{dir} appears more than once. Only the first counts; repeats are ignored.',
         },
+      },
+      'link-game': {
+        name: 'The real link',
+        desc: 'Four links, only one is real. Ten rounds to train your eye against phishing: subdomains, @, homographs, shorteners and more.',
+        intro: 'Each round shows four links for the same service and you pick the real one. After each answer I tell you the trick behind the fake ones.',
+        keysHint: 'Keys 1–4 pick, Enter moves on. The mouse works too.',
+        start: 'Start',
+        round: 'Round {n} of {total}',
+        score: 'Score: {n}',
+        optionsLabel: 'four links, pick the real one',
+        next: 'Next',
+        finish: 'See result',
+        right: '✓ Correct.',
+        wrong: '✗ Wrong. You picked a link with this trick:',
+        legitTag: '✓ the real link',
+        destination: 'the browser goes to:',
+        readsAs: 'reads as “{text}”, but contains characters from another alphabet:',
+        scripts: { cyrillic: 'Cyrillic', greek: 'Greek', latin: 'Latin', other: 'another alphabet' },
+        tricks: {
+          legit: { name: 'Real link', text: 'The domain is the service’s own and the address uses https.' },
+          homograph: {
+            name: 'Homograph (IDN / punycode)',
+            text: 'Part of the name uses letters from another alphabet that look like Latin ones. Underneath, the browser works with the xn-- form (punycode), which is a completely different address from what the eye reads.',
+          },
+          subdomain: {
+            name: 'Real name inside a fake domain',
+            text: 'In an address, what counts is the end of the domain, before the first slash. The name you recognise sits on the left, as a subdomain the owner of the domain on the right chose to write.',
+          },
+          userinfo: {
+            name: '@ in the address',
+            text: 'Everything before the @ is a username and password, not the destination. The browser goes to whatever comes after the @.',
+          },
+          typosquat: {
+            name: 'Look-alike name (typosquatting)',
+            text: 'A nearly identical name: swapped letter, digit in place of a letter, hyphen or extra words. Anyone can register a domain like that.',
+          },
+          tld: {
+            name: 'Swapped ending',
+            text: 'The name is right, but the ending (.top, .xyz, .com…) is different, and so is the owner.',
+          },
+          http: {
+            name: 'http instead of https',
+            text: 'The domain is right, but the address uses http, unencrypted: anyone along the way can read or change what you send. A serious service uses https.',
+          },
+          path: {
+            name: 'Name only in the path',
+            text: 'The service’s name appears after the first slash, in the path. The path is just a folder inside the site of whoever controls the domain on the left.',
+          },
+          shortener: {
+            name: 'Shortener',
+            text: 'A shortener hides the destination until you click. To reach a bank or a public service it is never a good idea.',
+          },
+          ip: {
+            name: 'IP address',
+            text: 'A number in place of the name. Well-known services have a name; an IP does not tell you whose server it is.',
+          },
+          other: { name: 'Unrelated domain', text: 'The domain has nothing to do with the service.' },
+        },
+        doneTitle: 'Result',
+        scoreLine: '{score} out of {total}',
+        rating: {
+          perfect: 'Full marks. No trick fooled you.',
+          good: 'Very good. You only slipped once or twice.',
+          ok: 'Decent. The subtler tricks still get you.',
+          low: 'These tricks work for a reason. Read the 3 rules and play again.',
+        },
+        best: 'Best result in this browser: {n}',
+        newBest: 'New record!',
+        playAgain: 'Play again',
+        rulesTitle: '3 rules to spot fake links',
+        rules: [
+          'Read the domain only up to the first slash, right to left. The link’s owner is the last name before the ending (cgd.pt); what is on the left is a subdomain and what follows the slash is just a path.',
+          'Distrust @, numbers in place of a name, xn-- and shorteners. A bank or a public service does not need any of them in a link sent to you.',
+          'When in doubt, do not click: type the address, use your bookmarks or the official app. The padlock and https only guarantee the connection is encrypted, not that the site is honest.',
+        ],
+        storageNote: 'The fake addresses appear only as text, never as links. Your best result is stored only in this browser (localStorage); nothing is sent anywhere.',
       },
       mirror: {
         name: 'Mirror',
