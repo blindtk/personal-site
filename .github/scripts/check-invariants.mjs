@@ -135,7 +135,7 @@ const CRITICAL = ['/api/health'];
 // once already smells like a real Worker problem, not one specific upstream
 // being down).
 const INFORMATIONAL = [
-  '/api/threat-intel', '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror',
+  '/api/threat-intel', '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror', '/api/radar',
 ];
 
 const results = await Promise.all([...CRITICAL, ...INFORMATIONAL].map(checkJson));

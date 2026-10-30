@@ -7,6 +7,7 @@ export const routes = {
   blog: { pt: '/blog/', en: '/en/blog/' },
   projects: { pt: '/projetos/', en: '/en/projects/' },
   tools: { pt: '/ferramentas/', en: '/en/tools/' },
+  radar: { pt: '/radar/', en: '/en/radar/' },
   links: { pt: '/links/', en: '/en/links/' },
   contact: { pt: '/contactos/', en: '/en/contact/' },
   lab: { pt: '/lab/', en: '/en/lab/' },

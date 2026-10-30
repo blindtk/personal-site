@@ -1,0 +1,263 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Tabs from '../site/Tabs.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.radar;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+// Os ids dos separadores são os valores de `type` das fontes no Worker
+// ('alert' | 'news'), mais 'all' — o script usa-os diretamente como filtro.
+const tabs = [
+  { id: 'all', label: s.tabAll },
+  { id: 'alert', label: s.tabAlerts },
+  { id: 'news', label: s.tabNews },
+];
+
+const jsStrings = {
+  never: s.never,
+  sourceOk: s.sourceOk,
+  sourceDown: s.sourceDown,
+  typeAlert: s.typeAlert,
+  typeNews: s.typeNews,
+  empty: s.empty,
+  emptyTab: s.emptyTab,
+  unavailable: s.unavailable,
+  newWindow: s.newWindow,
+};
+---
+
+<BaseLayout lang={lang} title={s.metaTitle} altUrl={routes.radar[other]} active="radar">
+  <div class="page-head">
+    <h1>{s.title} <span class="badge amber radar-kind">{dict.tools.serverBadge}</span></h1>
+    <p class="intro">{s.intro}</p>
+  </div>
+
+  <div class="radar" id="radar-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+    <p class="radar-updated mono">
+      {s.updated}: <time id="radar-generated">—</time>
+    </p>
+
+    <details class="radar-sources panel" id="radar-sources-box" hidden>
+      <summary class="mono">{s.sourcesTitle} <span id="radar-sources-count"></span></summary>
+      <ul id="radar-sources" class="mono"></ul>
+    </details>
+
+    <p class="hp-loading" id="radar-status" role="status">{s.loading}</p>
+    <p class="hp-fallback" id="radar-fallback" hidden></p>
+
+    <div id="radar-body" hidden>
+      <Tabs tabs={tabs} label={s.tabsLabel}>
+        {tabs.map((tab) => (
+          <div slot={tab.id}>
+            <ol class="radar-list" data-list={tab.id}></ol>
+            <p class="note" data-empty={tab.id} hidden>{s.emptyTab}</p>
+          </div>
+        ))}
+      </Tabs>
+    </div>
+  </div>
+
+  <p class="note">🛰️ {s.note}</p>
+</BaseLayout>
+
+<style>
+  .radar-kind {
+    font-size: 0.7rem;
+    letter-spacing: normal;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+  }
+  .radar-updated {
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin: 0 0 0.8rem;
+  }
+  .radar-updated time {
+    color: var(--text);
+  }
+  .radar-sources[hidden] { display: none; }
+  .radar-sources {
+    padding: 0.7rem 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .radar-sources summary {
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  #radar-sources {
+    list-style: none;
+    margin: 0.7rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+  }
+  @media (min-width: 640px) {
+    #radar-sources { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  /* Elementos criados pelo script não levam o atributo de scope do Astro —
+     daí :global, sempre preso a .radar para não vazar. */
+  .radar :global(.src-ok) { color: var(--accent); }
+  .radar :global(.src-down) { color: var(--accent-2); }
+  .radar :global(.src-meta) { color: var(--faint); }
+  .radar-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .radar :global(.radar-item) {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .radar :global(.radar-item a) {
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+  .radar :global(.radar-item a:hover),
+  .radar :global(.radar-item a:focus-visible) {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+  .radar :global(.radar-meta) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    align-items: center;
+    margin-top: 0.3rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .radar :global(.sr-only) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  import { normalizeRadar, itemsFor } from '../../scripts/radar.js';
+
+  const root = document.getElementById('radar-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+  const statusEl = document.getElementById('radar-status')!;
+  const fallbackEl = document.getElementById('radar-fallback')!;
+  const bodyEl = document.getElementById('radar-body')!;
+  const generatedEl = document.getElementById('radar-generated') as HTMLTimeElement;
+  const sourcesEl = document.getElementById('radar-sources')!;
+  const sourcesCount = document.getElementById('radar-sources-count')!;
+
+  // Formas devolvidas por normalizeRadar (scripts/radar.js, JS sem tipos).
+  type RadarSource = { id: string; name: string; type: 'alert' | 'news'; lang: string; ok: boolean };
+  type RadarItem = { title: string; url: string; date: Date; source: string; type: 'alert' | 'news'; lang: string };
+
+  const fmtDate = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const fmtDateTime = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+
+  function el(tag: string, cls: string, text?: string) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function showFallback(text: string) {
+    statusEl.hidden = true;
+    fallbackEl.textContent = text;
+    fallbackEl.hidden = false;
+  }
+
+  function renderSources(sources: RadarSource[]) {
+    sourcesEl.replaceChildren();
+    for (const src of sources) {
+      const li = el('li', '');
+      li.append(
+        el('span', src.ok ? 'src-ok' : 'src-down', src.ok ? '● ' : '▲ '),
+        el('span', '', src.name),
+        el('span', 'src-meta', ` · ${src.type === 'alert' ? S.typeAlert : S.typeNews} · ${src.lang.toUpperCase()} · `),
+        el('span', src.ok ? '' : 'src-down', src.ok ? S.sourceOk : S.sourceDown),
+      );
+      sourcesEl.append(li);
+    }
+    const up = sources.filter((src) => src.ok).length;
+    sourcesCount.textContent = `(${up}/${sources.length})`;
+    document.getElementById('radar-sources-box')!.hidden = sources.length === 0;
+  }
+
+  function renderItems(items: RadarItem[]) {
+    for (const list of root.querySelectorAll<HTMLOListElement>('[data-list]')) {
+      const tab = list.dataset.list!;
+      const subset: RadarItem[] = itemsFor(items, tab);
+      list.replaceChildren(
+        ...subset.map((it) => {
+          const li = el('li', 'radar-item');
+          const a = document.createElement('a');
+          a.href = it.url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = it.title;
+          a.append(el('span', 'sr-only', ` ${S.newWindow}`));
+          a.lang = it.lang;
+          const meta = el('div', 'radar-meta');
+          const time = document.createElement('time');
+          time.dateTime = it.date.toISOString();
+          time.textContent = fmtDate.format(it.date);
+          meta.append(
+            el('span', `badge${it.type === 'alert' ? ' amber' : ''}`, it.type === 'alert' ? S.typeAlert : S.typeNews),
+            el('span', '', it.source),
+            time,
+          );
+          li.append(a, meta);
+          return li;
+        }),
+      );
+      const empty = root.querySelector<HTMLElement>(`[data-empty="${tab}"]`);
+      if (empty) empty.hidden = subset.length > 0;
+    }
+  }
+
+  async function load() {
+    let doc;
+    try {
+      const res = await fetch(`${base}/api/radar`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      doc = normalizeRadar(await res.json());
+    } catch {
+      showFallback(S.unavailable);
+      return;
+    }
+    if (doc.generated) {
+      generatedEl.dateTime = doc.generated.toISOString();
+      generatedEl.textContent = fmtDateTime.format(doc.generated);
+    } else {
+      generatedEl.textContent = S.never;
+    }
+    renderSources(doc.sources);
+    if (doc.items.length === 0) {
+      showFallback(S.empty);
+      return;
+    }
+    renderItems(doc.items);
+    statusEl.hidden = true;
+    bodyEl.hidden = false;
+  }
+
+  load();
+</script>

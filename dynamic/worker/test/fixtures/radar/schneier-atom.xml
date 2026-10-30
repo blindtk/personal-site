@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><feed
+	xmlns="http://www.w3.org/2005/Atom"
+	xmlns:thr="http://purl.org/syndication/thread/1.0"
+	xml:lang="en-US"
+	>
+	<title type="text">Schneier on Security</title>
+	<subtitle type="text"></subtitle>
+
+	<updated>2026-10-28T11:05:31Z</updated>
+
+	<link rel="alternate" type="text/html" href="https://www.schneier.com/" />
+	<id>https://www.schneier.com/feed/atom/</id>
+	<link rel="self" type="application/atom+xml" href="https://www.schneier.com/feed/atom/" />
+
+	
+<icon>https://www.schneier.com/wp-content/uploads/2020/06/cropped-favicon-1-32x32.png</icon>
+	<entry>
+		<author>
+			<name>Bruce Schneier</name>
+					</author>
+
+		<title type="html"><![CDATA[Studying Fraudulent North Korean IT Workers]]></title>
+		<link rel="alternate" type="text/html" href="https://www.schneier.com/blog/archives/2026/10/studying-fraudulent-north-korean-it-workers.html" />
+
+		<id>https://www.schneier.com/?p=72866</id>
+		<updated>2026-10-28T11:05:31Z</updated>
+		<published>2026-10-28T11:05:00Z</published>
+		<category scheme="https://www.schneier.com/" term="Uncategorized" /><category scheme="https://www.schneier.com/" term="employment" /><category scheme="https://www.schneier.com/" term="fraud" /><category scheme="https://www.schneier.com/" term="North Korea" />
+		<summary type="html"><![CDATA[<p>Researchers set up a fake start-up company to <a href="https://thehackernews.com/2026/08/researchers-built-fake-crypto-startup.html ">study</a> fraudulent North Korean IT workers.</p>
+]]></summary>
+
+					<content type="html" xml:base="https://www.schneier.com/blog/archives/2026/10/studying-fraudulent-north-korean-it-workers.html"><![CDATA[<p>Researchers set up a fake start-up company to <a href="https://thehackernews.com/2026/08/researchers-built-fake-crypto-startup.html ">study</a> fraudulent North Korean IT workers.</p>
+]]></content>
+		
+					<link rel="replies" type="text/html" href="https://www.schneier.com/blog/archives/2026/10/studying-fraudulent-north-korean-it-workers.html#comments" thr:count="6" />
+			<link rel="replies" type="application/atom+xml" href="https://www.schneier.com/blog/archives/2026/10/studying-fraudulent-north-korean-it-workers.html/feed/atom/" thr:count="6" />
+			<thr:total>6</thr:total>
+			</entry>
+<entry>
+		<author>
+			<name>Bruce Schneier</name>
+					</author>
+
+		<title type="html"><![CDATA[Hiding Capabilities in AI Models]]></title>
+		<link rel="alternate" type="text/html" href="https://www.schneier.com/blog/archives/2026/10/hiding-capabilities-in-ai-models.html" />
+
+		<id>https://www.schneier.com/?p=72849</id>
+		<updated>2026-10-27T11:01:32Z</updated>
+		<published>2026-10-27T11:01:26Z</published>
+		<category scheme="https://www.schneier.com/" term="Uncategorized" /><category scheme="https://www.schneier.com/" term="academic papers" /><category scheme="https://www.schneier.com/" term="AI" /><category scheme="https://www.schneier.com/" term="encryption" />
+		<summary type="html"><![CDATA[<p>Interesting research: &#8220;<a href="https://arxiv.org/abs/2610.13928">AI Models Can Provably Hide Arbitrary Capabilities</a>&#8221;</p>
+<blockquote><p><b>Abstract:</b> Capability evaluations aim ]]></summary>
+
+					<content type="html" xml:base="https://www.schneier.com/blog/archives/2026/10/hiding-capabilities-in-ai-models.html"><![CDATA[<p>Interesting research: &#8220;<a href="https://arxiv.org/abs/2610.13928">AI Models Can Provably Hide Arbitrary Capabilities</a>&#8221;</p>
+<blockquote><p><b>Abstract:</b> Capability evaluations aim ]]></content>
+		
+					<link rel="replies" type="text/html" href="https://www.schneier.com/blog/archives/2026/10/hiding-capabilities-in-ai-models.html#comments" thr:count="5" />
+			<link rel="replies" type="application/atom+xml" href="https://www.schneier.com/blog/archives/2026/10/hiding-capabilities-in-ai-models.html/feed/atom/" thr:count="5" />
+			<thr:total>5</thr:total>
+			</entry>
+<entry>
+		<author>
+			<name>Bruce Schneier</name>
+					</author>
+
+		<title type="html"><![CDATA[Bias in Qwen3-Coder Model]]></title>
+		<link rel="alternate" type="text/html" href="https://www.schneier.com/blog/archives/2026/10/bias-in-qwen3-coder-model.html" />
+
+		<id>https://www.schneier.com/?p=72840</id>
+		<updated>2026-10-26T11:04:03Z</updated>
+		<published>2026-10-26T11:03:31Z</published>
+		<category scheme="https://www.schneier.com/" term="Uncategorized" /><category scheme="https://www.schneier.com/" term="bias" /><category scheme="https://www.schneier.com/" term="China" /><category scheme="https://www.schneier.com/" term="hacking" />
+		<summary type="html"><![CDATA[<p>Interesting <a href="https://www.hirundo.io/blog/qwen3-coder-vulnerabilities">research</a>:</p>
+<blockquote><p>TL;DR: Chinese AI models now sit inside Western products, and some carry geopolitical ]]></summary>
+
+					<content type="html" xml:base="https://www.schneier.com/blog/archives/2026/10/bias-in-qwen3-coder-model.html"><![CDATA[<p>Interesting <a href="https://www.hirundo.io/blog/qwen3-coder-vulnerabilities">research</a>:</p>
+<blockquote><p>TL;DR: Chinese AI models now sit inside Western products, and some carry geopolitical ]]></content>
+		
+					<link rel="replies" type="text/html" href="https://www.schneier.com/blog/archives/2026/10/bias-in-qwen3-coder-model.html#comments" thr:count="13" />
+			<link rel="replies" type="application/atom+xml" href="https://www.schneier.com/blog/archives/2026/10/bias-in-qwen3-coder-model.html/feed/atom/" thr:count="13" />
+			<thr:total>13</thr:total>
+			</entry>
+	</feed>

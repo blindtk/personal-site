@@ -116,7 +116,8 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
 # A cada 30 min: aquece ct/cf-stats/threat-intel (para as visitas caírem
-# sempre em cache) e apaga o que o honeypot interno deixou no KV, enquanto
+# sempre em cache), recolhe os feeds do Radar (1 escrita por tick em
+# radar:feed — /api/radar só lê, nunca vai buscar feeds) e apaga o que o honeypot interno deixou no KV, enquanto
 # houver (ADR 0022). O snapshot da firewall (fw:<dia>, para acumular 7
 # dias a partir do dataset cru do Free, que só retém 24h) fotografa o que a
 # cache `cache:cfstats` tiver — quem quer que a tenha refrescado (o cron, um
