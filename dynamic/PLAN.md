@@ -15,6 +15,41 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
+- **2026-10-30 — Radar: cybersecurity alerts and news aggregated from RSS**
+  (decision by the repo owner). A new page (`/radar/`, `/en/radar/`, with
+  the "requires server" badge) lists alerts and news from fixed sources,
+  collected by the Worker's existing cron (`*/30`) and served from KV by
+  `GET /api/radar`.
+    - **Sources** (URLs confirmed 2026-10-29). Alerts: CNCS (PT), CERT-EU
+      security advisories, NCSC UK (all-content feed), CISA KEV (JSON).
+      News: The Record, BleepingComputer, SecurityWeek, Dark Reading.
+      **ENISA dropped**: its new website discontinued RSS feeds and the old
+      URLs return 404.
+    - **Collection, never on request.** The cron fetches every source in
+      parallel, each with its own timeout (8 s) and byte cap (1 MiB; 4 MiB
+      for CNCS, whose feed is ~1.7 MB and oldest-first; 64 KiB for KEV, which
+      is newest-first, so the start of the ~1.8 MB catalog is enough).
+      Redirects are refused (`redirect: 'error'`): a moved feed shows up as
+      down instead of being followed off the fixed list. A source that fails
+      is `ok: false` and keeps its items from the previous run; it never
+      takes the others down. The route only reads `radar:feed`, behind the
+      data-center Cache API (5 min) and a 60/min per-client rate limit.
+    - **Pure parsing, no dependencies** (`src/lib/radar-feed.js`): a minimal
+      RSS 2.0/Atom reader that skips CDATA and comments, decodes entities,
+      strips HTML, truncates titles (160), keeps only `https:` links with no
+      credentials, and drops items with an invalid date or one more than
+      1 h in the future. Titles go through `sanitizeText`. Items are sorted
+      by date, deduplicated by URL, capped at 10 per source and 80 in total.
+      Stored shape: `{generated, sources:[{id,name,type,lang,ok}],
+      items:[{t,u,s,d}]}`.
+    - **Budgets.** KV: 48 writes/day (one put per tick), so the Worker's
+      total goes from ~440 to ~490/day. CPU: the CNCS feed is the expensive
+      one (~4–5 ms measured in Node). The parser reads dates first and only
+      cleans the newest items, to stay inside the Free plan's 10 ms per
+      invocation alongside the rest of the cron. If the cron starts hitting
+      the CPU limit, move the Radar to its own cron trigger (a separate
+      invocation with its own budget) or drop CNCS's full-history feed.
+
 - **2026-10-02 — Remove two tools** (decision by the repo owner): the
   passkey lab and the encoder/decoder. They are generic utilities that
   other tools do better (CyberChef, for one). The password generator was

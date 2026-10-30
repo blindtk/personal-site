@@ -39,6 +39,7 @@ const navItems: { key: RouteKey; label: string }[] = [
   ...(hasBlog ? [{ key: 'blog' as const, label: dict.nav.blog }] : []),
   { key: 'projects', label: dict.nav.projects },
   { key: 'tools', label: dict.nav.tools },
+  { key: 'radar', label: dict.nav.radar },
 ];
 
 const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [

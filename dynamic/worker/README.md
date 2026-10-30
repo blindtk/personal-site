@@ -25,6 +25,7 @@ Cloudflare Worker + one KV namespace.
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, and the requester's own IP — echoed back, **never stored**; ADR 0023) | — (per-request, `no-store`) | 30/min per client |
+| `GET /api/radar` | Radar: cybersecurity alerts and news (`{generated, sources:[{id,name,type,lang,ok}], items:[{t,u,s,d}]}`), read from the document the cron writes to KV (`radar:feed`) — **never fetches a feed on a visitor's request** | 5 min (data-center Cache API, then KV; the cron rewrites it every 30 min) | 60/min per client |
 | `GET /api/health` | Liveness | — | — |
 
 ## Privacy
@@ -157,8 +158,9 @@ of puts the event makes, including its own counter):
 | `CACHE_WRITE_CAP` | 80 | KV cache refreshes triggered by public GETs (2 puts each) |
 | `REFRESH_WRITE_CAP` | 40 | `/api/cf-stats?refresh=1` (2 puts each) |
 | cron (fixed rate) | ~16 (≤ 48 worst case) | cache warm-up every 30 min, firewall snapshot — one write per distinct `cache:cfstats` fetch, so request-driven refreshes can add a few (the legacy-honeypot clean-up writes only once) |
+| cron: Radar | 48 | `radar:feed`, one put per tick (`src/lib/radar-feed.js`) |
 
-Total ≈ 440/day, leaving headroom for the overshoot concurrent requests can
+Total ≈ 490/day, leaving headroom for the overshoot concurrent requests can
 cause (the counters are best-effort read-then-write on an eventually
 consistent store). Past a budget, the sample is dropped (the beacon still
 returns the same 204) or the cache serves its
@@ -171,7 +173,7 @@ audit both lived in KV, and a single client could exhaust the account's
 daily writes through them in ~16 minutes (the audit report is not
 published).
 Every public cached route (`/api/vitals`, `/api/threat-intel`, `/api/ct`,
-`/api/cf-stats`) is also
+`/api/cf-stats`, `/api/radar`) is also
 cached there first, for as long as its response `max-age`. Repeated
 requests therefore cost no KV operations, and they don't re-run the
 producer even while the KV write budget is exhausted. The Cache API is
