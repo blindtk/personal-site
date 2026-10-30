@@ -97,7 +97,8 @@ each, with the full original entries kept in this file's git history.
       parallel, each with its own timeout (8 s) and byte cap (1 MiB; 4 MiB
       for CNCS, whose feed is ~1.7 MB and oldest-first; 64 KiB for KEV,
       which is newest-first, so the start of the ~1.8 MB catalog is
-      enough). Redirects are refused (`redirect: 'error'`): a moved feed
+      enough). Redirects are refused (`redirect: 'manual'` + any 3xx is
+      a failure; workerd rejects `'error'`): a moved feed
       shows up as down instead of being followed off the fixed list. A
       source that fails is `ok: false` and keeps its items from the
       previous run; it never takes the others down. The route only reads
