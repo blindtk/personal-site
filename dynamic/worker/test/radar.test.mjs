@@ -149,6 +149,29 @@ test('links: só https: — javascript:, data:, http:, relativos e com credencia
   assert.deepEqual(items.map((it) => it.u), ['https://a.example/ok']);
 });
 
+test('links fora do domínio da fonte caem (feed comprometido a apontar para phishing)', () => {
+  const links = [
+    'https://a.example/ok',
+    'https://dyn.a.example/sub', // subdomínio, como o dyn.cncs.gov.pt do CNCS
+    'https://evil.example/post',
+    'https://a.example.evil.example/post', // o domínio da fonte como prefixo
+    'https://xa.example/post', // termina em "a.example" mas não é subdomínio
+  ];
+  const xml = rss(links.map((link) => ({ title: 'x', link })));
+  assert.deepEqual(parseFeed(xml, NOW, 10, 'a.example').map((it) => it.u).sort(),
+    ['https://a.example/ok', 'https://dyn.a.example/sub']);
+});
+
+test('fetchSource: o CNCS (feed em www., links em dyn.) passa; um link de outro domínio cai', async () => {
+  const cncs = RADAR_SOURCES.find((s) => s.id === 'cncs');
+  const items = await withFetch(async () => new Response(fixture('cncs.xml')), () => fetchSource(cncs, { now: NOW }));
+  assert.ok(items.length > 0 && items.every((it) => new URL(it.u).hostname === 'dyn.cncs.gov.pt'));
+  const xml = rss([{ title: 'ok', link: 'https://www.ncsc.gov.uk/news/x' }, { title: 'bad', link: 'https://ncsc-gov.example/x' }]);
+  const ncsc = RADAR_SOURCES.find((s) => s.id === 'ncsc-uk');
+  const out = await withFetch(async () => new Response(xml), () => fetchSource(ncsc, { now: NOW }));
+  assert.deepEqual(out.map((it) => it.t), ['ok']);
+});
+
 test('safeHttpsUrl: comprimento no limite exato (2048) passa, 2049 não', () => {
   const base = 'https://a.example/';
   assert.equal(safeHttpsUrl(base + 'x'.repeat(2048 - base.length)), base + 'x'.repeat(2048 - base.length));
@@ -384,23 +407,22 @@ test('cron do Radar: recolhe as fontes e grava radar:feed normalizado, com expir
   assert.ok(doc.items.every((it, i, a) => i === 0 || a[i - 1].d >= it.d));
 });
 
-test('tick de */30 com o Radar já recolhido: não vai buscar nenhum feed nem escreve radar:feed', async () => {
-  const env = { KV: fakeKV() };
-  const doc = JSON.stringify({ generated: '2026-10-29T18:13:00.000Z', sources: [], items: [] });
-  env.KV.store.set('radar:feed', doc);
-  const hosts = [];
-  await withFetch(async (url) => { hosts.push(new URL(url).hostname); return new Response('gone', { status: 404 }); },
-    () => run((ctx) => worker.scheduled({ cron: '*/30 * * * *' }, env, ctx)));
-  assert.deepEqual(hosts.filter((h) => RADAR_HOSTS.has(h)), []);
-  assert.equal(env.KV.store.get('radar:feed'), doc);
-});
-
-test('tick de */30 sem documento do Radar (1.º deploy): recolhe já, sem esperar até 6 h', async () => {
-  const env = { KV: fakeKV() };
-  await withFetch(feedsFetch, () => run((ctx) => worker.scheduled({ cron: '*/30 * * * *' }, env, ctx)));
-  const doc = JSON.parse(env.KV.store.get('radar:feed'));
-  assert.ok(doc.items.length > 0);
-});
+// Também sem documento: recolher aqui somava o parse do CNCS aos
+// aquecimentos de */30 na mesma invocação (10 ms de CPU no plano Free).
+for (const [label, stored] of [
+  ['com o Radar já recolhido', JSON.stringify({ generated: '2026-10-29T18:13:00.000Z', sources: [], items: [] })],
+  ['sem documento do Radar', undefined],
+]) {
+  test(`tick de */30 ${label}: não vai buscar nenhum feed nem escreve radar:feed`, async () => {
+    const env = { KV: fakeKV() };
+    if (stored) env.KV.store.set('radar:feed', stored);
+    const hosts = [];
+    await withFetch(async (url) => { hosts.push(new URL(url).hostname); return feedsFetch(url); },
+      () => run((ctx) => worker.scheduled({ cron: '*/30 * * * *' }, env, ctx)));
+    assert.deepEqual(hosts.filter((h) => RADAR_HOSTS.has(h)), []);
+    assert.equal(env.KV.store.get('radar:feed'), stored);
+  });
+}
 
 test('cron do Radar: não corre o trabalho de */30 (CPU numa invocação à parte)', async () => {
   const env = { KV: fakeKV() };
