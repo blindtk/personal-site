@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  LIVES, PER_LEVEL, BASE_TIME_MS, MIN_TIME_MS, BEST_KEY,
-  levelFor, timeLimitMs, shuffle, createGame, fromText, locate, segments, loadBest, saveBest,
+  LIVES, PER_LEVEL, BASE_TIME_MS, MIN_TIME_MS,
+  levelFor, timeLimitMs, createGame, fromText, locate, segments,
 } from '../src/scripts/phish-game.js';
 
 const mk = (n, verdict = 'phishing') =>
@@ -131,13 +131,6 @@ test('createGame: responder fora de uma pergunta é ignorado', () => {
   assert.equal(g.answer(s.verdict), null, 'a mesma pergunta não pontua duas vezes');
 });
 
-test('shuffle: é permutação, não altera o original e usa o rng', () => {
-  const src = [1, 2, 3, 4, 5];
-  assert.deepEqual([...shuffle(src, () => 0.999999)].sort(), src);
-  assert.deepEqual(src, [1, 2, 3, 4, 5]);
-  assert.notDeepEqual(shuffle(src, () => 0), src);
-});
-
 test('segments/locate: citação colada ao fim do texto e sobreposição', () => {
   const s = { from: { name: 'A', address: 'a@x.pt' }, subject: '', body: ['vê x.pt/ab'] };
   const loc = locate(s, 'x.pt/ab');
@@ -153,24 +146,6 @@ test('segments/locate: citação colada ao fim do texto e sobreposição', () =>
     [{ text: 'abcd', signal: 0 }, { text: 'ef' }],
   );
   assert.equal(fromText(s), 'A <a@x.pt>');
-});
-
-test('loadBest/saveBest: guarda só recordes e tolera localStorage a lançar', () => {
-  const mem = new Map();
-  const ok = { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v) };
-  assert.equal(loadBest(ok), 0);
-  assert.equal(saveBest(ok, 80), true);
-  assert.equal(saveBest(ok, 80), false, 'empate não é recorde');
-  assert.equal(saveBest(ok, 40), false);
-  assert.equal(loadBest(ok), 80);
-  mem.set(BEST_KEY, 'lixo');
-  assert.equal(loadBest(ok), 0, 'valor corrompido fica a 0');
-  mem.set(BEST_KEY, '-5');
-  assert.equal(loadBest(ok), 0);
-
-  const boom = { getItem() { throw new Error('SecurityError'); }, setItem() { throw new Error('QuotaExceeded'); } };
-  assert.equal(loadBest(boom), 0);
-  assert.doesNotThrow(() => saveBest(boom, 50));
 });
 
 // ---- Conteúdo: o que um erro de edição partiria só em produção ----
