@@ -136,6 +136,7 @@ const CRITICAL = ['/api/health'];
 // being down).
 const INFORMATIONAL = [
   '/api/threat-intel', '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror', '/api/radar',
+  '/api/radar-attacks',
 ];
 
 const results = await Promise.all([...CRITICAL, ...INFORMATIONAL].map(checkJson));
