@@ -1,0 +1,301 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const m = dict.attackMap;
+const other: Lang = lang === 'pt' ? 'en' : 'pt';
+
+const jsStrings = {
+  pause: m.pause,
+  play: m.play,
+  unavailable: m.unavailable,
+  selfEmpty: m.selfEmpty,
+  countryUnknown: m.countryUnknown,
+};
+---
+
+<BaseLayout lang={lang} title={m.metaTitle} altUrl={routes.attackMap[other]}>
+  <div class="page-head">
+    <h1>{m.title} <span class="badge amber am-badge">{m.serverBadge}</span></h1>
+    <p class="intro">{m.intro}</p>
+  </div>
+
+  <p class="note warn am-scope">{m.scopeNote}</p>
+
+  <div id="am-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+    <p class="hp-loading" id="am-status" role="status">{m.loading}</p>
+
+    <div id="am-body" hidden>
+      <figure class="am-figure">
+        <canvas id="am-globe" class="am-globe" role="img" aria-label={m.globeLabel}></canvas>
+        <figcaption class="am-caption">
+          <span class="am-legend">
+            <span><i class="am-sw origin" aria-hidden="true"></i>{m.legendOrigin}</span>
+            <span><i class="am-sw target" aria-hidden="true"></i>{m.legendTarget}</span>
+            <span><i class="am-sw ring" aria-hidden="true"></i>{m.legendDomestic}</span>
+          </span>
+          <span class="am-window mono">{m.windowLabel}: <span id="am-window">—</span></span>
+          <span class="am-controls">
+            <button type="button" class="btn small ghost" id="am-toggle" aria-controls="am-globe">{m.pause}</button>
+            <span class="note am-hint">{m.dragHint}</span>
+          </span>
+        </figcaption>
+      </figure>
+
+      <h2 class="am-h2">{m.tableTitle}</h2>
+      <div class="table-scroll">
+        <table class="result-table am-table">
+          <caption class="visually-hidden">{m.tableCaption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{m.colRank}</th>
+              <th scope="col">{m.colOrigin}</th>
+              <th scope="col">{m.colTarget}</th>
+              <th scope="col" class="num">{m.colShare}</th>
+            </tr>
+          </thead>
+          <tbody id="am-pairs"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <section class="am-self" id="am-self" hidden>
+      <h2 class="am-h2">{m.selfTitle}</h2>
+      <p class="note">{m.selfIntro} <a href={routes.cloudflare[lang]}>{m.selfLink}</a>.</p>
+      <div class="table-scroll">
+        <table class="result-table am-table">
+          <thead>
+            <tr>
+              <th scope="col">{m.colCountry}</th>
+              <th scope="col">{m.colAction}</th>
+              <th scope="col" class="num">{m.colEvents}</th>
+            </tr>
+          </thead>
+          <tbody id="am-self-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  {/* Atribuição exigida pela licença dos dados da Radar (CC BY-NC 4.0). */}
+  <p class="note">
+    {m.attributionPrefix}{' '}
+    <a href="https://radar.cloudflare.com/security/application-layer" rel="noopener">Cloudflare Radar</a>
+    {' · '}
+    <a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener license">{m.attributionLicense}</a>
+  </p>
+
+  <hr class="am-hr" />
+  <a href={routes.attack[lang]} class="mono">{m.seeAttack}</a>
+</BaseLayout>
+
+<script>
+  import { formatNumber } from '../../scripts/observability.js';
+
+  type Pair = [string, string, number];
+
+  const root = document.getElementById('am-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+  const status = document.getElementById('am-status')!;
+
+  const regionNames = (() => {
+    try { return new Intl.DisplayNames([locale], { type: 'region' }); } catch { return null; }
+  })();
+  const countryName = (code: string) => {
+    if (code === 'T1') return 'Tor';
+    if (code === 'XX' || !code) return S.countryUnknown;
+    try { return regionNames?.of(code) ?? code; } catch { return code; }
+  };
+  const pctFmt = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const hourFmt = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' });
+  const hourZoneFmt = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+
+  function cell(text: string, cls?: string) {
+    const td = document.createElement('td');
+    td.textContent = text;
+    if (cls) td.className = cls;
+    return td;
+  }
+
+  function countryCell(code: string) {
+    const td = document.createElement('td');
+    td.append(document.createTextNode(`${countryName(code)} `));
+    const c = document.createElement('span');
+    c.className = 'am-cc';
+    c.textContent = code;
+    td.append(c);
+    return td;
+  }
+
+  function renderPairs(pairs: Pair[]) {
+    const body = document.getElementById('am-pairs')!;
+    body.replaceChildren(
+      ...pairs.map(([origin, target, pct], i) => {
+        const tr = document.createElement('tr');
+        tr.append(cell(String(i + 1)), countryCell(origin), countryCell(target), cell(`${pctFmt.format(pct)} %`, 'num'));
+        return tr;
+      }),
+    );
+  }
+
+  function renderWindow(start: string, end: string) {
+    const s = new Date(start);
+    const e = new Date(end);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return;
+    // Hora local de quem vê, com o fuso no fim (ex.: "20:00–21:00 WET").
+    document.getElementById('am-window')!.textContent = `${hourFmt.format(s)}–${hourZoneFmt.format(e)}`;
+  }
+
+  // Globo: só se descarrega (import() → chunk próprio, com os dados
+  // geográficos) quando o canvas se aproxima do ecrã.
+  function lazyGlobe(pairs: Pair[]) {
+    const canvas = document.getElementById('am-globe') as HTMLCanvasElement;
+    const toggle = document.getElementById('am-toggle') as HTMLButtonElement;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // Com movimento reduzido o globo começa parado; o botão continua a
+    // deixar pô-lo a rodar, por escolha explícita.
+    let playing = !motion.matches;
+    const label = () => {
+      toggle.textContent = playing ? S.pause : S.play;
+      toggle.setAttribute('aria-pressed', String(!playing));
+    };
+    label();
+
+    const io = new IntersectionObserver(async ([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      const { mountGlobe } = await import('../attack-map/globe-canvas');
+      const globe = mountGlobe(canvas, pairs, { playing });
+      if (!globe) {
+        canvas.hidden = true;
+        toggle.hidden = true;
+        return;
+      }
+      toggle.addEventListener('click', () => {
+        playing = !playing;
+        globe.setPlaying(playing);
+        label();
+      });
+      motion.addEventListener('change', () => {
+        if (motion.matches && playing) {
+          playing = false;
+          globe.setPlaying(false);
+          label();
+        }
+      });
+    }, { rootMargin: '200px' });
+    io.observe(canvas);
+  }
+
+  async function loadRadar() {
+    try {
+      const res = await fetch(`${base}/api/radar-attacks`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const data = await res.json();
+      const pairs: Pair[] = Array.isArray(data?.pairs) ? data.pairs : [];
+      if (data?.ok !== true || pairs.length === 0) throw new Error('no data');
+      renderPairs(pairs);
+      renderWindow(data.start, data.end);
+      status.hidden = true;
+      document.getElementById('am-body')!.hidden = false;
+      lazyGlobe(pairs);
+    } catch {
+      status.className = 'hp-fallback';
+      status.textContent = S.unavailable;
+    }
+  }
+
+  // Opcional: a mesma pergunta para a zona deste site, com os dados de
+  // firewall que a página Cloudflare já usa (/api/threat-intel, 7 dias).
+  async function loadSelf() {
+    try {
+      const res = await fetch(`${base}/api/threat-intel`, { headers: { accept: 'application/json' } });
+      const ctype = res.headers.get('content-type') ?? '';
+      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
+      const rows = ((await res.json())?.firewall7d?.byCountry ?? []).slice(0, 5);
+      const body = document.getElementById('am-self-rows')!;
+      if (rows.length === 0) {
+        const tr = document.createElement('tr');
+        const td = cell(S.selfEmpty);
+        td.colSpan = 3;
+        tr.append(td);
+        body.replaceChildren(tr);
+      } else {
+        body.replaceChildren(
+          ...rows.map((r: any) => {
+            const tr = document.createElement('tr');
+            tr.append(countryCell(String(r.country)), cell(String(r.action)), cell(formatNumber(Number(r.count) || 0, locale), 'num'));
+            return tr;
+          }),
+        );
+      }
+      document.getElementById('am-self')!.hidden = false;
+    } catch {
+      // Sem Worker: a secção fica escondida — é um extra, não o assunto da página.
+    }
+  }
+
+  loadRadar();
+  loadSelf();
+</script>
+
+<style>
+  .am-badge {
+    vertical-align: middle;
+    font-size: 0.7rem;
+    margin-left: 0.4rem;
+  }
+  .am-scope { margin-top: 0; }
+  .am-figure {
+    margin: 1.2rem 0 0;
+    display: grid;
+    gap: 0.8rem;
+    justify-items: center;
+  }
+  .am-globe {
+    width: 100%;
+    max-width: 34rem;
+    aspect-ratio: 1;
+    touch-action: none;
+    cursor: grab;
+  }
+  .am-globe:active { cursor: grabbing; }
+  .am-caption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1.4rem;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .am-legend { display: inline-flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+  .am-legend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .am-sw {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+  }
+  .am-sw.origin { background: var(--accent-2); }
+  .am-sw.target { background: var(--accent); }
+  .am-sw.ring { border: 2px solid var(--accent-2); }
+  .am-controls { display: inline-flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+  .am-hint { margin: 0; }
+  .am-h2 { margin-top: 2rem; }
+  .am-table th { width: auto; }
+  /* :global — as linhas são criadas pelo script, sem o atributo de scope. */
+  .am-table :global(td) { word-break: normal; }
+  .am-table :global(.num) { text-align: right; white-space: nowrap; }
+  .am-table :global(.am-cc) { color: var(--muted); font-size: 0.78rem; }
+  .am-hr { margin: 1.6rem 0 1.3rem; }
+  #am-body[hidden], #am-self[hidden] { display: none; }
+</style>

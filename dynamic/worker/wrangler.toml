@@ -98,6 +98,12 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 #       `clientIP` está disponível no cru mas nunca é pedido (zero-PII por
 #       escolha, não limitação do plano). Ver src/lib/cf-analytics.js e
 #       dynamic/PLAN.md.
+#     · Globo de ataques (/api/radar-attacks, Cloudflare Radar — dados
+#       GLOBAIS, não desta zona): "Account Radar:Read" (Account → Radar →
+#       Read). Sem ela o cron regista `radar_attacks_forbidden`, a rota
+#       devolve { ok: false } e a página diz que os dados não estão
+#       disponíveis; os outros painéis não são afetados. Ver
+#       src/lib/radar-attacks.js.
 #
 # Rotação do RATE_SALT: rodar SEMANALMENTE. Trocar o segredo invalida de
 # imediato TODOS os rate-limits acumulados (o hash deixa de bater) — é
@@ -117,7 +123,8 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # --- Cron para aquecer caches e acumular janelas de 7 dias ---
 # A cada 30 min: aquece ct/cf-stats/threat-intel (para as visitas caírem
 # sempre em cache) e apaga o que o honeypot interno deixou no KV, enquanto
-# houver (ADR 0022). O snapshot da firewall (fw:<dia>, para acumular 7
+# houver (ADR 0022); pede ao Cloudflare Radar a última hora de ataques L7
+# (1 escrita por tick, ~48/dia — src/lib/radar-attacks.js). O snapshot da firewall (fw:<dia>, para acumular 7
 # dias a partir do dataset cru do Free, que só retém 24h) fotografa o que a
 # cache `cache:cfstats` tiver — quem quer que a tenha refrescado (o cron, um
 # `?refresh=1` ou um GET) — e só ESCREVE quando há um fetch novo (TTL 6h,

@@ -7,6 +7,7 @@
 //   · /api/vitals (GET)        — Core Web Vitals p75 (RUM, 7d)
 //   · /api/vitals (POST)       — beacon RUM first-party (agregados, sem PII)
 //   · /api/mirror              — o que o servidor vê deste pedido (sem guardar nada)
+//   · /api/radar-attacks       — pares origem→alvo de ataques L7 na última hora (Cloudflare Radar, global)
 //   · /api/health
 // O honeypot (paths-isco, lista de IPs, mapa e ticker SOC) saiu deste
 // Worker — ADR 0022: o sensor é agora só o honeypot externo
@@ -21,6 +22,7 @@ import { underCap } from './lib/kvcap.js';
 import { normalizePrefix, fetchRange } from './lib/pwned.js';
 import { fetchCtWatch } from './lib/ct.js';
 import { fetchCfStats } from './lib/cf-analytics.js';
+import { fetchRadarAttacks } from './lib/radar-attacks.js';
 import { serverView } from './lib/mirror.js';
 import { edgeCache, edgeKey, edgeGetJSON, edgePutJSON } from './lib/edgecache.js';
 
@@ -77,6 +79,41 @@ async function purgeLegacyHoneypotKeys(env) {
 // primeiro pedido depois do deploy já não a pode servir, sem esperar pelo
 // cron nem pela expiração da Cache API.
 const THREAT_INTEL_CACHE = { kv: 'cache:firewall7d', edge: 'firewall7d' };
+
+// ---------- Cloudflare Radar: ataques L7 na última hora (global) ----------
+
+// O cron escreve, a rota só lê — nenhum pedido de visitante chega ao Radar
+// nem escreve no KV. TTL de 3h: se o cron deixar de conseguir dados (Radar em
+// baixo, token sem permissão), a "última hora" não fica a ser servida para
+// sempre — a chave expira e a rota passa a dizer { ok: false }.
+const RADAR_ATTACKS_KEY = 'radar:attacks';
+const RADAR_ATTACKS_TTL_SEC = 3 * 3600;
+
+/**
+ * Um tick do cron: pede a última hora ao Radar e grava-a (1 escrita, ~48/dia
+ * — a janela anda 30 min por tick, por isso há sempre dados novos). Sem
+ * permissão (401/403) ou sem token, grava `{ ok: false }` uma vez — ticks
+ * seguintes com o mesmo erro só leem — para a página dizer porquê em vez de
+ * mostrar dados velhos. Erros transitórios (5xx, resposta vazia ou inválida)
+ * só se registam: fica o último valor bom até expirar.
+ */
+async function refreshRadarAttacks(env) {
+  const result = await fetchRadarAttacks(env);
+  if (result.ok) {
+    await env.KV.put(RADAR_ATTACKS_KEY, JSON.stringify(result), { expirationTtl: RADAR_ATTACKS_TTL_SEC });
+    return;
+  }
+  if (result.error === 'forbidden' || result.error === 'not_configured') {
+    console.error('radar_attacks_forbidden', result.error, 'CF_API_TOKEN needs Account > Radar > Read');
+    const prev = await getJSON(env, RADAR_ATTACKS_KEY);
+    if (prev?.ok === false && prev.error === result.error) return;
+    await env.KV.put(RADAR_ATTACKS_KEY, JSON.stringify({ ok: false, error: result.error }), {
+      expirationTtl: RADAR_ATTACKS_TTL_SEC,
+    });
+    return;
+  }
+  console.error('radar_attacks_fetch_failed', result.error);
+}
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
 
@@ -198,7 +235,7 @@ const STALE_GRACE_SEC = 86400;
 // refresh aceite custa 2 (valor + contador). Soma dos orçamentos diários do
 // Worker: cache 80 + refresh manual 40 + cron (~16:
 // ct/cfstats/fw/threatintel; a limpeza do honeypot antigo só escreve uma
-// vez) ≈ 140 — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
+// vez; + 48 do Radar, 1 por tick) ≈ 190 — abaixo das ~1.000/dia da conta, com margem para a ultrapassagem que
 // pedidos concorrentes conseguem (underCap não é atómico, ver lib/kvcap.js).
 // O rate limiter já não entra nesta conta: vive na Cache API (ver rateLimit).
 const CACHE_WRITE_CAP = { windowMs: DAY_MS, max: 80 };
@@ -635,6 +672,19 @@ export default {
         return json(data, request, env, { maxAge: 1800 });
       }
 
+      // Ataques L7 na última hora, globais (Cloudflare Radar) — NÃO ataques a
+      // este site. Só lê o que o cron gravou (refreshRadarAttacks): sem
+      // input de visitante, sem fetch ao Radar, sem escrita no KV. Qualquer
+      // falha (sem dados, token sem permissão) é só { ok: false } — o motivo
+      // fica nos logs, não numa rota pública.
+      if (path === '/api/radar-attacks') {
+        const data = await edgeCached(request, 'radar-attacks', 300, async () => {
+          const stored = await getJSON(env, RADAR_ATTACKS_KEY);
+          return stored?.ok === true ? stored : { ok: false };
+        });
+        return json(data, request, env, { maxAge: 300 });
+      }
+
       // Espelho: a "vista do servidor" deste mesmo pedido. Sem input de
       // visitante (não é proxy) e sem qualquer escrita de estado — só se lê
       // o que o pedido já trouxe. O IP é devolvido só a quem pediu e nunca
@@ -693,6 +743,11 @@ export default {
           cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({
             firewall7d: await readFirewall7d(env, Date.now()),
           }), { capped: false }).catch(() => {}),
+          // Radar (global): isolado como os outros — uma falha aqui (rede,
+          // token sem permissão) nunca impede os painéis acima de aquecer.
+          refreshRadarAttacks(env).catch((err) =>
+            console.error('radar_attacks_refresh_failed', err?.message ?? String(err)),
+          ),
         ]);
       })(),
     );

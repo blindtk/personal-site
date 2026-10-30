@@ -15,6 +15,48 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
+- **2026-10-30 — Attack globe: "attacks in the last hour" from Cloudflare
+  Radar** (approved by the repo owner). A new page, PT `/mapa-de-ataques/`
+  and EN `/en/attack-map/` (kept clear of `/attack/`, the MITRE ATT&CK
+  matrix; the two pages link to each other), with a "requires server"
+  badge. It shows **global** Radar data, not attacks on this site, and the
+  page says so, with attribution to Cloudflare Radar (CC BY-NC 4.0).
+    - **Source:** `GET /radar/attacks/layer7/top/attacks`, origin → target
+      country pairs as a % of mitigated layer 7 attacks. `dateRange` only
+      takes `<n>d`/`<n>w` (1 day minimum), so the last hour is asked for with
+      `dateStart`/`dateEnd`, aligned to 15 minutes (Radar floors both to the
+      quarter hour), `limit=30`. Layer 3 (`/radar/attacks/layer3/top/attacks`)
+      was evaluated and left out: it only returns the origin country, so
+      it can't draw arcs.
+    - **Backend:** the existing `*/30` cron fetches it with `CF_API_TOKEN`
+      (needs **Account → Radar → Read**) and stores
+      `{ ok, window, start, end, fetched, pairs: [[origin, target, pct], …] }`
+      in KV (`radar:attacks`, TTL 3 h). `GET /api/radar-attacks` only reads
+      that key (5 min data-center Cache API): no visitor input, no upstream
+      call, no KV write, no rate limit needed. On 401/403 the cron logs
+      `radar_attacks_forbidden`, writes `{ ok: false }` once, and the page
+      shows a message; transient errors keep the last good value. It runs
+      isolated from the other cron jobs, so it never stops them. Pure
+      validation in `src/lib/radar-attacks.js` (assigned ISO 3166-1 alpha-2
+      codes + XK, finite % in [0, 100], duplicates and junk dropped, 30-pair
+      cap), tested. **Write budget:** +48/day (one per tick), ~140 → ~190.
+    - **Frontend:** a small canvas-2D globe of our own
+      (`static/src/scripts/attack-globe.js`, pure and tested;
+      `components/attack-map/globe-canvas.ts`, loaded lazily), not cobe or
+      globe.gl. cobe 2.0.1 loads its map texture from a `data:` URI (blocked
+      by `img-src 'self' blob:`), injects an inline `<style>` (blocked by
+      `style-src 'self'`) and has one arc width for all arcs; globe.gl pulls
+      in three.js, well past the ~150 KB gz limit. The page's JS is ~2 KB gz
+      up front plus ~5 KB gz lazy (renderer + country centroids and land
+      mask from Natural Earth, `static/scripts/gen-attack-map-geo.mjs`), and
+      the CSP is unchanged. Arc width follows the %, colours come from
+      `--accent-2` (origin) and `--accent` (target), rotation starts paused
+      under `prefers-reduced-motion` and has a pause button, and an
+      accessible "most active pairs" table is the text alternative.
+      Country names come from `Intl.DisplayNames`.
+    - **Extra:** an "And on this site?" table with the top countries in
+      this zone's own 7-day firewall data, reusing `/api/threat-intel`.
+
 - **2026-10-02 — Remove two tools** (decision by the repo owner): the
   passkey lab and the encoder/decoder. They are generic utilities that
   other tools do better (CyberChef, for one). The password generator was

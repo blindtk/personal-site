@@ -25,6 +25,7 @@ Cloudflare Worker + one KV namespace.
 | `GET /api/ct` | CT watcher: certificates issued for the domain (Certificate Transparency logs, 90 d) | 6 h | — |
 | `GET /api/cf-stats` | Cloudflare zone status: zone requests/cache/threats (+ top countries by threats) + this Worker's invocations/errors (GraphQL Analytics API) | 6 h | `?refresh=1`: 3/10 min |
 | `GET /api/mirror` | Mirror: the "server's view" of this request (TLS/ASN/country/UA, and the requester's own IP — echoed back, **never stored**; ADR 0023) | — (per-request, `no-store`) | 30/min per client |
+| `GET /api/radar-attacks` | Attack globe (`/mapa-de-ataques/`): the last hour's top 30 layer 7 attack pairs, origin country → target country, in % — **global** Cloudflare Radar data, not attacks on this site. Only reads what the cron stored (`radar:attacks`); any failure is `{ ok: false }` | 5 min (data-center Cache API); KV value refreshed every 30 min by the cron | — (no visitor input, no upstream call) |
 | `GET /api/health` | Liveness | — | — |
 
 ## Privacy
@@ -78,7 +79,8 @@ countries with zero threats and invalid codes, and shows the top 10 by
 blocked threats, covering what the Cloudflare WAF/edge blocked across the
 **entire** zone.
 
-**This is not Cloudflare Radar.** Radar is a global, anonymous aggregate
+**This is not Cloudflare Radar** (Radar only feeds the separate attack
+globe, `/api/radar-attacks`, see `src/lib/radar-attacks.js`). Radar is a global, anonymous aggregate
 across all Cloudflare customers — it knows nothing about this specific
 domain, it only serves as borrowed context ("how the internet out there
 is doing"). The GraphQL Analytics API, by contrast, only returns data for
@@ -171,7 +173,7 @@ audit both lived in KV, and a single client could exhaust the account's
 daily writes through them in ~16 minutes (the audit report is not
 published).
 Every public cached route (`/api/vitals`, `/api/threat-intel`, `/api/ct`,
-`/api/cf-stats`) is also
+`/api/cf-stats`, `/api/radar-attacks`) is also
 cached there first, for as long as its response `max-age`. Repeated
 requests therefore cost no KV operations, and they don't re-run the
 producer even while the KV write budget is exhausted. The Cache API is

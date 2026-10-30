@@ -19,6 +19,10 @@ import {
 import { parseCfStats, firewallBreakdown, firewallDetailBreakdown, asnNames, withAsnNames, CF_FIREWALL_MIN_COUNT } from '../src/lib/cf-analytics.js';
 import { serverView, normalizeIp } from '../src/lib/mirror.js';
 import { edgeKey, edgeGetJSON, edgePutJSON } from '../src/lib/edgecache.js';
+import {
+  normalizeAlpha2, normalizePct, normalizeRadarAttacks, radarWindow, radarAttacksUrl, RADAR_ATTACKS_MAX_PAIRS,
+} from '../src/lib/radar-attacks.js';
+import { readFileSync } from 'node:fs';
 import worker from '../src/index.js';
 import {
   VitalsCounter, VITALS_MAX_SAMPLES_PER_DAY, vitalsDayKey,
@@ -2115,4 +2119,155 @@ test('VitalsCounter: `now` inválido falha fechado em vez de gravar numa chave N
   await assert.rejects(counter.record({ lcp: 1000 }, Number('x')), /vitals_bad_now/);
   await assert.rejects(counter.read(Number('x')), /vitals_bad_now/);
   assert.equal(storage.map.size, 0);
+});
+
+// ---------- Cloudflare Radar: ataques L7 na última hora (/api/radar-attacks) ----------
+
+const radarFixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), 'utf8'));
+const RADAR_NOW = Date.parse('2026-10-29T21:07:00Z');
+const radarRow = (o, t, value) => ({ originCountryAlpha2: o, targetCountryAlpha2: t, value });
+const radarOk = (rows) => ({ success: true, result: { meta: {}, top_0: rows } });
+
+test('normalizeRadarAttacks: resposta da API (fixture) → 30 pares ordenados com a janela do meta', () => {
+  const out = normalizeRadarAttacks(radarFixture('radar-layer7-top-attacks.json'), { now: RADAR_NOW });
+  assert.equal(out.ok, true);
+  assert.equal(out.window, '1h');
+  assert.equal(out.start, '2026-10-29T20:00:00.000Z');
+  assert.equal(out.end, '2026-10-29T21:00:00.000Z');
+  assert.equal(out.fetched, '2026-10-29T21:07:00.000Z');
+  assert.equal(out.pairs.length, 30);
+  assert.deepEqual(out.pairs[0], ['US', 'US', 9.8734]);
+  assert.deepEqual(out.pairs.at(-1), ['PT', 'US', 0.5803]);
+  for (let i = 1; i < out.pairs.length; i++) assert.ok(out.pairs[i - 1][2] >= out.pairs[i][2]);
+});
+
+test('normalizeRadarAttacks: success:false (resposta real de erro da API) → ok:false', () => {
+  assert.deepEqual(normalizeRadarAttacks(radarFixture('radar-error-missing-auth.json')), {
+    ok: false, error: 'upstream_unsuccessful',
+  });
+  assert.deepEqual(normalizeRadarAttacks(null), { ok: false, error: 'upstream_unsuccessful' });
+  assert.deepEqual(normalizeRadarAttacks({ success: true, result: {} }), { ok: false, error: 'bad_shape' });
+});
+
+test('normalizeRadarAttacks: resposta vazia, ou só com lixo, → ok:false empty', () => {
+  assert.deepEqual(normalizeRadarAttacks(radarOk([])), { ok: false, error: 'empty' });
+  assert.deepEqual(normalizeRadarAttacks(radarOk([radarRow('XX', 'US', '5'), null])), { ok: false, error: 'empty' });
+});
+
+test('normalizeAlpha2: só códigos ISO 3166-1 atribuídos (+XK); XX/T1/EU/ZZ e não-strings saem', () => {
+  assert.equal(normalizeAlpha2('pt'), 'PT');
+  assert.equal(normalizeAlpha2('XK'), 'XK');
+  for (const bad of ['XX', 'T1', 'EU', 'ZZ', 'UK', 'PRT', 'P', '', ' ', null, undefined, 620]) {
+    assert.equal(normalizeAlpha2(bad), null, String(bad));
+  }
+});
+
+test('normalizePct: limites 0 e 100 inclusivos; NaN, negativo, >100 e string vazia saem', () => {
+  assert.equal(normalizePct('0'), 0);
+  assert.equal(normalizePct('100'), 100);
+  assert.equal(normalizePct('4.323214'), 4.3232);
+  assert.equal(normalizePct(12.5), 12.5);
+  // Number('') e Number(' ') são 0 — não podem passar por "0%"
+  for (const bad of ['100.0001', '-0.1', -1, 'NaN', NaN, Infinity, '', ' ', '5%', '0x10', null, undefined]) {
+    assert.equal(normalizePct(bad), null, String(bad));
+  }
+});
+
+test('normalizeRadarAttacks: descarta pares inválidos e duplicados, mantém os válidos', () => {
+  const out = normalizeRadarAttacks(radarOk([
+    radarRow('US', 'GB', '3'),
+    radarRow('U1', 'GB', '9'),      // código inválido
+    radarRow('CN', 'US', 'NaN'),    // pct NaN
+    radarRow('RU', 'UA', '-2'),     // pct negativo
+    radarRow('DE', undefined, '4'), // alvo em falta
+    'lixo',
+    radarRow('us', 'gb', '7'),      // duplicado de US>GB (fica o primeiro)
+    radarRow('BR', 'BR', '1.5'),
+  ]), { now: RADAR_NOW });
+  assert.deepEqual(out.pairs, [['US', 'GB', 3], ['BR', 'BR', 1.5]]);
+});
+
+test('normalizeRadarAttacks: teto de pares exato, e corta DEPOIS de ordenar', () => {
+  const codes = ['AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+    'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR'];
+  // 31 pares em ordem crescente: o de menor % (o 1.º) é o que tem de sair
+  const rows = codes.map((c, i) => radarRow(c, 'US', String(i + 1)));
+  const out = normalizeRadarAttacks(radarOk(rows), { now: RADAR_NOW });
+  assert.equal(out.pairs.length, RADAR_ATTACKS_MAX_PAIRS);
+  assert.deepEqual(out.pairs[0], ['BR', 'US', 31]);
+  assert.ok(!out.pairs.some(([o]) => o === 'AD'));
+  assert.equal(normalizeRadarAttacks(radarOk(rows.slice(0, 30)), { now: RADAR_NOW }).pairs.length, 30);
+});
+
+test('radarWindow: última hora alinhada ao quarto de hora (o ms em que o quarto muda)', () => {
+  const t = Date.parse('2026-10-29T21:15:00Z');
+  assert.deepEqual(radarWindow(t - 1), { start: Date.parse('2026-10-29T20:00:00Z'), end: Date.parse('2026-10-29T21:00:00Z') });
+  assert.deepEqual(radarWindow(t), { start: Date.parse('2026-10-29T20:15:00Z'), end: t });
+  const url = new URL(radarAttacksUrl(t));
+  assert.equal(url.pathname, '/client/v4/radar/attacks/layer7/top/attacks');
+  assert.equal(url.searchParams.get('dateStart'), '2026-10-29T20:15:00.000Z');
+  assert.equal(url.searchParams.get('dateEnd'), '2026-10-29T21:15:00.000Z');
+  assert.equal(url.searchParams.get('limit'), '30');
+});
+
+// Cron + rota: o fetch é a borda. `radar` decide a resposta do Radar; o resto
+// (crt.sh, GraphQL) falha, como num deploy sem esses upstreams.
+async function withRadarFetch(radar, fn) {
+  const orig = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('/radar/attacks/')) return radar();
+    throw new Error('offline');
+  };
+  try { return await fn(); } finally { globalThis.fetch = orig; }
+}
+
+test('radar: cron grava a última hora e /api/radar-attacks serve-a', async () => {
+  const env = { KV: countingKV(), CF_API_TOKEN: 't' };
+  const fixture = radarFixture('radar-layer7-top-attacks.json');
+  await withRadarFetch(() => ({ ok: true, status: 200, json: async () => fixture }), () => runScheduled(env));
+  const res = await runFetch(fakeRequest('/api/radar-attacks'), env);
+  assert.equal(res.status, 200);
+  const data = await res.json();
+  assert.equal(data.ok, true);
+  assert.equal(data.pairs.length, 30);
+});
+
+test('radar: token sem permissão (403) → { ok: false }, regista, grava uma vez só, e o cron segue', async () => {
+  const env = { KV: countingKV(), CF_API_TOKEN: 't' };
+  const errors = [];
+  const origError = console.error;
+  console.error = (...args) => errors.push(args.join(' '));
+  try {
+    const forbidden = () => ({ ok: false, status: 403, json: async () => ({ success: false }) });
+    await withRadarFetch(forbidden, () => runScheduled(env));
+    await withRadarFetch(forbidden, () => runScheduled(env));
+  } finally {
+    console.error = origError;
+  }
+  assert.ok(errors.some((e) => e.startsWith('radar_attacks_forbidden')));
+  assert.equal(env.KV.puts.radar, 1);
+  // o motivo fica nos logs; a rota pública só diz ok:false
+  const res = await runFetch(fakeRequest('/api/radar-attacks'), env);
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { ok: false });
+});
+
+test('radar: erro transitório (500) mantém o último valor bom', async () => {
+  const env = { KV: countingKV(), CF_API_TOKEN: 't' };
+  const fixture = radarFixture('radar-layer7-top-attacks.json');
+  await withRadarFetch(() => ({ ok: true, status: 200, json: async () => fixture }), () => runScheduled(env));
+  const origError = console.error;
+  console.error = () => {};
+  try {
+    await withRadarFetch(() => ({ ok: false, status: 500 }), () => runScheduled(env));
+  } finally {
+    console.error = origError;
+  }
+  assert.equal(env.KV.puts.radar, 1);
+  assert.equal((await (await runFetch(fakeRequest('/api/radar-attacks'), env)).json()).ok, true);
+});
+
+test('radar: sem nada no KV → { ok: false }', async () => {
+  const res = await runFetch(fakeRequest('/api/radar-attacks'), { KV: fakeKV() });
+  assert.deepEqual(await res.json(), { ok: false });
 });
