@@ -717,20 +717,13 @@ export default {
       }
 
       // Radar: alertas e notícias de cibersegurança, do documento que o cron
-      // escreve no KV (nunca vai buscar feeds aqui). Sem input de visitante;
-      // rate limit leve como no espelho, para a rota não ser martelada. 30 min
-      // no data center à frente do KV (o cron só muda o documento a cada 6 h).
+      // escreve no KV (nunca vai buscar feeds aqui). Sem input de visitante,
+      // por isso sem rate limit, como /api/ct e /api/radar-attacks: o
+      // rateLimit cai para o KV quando a Cache API falha, e aí cada pedido
+      // gastaria 2 escritas do teto partilhado com /api/pwned-range e
+      // /api/mirror. 30 min no data center à frente do KV (o cron só muda o
+      // documento a cada 6 h).
       if (path === '/api/radar') {
-        const { allowed, retryAfterSec } = await rateLimit(env, request, 'radar', {
-          windowMs: 60_000,
-          max: 60,
-        });
-        if (!allowed) {
-          return json({ error: 'rate_limited' }, request, env, {
-            status: 429,
-            extra: { 'retry-after': String(retryAfterSec) },
-          });
-        }
         const data = await edgeCached(request, 'radar', 1800, async () =>
           (await getJSON(env, RADAR_KEY)) ?? RADAR_EMPTY,
         );
@@ -807,12 +800,10 @@ export default {
           refreshRadarAttacks(env).catch((err) =>
             console.error('radar_attacks_refresh_failed', err?.message ?? String(err)),
           ),
-          // Radar ainda sem documento (1.º deploy, ou o KV expirou ao fim de 7
-          // dias sem recolhas): recolhe já, em vez de a página ficar vazia até
-          // 6 h. Com documento, este tick custa só esta leitura.
-          getJSON(env, RADAR_KEY)
-            .then((doc) => (doc ? null : refreshRadar(env)))
-            .catch((err) => console.error('radar_refresh_failed', err?.message ?? String(err))),
+          // O Radar (feeds RSS) NÃO é recolhido aqui, nem quando ainda não há
+          // documento: o parse do CNCS (~1,7 MB) somado a estes aquecimentos
+          // arriscava passar os 10 ms de CPU do plano Free numa só invocação. Sem
+          // documento, /api/radar serve RADAR_EMPTY até ao próximo RADAR_CRON.
         ]);
       })(),
     );

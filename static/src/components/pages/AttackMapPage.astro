@@ -200,9 +200,11 @@ const jsStrings = {
     // Com movimento reduzido o globo começa parado; o botão continua a
     // deixar pô-lo a rodar, por escolha explícita.
     let playing = !motion.matches;
+    // O texto já diz a ação ("Pausar rotação"/"Rodar globo"); sem
+    // aria-pressed, que somado ao texto que muda era lido como "Rodar globo,
+    // premido" — dois sinais contraditórios para o leitor de ecrã.
     const label = () => {
       toggle.textContent = playing ? S.pause : S.play;
-      toggle.setAttribute('aria-pressed', String(!playing));
     };
     label();
 

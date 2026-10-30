@@ -102,9 +102,11 @@ each, with the full original entries kept in this file's git history.
       feed (the Worker's heaviest job, ~4–5 ms in Node) doesn't share a
       budget with the cache warm-up. Once a day was rejected because news
       up to 24 h old turns the page into a daily digest. The `*/30` tick
-      only reads `radar:feed`: if the key is missing (first deploy, or 7
-      days without a collection), it collects right away instead of
-      leaving the page empty for up to 6 h.
+      never collects, not even when `radar:feed` is missing (first deploy,
+      or 7 days without a collection): it used to, but that put the CNCS
+      parse in the same 10 ms as every cache warm-up — exactly what the
+      separate trigger avoids. Without a document the page says it is
+      empty until the next `13 */6` run (2026-10-30 review).
     - **Collection, never on request.** All sources are fetched in
       parallel, each with its own timeout (8 s) and byte cap (1 MiB; 4 MiB
       for CNCS, whose feed is ~1.7 MB and oldest-first; 64 KiB for KEV,
@@ -114,12 +116,18 @@ each, with the full original entries kept in this file's git history.
       shows up as down instead of being followed off the fixed list. A
       source that fails is `ok: false` and keeps its items from the
       previous run; it never takes the others down. The route only reads
-      `radar:feed`, behind the data-center Cache API (30 min) and a 60/min
-      per-client rate limit.
+      `radar:feed`, behind the data-center Cache API (30 min), with no rate
+      limit, like `/api/ct` and `/api/radar-attacks`: it takes no visitor
+      input, and `rateLimit` falls back to KV when the Cache API fails, where
+      each request would spend 2 writes of the cap shared with
+      `/api/pwned-range` and `/api/mirror` (2026-10-30 review).
     - **Pure parsing, no dependencies** (`src/lib/radar-feed.js`): a minimal
       RSS 2.0/Atom reader that skips CDATA and comments, decodes entities,
       strips HTML, truncates titles (160), keeps only `https:` links with no
-      credentials, and drops items with an invalid date or one more than
+      credentials on the source's own domain or a subdomain of it (the
+      feed URL's host minus `www.`; CNCS links to `dyn.cncs.gov.pt`), so a
+      compromised feed can't slip phishing links onto a security site
+      (KEV is exempt: its NVD link is built, not read), and drops items with an invalid date or one more than
       1 h in the future. Titles go through `sanitizeText`. Items are sorted
       by date, deduplicated by URL, capped at 10 per source and 80 in total.
       Stored shape: `{generated, sources:[{id,name,type,lang,ok}],

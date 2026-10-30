@@ -138,6 +138,24 @@ export function safeHttpsUrl(input) {
   return url.href.length > MAX_URL_LEN ? null : url.href;
 }
 
+/**
+ * Domínio de uma fonte para validar os links dos seus itens: o host do URL do
+ * feed sem um `www.` à frente (o CNCS liga para dyn.cncs.gov.pt).
+ */
+export function sourceHost(feedUrl) {
+  return new URL(feedUrl).hostname.replace(/^www\./, '');
+}
+
+/**
+ * O link (já validado por safeHttpsUrl) é do domínio da fonte ou de um
+ * subdomínio dele? Um feed comprometido ou sequestrado não consegue assim
+ * meter num site de segurança links para outro domínio (phishing).
+ */
+export function linkOnHost(url, host) {
+  const h = new URL(url).hostname;
+  return h === host || h.endsWith(`.${host}`);
+}
+
 // ---------- datas ----------
 
 const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
@@ -313,7 +331,8 @@ function atomLink(inner) {
 /**
  * Documento RSS 2.0 ou Atom → os `limit` itens válidos mais recentes,
  * [{ t, u, d }] do mais recente para o mais antigo. Itens sem título, sem
- * link https: ou sem data válida (inválida, ausente, futura) caem — o Radar
+ * link https: (ou, com `host`, com link fora desse domínio — ver
+ * linkOnHost) ou sem data válida (inválida, ausente, futura) caem — o Radar
  * ordena por data e um item sem ela não tem onde ficar.
  *
  * Em duas passagens: primeiro só a data de cada item (barato), depois título
@@ -321,7 +340,7 @@ function atomLink(inner) {
  * traz ~350 alertas desde 2016 e só os 10 mais novos chegam ao Radar —
  * limpar os outros todos era CPU gasta para nada.
  */
-export function parseFeed(xml, now = Date.now(), limit = MAX_ITEMS_PER_SOURCE) {
+export function parseFeed(xml, now = Date.now(), limit = MAX_ITEMS_PER_SOURCE, host = null) {
   if (typeof xml !== 'string') return [];
   // Atom tem <feed> na raiz; RSS 2.0 tem <rss>/<channel>. Só o cabeçalho conta.
   const head = xml.slice(0, 4096);
@@ -348,7 +367,7 @@ export function parseFeed(xml, now = Date.now(), limit = MAX_ITEMS_PER_SOURCE) {
       if (linkEl) link = xmlValue(linkEl.inner);
     }
     const u = safeHttpsUrl(link);
-    if (t && u) out.push({ t, u, d });
+    if (t && u && (!host || linkOnHost(u, host))) out.push({ t, u, d });
   }
   return out;
 }
@@ -492,7 +511,10 @@ export async function fetchSource(src, { now = Date.now(), timeoutMs = DEFAULT_T
   });
   if (!res.ok) throw new Error(`radar_status_${res.status}`);
   const text = await readCapped(res, src.maxBytes ?? DEFAULT_MAX_BYTES);
-  return src.format === 'kev' ? parseKev(text, now) : parseFeed(text, now);
+  // O KEV não precisa: o link é construído aqui (NVD), não vem do feed.
+  return src.format === 'kev'
+    ? parseKev(text, now)
+    : parseFeed(text, now, MAX_ITEMS_PER_SOURCE, sourceHost(src.url));
 }
 
 /**
