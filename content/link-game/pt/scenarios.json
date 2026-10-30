@@ -1,0 +1,548 @@
+[
+  {
+    "id": "cgd-netbanking",
+    "prompt": "Entra no teu banco: Caixa Geral de Depósitos.",
+    "domain": "cgd.pt",
+    "note": "A CGD vive em cgd.pt. Lê o endereço até à primeira barra: é aí que se decide quem é o dono.",
+    "legit": "https://www.cgd.pt/",
+    "decoys": [
+      {
+        "url": "https://cgd.pt.acesso-seguro.net/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "https://www.cgd.pt@acesso-clientes.net/",
+        "trick": "userinfo"
+      },
+      {
+        "url": "https://www.cgd-pt.com/",
+        "trick": "typosquat"
+      }
+    ]
+  },
+  {
+    "id": "millennium-bcp",
+    "prompt": "Abre o homebanking do Millennium bcp.",
+    "domain": "millenniumbcp.pt",
+    "note": "O Millennium bcp usa millenniumbcp.pt. Um encurtador esconde o destino: não o uses para chegar ao banco.",
+    "legit": "https://www.millenniumbcp.pt/",
+    "decoys": [
+      {
+        "url": "https://www.millenniumbcp.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://bit.ly/4kQz9Tm",
+        "trick": "shortener"
+      },
+      {
+        "url": "https://www.milleniumbcp.com/",
+        "trick": "typosquat"
+      }
+    ]
+  },
+  {
+    "id": "portal-financas",
+    "prompt": "Recebeste um aviso de reembolso de IRS. Vai ao Portal das Finanças.",
+    "domain": "portaldasfinancas.gov.pt",
+    "note": "O Portal das Finanças é portaldasfinancas.gov.pt, sempre em https. O mesmo nome noutro domínio, ou só dentro do caminho, é outro site.",
+    "legit": "https://www.portaldasfinancas.gov.pt/",
+    "decoys": [
+      {
+        "url": "http://www.portaldasfinancas.gov.pt/",
+        "trick": "http"
+      },
+      {
+        "url": "https://reembolso-irs.top/portaldasfinancas.gov.pt/entrar",
+        "trick": "path"
+      },
+      {
+        "url": "https://www.portaldasfinancas.top/",
+        "trick": "tld"
+      }
+    ]
+  },
+  {
+    "id": "ctt-encomenda",
+    "prompt": "Estás à espera de uma encomenda e queres ver o estado nos CTT.",
+    "domain": "ctt.pt",
+    "note": "Os CTT são ctt.pt. Um número no lugar do nome (203.0.113.45) é um servidor anónimo, não uma empresa.",
+    "legit": "https://www.ctt.pt/",
+    "decoys": [
+      {
+        "url": "https://ctt.encomenda-retida.com/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "https://www.ctt-pt-entregas.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "http://203.0.113.45/ctt/rastreio",
+        "trick": "ip"
+      }
+    ]
+  },
+  {
+    "id": "seguranca-social",
+    "prompt": "Precisas de atualizar o IBAN na Segurança Social Direta.",
+    "domain": "seg-social.pt",
+    "note": "A Segurança Social Direta está em seg-social.pt. O hífen faz parte do nome verdadeiro: confirma cada letra e cada sinal.",
+    "legit": "https://app.seg-social.pt/",
+    "decoys": [
+      {
+        "url": "https://app.xn--eg-social-k9h.com/",
+        "trick": "homograph"
+      },
+      {
+        "url": "https://tinyurl.com/ssdireta-iban",
+        "trick": "shortener"
+      },
+      {
+        "url": "https://app.seg-social.pt@validar-dados.top/",
+        "trick": "userinfo"
+      }
+    ]
+  },
+  {
+    "id": "via-verde",
+    "prompt": "Tens portagens em atraso. Paga-as no site da Via Verde.",
+    "domain": "viaverde.pt",
+    "note": "A Via Verde é viaverde.pt. Para pagar portagens, escreve tu o endereço ou usa a app, em vez de seguires um link de uma mensagem.",
+    "legit": "https://www.viaverde.pt/",
+    "decoys": [
+      {
+        "url": "https://www.vlaverde.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://pagar-portagens.site/viaverde.pt/pagamento",
+        "trick": "path"
+      },
+      {
+        "url": "https://www.viaverde.online/",
+        "trick": "tld"
+      }
+    ]
+  },
+  {
+    "id": "mb-way",
+    "prompt": "Queres consultar a informação oficial do MB WAY.",
+    "domain": "mbway.pt",
+    "note": "O MB WAY é mbway.pt. Acrescentar palavras ao nome («-pagamentos») dá outro domínio, que qualquer pessoa pode registar.",
+    "legit": "https://www.mbway.pt/",
+    "decoys": [
+      {
+        "url": "https://www.mbway-pagamentos.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://mbway.pt.confirmar-pagamento.site/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "http://www.mbway.pt/",
+        "trick": "http"
+      }
+    ]
+  },
+  {
+    "id": "novo-banco",
+    "prompt": "Entra no site do Novo Banco.",
+    "domain": "novobanco.pt",
+    "note": "O Novo Banco é novobanco.pt. Quando há um @ no link, o browser ignora tudo o que está antes dele.",
+    "legit": "https://www.novobanco.pt/",
+    "decoys": [
+      {
+        "url": "https://www.n0vobanco.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://www.novobanco.pt:seguro@login-clientes.xyz/",
+        "trick": "userinfo"
+      },
+      {
+        "url": "https://cutt.ly/novobco",
+        "trick": "shortener"
+      }
+    ]
+  },
+  {
+    "id": "santander",
+    "prompt": "Vais aceder ao Santander Portugal.",
+    "domain": "santander.pt",
+    "note": "O Santander Portugal é santander.pt. Muda a terminação e o dono muda.",
+    "legit": "https://www.santander.pt/",
+    "decoys": [
+      {
+        "url": "https://www.santander.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://acesso-particulares.online/santander.pt/netbanking",
+        "trick": "path"
+      },
+      {
+        "url": "https://www.santander.pt.autenticacao-forte.com/",
+        "trick": "subdomain"
+      }
+    ]
+  },
+  {
+    "id": "montepio",
+    "prompt": "Entra no site do Banco Montepio.",
+    "domain": "montepio.pt",
+    "note": "O Montepio é montepio.pt. Um link sem cadeado (http) com o nome certo continua a ser má ideia: a ligação não vai cifrada.",
+    "legit": "https://www.montepio.pt/",
+    "decoys": [
+      {
+        "url": "https://www.montepio-24.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "http://www.montepio.pt/",
+        "trick": "http"
+      },
+      {
+        "url": "https://198.51.100.23/montepio/login",
+        "trick": "ip"
+      }
+    ]
+  },
+  {
+    "id": "activobank",
+    "prompt": "Abre o site do ActivoBank.",
+    "domain": "activobank.pt",
+    "note": "O ActivoBank é activobank.pt. Uma letra trocada («activobanc») chega para ser outro domínio.",
+    "legit": "https://www.activobank.pt/",
+    "decoys": [
+      {
+        "url": "https://xn--ctivobank-zyh.com/",
+        "trick": "homograph"
+      },
+      {
+        "url": "https://www.activobanc.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://is.gd/actvbk",
+        "trick": "shortener"
+      }
+    ]
+  },
+  {
+    "id": "banco-bpi",
+    "prompt": "Entra no site do Banco BPI.",
+    "domain": "bancobpi.pt",
+    "note": "O Banco BPI é bancobpi.pt. O nome do banco à esquerda de um domínio alheio não torna o link do banco.",
+    "legit": "https://www.bancobpi.pt/",
+    "decoys": [
+      {
+        "url": "https://bancobpi.login-seguro.online/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "http://198.51.100.77/bancobpi/acesso",
+        "trick": "ip"
+      },
+      {
+        "url": "https://bancobpi.pt@atualizar-conta.site/",
+        "trick": "userinfo"
+      }
+    ]
+  },
+  {
+    "id": "edp-fatura",
+    "prompt": "Recebeste um aviso de fatura em atraso da EDP. Vai ao site da EDP.",
+    "domain": "edp.pt",
+    "note": "A EDP é edp.pt. Faturas e avisos urgentes por mensagem são o isco preferido: vai ao site que escreves tu.",
+    "legit": "https://www.edp.pt/",
+    "decoys": [
+      {
+        "url": "https://www.edp-faturas.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://faturas-online.top/edp/pagar",
+        "trick": "path"
+      },
+      {
+        "url": "http://www.edp.pt/",
+        "trick": "http"
+      }
+    ]
+  },
+  {
+    "id": "meo",
+    "prompt": "Queres ver a tua fatura da MEO.",
+    "domain": "meo.pt",
+    "note": "A MEO é meo.pt. Nomes curtos têm muitas variantes: confirma sempre o fim do domínio.",
+    "legit": "https://www.meo.pt/",
+    "decoys": [
+      {
+        "url": "https://www.meo.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://meo.pt.fatura-meo-online.com/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "https://rb.gy/meo24",
+        "trick": "shortener"
+      }
+    ]
+  },
+  {
+    "id": "nos",
+    "prompt": "Vais ao site da NOS ver as ofertas de telemóvel.",
+    "domain": "nos.pt",
+    "note": "A NOS é nos.pt. Uma oferta «grátis» com um @ no link é sempre sinal de alarme.",
+    "legit": "https://www.nos.pt/",
+    "decoys": [
+      {
+        "url": "https://www.nos.xyz/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://www.nos-pt.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://www.nos.pt@oferta-telemovel.top/",
+        "trick": "userinfo"
+      }
+    ]
+  },
+  {
+    "id": "vodafone",
+    "prompt": "Entra na área de cliente da Vodafone Portugal.",
+    "domain": "vodafone.pt",
+    "note": "A Vodafone Portugal é vodafone.pt. Um zero no lugar de um «o» engana a vista; um «o» cirílico engana até o texto copiado.",
+    "legit": "https://www.vodafone.pt/",
+    "decoys": [
+      {
+        "url": "https://www.vodaf0ne.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://www.xn--vdafone-9ig.com/",
+        "trick": "homograph"
+      },
+      {
+        "url": "http://www.vodafone.pt/",
+        "trick": "http"
+      }
+    ]
+  },
+  {
+    "id": "paypal",
+    "prompt": "Entra na tua conta PayPal.",
+    "domain": "paypal.com",
+    "note": "O PayPal é paypal.com. Um «1» no lugar de um «l» é difícil de ver, sobretudo em letra sem serifas.",
+    "legit": "https://www.paypal.com/",
+    "decoys": [
+      {
+        "url": "https://www.paypa1.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://paypal.com.conta-verificada.net/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "https://suporte-clientes.top/paypal.com/signin",
+        "trick": "path"
+      }
+    ]
+  },
+  {
+    "id": "apple-id",
+    "prompt": "Queres abrir o site da Apple.",
+    "domain": "apple.com",
+    "note": "A Apple é apple.com. Se o browser mostrar «xn--» no endereço, está a avisar que há carateres de outro alfabeto.",
+    "legit": "https://www.apple.com/",
+    "decoys": [
+      {
+        "url": "https://xn--pple-43d.com/",
+        "trick": "homograph"
+      },
+      {
+        "url": "https://www.apple.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://apple.com@id-verificar.net/",
+        "trick": "userinfo"
+      }
+    ]
+  },
+  {
+    "id": "microsoft-365",
+    "prompt": "Entra na tua conta de trabalho do Microsoft 365.",
+    "domain": "microsoftonline.com",
+    "note": "O início de sessão da Microsoft está em microsoftonline.com, outro domínio da própria Microsoft. O domínio verdadeiro nem sempre é o que esperas: na dúvida, chega lá pelos favoritos ou pela app.",
+    "legit": "https://login.microsoftonline.com/",
+    "decoys": [
+      {
+        "url": "https://login.rnicrosoftonline.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://login.microsoftonline.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://login.microsoftonline.com.sso-verificar.net/",
+        "trick": "subdomain"
+      }
+    ]
+  },
+  {
+    "id": "google-conta",
+    "prompt": "Inicia sessão na tua conta Google.",
+    "domain": "google.com",
+    "note": "O início de sessão da Google é accounts.google.com: «accounts» é só um subdomínio de google.com.",
+    "legit": "https://accounts.google.com/",
+    "decoys": [
+      {
+        "url": "https://accounts.gooogle.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "https://accounts.google.com.verificar-sessao.xyz/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "https://t.co/Xk29aPq",
+        "trick": "shortener"
+      }
+    ]
+  },
+  {
+    "id": "github",
+    "prompt": "Faz login no GitHub.",
+    "domain": "github.com",
+    "note": "O GitHub é github.com. Um «i» cirílico é visualmente igual ao latino, por isso o browser pode mostrar a versão xn--.",
+    "legit": "https://github.com/login",
+    "decoys": [
+      {
+        "url": "https://xn--gthub-n2e.com/login",
+        "trick": "homograph"
+      },
+      {
+        "url": "https://dev-auth.top/github.com/login",
+        "trick": "path"
+      },
+      {
+        "url": "https://github-login.com/",
+        "trick": "typosquat"
+      }
+    ]
+  },
+  {
+    "id": "amazon",
+    "prompt": "Vais fazer uma compra na Amazon (a loja que serve Portugal).",
+    "domain": "amazon.es",
+    "note": "A loja da Amazon que serve Portugal é amazon.es. O mesmo nome com outra terminação é outro dono.",
+    "legit": "https://www.amazon.es/",
+    "decoys": [
+      {
+        "url": "https://www.amazon.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://www.arnazon.com/",
+        "trick": "typosquat"
+      },
+      {
+        "url": "http://www.amazon.es/",
+        "trick": "http"
+      }
+    ]
+  },
+  {
+    "id": "netflix",
+    "prompt": "A tua Netflix pede para entrares. Qual é o link verdadeiro?",
+    "domain": "netflix.com",
+    "note": "A Netflix é netflix.com. Um IP numérico nunca é o endereço de um serviço conhecido.",
+    "legit": "https://www.netflix.com/pt/login",
+    "decoys": [
+      {
+        "url": "https://netflix.com:pagamento@renovar-conta.top/",
+        "trick": "userinfo"
+      },
+      {
+        "url": "https://www.netfliix.com/pt/login",
+        "trick": "typosquat"
+      },
+      {
+        "url": "http://203.0.113.9/netflix/login",
+        "trick": "ip"
+      }
+    ]
+  },
+  {
+    "id": "autenticacao-gov",
+    "prompt": "Precisas de gerir a tua Chave Móvel Digital.",
+    "domain": "autenticacao.gov.pt",
+    "note": "O Autenticação.Gov é autenticacao.gov.pt. O sufixo .gov.pt está reservado a entidades do Estado; um «gov.pt» a meio do endereço não conta.",
+    "legit": "https://www.autenticacao.gov.pt/",
+    "decoys": [
+      {
+        "url": "https://www.autenticacao.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://autenticacao.gov.pt.chave-movel.top/",
+        "trick": "subdomain"
+      },
+      {
+        "url": "https://www.autenticacao-gov.com/",
+        "trick": "typosquat"
+      }
+    ]
+  },
+  {
+    "id": "sns24",
+    "prompt": "Queres consultar os teus dados de saúde no SNS 24.",
+    "domain": "sns24.gov.pt",
+    "note": "O SNS 24 é sns24.gov.pt. Um certificado ou resultado de saúde pedido por link encurtado é quase sempre burla.",
+    "legit": "https://www.sns24.gov.pt/",
+    "decoys": [
+      {
+        "url": "https://bit.ly/sns24-cert",
+        "trick": "shortener"
+      },
+      {
+        "url": "https://certificado-covid.site/sns24.gov.pt/obter",
+        "trick": "path"
+      },
+      {
+        "url": "https://www.sns-24.com/",
+        "trick": "typosquat"
+      }
+    ]
+  },
+  {
+    "id": "continente",
+    "prompt": "Vais às compras online no Continente.",
+    "domain": "continente.pt",
+    "note": "O Continente é continente.pt. Cartões e ofertas «exclusivas» são isco comum: confirma o domínio antes de inserires dados.",
+    "legit": "https://www.continente.pt/",
+    "decoys": [
+      {
+        "url": "https://www.xn--cntinente-02h.com/",
+        "trick": "homograph"
+      },
+      {
+        "url": "https://www.continente.top/",
+        "trick": "tld"
+      },
+      {
+        "url": "https://continente.pt@cartao-oferta.xyz/",
+        "trick": "userinfo"
+      }
+    ]
+  }
+]

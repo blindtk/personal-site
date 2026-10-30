@@ -2655,3 +2655,142 @@ main > section > p:not([class]), main > p:not([class]) {
   .contact-list td a::after { transform: none; }
   .journey .stop:last-child .dot { animation: none; box-shadow: 0 0 0 2px var(--accent), 0 0 12px var(--accent); }
 }
+
+/* ---------- O link verdadeiro (ferramentas/link-game) ---------- */
+.lg [hidden] { display: none; }
+.lg-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.8rem;
+}
+.lg-prompt {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  margin: 0 0 1rem;
+  outline: none;
+}
+.lg-options {
+  display: grid;
+  gap: 0.6rem;
+}
+.lg-opt {
+  display: grid;
+  grid-template-columns: 1.9rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: 0.7rem 0.8rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  cursor: pointer;
+}
+.lg-opt:hover,
+.lg-opt:focus-visible {
+  border-color: var(--accent);
+}
+.lg-opt[aria-disabled='true'] { cursor: default; }
+.lg-opt[data-state='right'] { border-color: var(--accent); background: var(--accent-dim); }
+.lg-opt[data-state='wrong'] { border-color: var(--danger); }
+.lg-opt[data-state='other'] { border-color: var(--border); }
+.lg-key {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.7;
+  text-align: center;
+  color: var(--accent);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+.lg-body { display: grid; gap: 0.3rem; min-width: 0; }
+.lg-url {
+  font-size: 0.86rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.lg-tag,
+.lg-dest {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.lg-opt[data-state='right'] .lg-tag { color: var(--accent); }
+.lg-opt[data-state='wrong'] .lg-tag { color: var(--danger); }
+.lg-feedback { margin-top: 1rem; }
+.lg-feedback p { margin: 0.5rem 0; }
+.lg-verdict { font-family: var(--mono); font-weight: 700; }
+.lg-verdict[data-ok='true'] { color: var(--accent); }
+.lg-verdict[data-ok='false'] { color: var(--danger); }
+.lg-note { color: var(--muted); }
+.lg-final {
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0.2rem 0 0.4rem;
+}
+.lg-rules { padding-left: 1.2rem; }
+.lg-rules li { margin-bottom: 0.6rem; }
+
+/* ---------- Jogo «Phishing ou legítimo?» ---------- */
+.ph-muted { color: var(--muted); font-size: 0.85rem; }
+.ph-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.ph-timer { display: flex; align-items: center; gap: 0.8rem; margin: 0.5rem 0 1rem; }
+.ph-timer .meter { flex: 1; margin-top: 0; }
+.ph-timer .fill { width: 100%; transition: none; }
+#ph-card { outline: none; }
+.ph-msg {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1rem;
+  max-width: 38rem;
+}
+.ph-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; margin-bottom: 0.7rem; }
+.ph-fict { color: var(--muted); font-size: 0.72rem; }
+.ph-row { margin: 0 0 0.35rem; font-size: 0.9rem; overflow-wrap: anywhere; }
+.ph-label { color: var(--muted); font-size: 0.75rem; margin-right: 0.6rem; }
+.ph-subject .ph-value { font-weight: 700; }
+.ph-body { border-top: 1px solid var(--border); margin-top: 0.6rem; padding-top: 0.7rem; overflow-wrap: anywhere; }
+.ph-body p { margin: 0 0 0.6rem; }
+.ph-sms .ph-body,
+.ph-whatsapp .ph-body {
+  background: var(--bg-raise-2);
+  border: 1px solid var(--border);
+  border-radius: 14px 14px 14px 4px;
+  padding: 0.7rem 0.9rem;
+  margin-top: 0.5rem;
+}
+.ph-body p:last-child { margin-bottom: 0; }
+.ph-attach .ph-value { font-family: var(--mono); font-size: 0.85rem; }
+.ph-answers { margin-top: 1rem; }
+.ph-answers .btn:disabled { opacity: 0.45; cursor: default; }
+.ph-sig { color: inherit; border-radius: 3px; padding: 0 0.15em; }
+.ph-sig.ph-bad { background: rgba(242, 109, 109, 0.22); text-decoration: underline wavy var(--danger); text-underline-offset: 3px; }
+.ph-sig.ph-ok { background: var(--accent-dim); text-decoration: underline var(--accent); text-underline-offset: 3px; }
+.ph-n { font-family: var(--mono); font-size: 0.65em; margin-left: 0.15em; }
+.ph-result { border-left: 3px solid var(--accent); padding: 0.2rem 0 0.2rem 1rem; margin-top: 1.2rem; }
+.ph-result.ph-miss { border-left-color: var(--danger); }
+.ph-headline { font-weight: 700; margin: 0 0 0.3rem; }
+.ph-levelup { color: var(--accent-2); font-size: 0.85rem; }
+.ph-signals { padding-left: 1.2rem; }
+.ph-signals li { margin-bottom: 0.7rem; }
+.ph-signals p { margin: 0; }
+.ph-why { color: var(--muted); }
+.ph-final { font-size: 1.1rem; }
+.ph-rules li { margin-bottom: 0.6rem; }
