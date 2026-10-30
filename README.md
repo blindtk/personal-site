@@ -37,7 +37,7 @@ That scale is deliberate; see
 | **Cloudflare panels** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | `/api/cf-stats`, `/api/threat-intel` |
 | **Performance** — first-party Core Web Vitals, no third-party script | `/este-site/performance/` | `/api/vitals` |
 | **Certificate Transparency watch** — certificates issued for the domain, checked against the expected CAs | `/este-site/provas/` | `/api/ct` |
-| **Radar** — cybersecurity alerts (CNCS, CERT-EU, NCSC UK, CISA KEV) and news, aggregated from RSS by the Worker's cron | `/radar/` | `/api/radar` |
+| **Radar** — cybersecurity alerts (CNCS, CERT-EU, NCSC UK, CISA KEV) and news, aggregated from RSS by the Worker every 6 h | `/radar/` | `/api/radar` |
 | **MITRE ATT&CK heatmap** | `/attack/` | No |
 | **Lab** — a terminal and the site's tools in windows | `/lab/` | No |
 

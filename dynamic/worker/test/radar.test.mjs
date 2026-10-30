@@ -342,7 +342,7 @@ test('/api/radar: serve o documento do KV sem nunca ir buscar feeds', async () =
     () => run((ctx) => worker.fetch(fakeRequest('/api/radar'), env, ctx)));
   assert.equal(res.status, 200);
   assert.deepEqual(await res.json(), doc);
-  assert.equal(res.headers.get('cache-control'), 'public, max-age=300');
+  assert.equal(res.headers.get('cache-control'), 'public, max-age=1800');
   assert.equal(fetched, 0);
 });
 
@@ -352,17 +352,26 @@ test('/api/radar: sem documento no KV (cron ainda não correu) → forma vazia, 
   assert.deepEqual(await res.json(), { generated: null, sources: [], items: [] });
 });
 
-test('cron: recolhe as fontes e grava radar:feed normalizado, com expiração', async () => {
+// O cron do Radar, tal como está no wrangler.toml: é por esta string exata
+// que scheduled() distingue a recolha do Radar do tick de */30 das caches.
+const CRONS = JSON.parse(readFileSync(new URL('../wrangler.toml', import.meta.url), 'utf8').match(/^crons = (\[.*\])$/m)[1]);
+const RADAR_TICK = { cron: CRONS.find((c) => c !== '*/30 * * * *') };
+
+const RADAR_HOSTS = new Set(RADAR_SOURCES.map((s) => new URL(s.url).hostname));
+const BY_HOST = {
+  'cert.europa.eu': fixture('cert-eu.xml'),
+  'www.darkreading.com': fixture('darkreading.xml'),
+  'www.cisa.gov': fixture('cisa-kev.json'),
+};
+async function feedsFetch(url) {
+  const body = BY_HOST[new URL(url).hostname];
+  return body ? new Response(body) : new Response('gone', { status: 404 });
+}
+
+test('cron do Radar: recolhe as fontes e grava radar:feed normalizado, com expiração', async () => {
   const env = { KV: fakeKV() };
-  const byHost = {
-    'cert.europa.eu': fixture('cert-eu.xml'),
-    'www.darkreading.com': fixture('darkreading.xml'),
-    'www.cisa.gov': fixture('cisa-kev.json'),
-  };
-  await withFetch(async (url) => {
-    const body = byHost[new URL(url).hostname];
-    return body ? new Response(body) : new Response('gone', { status: 404 });
-  }, () => run((ctx) => worker.scheduled({}, env, ctx)));
+  env.KV.store.set('radar:feed', JSON.stringify({ generated: '2026-10-01T00:00:00.000Z', sources: [], items: [] }));
+  await withFetch(feedsFetch, () => run((ctx) => worker.scheduled(RADAR_TICK, env, ctx)));
   const doc = JSON.parse(env.KV.store.get('radar:feed'));
   assert.equal(env.KV.opts.get('radar:feed').expirationTtl, 7 * 86400);
   assert.deepEqual(Object.keys(doc).sort(), ['generated', 'items', 'sources']);
@@ -370,4 +379,31 @@ test('cron: recolhe as fontes e grava radar:feed normalizado, com expiração', 
   assert.equal(doc.sources.length, RADAR_SOURCES.length);
   assert.ok(doc.items.length > 0 && doc.items.every((it) => it.u.startsWith('https://') && typeof it.t === 'string'));
   assert.ok(doc.items.every((it, i, a) => i === 0 || a[i - 1].d >= it.d));
+});
+
+test('tick de */30 com o Radar já recolhido: não vai buscar nenhum feed nem escreve radar:feed', async () => {
+  const env = { KV: fakeKV() };
+  const doc = JSON.stringify({ generated: '2026-10-29T18:13:00.000Z', sources: [], items: [] });
+  env.KV.store.set('radar:feed', doc);
+  const hosts = [];
+  await withFetch(async (url) => { hosts.push(new URL(url).hostname); return new Response('gone', { status: 404 }); },
+    () => run((ctx) => worker.scheduled({ cron: '*/30 * * * *' }, env, ctx)));
+  assert.deepEqual(hosts.filter((h) => RADAR_HOSTS.has(h)), []);
+  assert.equal(env.KV.store.get('radar:feed'), doc);
+});
+
+test('tick de */30 sem documento do Radar (1.º deploy): recolhe já, sem esperar até 6 h', async () => {
+  const env = { KV: fakeKV() };
+  await withFetch(feedsFetch, () => run((ctx) => worker.scheduled({ cron: '*/30 * * * *' }, env, ctx)));
+  const doc = JSON.parse(env.KV.store.get('radar:feed'));
+  assert.ok(doc.items.length > 0);
+});
+
+test('cron do Radar: não corre o trabalho de */30 (CPU numa invocação à parte)', async () => {
+  const env = { KV: fakeKV() };
+  env.KV.store.set('radar:feed', JSON.stringify({ generated: null, sources: [], items: [] }));
+  const hosts = [];
+  await withFetch(async (url) => { hosts.push(new URL(url).hostname); return feedsFetch(url); },
+    () => run((ctx) => worker.scheduled(RADAR_TICK, env, ctx)));
+  assert.deepEqual(hosts.filter((h) => !RADAR_HOSTS.has(h)), []); // nada de crt.sh nem GraphQL
 });

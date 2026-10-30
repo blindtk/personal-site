@@ -82,9 +82,17 @@ const THREAT_INTEL_CACHE = { kv: 'cache:firewall7d', edge: 'firewall7d' };
 
 // ---------- Radar (alertas e notícias por RSS) ----------
 
-// Documento do Radar no KV. Só o cron o escreve (1 put por tick, 48/dia); a
-// rota pública só o lê — nunca vai buscar feeds no pedido de um visitante.
+// Documento do Radar no KV. Só o cron o escreve; a rota pública só o lê —
+// nunca vai buscar feeds no pedido de um visitante.
 const RADAR_KEY = 'radar:feed';
+
+// Cron próprio do Radar (wrangler.toml): de 6 em 6 horas (4 escritas/dia), ao
+// minuto 13 para não coincidir com os ticks de :00/:30 do cron das caches.
+// Numa invocação à parte, com os seus próprios 10 ms de CPU do plano Free — o
+// feed do CNCS (~1,7 MB) é o trabalho mais caro do Worker. Alertas e notícias
+// com até 6 h de atraso chegam para um radar; tem de bater certo, carácter a
+// carácter, com a entrada em `crons`.
+const RADAR_CRON = '13 */6 * * *';
 const RADAR_EMPTY = { generated: null, sources: [], items: [] };
 
 /**
@@ -219,7 +227,7 @@ const STALE_GRACE_SEC = 86400;
 // refresh aceite custa 2 (valor + contador). Soma dos orçamentos diários do
 // Worker: cache 80 + refresh manual 40 + cron (~16:
 // ct/cfstats/fw/threatintel; a limpeza do honeypot antigo só escreve uma
-// vez) + Radar (48: 1 put por tick) ≈ 185 — abaixo das ~1.000/dia da conta,
+// vez) + Radar (4: 1 put de 6 em 6 h) ≈ 140 — abaixo das ~1.000/dia da conta,
 // com margem para a ultrapassagem que pedidos concorrentes conseguem (underCap
 // não é atómico, ver lib/kvcap.js).
 // O rate limiter já não entra nesta conta: vive na Cache API (ver rateLimit).
@@ -659,8 +667,8 @@ export default {
 
       // Radar: alertas e notícias de cibersegurança, do documento que o cron
       // escreve no KV (nunca vai buscar feeds aqui). Sem input de visitante;
-      // rate limit leve como no espelho, para a rota não ser martelada. 5 min
-      // no data center à frente do KV (o cron só muda o documento a cada 30).
+      // rate limit leve como no espelho, para a rota não ser martelada. 30 min
+      // no data center à frente do KV (o cron só muda o documento a cada 6 h).
       if (path === '/api/radar') {
         const { allowed, retryAfterSec } = await rateLimit(env, request, 'radar', {
           windowMs: 60_000,
@@ -672,10 +680,10 @@ export default {
             extra: { 'retry-after': String(retryAfterSec) },
           });
         }
-        const data = await edgeCached(request, 'radar', 300, async () =>
+        const data = await edgeCached(request, 'radar', 1800, async () =>
           (await getJSON(env, RADAR_KEY)) ?? RADAR_EMPTY,
         );
-        return json(data, request, env, { maxAge: 300 });
+        return json(data, request, env, { maxAge: 1800 });
       }
 
       // Espelho: a "vista do servidor" deste mesmo pedido. Sem input de
@@ -709,11 +717,17 @@ export default {
     return json({ error: 'not_found' }, request, env, { status: 404 });
   },
 
-  // Cron (ver wrangler.toml): aquece as caches para que a 1.ª visita após
-  // expirar não pague a latência do upstream, recolhe os feeds do Radar, e
-  // limpa o que o honeypot interno deixou no KV (ADR 0022 — só escreve
-  // enquanto houver o que apagar).
+  // Crons (ver wrangler.toml). O do Radar (RADAR_CRON) só recolhe os feeds.
+  // O de */30 aquece as caches para que a 1.ª visita após expirar não pague a
+  // latência do upstream, e limpa o que o honeypot interno deixou no KV (ADR
+  // 0022 — só escreve enquanto houver o que apagar).
   async scheduled(event, env, ctx) {
+    if (event?.cron === RADAR_CRON) {
+      ctx.waitUntil(
+        refreshRadar(env).catch((err) => console.error('radar_refresh_failed', err?.message ?? String(err))),
+      );
+      return;
+    }
     ctx.waitUntil(
       (async () => {
         await purgeLegacyHoneypotKeys(env).catch((err) =>
@@ -737,9 +751,12 @@ export default {
           cached(env, ctx, THREAT_INTEL_CACHE.kv, 6 * 3600, async () => ({
             firewall7d: await readFirewall7d(env, Date.now()),
           }), { capped: false }).catch(() => {}),
-          refreshRadar(env).catch((err) =>
-            console.error('radar_refresh_failed', err?.message ?? String(err)),
-          ),
+          // Radar ainda sem documento (1.º deploy, ou o KV expirou ao fim de 7
+          // dias sem recolhas): recolhe já, em vez de a página ficar vazia até
+          // 6 h. Com documento, este tick custa só esta leitura.
+          getJSON(env, RADAR_KEY)
+            .then((doc) => (doc ? null : refreshRadar(env)))
+            .catch((err) => console.error('radar_refresh_failed', err?.message ?? String(err))),
         ]);
       })(),
     );

@@ -58,7 +58,7 @@ export const ui = {
       evidence: 'Provas verificáveis deste site, geradas no build ou lidas ao vivo: último commit, cabeçalhos, Certificate Transparency e workflows de CI.',
       attack: 'Heatmap pessoal do MITRE ATT&CK: as técnicas que cubro defensivamente, tática a tática, e o que as cobre.',
       certifications: 'Certificações de Daniel Malaco (Fortinet, SANS, Microsoft, CyberDefenders e outras), com verificação independente no Credly.',
-      radar: 'Radar de cibersegurança: alertas do CNCS, CERT-EU, NCSC UK e CISA KEV e notícias do setor, agregados por RSS a cada 30 minutos.',
+      radar: 'Radar de cibersegurança: alertas do CNCS, CERT-EU, NCSC UK e CISA KEV e notícias do setor, agregados por RSS a cada 6 horas.',
     },
     layers: {
       title: 'Páginas da secção Este site',
@@ -916,7 +916,7 @@ export const ui = {
     radar: {
       metaTitle: 'Radar de cibersegurança',
       title: 'Radar',
-      intro: 'Alertas de entidades oficiais e notícias de cibersegurança, num só sítio. O servidor do site recolhe os feeds a cada 30 minutos; os links levam aos sites originais.',
+      intro: 'Alertas de entidades oficiais e notícias de cibersegurança, num só sítio. O servidor do site recolhe os feeds a cada 6 horas; os links levam aos sites originais.',
       tabsLabel: 'Filtrar o Radar',
       tabAll: 'Tudo',
       tabAlerts: 'Alertas',
@@ -984,7 +984,7 @@ export const ui = {
       evidence: 'Verifiable evidence for this site, generated at build or read live: latest commit, headers, Certificate Transparency and CI workflows.',
       attack: 'Personal MITRE ATT&CK heatmap: the techniques I cover defensively, tactic by tactic, and what covers them.',
       certifications: 'Daniel Malaco’s certifications (Fortinet, SANS, Microsoft, CyberDefenders and others), independently verifiable on Credly.',
-      radar: 'Cybersecurity radar: alerts from CNCS, CERT-EU, NCSC UK and CISA KEV plus industry news, aggregated from RSS every 30 minutes.',
+      radar: 'Cybersecurity radar: alerts from CNCS, CERT-EU, NCSC UK and CISA KEV plus industry news, aggregated from RSS every 6 hours.',
     },
     layers: {
       title: 'Pages in the This site section',
@@ -1824,7 +1824,7 @@ export const ui = {
     radar: {
       metaTitle: 'Cybersecurity radar',
       title: 'Radar',
-      intro: 'Alerts from official bodies and cybersecurity news, in one place. The site’s server collects the feeds every 30 minutes; links go to the original sites.',
+      intro: 'Alerts from official bodies and cybersecurity news, in one place. The site’s server collects the feeds every 6 hours; links go to the original sites.',
       tabsLabel: 'Filter the Radar',
       tabAll: 'All',
       tabAlerts: 'Alerts',
