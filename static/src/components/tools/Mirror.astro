@@ -149,15 +149,23 @@ const jsStrings = s;
   }
 
   async function loadServer() {
+    let why: string = S.diagNetwork;
     try {
       const res = await fetch(`${base}/api/mirror`, { headers: { accept: 'application/json' } });
       const ctype = res.headers.get('content-type') ?? '';
-      if (!res.ok || !ctype.includes('application/json')) throw new Error('no api');
-      renderServer(await res.json());
+      if (!res.ok) {
+        why = S.diagHttp.replace('{status}', String(res.status));
+      } else if (!ctype.includes('application/json')) {
+        why = S.diagNotJson;
+      } else {
+        renderServer(await res.json());
+        return;
+      }
     } catch {
-      // Sem Worker publicado: o painel local continua a funcionar.
-      statusEl.textContent = S.unavailable;
+      /* mantém diagNetwork */
     }
+    // Sem Worker publicado: o painel local continua a funcionar.
+    statusEl.textContent = `${S.unavailable} (${why})`;
   }
 
   renderLocal();
