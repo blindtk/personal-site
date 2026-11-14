@@ -51,7 +51,7 @@ jobs:
         with:
           persist-credentials: false
       - name: OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
+        uses: google/osv-scanner-action/osv-scanner-action@32d3cd482bdadfb38b186c0ad1b031902d55d932 # v2.7.1
         with:
           # --config: exceções em osv-scanner.toml (na raiz). Cada IgnoredVuln
           # traz justificação e data de expiração — usar só para falsos
@@ -98,7 +98,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Instalar Semgrep
-        run: pipx install semgrep==1.183.0
+        run: pipx install semgrep==1.185.0
       - name: SAST
         # Gate a ERROR **e** WARNING (era só ERROR até à triagem de 2026-07,
         # ver a revisão de segurança de 2026-07-29, não publicada). O volume real medido contra
@@ -166,7 +166,7 @@ jobs:
         # de segurança (GHSA-f42p-wjw5-97qh) — apanhado numa revisão de
         # segurança ao tentar reproduzir este job localmente; já corrigido
         # noutro PR antes deste chegar a mergear.
-        run: pipx install zizmor==1.31.1
+        run: pipx install zizmor==1.32.0
       - name: Auditar workflows
         env:
           # permite as auditorias online (ex.: deteção de commits impostores)
