@@ -54,9 +54,43 @@
       matchManagers: ['pre-commit'],
       addLabels: ['pre-commit'],
     },
+    // Por datasource, não por manager: o custom.regex também apanha o
+    // testssl.sh (docker) e o actionlint (github-releases), que não são PyPI.
     {
       matchManagers: ['custom.regex'],
+      matchDatasources: ['pypi'],
       addLabels: ['pypi'],
+    },
+    {
+      matchDatasources: ['docker'],
+      addLabels: ['docker'],
+    },
+    // Os `overrides` do dynamic/worker (undici, sharp) não são dependências
+    // diretas: com rangeStrategy 'update-lockfile' o Renovate corre
+    // `npm install undici@<x> --package-lock-only` e o npm rejeita
+    // ("EOVERRIDE: Override for undici@… conflicts with direct dependency"),
+    // o lock do worker fica por atualizar e o PR de grupo sai com "Artifact
+    // update problem" (#245). Com 'bump' o Renovate sobe o próprio range do
+    // override no package.json e o npm resolve o lock sem conflito. Também
+    // sobe o piso do override (útil: o undici está lá por segurança).
+    {
+      matchManagers: ['npm'],
+      matchDepTypes: ['overrides'],
+      rangeStrategy: 'bump',
+    },
+    // As imagens base do OSS-Fuzz são reconstruídas upstream quase todos os
+    // dias, por isso o digest mais recente nunca tem 3 dias e o update fica
+    // para sempre em "Pending Status Checks" no Dependency Dashboard. Sem
+    // espera para estas (são do próprio Google/OSS-Fuzz; o ci-fuzzing.yml não
+    // corre em PRs, por isso corrê-lo à mão — workflow_dispatch — no branch
+    // do Renovate antes do merge); uma vez por mês chega, para não haver um
+    // PR por semana só de digest.
+    {
+      matchDatasources: ['docker'],
+      matchPackageNames: ['gcr.io/oss-fuzz-base/**'],
+      matchUpdateTypes: ['digest'],
+      minimumReleaseAge: null,
+      schedule: ['before 8am on the first day of the month'],
     },
     {
       matchUpdateTypes: ['major'],
