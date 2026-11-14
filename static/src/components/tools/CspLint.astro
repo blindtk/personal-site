@@ -1,4 +1,6 @@
 ---
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { analyzeCsp, fillMessage } from '../../scripts/csp-lint.js';
@@ -6,6 +8,18 @@ import { analyzeCsp, fillMessage } from '../../scripts/csp-lint.js';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
 const s = t(lang).tools.csp;
+
+// A CSP que este site serve de facto, lida no build de public/_headers (a
+// fonte única do cabeçalho): o botão "a CSP deste site" analisa a política
+// real, não uma cópia que pudesse ficar para trás. Sem a linha, o build
+// falha — nunca um exemplo no lugar dela.
+const siteCsp = readFileSync(fileURLToPath(new URL('../../../public/_headers', import.meta.url)), 'utf8')
+  .split('\n')
+  .map((line) => line.trim())
+  .find((line) => line.toLowerCase().startsWith('content-security-policy:'))
+  ?.slice('content-security-policy:'.length)
+  .trim();
+if (!siteCsp) throw new Error('public/_headers: linha Content-Security-Policy em falta');
 
 // Strings que o JS precisa em runtime (mensagens + rótulos), passadas via
 // data-strings para não duplicar o dicionário no bundle.
@@ -22,6 +36,7 @@ const jsStrings = {
   emptyHint: s.emptyHint,
   exampleWeak: s.exampleWeak,
   exampleStrong: s.exampleStrong,
+  siteCsp,
 };
 
 // Render inicial no build (função pura, sem DOM) — a análise do exemplo já
@@ -41,6 +56,7 @@ const tokClass = (flag: string | null) => (flag === 'bad' ? 'tok-bad' : flag ===
     <button type="button" class="btn" id="csp-run">{s.analyze}</button>
     <button type="button" class="btn ghost small" id="csp-weak">{s.exWeak}</button>
     <button type="button" class="btn ghost small" id="csp-strong">{s.exStrong}</button>
+    <button type="button" class="btn ghost small" id="csp-site">{s.exSite}</button>
   </div>
 
   <section class="self-scan" id="csp-result" aria-live="polite">
@@ -176,6 +192,10 @@ const tokClass = (flag: string | null) => (flag === 'bad' ? 'tok-bad' : flag ===
   });
   document.getElementById('csp-strong')!.addEventListener('click', () => {
     input.value = S.exampleStrong;
+    run();
+  });
+  document.getElementById('csp-site')!.addEventListener('click', () => {
+    input.value = S.siteCsp;
     run();
   });
 </script>

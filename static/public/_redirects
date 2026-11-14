@@ -6,14 +6,14 @@
 /en/honeypot/ /en/projects/threat-intel/ 301
 /este-site/honeypot/ /projetos/threat-intel/ 301
 /en/this-site/honeypot/ /en/projects/threat-intel/ 301
-/este-site/analytics/ /este-site/performance/ 301
-/en/this-site/analytics/ /en/this-site/performance/ 301
+/este-site/analytics/ /este-site/ 301
+/en/this-site/analytics/ /en/this-site/ 301
 /detecoes/ /projetos/threat-intel/ 301
 /en/detections/ /en/projects/threat-intel/ 301
 /perimetro/ /este-site/cloudflare/ 301
 /en/perimeter/ /en/this-site/cloudflare/ 301
-/seguranca/ /este-site/seguranca/ 301
-/en/security/ /en/this-site/security/ 301
+/seguranca/ /este-site/ 301
+/en/security/ /en/this-site/ 301
 /provas/ /este-site/provas/ 301
 /en/evidence/ /en/this-site/evidence/ 301
 /ferramentas/encoder/ /ferramentas/ 301
@@ -22,3 +22,7 @@
 /en/tools/passkeys/ /en/tools/ 301
 /mapa-de-ataques/ /este-site/mapa-de-ataques/ 301
 /en/attack-map/ /en/this-site/attack-map/ 301
+/este-site/seguranca/ /este-site/ 301
+/en/this-site/security/ /en/this-site/ 301
+/este-site/performance/ /este-site/ 301
+/en/this-site/performance/ /en/this-site/ 301

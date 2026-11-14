@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Widget from '../site/Widget.astro';
 import StatusBadge from '../site/StatusBadge.astro';
 import SiteLayers from '../SiteLayers.astro';
+import PerformancePanel from '../site/PerformancePanel.astro';
 import { getEntry, render } from 'astro:content';
 import { API_BASE, INFRA, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -13,6 +14,7 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const dict = t(lang);
 const s = dict.site;
+const sec = dict.security;
 const other: Lang = lang === 'pt' ? 'en' : 'pt';
 
 // "Porque foi feito assim": as decisões vivem em content/ (o mesmo ficheiro
@@ -97,11 +99,49 @@ const jsStrings = {
     </dl>
   </section>
 
+  {/* Postura de segurança: era a página Segurança, fundida aqui (2026-11).
+     A tabela "cabeçalho → porquê" foi para as Provas, ao lado do valor que
+     cada cabeçalho exige — uma tabela só em vez de duas. */}
+  <section aria-labelledby="h-threat">
+    <div class="section-title"><h2 id="h-threat">{sec.threatTitle}</h2></div>
+    <p class="arch-body">{sec.threatBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={`${routes.evidence[lang]}#h-headers`}>{sec.headersCta}</a></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-privacy">
+    <div class="section-title"><h2 id="h-privacy">{sec.privacyTitle}</h2></div>
+    <p class="arch-body">{sec.privacyBody}</p>
+  </section>
+
+  <section aria-labelledby="h-ci">
+    <div class="section-title"><h2 id="h-ci">{sec.ciTitle}</h2></div>
+    <p class="arch-body">{sec.ciBody}</p>
+    <ul class="sec-links mono">
+      <li><a href={`${routes.evidence[lang]}#h-workflows`}>{sec.ciCta}</a></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="h-perf">
+    <div class="section-title"><h2 id="h-perf">{s.perfTitle}</h2></div>
+    <p class="arch-body">{s.perfIntro}</p>
+    <PerformancePanel lang={lang} />
+  </section>
+
   <section aria-labelledby="h-why">
     <div class="section-title"><h2 id="h-why">{s.decisionsTitle}</h2></div>
     <div class="prose decisions">
       <Decisions />
     </div>
+  </section>
+
+  <section aria-labelledby="h-report">
+    <div class="section-title"><h2 id="h-report">{sec.reportTitle}</h2></div>
+    <p class="arch-body">{sec.reportBody}</p>
+    <ul class="sec-links mono">
+      <li><a href="/.well-known/security.txt" rel="noopener">→ {sec.securityTxtLabel}</a></li>
+    </ul>
   </section>
 </BaseLayout>
 
@@ -181,6 +221,18 @@ const jsStrings = {
   .stack-list dd {
     text-align: left;
     color: var(--accent);
+  }
+  .sec-links {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+  }
+  .sec-links a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .sec-links a:hover {
+    text-decoration: underline;
   }
   .decisions,
   .arch-body {

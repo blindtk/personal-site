@@ -4,7 +4,8 @@ import { t } from '../i18n/ui';
 import { routes } from '../i18n/routes';
 
 /**
- * Separadores da secção "Este site", no topo de cada uma das seis páginas,
+ * Separadores da secção "Este site", no topo de cada uma das quatro páginas
+ * (eram seis: Segurança e Performance foram fundidas na Visão geral em 2026-11),
  * com a atual marcada. Substitui a lista "por camadas" que se repetia no fim
  * de cada página: a navegação fica num sítio só e a descrição de cada página
  * vive uma vez, na Visão geral.
@@ -14,7 +15,7 @@ import { routes } from '../i18n/routes';
  * de fora: são sobre o percurso pessoal, não sobre o site (ver a nota no
  * BaseLayout.astro).
  */
-type LayerKey = 'overview' | 'security' | 'cloudflare' | 'attackMap' | 'evidence' | 'performance';
+type LayerKey = 'overview' | 'cloudflare' | 'attackMap' | 'evidence';
 
 interface Props {
   lang: Lang;
@@ -25,11 +26,9 @@ const dict = t(lang).layers;
 
 const items: { key: LayerKey; href: string; label: string }[] = [
   { key: 'overview', href: routes.siteOverview[lang], label: dict.overview },
-  { key: 'security', href: routes.security[lang], label: dict.security },
   { key: 'cloudflare', href: routes.cloudflare[lang], label: dict.cloudflare },
   { key: 'attackMap', href: routes.attackMap[lang], label: dict.attackMap },
   { key: 'evidence', href: routes.evidence[lang], label: dict.evidence },
-  { key: 'performance', href: routes.performance[lang], label: dict.performance },
 ];
 ---
 
@@ -78,20 +77,17 @@ const items: { key: LayerKey; href: string; label: string }[] = [
     color: var(--accent);
     border-bottom-color: var(--accent);
   }
-  /* Telemóvel: as 5 camadas não cabem numa linha, e partidas em duas os
-     sublinhados ficavam soltos. Seletor segmentado 3 + 2 numa grelha de 6
-     colunas (as 3 primeiras ocupam 2, as 2 últimas ocupam 3): cada linha
-     preenche a largura e nenhuma camada fica escondida atrás de scroll. */
+  /* Telemóvel: as 4 páginas não cabem numa linha, e partidas em duas os
+     sublinhados ficavam soltos. Seletor segmentado 2 + 2: cada linha
+     preenche a largura e nenhuma página fica escondida atrás de scroll. */
   @media (max-width: 40rem) {
     .layers-tabs { border-bottom: 0; }
     .layers-tabs ul {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.4rem;
       font-size: 0.78rem;
     }
-    .layers-tabs li:nth-child(-n + 3) { grid-column: span 2; }
-    .layers-tabs li:nth-child(n + 4) { grid-column: span 3; }
     .layers-tabs a {
       justify-content: center;
       width: 100%;

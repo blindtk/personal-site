@@ -14,7 +14,7 @@ import { codecs } from './encoding.js';
 // Flag de CTF: não aparece no help; descobre-se com `ls -la` + `cat .flag`.
 const FLAG = 'flag{wh04m1_l4b_pwn3d}';
 
-const APPS = ['subnets', 'hashes', 'passwords', 'email-headers', 'sobre', 'roadmap'];
+const APPS = ['subnets', 'hashes', 'passwords', 'email-headers', 'sobre'];
 
 async function sha(alg, text) {
   const bytes = new TextEncoder().encode(text);
@@ -77,7 +77,7 @@ export function createTerminal(ctx) {
           return { lines: [slugs.length ? slugs.join('  ') : '—'] };
         }
         const all = rest.includes('-la') || rest.includes('-a') || rest.includes('-al');
-        const files = [pt ? 'sobre.md' : 'about.md', 'roadmap.txt', 'projetos/', 'ferramentas/'];
+        const files = [pt ? 'sobre.md' : 'about.md', 'projetos/', 'ferramentas/'];
         if (all) files.unshift('.flag');
         return { lines: [files.join('  ')] };
       }
@@ -86,7 +86,6 @@ export function createTerminal(ctx) {
         if (!arg) return { lines: [t.usage('cat <ficheiro>')] };
         if (arg === '.flag') return { lines: [FLAG] };
         if (arg === 'sobre.md' || arg === 'about.md') return { lines: ctx.aboutMd.split('\n') };
-        if (arg === 'roadmap.txt') return { lines: ctx.roadmap };
         return { lines: [t.fileNotFound(arg)] };
       }
 
@@ -177,7 +176,7 @@ export function createTerminal(ctx) {
         const rows = a.techniques.map(
           (te) => `  ${te.level === 'prod' ? '●' : '○'} ${te.id.padEnd(7)} ${te.name}  [${te.tactic}]`,
         );
-        return { lines: [head, ...rows, pt ? '● produção · ○ lab · heatmap completo em /attack' : '● production · ○ lab · full heatmap at /attack'] };
+        return { lines: [head, ...rows, pt ? '● produção · ○ lab · heatmap completo em /attack' : '● production · ○ lab · full heatmap at /en/attack'] };
       }
 
       case 'projetos':
@@ -218,8 +217,8 @@ export function createTerminal(ctx) {
         }
         lines.push(
           pt
-            ? 'scan aos cabeçalhos ao vivo e workflows em /provas'
-            : 'live header scan and workflows at /evidence',
+            ? 'cabeçalhos, vigia de CT e workflows em /este-site/provas'
+            : 'headers, CT watch and workflows at /en/this-site/evidence',
         );
         return { lines };
       }

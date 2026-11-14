@@ -6,7 +6,6 @@ const ctxPt = {
   lang: 'pt',
   bio: ['linha1', 'linha2'],
   aboutMd: 'Titulo\n\nTexto sobre.',
-  roadmap: ['item 1', 'item 2'],
   catalog: {
     totalRepos: 42,
     categories: [{
@@ -33,8 +32,8 @@ test('createTerminal (pt): comandos básicos — help/whoami/clear/vazio', async
 
 test('createTerminal (pt): ls esconde .flag sem -la, ls projetos lista slugs reais', async () => {
   const { exec } = createTerminal(ctxPt);
-  assert.deepEqual(await exec('ls'), { lines: ['sobre.md  roadmap.txt  projetos/  ferramentas/'] });
-  assert.deepEqual(await exec('ls -la'), { lines: ['.flag  sobre.md  roadmap.txt  projetos/  ferramentas/'] });
+  assert.deepEqual(await exec('ls'), { lines: ['sobre.md  projetos/  ferramentas/'] });
+  assert.deepEqual(await exec('ls -la'), { lines: ['.flag  sobre.md  projetos/  ferramentas/'] });
   assert.deepEqual(await exec('ls projetos'), { lines: ['este-site'] });
 });
 
@@ -112,7 +111,7 @@ test('createTerminal (pt): comandos-espelho do site (attack/projetos/intel/prova
   const hp = await exec('intel');
   assert.ok(hp.lines.some((l) => l.includes('/projetos/threat-intel')));
   assert.deepEqual(await exec('provas'), {
-    lines: ['último commit: abc1234', 'scan aos cabeçalhos ao vivo e workflows em /provas'],
+    lines: ['último commit: abc1234', 'cabeçalhos, vigia de CT e workflows em /este-site/provas'],
   });
 });
 
@@ -120,7 +119,7 @@ test('createTerminal (pt): open válido devolve { open }, inválido dá uso; sud
   const { exec } = createTerminal(ctxPt);
   assert.deepEqual(await exec('open subnets'), { open: 'subnets', lines: ['a abrir subnets…'] });
   assert.deepEqual(await exec('open bogus'), {
-    lines: ['uso: open <subnets|hashes|passwords|email-headers|sobre|roadmap>'],
+    lines: ['uso: open <subnets|hashes|passwords|email-headers|sobre>'],
   });
   assert.deepEqual(await exec('sudo'), {
     lines: ['daniel is not in the sudoers file. This incident will be reported. 🙃'],
@@ -132,7 +131,7 @@ test('createTerminal (pt): open válido devolve { open }, inválido dá uso; sud
 test('createTerminal (en): mensagens em inglês e "about.md" em vez de "sobre.md"', async () => {
   const ctxEn = { ...ctxPt, lang: 'en' };
   const { exec } = createTerminal(ctxEn);
-  assert.deepEqual(await exec('ls'), { lines: ['about.md  roadmap.txt  projetos/  ferramentas/'] });
+  assert.deepEqual(await exec('ls'), { lines: ['about.md  projetos/  ferramentas/'] });
   assert.deepEqual(await exec('cat about.md'), { lines: ['Titulo', '', 'Texto sobre.'] });
   assert.deepEqual(await exec('zzz'), { lines: ["command not found: zzz (try 'help')"] });
 });

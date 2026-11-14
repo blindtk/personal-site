@@ -67,7 +67,7 @@ test).
 ## Cloudflare Status (`/api/cf-stats`)
 
 Panels on the Cloudflare page (`/este-site/cloudflare/`, also read by
-the Performance page) with real metrics for this zone/Worker —
+the Overview's performance panel) with real metrics for this zone/Worker —
 requests, cache rate, threats blocked by Cloudflare's edge (with a table
 of the origin countries with the most blocked threats over the last 7
 days), and this Worker's own invocations and errors — via the

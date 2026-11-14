@@ -44,7 +44,14 @@ const commitDate = commit
 const expected = JSON.parse(
   readFileSync(fileURLToPath(new URL('../../../../.github/expected-headers.json', import.meta.url)), 'utf8'),
 ) as { headers: Record<string, string[]> };
-const contract = Object.entries(expected.headers);
+// O "porquê" de cada cabeçalho (prosa, i18n) casa pelo nome em minúsculas,
+// antes dos dois pontos ("X-Frame-Options: DENY" → x-frame-options).
+const whyByHeader = new Map(
+  dict.security.headers.map((h) => [h.name.split(':')[0].trim().toLowerCase(), h.why] as const),
+);
+const contract = Object.entries(expected.headers).map(
+  ([name, requires]) => [name, requires, whyByHeader.get(name) ?? ''] as const,
+);
 
 // --- Workflows (fonte: .github/workflows/*.yml) ---
 const workflowsDir = fileURLToPath(new URL('../../../../.github/workflows', import.meta.url));
@@ -113,15 +120,17 @@ const scanners = [
           <tr>
             <th class="mono">{ev.contractHeader}</th>
             <th class="mono">{ev.contractRequires}</th>
+            <th class="mono">{ev.contractWhy}</th>
           </tr>
         </thead>
         <tbody>
-          {contract.map(([name, requires]) => (
+          {contract.map(([name, requires, why]) => (
             <tr>
               <th class="mono">{name}</th>
               <td>
-                {requires.map((r) => <span class="badge">{r}</span>)}
+                <div class="ev-req">{requires.map((r) => <span class="badge">{r}</span>)}</div>
               </td>
+              <td class="ev-why">{why}</td>
             </tr>
           ))}
         </tbody>
@@ -212,7 +221,6 @@ const scanners = [
       border: 0;
       padding: 0.1rem 0;
     }
-    .ev-contract td { display: flex; }
     .ev-contract .badge { font-size: 0.7rem; padding: 0.05rem 0.4rem; }
   }
   .result-table td a.hl {
@@ -223,11 +231,20 @@ const scanners = [
   }
   /* A coluna "exige" alinha os requisitos como chips; os valores são curtos
      e técnicos, por isso quebram por chip e não a meio da palavra. */
-  .ev-contract td {
+  /* O flex vive num <div> dentro da célula: uma <td> em flex deixa de
+     esticar com a linha e o filete inferior ficava a meio. */
+  .ev-contract .ev-req {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
     word-break: normal;
+  }
+  .ev-contract td.ev-why {
+    word-break: normal;
+    overflow-wrap: anywhere;
+    color: var(--muted);
+    font-size: 0.86rem;
+    min-width: 16rem;
   }
   .ev-contract th[scope],
   .ev-contract thead th {

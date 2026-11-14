@@ -2,10 +2,11 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import NetworkTopology from '../NetworkTopology.astro';
-import { SITE, type Lang } from '../../config';
+import { API_BASE, SITE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes, blogPostUrl, toolUrl, projectUrl } from '../../i18n/routes';
 import { TOOLS } from '../../lib/tools';
+import { BUILD_INFO } from '../../lib/build-info';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -21,13 +22,35 @@ const projects = (await getCollection('projects', (e) => e.id.startsWith(`${lang
 
 // Seleção de ferramentas para a Home — "em destaque", só as que correm no
 // browser; a lista completa (com as que precisam de servidor) vive em
-// Ferramentas. Os glifos vêm de TOOLS (lib/tools.ts).
-const featured = ['subnets', 'hashes', 'passwords', 'csp', 'email-headers', 'exif'] as const;
+// Ferramentas. Primeiro as que não se encontram em qualquer lado (análise de
+// CSP e de cabeçalhos, os dois jogos de phishing, EXIF); a calculadora de
+// subnets fecha a lista, pelo percurso em redes. Os glifos vêm de TOOLS.
+const featured = ['csp', 'email-headers', 'phishing', 'link-game', 'exif', 'subnets'] as const;
 const tools = featured.map((slug) => ({
   slug,
   glyph: TOOLS.find((tool) => tool.slug === slug)!.glyph,
   ...dict.tools[slug],
 }));
+
+// Faixa "prova ao vivo": o deploy é um facto de build (sempre presente); a
+// firewall e a vigia de CT nascem como convite e passam a número no browser.
+const builtAbs = new Date(BUILD_INFO.builtAt).toISOString().slice(0, 10);
+const proofStrings = {
+  firewallLive: dict.home.proof.firewallLive,
+  ctLive: dict.home.proof.ctLive,
+  ago: dict.site.agoPrefix,
+  units: {
+    second: dict.site.unitSecond, minute: dict.site.unitMinute, hour: dict.site.unitHour,
+    day: dict.site.unitDay, month: dict.site.unitMonth, year: dict.site.unitYear,
+  },
+};
+
+const explore = [
+  { href: routes.radar[lang], glyph: '◉', ...dict.home.explore.radar },
+  { href: routes.links[lang], glyph: '★', ...dict.home.explore.links },
+  { href: routes.attack[lang], glyph: '▦', ...dict.home.explore.attack },
+  { href: routes.certifications[lang], glyph: '✓', ...dict.home.explore.certs },
+];
 
 const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dateStyle: 'medium' });
 ---
@@ -52,7 +75,39 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
       {dict.home.chips.map((chip) => <span class="chip">{chip}</span>)}
     </div>
     <p class="stack-line">{dict.home.stack}</p>
+    <p class="stack-line">{dict.home.frameworksLabel} {dict.home.frameworks}</p>
+    <p class="thesis">{dict.home.thesis}</p>
+    <div class="hero-cta">
+      <a class="btn" href={routes.cloudflare[lang]}>{dict.home.ctaLive} →</a>
+      <a class="btn ghost" href={routes.about[lang]}>{dict.home.ctaAbout}</a>
+    </div>
   </section>
+
+  {/* <aside> e não <section>: fica fora da numeração 01/02/03 das secções. */}
+  <aside
+    class="proof"
+    id="home-proof"
+    aria-label={dict.home.proof.label}
+    data-api={API_BASE}
+    data-lang={lang}
+    data-strings={JSON.stringify(proofStrings)}
+  >
+    <p class="proof-label mono"><span class="live-dot" aria-hidden="true"></span>{dict.home.proof.label}</p>
+    <div class="proof-grid">
+      <a class="proof-cell" href={routes.cloudflare[lang]}>
+        <span class="n" id="proof-fw" aria-hidden="true">→</span>
+        <span class="l" id="proof-fw-l">{dict.home.proof.firewallTeaser}</span>
+      </a>
+      <a class="proof-cell" href={`${routes.evidence[lang]}#h-ct`}>
+        <span class="n" id="proof-ct" aria-hidden="true">→</span>
+        <span class="l" id="proof-ct-l">{dict.home.proof.ctTeaser}</span>
+      </a>
+      <a class="proof-cell" href={routes.evidence[lang]}>
+        <span class="n"><time datetime={BUILD_INFO.builtAt} id="proof-deploy">{builtAbs}</time></span>
+        <span class="l">{dict.home.proof.deployLabel} <span class="mono">{BUILD_INFO.commit}</span></span>
+      </a>
+    </div>
+  </aside>
 
   <section aria-labelledby="h-journey">
     <div class="section-title">
@@ -143,5 +198,74 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
       ))}
     </div>
   </section>
+
+  <section aria-labelledby="h-explore">
+    <div class="section-title">
+      <h2 id="h-explore">{dict.home.explore.title}</h2>
+    </div>
+    <div class="tool-tiles explore-tiles">
+      {explore.map((item) => (
+        <a href={item.href}>
+          <span class="glyph" aria-hidden="true">{item.glyph}</span>
+          <span class="name">{item.name}</span>
+          <span class="desc">{item.desc}</span>
+        </a>
+      ))}
+    </div>
+  </section>
 </BaseLayout>
+
+<script>
+  import { relativeTime } from '../../scripts/observability.js';
+  import { firewallStopped, unexpectedCerts } from '../../scripts/home-proof.js';
+
+  const root = document.getElementById('home-proof')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fmt = new Intl.NumberFormat(locale);
+
+  // Último deploy em tempo relativo; sem JS fica a data ISO do build.
+  const deploy = document.getElementById('proof-deploy') as HTMLTimeElement | null;
+  if (deploy?.dateTime) {
+    const { value, unit } = relativeTime(new Date(deploy.dateTime).getTime());
+    deploy.textContent = `${S.ago} ${value} ${S.units?.[unit] ?? unit}`;
+  }
+
+  // Conta de 0 até ao valor em ~0,7 s (parado em reduced-motion). O número
+  // final é escrito sempre, mesmo que a animação seja interrompida.
+  function countTo(el: HTMLElement, target: number) {
+    if (still || target === 0) {
+      el.textContent = fmt.format(target);
+      return;
+    }
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / 700);
+      el.textContent = fmt.format(Math.round(target * (1 - (1 - p) ** 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  async function fill(path: string, pick: (doc: unknown) => number | null, id: string, label: string, alarm = false) {
+    try {
+      const res = await fetch(`${base}${path}`, { headers: { accept: 'application/json' } });
+      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('application/json')) return;
+      const value = pick(await res.json());
+      if (value === null) return;
+      const n = document.getElementById(id)!;
+      n.removeAttribute('aria-hidden');
+      if (alarm && value > 0) n.closest('.proof-cell')?.classList.add('alarm');
+      document.getElementById(`${id}-l`)!.textContent = label;
+      countTo(n, value);
+    } catch {
+      // Sem Worker: fica o convite de build, que já liga ao painel.
+    }
+  }
+
+  fill('/api/threat-intel', firewallStopped, 'proof-fw', S.firewallLive);
+  fill('/api/ct', unexpectedCerts, 'proof-ct', S.ctLive, true);
+</script>
 

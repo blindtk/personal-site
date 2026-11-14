@@ -15,6 +15,56 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
+- **2026-11-14 — Product pass: fewer pages, a home that shows the proof**
+  (approved point by point by the repo owner after a site review). No new
+  Worker route, no new KV key, no CSP change.
+    - **"This site" goes from six pages to four.** Security and Performance
+      are folded into the Overview (threat model, privacy, delivery chain,
+      Web Vitals and traffic, how to report); the "header → why" table moved
+      to Evidence as a third column next to what each header requires, so
+      there is one headers table instead of two. Old URLs 301 to the
+      Overview (`static/public/_redirects`); `security.txt`'s `Policy` now
+      points at the Overview's report section. The attack map stays its own
+      page, as decided on 2026-10-30.
+    - **Radar and Links leave the top-level nav** and sit in a "Resources"
+      dropdown (same `<details>` pattern as "This site"), on the home page
+      ("More to explore", with ATT&CK and Certifications) and in the footer.
+      This revisits the 2026-10-30 placement of the Radar: it aggregates
+      other people's news, so it should not sit at the same level as the
+      pages that present the author. The page and `/api/radar` are unchanged.
+    - **Home: a thesis, two CTAs and a "live evidence" strip** reading two
+      existing routes (`/api/threat-intel`, `/api/ct`) plus the build's
+      deploy time. Each cell is rendered at build time as an invitation and
+      only becomes a number when the Worker answers with valid data
+      (`static/src/scripts/home-proof.js`, tested): a malformed document
+      never turns into "0 unexpected certificates". Two more read requests
+      per home view, both served from the data-center Cache API, no KV
+      writes.
+    - **Honeypot summary on the Threat Intel project page.** Aggregates only
+      (totals, top ATT&CK techniques, top usernames), vendored as
+      `content/intel-summary.json` and delivered by pull request from the
+      honeypot repo, like the stars catalog — contract and failure modes in
+      `docs/intel-sync.md`. The honeypot itself stays out of this repo (ADR
+      0022). The file is optional: without it the section is not rendered,
+      and there is never sample data in its place. A string shaped like an
+      IP address fails the build (`static/src/scripts/intel-summary.js`).
+      **Pending on the honeypot side:** the job that generates the file and
+      opens the PR.
+    - **Tools:** the index and the home lead with the tools that are
+      specific to this site (mirror, CSP analyser, email headers, the two
+      phishing games); the CSP analyser gained a "this site's CSP" button
+      that reads the real policy from `static/public/_headers` at build.
+    - **Claims aligned with the data:** the home chips no longer advertise
+      the Fortinet NSE 4-7 tracks that `content/certs.json` shows as expired
+      (09/2026), and NIS2 / ISO 27001 moved from the credential chips to a
+      "working frameworks" line. The Lab's `roadmap.txt` (a list of tools
+      not built) is gone; the list lives only under
+      [Next tools](#next-tools).
+    - **Motion, CSS only:** cross-document View Transitions, the ATT&CK
+      matrix lighting up tactic by tactic, and scroll-driven entry on the
+      home page. All progressive enhancement and all off under
+      `prefers-reduced-motion`.
+
 - **2026-10-30 — The attack map moves into "This site"** (decision by the
   repo owner, same day as the entry below). Once its default tab became
   this zone's own firewall data, the page is about the site, unlike ATT&CK
