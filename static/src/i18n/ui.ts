@@ -26,10 +26,9 @@ export const ui = {
       projects: 'Projetos',
       tools: 'Ferramentas',
       radar: 'Radar',
-      security: 'Segurança',
       thisSite: 'Este site',
+      resources: 'Recursos',
       overview: 'Visão geral',
-      performance: 'Performance',
       cloudflare: 'Cloudflare',
       links: 'Links',
       contact: 'Contactos',
@@ -51,10 +50,8 @@ export const ui = {
       links: 'Repositórios do GitHub organizados por categoria e as ferramentas externas de rede e segurança que uso no dia a dia.',
       contact: 'Como contactar Daniel Malaco (email, GitHub, LinkedIn e Credly) e a política de divulgação responsável (security.txt).',
       lab: 'Um ambiente de trabalho no browser: terminal e as ferramentas do site em janelas, para explorar sem sair da página.',
-      siteOverview: 'Como este site é construído, protegido e monitorizado: stack, arquitetura, decisões e estado ao vivo.',
-      security: 'A postura de segurança deste site: modelo de ameaça, cabeçalhos HTTP, privacidade, cadeia de entrega e como reportar vulnerabilidades.',
+      siteOverview: 'Como este site é construído, protegido e monitorizado: arquitetura, modelo de ameaça, privacidade, performance real e como reportar falhas.',
       cloudflare: 'O que a Cloudflare vê e trava na zona deste site, ao vivo: pedidos, ameaças, países e redes de origem.',
-      performance: 'Performance real deste site: pedidos ao longo do tempo, cache e Core Web Vitals (LCP, INP, CLS, TTFB) medidos em visitas reais.',
       evidence: 'Provas verificáveis deste site, geradas no build ou lidas ao vivo: último commit, cabeçalhos, Certificate Transparency e workflows de CI.',
       attack: 'Heatmap pessoal do MITRE ATT&CK: as técnicas que cubro defensivamente, tática a tática, e o que as cobre.',
       attackMap: 'Mapa de ataques em globo: os países de onde vêm os ataques a este site e os ataques da última hora no mundo, com dados da Cloudflare Radar.',
@@ -64,11 +61,9 @@ export const ui = {
     layers: {
       title: 'Páginas da secção Este site',
       overview: 'Visão geral',
-      security: 'Segurança',
       cloudflare: 'Cloudflare',
       attackMap: 'Mapa de ataques',
       evidence: 'Provas',
-      performance: 'Performance',
     },
     // Secção "Este Site" — Visão Geral, Analytics e Performance.
     site: {
@@ -174,23 +169,22 @@ export const ui = {
       built: 'Construído com Astro. Código-fonte no',
       thisSiteLabel: 'Este site:',
       pathLabel: 'Percurso:',
-      security: 'Segurança',
+      resourcesLabel: 'Recursos:',
+      overview: 'Visão geral',
       evidence: 'Provas',
       cloudflare: 'Cloudflare',
       attack: 'ATT&CK',
       certs: 'Certificações',
     },
     security: {
-      title: 'Segurança',
-      metaTitle: 'Segurança',
-      intro:
-        'Este site mostra trabalho técnico sem acrescentar superfície de ataque desnecessária.',
       // ----- Modelo de ameaça -----
       threatTitle: 'Modelo de ameaça',
       threatBody:
         'Não há contas, sessões, base de dados nem formulários que guardem o que escreves, por isso há pouco para atacar. Sobram duas coisas que vale a pena proteger: a integridade do que é servido (ninguém deve conseguir injetar ou alterar código no site) e a privacidade de quem o visita. Os cabeçalhos tratam da primeira; a secção de privacidade explica a segunda.',
       // ----- Cabeçalhos e porquê -----
-      headersTitle: 'Cabeçalhos e porquê',
+      // A tabela vive nas Provas (coluna "porquê"), ao lado do que cada
+      // cabeçalho exige; a chave casa pelo nome antes dos dois pontos.
+      headersCta: 'Ver os cabeçalhos e o porquê de cada um nas Provas →',
       headers: [
         { name: 'Content-Security-Policy', why: "script-src 'self' e style-src 'self', sem 'unsafe-inline'. Não há JavaScript nem CSS inline no site, por isso só corre código servido por este domínio e um script injetado não executa. É a principal defesa contra XSS." },
         { name: 'Strict-Transport-Security', why: 'Obriga o browser a usar HTTPS durante 2 anos, mesmo que alguém tente forçar HTTP.' },
@@ -232,6 +226,7 @@ export const ui = {
       contractTitle: 'Contrato de cabeçalhos',
       contractHeader: 'cabeçalho',
       contractRequires: 'exige',
+      contractWhy: 'porquê',
       workflowsTitle: 'Workflows',
       pipelineToolCol: 'ferramenta',
       pipelineCatchesCol: 'o que apanha',
@@ -419,9 +414,30 @@ export const ui = {
       location: 'Porto, Portugal',
       bio: 'Desenho e defendo a segurança de infraestruturas rodoviárias, da rede ao endpoint e da prevenção à resposta a incidentes. Comecei nas redes de metro e ferrovia, onde aprendi que uma falha não é um simples alerta: é um sistema parado e milhares de pessoas à espera.',
       meta: ['@ Ascendi · desde 2020', 'MSc · FEUP'],
-      // Nomeia em vez de contar — a credencial mais forte (CCDL2, com badge)
-      // vem primeiro; NIS2 como diferenciador de setor.
-      chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
+      // A tese: o que distingue este site de um CV. Fica logo abaixo da bio,
+      // antes dos CTAs.
+      thesis: 'Este site é a minha prova de trabalho: a segurança dele está à vista e podes verificá-la.',
+      ctaLive: 'Vê a segurança ao vivo',
+      ctaAbout: 'Sobre mim',
+      // Faixa "prova ao vivo". Cada célula nasce no build com um convite
+      // (teaser) e só passa a número quando o Worker responde com dados
+      // válidos (scripts/home-proof.js) — nunca um 0 inventado.
+      proof: {
+        label: 'Prova ao vivo',
+        firewallTeaser: 'O que a firewall travou nos últimos 7 dias',
+        firewallLive: 'pedidos travados pela firewall · 7 dias',
+        ctTeaser: 'Vigia de Certificate Transparency do domínio',
+        ctLive: 'certificados de emissor inesperado · 90 dias',
+        deployLabel: 'último deploy · commit',
+        open: 'abrir',
+      },
+      // Só credenciais em vigor e verificáveis (ver content/certs.json): os
+      // tracks Fortinet NSE 4-7 expiraram em 09/2026, por isso o chip nomeia
+      // uma certificação Fortinet sem validade. NIS2 e ISO 27001 são
+      // referenciais de trabalho, não certificações — ficam na linha abaixo.
+      chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet Cloud Security Architect'],
+      frameworksLabel: 'Referenciais de trabalho:',
+      frameworks: 'NIS2 · ISO 27001 · CIS Controls · MITRE ATT&CK',
       // Nomes de vendors/plataformas — o payload de palavras-chave que um
       // recrutador pesquisa (Splunk, Entra ID, …), ausente dos chips acima.
       stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure',
@@ -473,6 +489,15 @@ export const ui = {
       allPosts: 'todos os posts',
       featuredTools: 'Ferramentas em destaque',
       allTools: 'todas as ferramentas',
+      // Atalhos para o que saiu da nav principal (Radar, Links) e para o que
+      // só se alcançava pelo rodapé (ATT&CK, Certificações).
+      explore: {
+        title: 'Mais para explorar',
+        radar: { name: 'Radar', desc: 'Alertas do CNCS, CERT-EU, NCSC UK e CISA KEV e notícias do setor, a cada 6 horas.' },
+        links: { name: 'Links', desc: 'Os repositórios que sigo, por categoria, e as ferramentas externas que uso.' },
+        attack: { name: 'Matriz ATT&CK', desc: 'As técnicas que cubro do lado defensivo, tática a tática.' },
+        certs: { name: 'Certificações', desc: 'O estado de cada uma, com verificação independente no Credly.' },
+      },
       projects: 'Projetos',
       allProjects: 'todos os projetos',
       readMore: 'ler',
@@ -492,6 +517,27 @@ export const ui = {
       live: 'painel ao vivo',
       open: 'ver projeto',
       back: '← Voltar aos projetos',
+    },
+    // Resumo agregado do honeypot externo, na página do projeto Threat Intel
+    // (components/IntelSummary.astro; dados de /api/intel).
+    intel: {
+      title: 'O que o sensor viu',
+      snapshot: 'Publicado pelo sensor em',
+      addresses: 'Endereços publicados',
+      deltaUp: '+',
+      deltaDown: '−',
+      deltaDays: 'em {n} dias',
+      sessions: 'Sessões iniciadas · 7 dias',
+      credentials: 'Pares utilizador/password',
+      artifacts: 'Ficheiros capturados',
+      techniques: 'Técnicas ATT&CK mais vistas',
+      techniqueUnit: 'endereços',
+      campaigns: 'Ferramentas reconhecidas',
+      campaignsNote: 'Nomes de ferramentas descritas em publicações citadas, nunca de pessoas ou grupos.',
+      covered: 'na minha matriz',
+      note: 'Só agregados: nenhum endereço IP passa por este site. O Worker lê o arquivo diário do sensor de 6 em 6 horas.',
+      more: 'Relatório completo e feed em intel.danielmala.co',
+      unavailable: 'Resumo ao vivo indisponível: o Worker não respondeu ou o sensor não publicou nos últimos dias.',
     },
     awards: {
       title: 'CTFs vencidos',
@@ -561,6 +607,7 @@ export const ui = {
         analyze: 'Analisar',
         exWeak: 'exemplo fraco',
         exStrong: 'exemplo forte',
+        exSite: 'a CSP deste site',
         tableTitle: 'diretiva a diretiva',
         scrollLabel: 'tabela diretiva a diretiva, com scroll horizontal',
         thDir: 'diretiva',
@@ -930,7 +977,7 @@ export const ui = {
       responseLabel: 'Tempo típico de resposta',
       securityTitle: 'Contacto de segurança',
       securityBody: 'Encontraste uma vulnerabilidade? A política de divulgação responsável está publicada em formato legível por máquinas, com o contexto completo na página',
-      securityLink: 'Segurança',
+      securityLink: 'Este site',
       securityTxtLabel: 'security.txt (RFC 9116)',
       pgpLabel: 'Chave PGP',
       note: 'Fora do terminal tenho um homelab e faço CTFs. Há mais sobre isso na página',
@@ -945,25 +992,12 @@ export const ui = {
       icons: {
         terminal: 'terminal',
         about: 'sobre.md',
-        roadmap: 'roadmap.txt',
       },
       windowAbout: 'sobre.md',
-      windowRoadmap: 'roadmap.txt',
       winMinimize: 'Minimizar janela',
       winMaximize: 'Maximizar janela',
       winRestore: 'Restaurar janela',
       winClose: 'Fechar janela',
-      roadmapBody: [
-        'A seguir, ferramentas com backend (ver dynamic/PLAN.md):',
-        '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
-        '  [ ] Whois de domínios e IPs',
-        '  [ ] Headers de segurança de sites terceiros',
-        '  [ ] Verificação de blacklists de IP',
-        '',
-        'As ferramentas deste Lab correm 100% no teu browser; as duas',
-        'que falam com o Worker (pwned, espelho) estão marcadas',
-        'com «requer servidor» nas Ferramentas.',
-      ],
       termWelcome: [
         'daniel@lab: sessão iniciada.',
         "escreve 'help' para veres os comandos.",
@@ -1008,10 +1042,9 @@ export const ui = {
       projects: 'Projects',
       tools: 'Tools',
       radar: 'Radar',
-      security: 'Security',
       thisSite: 'This site',
+      resources: 'Resources',
       overview: 'Overview',
-      performance: 'Performance',
       cloudflare: 'Cloudflare',
       links: 'Links',
       contact: 'Contact',
@@ -1033,10 +1066,8 @@ export const ui = {
       links: 'GitHub repositories organised by category, and the external networking and security tools I use day to day.',
       contact: 'How to reach Daniel Malaco (email, GitHub, LinkedIn and Credly) and the responsible disclosure policy (security.txt).',
       lab: 'A desktop in the browser: a terminal and the site’s tools in windows, to explore without leaving the page.',
-      siteOverview: 'How this site is built, protected and monitored: stack, architecture, decisions and live status.',
-      security: 'This site’s security posture: threat model, HTTP headers, privacy, delivery chain, and how to report vulnerabilities.',
+      siteOverview: 'How this site is built, protected and monitored: architecture, threat model, privacy, real performance and how to report flaws.',
       cloudflare: 'What Cloudflare sees and blocks on this site’s zone, live: requests, threats, source countries and networks.',
-      performance: 'This site’s real performance: requests over time, cache, and Core Web Vitals (LCP, INP, CLS, TTFB) measured on real visits.',
       evidence: 'Verifiable evidence for this site, generated at build or read live: latest commit, headers, Certificate Transparency and CI workflows.',
       attack: 'Personal MITRE ATT&CK heatmap: the techniques I cover defensively, tactic by tactic, and what covers them.',
       attackMap: 'Attack map on a globe: the countries attacks on this site come from, and the last hour of attacks worldwide, with Cloudflare Radar data.',
@@ -1046,11 +1077,9 @@ export const ui = {
     layers: {
       title: 'Pages in the This site section',
       overview: 'Overview',
-      security: 'Security',
       cloudflare: 'Cloudflare',
       attackMap: 'Attack map',
       evidence: 'Evidence',
-      performance: 'Performance',
     },
     // "This Site" section — Overview, Analytics and Performance.
     site: {
@@ -1150,23 +1179,22 @@ export const ui = {
       built: 'Built with Astro. Source code on',
       thisSiteLabel: 'This site:',
       pathLabel: 'Track record:',
-      security: 'Security',
+      resourcesLabel: 'Resources:',
+      overview: 'Overview',
       evidence: 'Evidence',
       cloudflare: 'Cloudflare',
       attack: 'ATT&CK',
       certs: 'Certifications',
     },
     security: {
-      title: 'Security',
-      metaTitle: 'Security',
-      intro:
-        'This site shows technical work without adding attack surface it does not need.',
       // ----- Threat model -----
       threatTitle: 'Threat model',
       threatBody:
         'There are no accounts, sessions, database or forms that store what you type, so there is little to attack. Two things are worth protecting: the integrity of what is served (nobody should be able to inject or alter code on the site) and the privacy of the people who visit. The headers take care of the first; the privacy section explains the second.',
       // ----- Headers and why -----
-      headersTitle: 'Headers and why',
+      // The table lives on Evidence (the "why" column), next to what each
+      // header requires; rows match on the name before the colon.
+      headersCta: 'See each header and why it is there on Evidence →',
       headers: [
         { name: 'Content-Security-Policy', why: "script-src 'self' and style-src 'self', no 'unsafe-inline'. There is no inline JavaScript or CSS on the site, so only code served by this domain runs and an injected script does not execute. It is the main defence against XSS." },
         { name: 'Strict-Transport-Security', why: 'Makes the browser use HTTPS for 2 years, even if someone tries to force HTTP.' },
@@ -1208,6 +1236,7 @@ export const ui = {
       contractTitle: 'Header contract',
       contractHeader: 'header',
       contractRequires: 'requires',
+      contractWhy: 'why',
       workflowsTitle: 'Workflows',
       pipelineToolCol: 'tool',
       pipelineCatchesCol: 'what it catches',
@@ -1384,7 +1413,30 @@ export const ui = {
       meta: ['@ Ascendi · since 2020', 'MSc · FEUP'],
       // Names instead of counts — the strongest credential (CCDL2,
       // badge-verified) leads; NIS2 as the sector differentiator.
-      chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet NSE 4-7', 'NIS2', 'ISO 27001'],
+      // The thesis: what sets this site apart from a CV. Sits right under
+      // the bio, before the CTAs.
+      thesis: 'This site is my proof of work: its security is on display, and you can verify it yourself.',
+      ctaLive: 'See the security live',
+      ctaAbout: 'About me',
+      // "Live evidence" strip. Each cell is built as an invitation (teaser)
+      // and only becomes a number when the Worker answers with valid data
+      // (scripts/home-proof.js) — never an invented 0.
+      proof: {
+        label: 'Live evidence',
+        firewallTeaser: 'What the firewall stopped in the last 7 days',
+        firewallLive: 'requests stopped by the firewall · 7 days',
+        ctTeaser: 'Certificate Transparency watch for the domain',
+        ctLive: 'certificates from an unexpected issuer · 90 days',
+        deployLabel: 'last deploy · commit',
+        open: 'open',
+      },
+      // Only current, verifiable credentials (see content/certs.json): the
+      // Fortinet NSE 4-7 tracks expired in 09/2026, so the chip names a
+      // Fortinet certification with no expiry. NIS2 and ISO 27001 are
+      // working frameworks, not certifications — they go on the line below.
+      chips: ['Certified CyberDefender L2', 'SANS SEC504', 'Fortinet Cloud Security Architect'],
+      frameworksLabel: 'Working frameworks:',
+      frameworks: 'NIS2 · ISO 27001 · CIS Controls · MITRE ATT&CK',
       // Vendor/platform names — the keyword payload a recruiter searches
       // for (Splunk, Entra ID, …), missing from the chips above.
       stack: 'Fortinet · Cloudflare · Splunk · Elastic · Entra ID · Active Directory · VMware · AWS · Azure',
@@ -1436,6 +1488,15 @@ export const ui = {
       allPosts: 'all posts',
       featuredTools: 'Featured tools',
       allTools: 'all tools',
+      // Shortcuts to what left the main nav (Radar, Links) and to what was
+      // only reachable from the footer (ATT&CK, Certifications).
+      explore: {
+        title: 'More to explore',
+        radar: { name: 'Radar', desc: 'Alerts from CNCS, CERT-EU, NCSC UK and CISA KEV plus industry news, every 6 hours.' },
+        links: { name: 'Links', desc: 'The repositories I follow, by category, and the external tools I use.' },
+        attack: { name: 'ATT&CK matrix', desc: 'The techniques I cover on the defensive side, tactic by tactic.' },
+        certs: { name: 'Certifications', desc: 'The status of each one, independently verifiable on Credly.' },
+      },
       projects: 'Projects',
       allProjects: 'all projects',
       readMore: 'read',
@@ -1455,6 +1516,27 @@ export const ui = {
       live: 'live panel',
       open: 'view project',
       back: '← Back to projects',
+    },
+    // Aggregated summary from the external honeypot, on the Threat Intel
+    // project page (components/IntelSummary.astro; data from /api/intel).
+    intel: {
+      title: 'What the sensor saw',
+      snapshot: 'Published by the sensor on',
+      addresses: 'Published addresses',
+      deltaUp: '+',
+      deltaDown: '−',
+      deltaDays: 'in {n} days',
+      sessions: 'Sessions started · 7 days',
+      credentials: 'Username/password pairs',
+      artifacts: 'Files captured',
+      techniques: 'Most seen ATT&CK techniques',
+      techniqueUnit: 'addresses',
+      campaigns: 'Recognised tooling',
+      campaignsNote: 'Names of tooling described in cited publications, never of people or groups.',
+      covered: 'in my matrix',
+      note: 'Aggregates only: no IP address passes through this site. The Worker reads the sensor’s daily archive every 6 hours.',
+      more: 'Full report and feed at intel.danielmala.co',
+      unavailable: 'Live summary unavailable: the Worker did not answer, or the sensor has not published in the last few days.',
     },
     awards: {
       title: 'CTFs won',
@@ -1524,6 +1606,7 @@ export const ui = {
         analyze: 'Analyze',
         exWeak: 'weak example',
         exStrong: 'strong example',
+        exSite: 'this site’s CSP',
         tableTitle: 'directive by directive',
         scrollLabel: 'directive-by-directive table, horizontally scrollable',
         thDir: 'directive',
@@ -1893,7 +1976,7 @@ export const ui = {
       responseLabel: 'Typical response time',
       securityTitle: 'Security contact',
       securityBody: 'Found a vulnerability? The responsible-disclosure policy is published in a machine-readable format, with full context on the',
-      securityLink: 'Security page',
+      securityLink: 'This site page',
       securityTxtLabel: 'security.txt (RFC 9116)',
       pgpLabel: 'PGP key',
       note: 'Away from the terminal I run a homelab and do CTFs. More on that on the',
@@ -1908,25 +1991,12 @@ export const ui = {
       icons: {
         terminal: 'terminal',
         about: 'about.md',
-        roadmap: 'roadmap.txt',
       },
       windowAbout: 'about.md',
-      windowRoadmap: 'roadmap.txt',
       winMinimize: 'Minimize window',
       winMaximize: 'Maximize window',
       winRestore: 'Restore window',
       winClose: 'Close window',
-      roadmapBody: [
-        'Up next, backend tools (see dynamic/PLAN.md):',
-        '  [ ] DNS lookup (A, AAAA, MX, TXT, NS…)',
-        '  [ ] Domain and IP whois',
-        '  [ ] Security headers of third-party sites',
-        '  [ ] IP blacklist checks',
-        '',
-        'The tools in this Lab run 100% in your browser; the two that',
-        'talk to the Worker (pwned, mirror) are flagged with',
-        '“requires server” on the Tools page.',
-      ],
       termWelcome: [
         'daniel@lab: session started.',
         "type 'help' to see the available commands.",

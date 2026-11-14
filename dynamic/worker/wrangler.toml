@@ -124,7 +124,8 @@ CF_WORKER_SCRIPT = "personal-site-worker"
 # A cada 30 min: aquece ct/cf-stats/threat-intel (para as visitas caírem
 # sempre em cache) e apaga o que o honeypot interno deixou no KV, enquanto
 # houver (ADR 0022); pede ao Cloudflare Radar a última hora de ataques L7
-# (1 escrita por tick, ~48/dia — src/lib/radar-attacks.js). O snapshot da firewall (fw:<dia>, para acumular 7
+# (1 escrita por tick, ~48/dia — src/lib/radar-attacks.js); e, de 6 em 6 h,
+# lê o history.json do honeypot externo (4 escritas/dia — src/lib/intel.js). O snapshot da firewall (fw:<dia>, para acumular 7
 # dias a partir do dataset cru do Free, que só retém 24h) fotografa o que a
 # cache `cache:cfstats` tiver — quem quer que a tenha refrescado (o cron, um
 # `?refresh=1` ou um GET) — e só ESCREVE quando há um fetch novo (TTL 6h,

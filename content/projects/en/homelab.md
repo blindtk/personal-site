@@ -1,7 +1,7 @@
 ---
 title: 'Homelab'
 description: 'A zero-trust home network: Raspberry Pi, firewall and GitOps.'
-tags: ['flux', 'docker', 'k3s']
+tags: ['docker', 'k3s', 'tailscale']
 order: 4
 ---
 

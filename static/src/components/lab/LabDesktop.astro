@@ -76,7 +76,6 @@ const termCtx = {
     `${dict.home.location} · ${SITE.github}`,
   ],
   aboutMd: aboutEntry.body ?? '',
-  roadmap: lab.roadmapBody,
   welcome: lab.termWelcome,
   projects,
   attack: attackSummary,
@@ -90,7 +89,6 @@ const windows = [
   { id: 'passwords', title: dict.tools.passwords.name, icon: '⚿' },
   { id: 'email-headers', title: dict.tools['email-headers'].name, icon: '@' },
   { id: 'sobre', title: lab.windowAbout, icon: '☰' },
-  { id: 'roadmap', title: lab.windowRoadmap, icon: '⚑' },
 ];
 ---
 
@@ -178,15 +176,6 @@ const windows = [
       <div class="win-resize" aria-hidden="true"></div>
     </div>
 
-    <div class="win closed" data-win="roadmap">
-      <div class="win-bar"><span class="wt">⚑ {lab.windowRoadmap}</span>
-        <span class="wa"><button data-act="min" aria-label={lab.winMinimize}>–</button><button data-act="max" aria-label={lab.winMaximize} data-label-maximize={lab.winMaximize} data-label-restore={lab.winRestore}>□</button><button data-act="close" aria-label={lab.winClose}>×</button></span>
-      </div>
-      <div class="win-body">
-        <pre class="roadmap-pre">{lab.roadmapBody.join('\n')}</pre>
-      </div>
-      <div class="win-resize" aria-hidden="true"></div>
-    </div>
   </div>
 
   <div class="taskbar">
@@ -304,7 +293,6 @@ const windows = [
   .win[data-win="passwords"] { width: 520px; height: 560px; left: 240px; top: 120px; }
   .win[data-win="email-headers"] { width: 680px; height: 620px; left: 160px; top: 40px; }
   .win[data-win="sobre"]     { width: 640px; height: 540px; left: 280px; top: 40px; }
-  .win[data-win="roadmap"]   { width: 520px; height: 320px; left: 320px; top: 140px; }
   .win.maxed {
     position: fixed;
     inset: 0.6rem;
@@ -362,13 +350,6 @@ const windows = [
     padding: 0.6rem 0.4rem;
   }
   .prose-scroll { padding: 0.8rem 1.1rem; }
-  .roadmap-pre {
-    border: none;
-    background: transparent;
-    padding: 0.6rem 0.4rem;
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
 
   .win-resize {
     position: absolute;
@@ -495,7 +476,7 @@ const windows = [
     // senão fica preso no ícone/botão da taskbar que a abriu. O terminal
     // vai sempre para o input; as restantes vão para o 1.º controlo focável
     // do corpo da janela (input/textarea/select/botão/link), com o botão
-    // fechar como último recurso (ex.: roadmap.txt não tem nada focável).
+    // fechar como último recurso (janela sem nada focável).
     function focusWinContent(win: HTMLElement) {
       if (win.dataset.win === 'terminal') {
         termInput.focus();

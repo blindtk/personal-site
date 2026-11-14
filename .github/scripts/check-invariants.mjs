@@ -136,7 +136,7 @@ const CRITICAL = ['/api/health'];
 // being down).
 const INFORMATIONAL = [
   '/api/threat-intel', '/api/vitals', '/api/ct', '/api/cf-stats', '/api/mirror', '/api/radar',
-  '/api/radar-attacks',
+  '/api/radar-attacks', '/api/intel',
 ];
 
 // HTTP 200 is not enough for the two cron-fed routes: they only read what a

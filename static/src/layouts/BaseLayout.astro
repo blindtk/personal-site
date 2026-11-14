@@ -39,12 +39,18 @@ const navItems: { key: RouteKey; label: string }[] = [
   ...(hasBlog ? [{ key: 'blog' as const, label: dict.nav.blog }] : []),
   { key: 'projects', label: dict.nav.projects },
   { key: 'tools', label: dict.nav.tools },
-  { key: 'radar', label: dict.nav.radar },
 ];
 
 const navItemsAfterSecurity: { key: RouteKey; label: string }[] = [
-  { key: 'links', label: dict.nav.links },
   { key: 'contact', label: dict.nav.contact },
+];
+
+// "Recursos" agrupa o Radar e os Links: material de consulta, não trabalho
+// meu. Ficam a um clique (dropdown igual ao de "Este site"), na home e no
+// rodapé, e a nav principal fica com o que apresenta o autor.
+const resourcesGroup: { href: string; label: string }[] = [
+  { href: routes.radar[lang], label: dict.nav.radar },
+  { href: routes.links[lang], label: dict.nav.links },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -53,7 +59,7 @@ const currentPath = Astro.url.pathname;
 // bloqueia estilos inline. Só aparece onde há .page-head (global.css).
 const promptPath = currentPath.replace(/\/$/, '');
 
-// "Este site" agrupa na nav as seis páginas da secção, pela mesma ordem
+// "Este site" agrupa na nav as quatro páginas da secção, pela mesma ordem
 // dos separadores no topo de cada uma (SiteLayers.astro). Cloudflare e o
 // Mapa de ataques (o que acontece ao vivo) vêm antes de Provas (commit,
 // cabeçalhos, CI): primeiro o que está a acontecer, depois o "não acredites,
@@ -63,13 +69,12 @@ const promptPath = currentPath.replace(/\/$/, '');
 // o Sobre, que já as liga em prosa; continuam também acessíveis pelo rodapé.
 const siteGroup: { href: string; label: string }[] = [
   { href: routes.siteOverview[lang], label: dict.nav.overview },
-  { href: routes.security[lang], label: dict.nav.security },
   { href: routes.cloudflare[lang], label: dict.nav.cloudflare },
   { href: routes.attackMap[lang], label: dict.layers.attackMap },
   { href: routes.evidence[lang], label: dict.footer.evidence },
-  { href: routes.performance[lang], label: dict.nav.performance },
 ];
 const siteActive = siteGroup.some((item) => item.href === currentPath);
+const resourcesActive = resourcesGroup.some((item) => item.href === currentPath);
 
 // Imagem de partilha (LinkedIn, Twitter/X, etc.) — uma por idioma, gerada
 // a partir do mesmo design system do site.
@@ -159,10 +164,27 @@ const personSchema = {
                flutuante (position: absolute) a tapar a intro da própria
                página no primeiro paint, sem precisar de nenhuma interação. A
                secção ativa continua marcada — só no aria-current do summary. */}
-            <details>
+            <details name="nav-group">
               <summary aria-current={siteActive ? 'page' : undefined}>{dict.nav.thisSite}</summary>
               <ul class="sub-links">
                 {siteGroup.map((item) => (
+                  <li>
+                    <a
+                      href={item.href}
+                      aria-current={currentPath === item.href ? 'page' : undefined}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </li>
+          <li class="nav-security">
+            <details name="nav-group">
+              <summary aria-current={resourcesActive ? 'page' : undefined}>{dict.nav.resources}</summary>
+              <ul class="sub-links">
+                {resourcesGroup.map((item) => (
                   <li>
                     <a
                       href={item.href}
@@ -220,10 +242,15 @@ const personSchema = {
            não são "camadas" do site. */}
         <span class="footer-group">
           {dict.footer.thisSiteLabel}{' '}
-          <a href={routes.security[lang]}>{dict.footer.security}</a> ·{' '}
+          <a href={routes.siteOverview[lang]}>{dict.footer.overview}</a> ·{' '}
           <a href={routes.cloudflare[lang]}>{dict.footer.cloudflare}</a> ·{' '}
           <a href={routes.attackMap[lang]}>{dict.layers.attackMap}</a> ·{' '}
           <a href={routes.evidence[lang]}>{dict.footer.evidence}</a>
+        </span>
+        <span class="footer-group">
+          {dict.footer.resourcesLabel}{' '}
+          <a href={routes.radar[lang]}>{dict.nav.radar}</a> ·{' '}
+          <a href={routes.links[lang]}>{dict.nav.links}</a>
         </span>
         <span class="footer-group">
           {dict.footer.pathLabel}{' '}

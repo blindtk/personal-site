@@ -1,0 +1,262 @@
+---
+/**
+ * "O que o sensor viu": resumo agregado do honeypot externo na página do
+ * projeto Threat Intel. Lê /api/intel (Worker), que por sua vez recolhe o
+ * history.json do sensor de 6 em 6 horas — ver dynamic/PLAN.md. Sem Worker
+ * ou sem resumo fica o texto de build, com a ligação ao painel completo.
+ *
+ * As barras são <svg><rect width=…> (atributos de apresentação, não estilos
+ * inline) e todo o texto entra por textContent: a CSP não é tocada.
+ */
+import attackData from '../../../content/attack.json';
+import { API_BASE, SITE, type Lang } from '../config';
+import { t } from '../i18n/ui';
+import { routes } from '../i18n/routes';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const dict = t(lang);
+const s = dict.intel;
+
+// Técnicas da minha matriz ATT&CK (id base → nome): dá nome às técnicas que
+// o sensor vê e marca as que digo cobrir.
+const matrix = Object.fromEntries(
+  (attackData.tactics as { techniques: { id: string; name: string }[] }[]).flatMap((tac) =>
+    tac.techniques.map((tech) => [tech.id, tech.name] as const),
+  ),
+);
+
+const jsStrings = {
+  snapshot: s.snapshot,
+  deltaUp: s.deltaUp,
+  deltaDown: s.deltaDown,
+  deltaDays: s.deltaDays,
+  covered: s.covered,
+  techniqueUnit: s.techniqueUnit,
+};
+---
+
+<section class="intel" aria-labelledby="h-intel">
+  <div class="section-title">
+    <h2 id="h-intel">{s.title}</h2>
+  </div>
+  <div
+    id="intel-root"
+    data-api={API_BASE}
+    data-lang={lang}
+    data-attack={routes.attack[lang]}
+    data-matrix={JSON.stringify(matrix)}
+    data-strings={JSON.stringify(jsStrings)}
+  >
+    <p class="hp-fallback" id="intel-fallback">
+      {s.unavailable}{' '}
+      <a href={SITE.honeypotIntel} rel="noopener">{s.more} →</a>
+    </p>
+    <div id="intel-body" hidden>
+      <p class="intel-window mono" id="intel-window"></p>
+      <div class="metric-grid">
+        <div class="stat">
+          <div class="n" id="intel-addresses">—</div>
+          <div class="l">{s.addresses} <span id="intel-delta"></span></div>
+        </div>
+        <div class="stat blue"><div class="n" id="intel-sessions">—</div><div class="l">{s.sessions}</div></div>
+        <div class="stat blue"><div class="n" id="intel-credentials">—</div><div class="l">{s.credentials}</div></div>
+        <div class="stat blue"><div class="n" id="intel-artifacts">—</div><div class="l">{s.artifacts}</div></div>
+      </div>
+      <div class="intel-cols">
+        <div>
+          <h3 class="intel-sub mono">{s.techniques}</h3>
+          <ol class="intel-rows" id="intel-techniques"></ol>
+        </div>
+        <div id="intel-campaigns-box" hidden>
+          <h3 class="intel-sub mono">{s.campaigns}</h3>
+          <ul class="intel-chips mono" id="intel-campaigns"></ul>
+          <p class="note">{s.campaignsNote}</p>
+        </div>
+      </div>
+      <p class="note">
+        {s.note}{' '}
+        <a href={SITE.honeypotIntel} rel="noopener">{s.more} →</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { normalizeIntel, techniqueUrl } from '../scripts/intel-summary.js';
+
+  const root = document.getElementById('intel-root')!;
+  const base = root.dataset.api ?? '';
+  const locale = root.dataset.lang === 'pt' ? 'pt-PT' : 'en-GB';
+  const S = JSON.parse(root.dataset.strings ?? '{}');
+  const matrix = JSON.parse(root.dataset.matrix ?? '{}') as Record<string, string>;
+  const num = new Intl.NumberFormat(locale);
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const setText = (id: string, value: string) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  const show = (n: number | null) => (n === null ? '—' : num.format(n));
+
+  function techniqueRow(tech: { id: string; count: number }, max: number) {
+    const li = document.createElement('li');
+    const key = document.createElement('span');
+    key.className = 'intel-key mono';
+    const link = document.createElement('a');
+    link.href = techniqueUrl(tech.id);
+    link.rel = 'noopener';
+    link.textContent = tech.id;
+    key.append(link);
+    const baseId = tech.id.split('.')[0];
+    if (matrix[baseId]) {
+      const badge = document.createElement('a');
+      badge.className = 'badge';
+      badge.href = root.dataset.attack ?? '#';
+      badge.textContent = S.covered;
+      key.append(badge);
+    }
+    const count = document.createElement('span');
+    count.className = 'intel-count mono';
+    count.textContent = `${num.format(tech.count)} ${S.techniqueUnit}`;
+    li.append(key, count);
+    if (matrix[baseId]) {
+      const name = document.createElement('span');
+      name.className = 'intel-name';
+      name.textContent = matrix[baseId];
+      li.append(name);
+    }
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'intel-bar');
+    svg.setAttribute('viewBox', '0 0 100 4');
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+    const rect = document.createElementNS(SVG_NS, 'rect');
+    rect.setAttribute('width', String(Math.max(1, Math.round((tech.count / max) * 100))));
+    rect.setAttribute('height', '4');
+    svg.append(rect);
+    li.append(svg);
+    return li;
+  }
+
+  async function load() {
+    let data: ReturnType<typeof normalizeIntel> = null;
+    try {
+      const res = await fetch(`${base}/api/intel`, { headers: { accept: 'application/json' } });
+      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('application/json')) return;
+      data = normalizeIntel(await res.json());
+    } catch {
+      return; // sem Worker: fica o texto de build
+    }
+    if (!data) return;
+
+    const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(`${data.day}T00:00:00Z`));
+    setText('intel-window', `${S.snapshot} ${day}`);
+    setText('intel-addresses', num.format(data.addresses));
+    if (data.delta && data.delta.value !== 0) {
+      const sign = data.delta.value > 0 ? S.deltaUp : S.deltaDown;
+      setText('intel-delta', `(${sign}${num.format(Math.abs(data.delta.value))} ${S.deltaDays.replace('{n}', String(data.delta.days))})`);
+    }
+    setText('intel-sessions', show(data.sessions7d));
+    setText('intel-credentials', show(data.credentialPairs));
+    setText('intel-artifacts', show(data.artifacts));
+
+    const max = data.techniques[0]?.count ?? 1;
+    document.getElementById('intel-techniques')!.replaceChildren(...data.techniques.map((tech: { id: string; count: number }) => techniqueRow(tech, max)));
+
+    if (data.campaigns.length > 0) {
+      document.getElementById('intel-campaigns')!.replaceChildren(
+        ...data.campaigns.map((name: string) => {
+          const li = document.createElement('li');
+          li.className = 'chip';
+          li.textContent = name;
+          return li;
+        }),
+      );
+      document.getElementById('intel-campaigns-box')!.hidden = false;
+    }
+
+    document.getElementById('intel-fallback')!.hidden = true;
+    document.getElementById('intel-body')!.hidden = false;
+  }
+
+  load();
+</script>
+
+<style>
+  .intel {
+    margin-bottom: 2rem;
+  }
+  .intel-window {
+    margin: 0 0 0.7rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .intel-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.4rem;
+    margin-top: 1.2rem;
+  }
+  @media (min-width: 860px) {
+    .intel-cols { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  }
+  .intel-sub {
+    margin: 0 0 0.6rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .intel-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.7rem;
+  }
+  .intel-chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  /* As linhas são criadas por script, por isso os seletores são :global
+     (mesmo padrão dos gráficos do painel Cloudflare). */
+  .intel-rows :global(li) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.15rem 0.8rem;
+    align-items: baseline;
+  }
+  .intel-rows :global(.intel-key) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.86rem;
+  }
+  .intel-rows :global(.intel-key a) { color: var(--accent); }
+  .intel-rows :global(.intel-key .badge) { text-decoration: none; }
+  .intel-rows :global(.intel-name) {
+    grid-column: 1 / -1;
+    font-size: 0.84rem;
+    color: var(--muted);
+  }
+  .intel-rows :global(.intel-count) {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .intel-rows :global(.intel-bar) {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: 4px;
+    background: var(--bg-raise-2);
+    border-radius: 2px;
+  }
+  .intel-rows :global(.intel-bar rect) { fill: var(--accent); }
+</style>

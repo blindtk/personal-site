@@ -1,6 +1,7 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import IntelSummary from '../IntelSummary.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -14,6 +15,8 @@ interface Props {
 const { lang, project, altUrl } = Astro.props;
 const dict = t(lang);
 const { Content } = await render(project);
+// O resumo do sensor só faz sentido no projeto que o descreve.
+const showIntel = project.id.slice(3) === 'threat-intel';
 ---
 
 <BaseLayout
@@ -32,6 +35,7 @@ const { Content } = await render(project);
       {project.data.tags.map((tag) => <span class="badge">{tag}</span>)}
     </div>
   )}
+  {showIntel && <IntelSummary lang={lang} />}
   <article class="prose">
     <Content />
   </article>

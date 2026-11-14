@@ -12,8 +12,6 @@ export const routes = {
   contact: { pt: '/contactos/', en: '/en/contact/' },
   lab: { pt: '/lab/', en: '/en/lab/' },
   siteOverview: { pt: '/este-site/', en: '/en/this-site/' },
-  performance: { pt: '/este-site/performance/', en: '/en/this-site/performance/' },
-  security: { pt: '/este-site/seguranca/', en: '/en/this-site/security/' },
   cloudflare: { pt: '/este-site/cloudflare/', en: '/en/this-site/cloudflare/' },
   attack: { pt: '/attack/', en: '/en/attack/' },
   // Mapa de ataques (firewall desta zona + Cloudflare Radar), na secção Este

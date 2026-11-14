@@ -15,6 +15,68 @@ each, with the full original entries kept in this file's git history.
 
 ## Recorded decisions
 
+- **2026-11-14 — Product pass: fewer pages, a home that shows the proof**
+  (approved point by point by the repo owner after a site review). One new
+  read-only Worker route (`/api/intel`, below); no CSP change.
+    - **"This site" goes from six pages to four.** Security and Performance
+      are folded into the Overview (threat model, privacy, delivery chain,
+      Web Vitals and traffic, how to report); the "header → why" table moved
+      to Evidence as a third column next to what each header requires, so
+      there is one headers table instead of two. Old URLs 301 to the
+      Overview (`static/public/_redirects`); `security.txt`'s `Policy` now
+      points at the Overview's report section. The attack map stays its own
+      page, as decided on 2026-10-30.
+    - **Radar and Links leave the top-level nav** and sit in a "Resources"
+      dropdown (same `<details>` pattern as "This site"), on the home page
+      ("More to explore", with ATT&CK and Certifications) and in the footer.
+      This revisits the 2026-10-30 placement of the Radar: it aggregates
+      other people's news, so it should not sit at the same level as the
+      pages that present the author. The page and `/api/radar` are unchanged.
+    - **Home: a thesis, two CTAs and a "live evidence" strip** reading two
+      existing routes (`/api/threat-intel`, `/api/ct`) plus the build's
+      deploy time. Each cell is rendered at build time as an invitation and
+      only becomes a number when the Worker answers with valid data
+      (`static/src/scripts/home-proof.js`, tested): a malformed document
+      never turns into "0 unexpected certificates". Two more read requests
+      per home view, both served from the data-center Cache API, no KV
+      writes.
+    - **Honeypot summary on the Threat Intel project page: `GET /api/intel`**
+      (requested by the repo owner: no bot PRs and no redeploy of this site
+      to refresh the numbers). The sensor already publishes
+      `history.json` on `intel.danielmala.co` on every feed run: one row of
+      aggregates per UTC day and no indicators, about 6 KB. The existing
+      `*/30` cron reads the stored summary and only fetches when it is 6 h
+      old (4 KV writes/day in `intel:summary`, TTL 3 days; the other ticks
+      cost one read). `feed.json` is never read: it holds the addresses and
+      is ~18 MB, far past the Free plan's CPU budget. Two fixed sources in
+      order (the custom domain, then the same Pages project's `*.pages.dev`
+      host, in case the zone's WAF refuses the Worker's subrequest),
+      redirects refused, 1 MiB cap. Pure reduction in `src/lib/intel.js`,
+      tested against the sensor's real file: counts, validated ATT&CK ids
+      and campaign slugs only, so no address can leave the module; a last
+      day older than 3 days or in the future yields no summary. The route
+      only reads KV behind the data-center Cache API (30 min): no visitor
+      input, no upstream call, no rate limit, like `/api/radar`. The page
+      re-validates the response (`static/src/scripts/intel-summary.js`) and
+      keeps a build-time fallback. Nothing changes in the honeypot
+      repository (ADR 0022 stands); `history.json` becomes a contract this
+      site depends on. Detail in `docs/intel-sync.md`. **Write budget:**
+      +4/day.
+    - **Tools:** the index and the home lead with the tools that are
+      specific to this site (mirror, CSP analyser, email headers, the two
+      phishing games); the CSP analyser gained a "this site's CSP" button
+      that reads the real policy from `static/public/_headers` at build.
+    - **Claims aligned with the data:** the home chips no longer advertise
+      the Fortinet NSE 4-7 tracks that `content/certs.json` shows as expired
+      (09/2026), and NIS2 / ISO 27001 moved from the credential chips to a
+      "working frameworks" line. The Lab's `roadmap.txt` (a list of tools
+      not built) is gone; the list lives only under
+      [Next tools](#next-tools).
+    - **Motion, CSS only:** cross-document View Transitions, the ATT&CK
+      matrix lighting up tactic by tactic, and scroll-driven entry on the
+      home page. All progressive enhancement and all off under
+      `prefers-reduced-motion`.
+
 - **2026-10-30 — The attack map moves into "This site"** (decision by the
   repo owner, same day as the entry below). Once its default tab became
   this zone's own firewall data, the page is about the site, unlike ATT&CK

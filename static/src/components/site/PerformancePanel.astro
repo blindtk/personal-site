@@ -1,23 +1,18 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Tabs from '../site/Tabs.astro';
-import Widget from '../site/Widget.astro';
-import Skeleton from '../site/Skeleton.astro';
-import SiteLayers from '../SiteLayers.astro';
+/**
+ * Painel de performance da Visão geral (era a página /este-site/performance/,
+ * fundida em 2026-11 — ver dynamic/PLAN.md). Core Web Vitals first-party
+ * (/api/vitals) e tráfego da zona (/api/cf-stats). Sem Worker fica o fallback
+ * já pintado, sem saltos de layout.
+ */
+import Widget from './Widget.astro';
+import Skeleton from './Skeleton.astro';
 import { API_BASE, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
-import { routes } from '../../i18n/routes';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
-const dict = t(lang);
-const s = dict.site;
-const other: Lang = lang === 'pt' ? 'en' : 'pt';
-
-const tabs = [
-  { id: 'traffic', label: s.perfTabTraffic },
-  { id: 'cwv', label: s.perfTabCwv },
-];
+const s = t(lang).site;
 
 const metrics = [
   { key: 'lcp', label: 'LCP' },
@@ -38,17 +33,9 @@ const jsStrings = {
 };
 ---
 
-<BaseLayout lang={lang} title={s.perfMetaTitle} altUrl={routes.performance[other]} active="performance" wide>
-  <SiteLayers lang={lang} current="performance" />
-  <div class="page-head">
-    <h1>{s.perfTitle}</h1>
-    <p class="intro">{s.perfIntro}</p>
-  </div>
-
-  <div id="perf-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
-    <Tabs tabs={tabs} label={s.perfTitle}>
-      <!-- ---------- Tráfego ---------- -->
-      <div slot="traffic">
+<div id="perf-root" data-api={API_BASE} data-lang={lang} data-strings={JSON.stringify(jsStrings)}>
+  <h3 class="perf-sub mono">{s.perfTabTraffic}</h3>
+      <div>
         <p class="hp-fallback" id="perf-fallback">{s.unavailable}</p>
         <div id="perf-body" hidden>
           <div class="metric-grid">
@@ -73,8 +60,8 @@ const jsStrings = {
         </div>
       </div>
 
-      <!-- ---------- Core Web Vitals ---------- -->
-      <div slot="cwv">
+  <h3 class="perf-sub mono">{s.perfTabCwv}</h3>
+      <div>
         <p class="hp-fallback" id="cwv-fallback">{s.perfNoData}</p>
         <div id="cwv-body" hidden>
           <div class="widget-grid">
@@ -90,10 +77,8 @@ const jsStrings = {
           <p class="note" id="cwv-samples"></p>
         </div>
       </div>
-    </Tabs>
   </div>
 
-</BaseLayout>
 
 <script>
   import { formatBytes, formatPercent, formatNumber, sparkPath } from '../../scripts/observability.js';
@@ -214,6 +199,13 @@ const jsStrings = {
 </script>
 
 <style>
+  .perf-sub {
+    margin: 1.2rem 0 0.6rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
   .an-mt { margin-top: 0.9rem; }
   .wide-widget { grid-column: 1 / -1; }
   .cwv { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
