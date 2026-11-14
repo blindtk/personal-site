@@ -1,83 +1,87 @@
-# Intel sync — how `content/intel-summary.json` arrives
+# Intel sync — how the honeypot summary reaches the site
 
 The Threat Intel project page (`/projetos/threat-intel/`,
-`/en/projects/threat-intel/`) shows a small "what the sensor saw" panel:
-totals, the most seen ATT&CK techniques and the most tried usernames for
-the last window. The numbers come from the external honeypot
+`/en/projects/threat-intel/`) has a "what the sensor saw" panel: published
+addresses, sessions started in the last 7 days, credential pairs, captured
+files, the most seen ATT&CK techniques and the tooling the sensor
+recognised. The numbers come from the external honeypot
 (`honeypot-vps-infra`, [ADR 0019](adr/0019-external-cowrie-honeypot-vps.md)),
 which stays a separate project
-([ADR 0022](adr/0022-retire-internal-honeypot.md)). This site only renders a
-vendored JSON file: no fetch at build time, no request from the browser.
+([ADR 0022](adr/0022-retire-internal-honeypot.md)).
 
-**Status:** the site side is in place. The job that generates the file and
-opens the pull request lives in the honeypot repository and is still to be
-built. Until the first file is merged the panel is not rendered at all —
-there is never sample data in its place.
+Nothing is committed to this repository to refresh the panel, and the site
+is not redeployed for it.
 
-## Contract
+## The path
 
-`content/intel-summary.json`, every field required:
-
-```json
-{
-  "generatedAt": "2026-11-10T06:00:00Z",
-  "windowDays": 7,
-  "totals": { "events": 0, "sources": 0, "sessions": 0 },
-  "techniques": [{ "id": "T1110.001", "name": "Brute Force: Password Guessing", "count": 0 }],
-  "usernames": [{ "name": "root", "count": 0 }]
-}
+```
+sensor (every feed run)            this site's Worker                 browser
+intel.danielmala.co/history.json → */30 cron, fetch when 6 h old → GET /api/intel
+  one row of aggregates per day     reduce → KV intel:summary          same-origin
 ```
 
-| Field | Rule |
-| --- | --- |
-| `generatedAt` | End of the window, ISO 8601 in UTC (`…Z`), not more than 1 h in the future |
-| `windowDays` | Integer, 1 to 31 |
-| `totals.*` | Integers ≥ 0. `sources` is a **count** of distinct source addresses, never the addresses |
-| `techniques` | At most 10 rows, unique `id` matching `T1234` or `T1234.001`, `name` ≤ 80 printable ASCII characters |
-| `usernames` | At most 10 rows, unique `name` ≤ 32 printable ASCII characters |
-| any `count` | Integer ≥ 0 |
+1. **The sensor publishes `history.json`** with each feed run: one row per
+   UTC day holding counts only (addresses published, sessions started, per
+   technique how many addresses it was seen from, recognised campaigns).
+   The honeypot repo defines it as the archive that keeps no indicator
+   (`feed/lib/history.py`). It is about 6 KB and grows by one row a day.
+2. **The Worker's `*/30` cron** reads the stored summary and fetches the
+   file only when that summary is 6 hours old: 4 KV writes a day, one KV
+   read on the other ticks. It tries `https://intel.danielmala.co/history.json`
+   first and the same Pages project's `*.pages.dev` address second.
+3. **`GET /api/intel`** only reads KV, behind the data-center Cache API
+   (30 minutes). It takes no visitor input and never calls the sensor.
+4. **The page** fetches `/api/intel` (same origin, so `connect-src 'self'`
+   is unchanged), validates the response again and fills the panel. Until
+   then, and whenever the Worker has nothing, it shows a line of text with
+   a link to `intel.danielmala.co`.
 
-The validator is `static/src/scripts/intel-summary.js`
-(`static/test/intel-summary.test.mjs`); the loader is
-`static/src/lib/intel.ts`.
+Code: `dynamic/worker/src/lib/intel.js` (reduction and fetch),
+`dynamic/worker/src/index.js` (`refreshIntel`, the route),
+`static/src/scripts/intel-summary.js` and
+`static/src/components/IntelSummary.astro`.
+
+## Why `history.json` and not `feed.json`
+
+`feed.json` holds every published address and is about 18 MB. Parsing it
+would not fit the Free plan's 10 ms of CPU, and it would bring addresses
+into this site's Worker for no reason. `history.json` is small and already
+free of indicators by the sensor's own design, so the privacy boundary is
+drawn by the publisher and then enforced again here.
 
 ## Privacy boundary
 
-Only aggregates cross into this repository. The generator must apply the
-honeypot's own publication rules before writing the file (for usernames,
-the same multi-ASN, multi-network, multi-day threshold it uses for
-credential pairs). As a second line, this site **fails the build** if any
-`name` contains something shaped like an IPv4 or IPv6 address, so an
-address cannot be published here by a generator bug. Passwords are not part
-of the contract.
+Only counts, ATT&CK technique ids matching `T1234` or `T1234.001`, and
+campaign names matching `^[a-z0-9][a-z0-9-]{0,31}$` leave
+`summarizeHistory`. Anything else in the file is dropped, so an address
+cannot be stored in KV or served by `/api/intel` even if the upstream file
+changed shape. The Worker test suite pins this with a hostile document.
 
-## Why a PR and not a fetch
+## Freshness
 
-Same reasons as the stars catalog ([catalog-sync.md](catalog-sync.md)): the
-build stays offline and deterministic, `main` keeps its ruleset with no
-bypass actor, and every change to what the page claims is a reviewed diff
-of one JSON file. A browser-side fetch to `intel.danielmala.co` would also
-need `connect-src` opened beyond `'self'`.
+| Stage | Limit |
+| --- | --- |
+| Collection | every 6 hours |
+| Last archived day | no summary if it is more than 3 days old, or in the future |
+| KV value | expires after 3 days without a successful collection |
+| Page | hides a summary whose day is more than 4 days old |
 
-## Staleness
-
-The panel always prints the window and its end date. A summary older than
-30 days at build time is not rendered: a stalled pipeline makes the panel
-disappear instead of showing an old week as recent. A build only happens on
-a push, so a quiet repository can still serve a summary up to 30 days old
-plus the time since its last build; the date on the panel is what keeps
-that honest.
+A sensor that stops publishing therefore makes the panel fall back to its
+text line within about 3 days, instead of showing an old day as current.
 
 ## Failure modes
 
 | What breaks | What happens |
 | --- | --- |
-| No file yet, or the file is removed | The panel is not rendered; the page is otherwise unchanged. |
-| The file does not match the contract | The build fails with the field named in the error. |
-| A name looks like an IP address | The build fails. |
-| The generator stops running | The last merged summary stays until it is 30 days old, then the panel disappears on the next build. |
+| The zone's WAF refuses the Worker's request to the custom domain | The second source (`*.pages.dev`) is used. |
+| Both sources fail, or return something that is not the archive | `intel_fetch_failed` in the Worker logs; the last good summary stays until it expires. |
+| The archive's shape changes | Fields that no longer validate come back as `null` (shown as "—") or are dropped; without a valid address count for the last day there is no summary. |
+| The Worker is down | The page keeps its build-time text and link. |
 
-## Manual update
+## What the honeypot repository must keep
 
-Write the file by hand from the sensor's report, open a PR with only
-`content/intel-summary.json`, and let CI build it.
+`history.json` at the site root, with `days[].day` (`YYYY-MM-DD`),
+`addresses`, and optionally `sessions_started`, `credential_pairs`,
+`artifacts`, `usernames`, `addresses_not_scanners`, `techniques` (id →
+count) and `campaigns` (list of slugs). Renaming one of the optional fields
+empties that figure here; renaming `day` or `addresses` removes the panel.

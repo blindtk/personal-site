@@ -36,7 +36,7 @@ That scale is deliberate; see
 | **Mirror** — what any server learns about you from a request | `/ferramentas/mirror/` | `/api/mirror` |
 | **Cloudflare panels** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | `/api/cf-stats`, `/api/threat-intel` |
 | **Performance** — first-party Core Web Vitals, no third-party script | `/este-site/` (overview) | `/api/vitals` |
-| **Honeypot summary** — aggregated ATT&CK techniques and usernames from the external sensor, vendored as JSON (no IPs, no network call) | `/projetos/threat-intel/` | No |
+| **Honeypot summary** — aggregates from the external sensor's daily archive (published addresses, sessions, ATT&CK techniques, recognised tooling), collected by the Worker every 6 h; no IP address passes through this site | `/projetos/threat-intel/` | `/api/intel` |
 | **Certificate Transparency watch** — certificates issued for the domain, checked against the expected CAs | `/este-site/provas/` | `/api/ct` |
 | **Radar** — cybersecurity alerts (CNCS, CERT-EU, NCSC UK, CISA KEV) and news, aggregated from RSS by the Worker every 6 h | `/radar/` | `/api/radar` |
 | **MITRE ATT&CK heatmap** | `/attack/` | No |
@@ -86,7 +86,7 @@ and the repository's conventions live in [`CLAUDE.md`](CLAUDE.md).
 - [`docs/security-headers.md`](docs/security-headers.md) — current header values, portable to nginx/Caddy
 - [`docs/dns-tls.md`](docs/dns-tls.md) — CAA, HTTPS redirect, HSTS preload, DNSSEC
 - [`docs/catalog-sync.md`](docs/catalog-sync.md) — how the links catalog arrives (bot PR)
-- [`docs/intel-sync.md`](docs/intel-sync.md) — the honeypot summary's contract and how it arrives (PR from the honeypot repo)
+- [`docs/intel-sync.md`](docs/intel-sync.md) — how the honeypot summary reaches the site (the Worker reads the sensor's `history.json`)
 - [`dynamic/worker/README.md`](dynamic/worker/README.md) — Worker endpoints, privacy, KV budget, local development
 - [`dynamic/PLAN.md`](dynamic/PLAN.md) — backend decision log and next tools
 

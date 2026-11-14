@@ -6,7 +6,7 @@ Personal site monorepo. Three areas with rigid responsibilities:
 - `static/` — Astro static site. Reads `content/` via loaders (`glob`, JSON import).
 - `dynamic/` — backend (Cloudflare Worker in `dynamic/worker/`:
   Cloudflare/firewall panels, CT watch, Web Vitals, HIBP relay, mirror,
-  Cloudflare Radar attack globe).
+  Cloudflare Radar attack globe, the honeypot's aggregated summary).
   The honeypot is a separate project (`honeypot-vps-infra`, ADR 0022). Pure logic in `src/lib/*` tested with
   `node --test` (run before any PR that touches this). New tools only with
   an explicit decision from the repo owner (see `dynamic/PLAN.md`).

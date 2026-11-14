@@ -9,6 +9,7 @@
 //   · /api/mirror              — o que o servidor vê deste pedido (sem guardar nada)
 //   · /api/radar               — Radar: alertas e notícias de ciber por RSS (recolhidos pelo cron)
 //   · /api/radar-attacks       — pares origem→alvo de ataques L7 na última hora (Cloudflare Radar, global)
+//   · /api/intel               — resumo agregado do honeypot externo (history.json, recolhido pelo cron)
 //   · /api/health
 // O honeypot (paths-isco, lista de IPs, mapa e ticker SOC) saiu deste
 // Worker — ADR 0022: o sensor é agora só o honeypot externo
@@ -26,6 +27,7 @@ import { fetchCfStats } from './lib/cf-analytics.js';
 import { fetchRadarAttacks } from './lib/radar-attacks.js';
 import { serverView } from './lib/mirror.js';
 import { collectRadar } from './lib/radar-feed.js';
+import { fetchIntelSummary } from './lib/intel.js';
 import { edgeCache, edgeKey, edgeGetJSON, edgePutJSON } from './lib/edgecache.js';
 
 // A classe do Durable Object tem de sair do módulo principal (wrangler.toml).
@@ -142,6 +144,31 @@ async function refreshRadar(env, now = Date.now()) {
   const prev = await getJSON(env, RADAR_KEY);
   const doc = await collectRadar(undefined, { now, prev });
   await env.KV.put(RADAR_KEY, JSON.stringify(doc), { expirationTtl: 7 * 86400 });
+}
+
+// ---------- Resumo do honeypot externo (history.json) ----------
+
+// O cron escreve, a rota só lê. TTL de 3 dias: se o sensor ou a recolha
+// pararem, o painel deixa de ter dados em vez de mostrar um dia antigo.
+const INTEL_KEY = 'intel:summary';
+const INTEL_TTL_SEC = 3 * 86400;
+// O arquivo é diário e o sensor reescreve o dia corrente a cada execução:
+// recolher de 6 em 6 horas chega (4 escritas/dia). Corre no tick de */30,
+// que primeiro lê o que está guardado e só vai buscar quando já passou o
+// intervalo — os outros ~44 ticks do dia custam uma leitura e nada mais.
+const INTEL_REFRESH_MS = 6 * 3600_000;
+
+async function refreshIntel(env, now = Date.now()) {
+  const prev = await getJSON(env, INTEL_KEY);
+  const fetched = Date.parse(prev?.fetched ?? '');
+  if (prev?.ok === true && Number.isFinite(fetched) && now - fetched < INTEL_REFRESH_MS) return;
+  const result = await fetchIntelSummary({ now });
+  if (!result.ok) {
+    // Fica o último resumo bom até expirar; o motivo vai só para os logs.
+    console.error('intel_fetch_failed', result.error);
+    return;
+  }
+  await env.KV.put(INTEL_KEY, JSON.stringify(result), { expirationTtl: INTEL_TTL_SEC });
 }
 
 // ---------- Core Web Vitals (RUM): escrita/leitura ----------
@@ -716,6 +743,17 @@ export default {
         return json(data, request, env, { maxAge: 300 });
       }
 
+      // Resumo do honeypot externo: só lê o que o cron gravou (refreshIntel).
+      // Sem input de visitante, sem fetch ao sensor, sem escrita no KV — por
+      // isso sem rate limit, como /api/radar. Só agregados; ver lib/intel.js.
+      if (path === '/api/intel') {
+        const data = await edgeCached(request, 'intel', 1800, async () => {
+          const stored = await getJSON(env, INTEL_KEY);
+          return stored?.ok === true ? stored : { ok: false };
+        });
+        return json(data, request, env, { maxAge: 1800 });
+      }
+
       // Radar: alertas e notícias de cibersegurança, do documento que o cron
       // escreve no KV (nunca vai buscar feeds aqui). Sem input de visitante,
       // por isso sem rate limit, como /api/ct e /api/radar-attacks: o
@@ -800,6 +838,8 @@ export default {
           refreshRadarAttacks(env).catch((err) =>
             console.error('radar_attacks_refresh_failed', err?.message ?? String(err)),
           ),
+          // Resumo do honeypot externo: um ficheiro de poucos KB, de 6 em 6 h.
+          refreshIntel(env).catch((err) => console.error('intel_refresh_failed', err?.message ?? String(err))),
           // O Radar (feeds RSS) NÃO é recolhido aqui, nem quando ainda não há
           // documento: o parse do CNCS (~1,7 MB) somado a estes aquecimentos
           // arriscava passar os 10 ms de CPU do plano Free numa só invocação. Sem

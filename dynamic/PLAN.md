@@ -16,8 +16,8 @@ each, with the full original entries kept in this file's git history.
 ## Recorded decisions
 
 - **2026-11-14 — Product pass: fewer pages, a home that shows the proof**
-  (approved point by point by the repo owner after a site review). No new
-  Worker route, no new KV key, no CSP change.
+  (approved point by point by the repo owner after a site review). One new
+  read-only Worker route (`/api/intel`, below); no CSP change.
     - **"This site" goes from six pages to four.** Security and Performance
       are folded into the Overview (threat model, privacy, delivery chain,
       Web Vitals and traffic, how to report); the "header → why" table moved
@@ -40,16 +40,28 @@ each, with the full original entries kept in this file's git history.
       never turns into "0 unexpected certificates". Two more read requests
       per home view, both served from the data-center Cache API, no KV
       writes.
-    - **Honeypot summary on the Threat Intel project page.** Aggregates only
-      (totals, top ATT&CK techniques, top usernames), vendored as
-      `content/intel-summary.json` and delivered by pull request from the
-      honeypot repo, like the stars catalog — contract and failure modes in
-      `docs/intel-sync.md`. The honeypot itself stays out of this repo (ADR
-      0022). The file is optional: without it the section is not rendered,
-      and there is never sample data in its place. A string shaped like an
-      IP address fails the build (`static/src/scripts/intel-summary.js`).
-      **Pending on the honeypot side:** the job that generates the file and
-      opens the PR.
+    - **Honeypot summary on the Threat Intel project page: `GET /api/intel`**
+      (requested by the repo owner: no bot PRs and no redeploy of this site
+      to refresh the numbers). The sensor already publishes
+      `history.json` on `intel.danielmala.co` on every feed run: one row of
+      aggregates per UTC day and no indicators, about 6 KB. The existing
+      `*/30` cron reads the stored summary and only fetches when it is 6 h
+      old (4 KV writes/day in `intel:summary`, TTL 3 days; the other ticks
+      cost one read). `feed.json` is never read: it holds the addresses and
+      is ~18 MB, far past the Free plan's CPU budget. Two fixed sources in
+      order (the custom domain, then the same Pages project's `*.pages.dev`
+      host, in case the zone's WAF refuses the Worker's subrequest),
+      redirects refused, 1 MiB cap. Pure reduction in `src/lib/intel.js`,
+      tested against the sensor's real file: counts, validated ATT&CK ids
+      and campaign slugs only, so no address can leave the module; a last
+      day older than 3 days or in the future yields no summary. The route
+      only reads KV behind the data-center Cache API (30 min): no visitor
+      input, no upstream call, no rate limit, like `/api/radar`. The page
+      re-validates the response (`static/src/scripts/intel-summary.js`) and
+      keeps a build-time fallback. Nothing changes in the honeypot
+      repository (ADR 0022 stands); `history.json` becomes a contract this
+      site depends on. Detail in `docs/intel-sync.md`. **Write budget:**
+      +4/day.
     - **Tools:** the index and the home lead with the tools that are
       specific to this site (mirror, CSP analyser, email headers, the two
       phishing games); the CSP analyser gained a "this site's CSP" button
