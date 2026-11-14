@@ -2,7 +2,7 @@
 # OpenSSF Scorecard, e sem pin um rebuild upstream podia mudar o comportamento
 # do fuzzer sem nenhuma alteração deste repo). Renovate segue o digest a
 # partir daqui (dockerfile manager, incluído em config:recommended).
-FROM gcr.io/oss-fuzz-base/base-builder-javascript@sha256:2e218dedc1603f15e34cec784030789e06db1df8eb5356f0a8e27285619ac8c2
+FROM gcr.io/oss-fuzz-base/base-builder-javascript@sha256:fff2fe5f532ffcd3fcea7c54cc1db18951b364b64aa37c415348ce8ba17cde34
 
 # Só copiamos o que os harnesses precisam (lib/ com as funções puras a
 # fuzzar, e os próprios harnesses) — não o monorepo inteiro. A estrutura
