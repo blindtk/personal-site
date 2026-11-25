@@ -193,7 +193,13 @@ const intelOnly = (calls) => async (url) => {
   return jsonRes(HISTORY);
 };
 
-test('cron: sem resumo guardado, recolhe e grava com TTL de 3 dias', async () => {
+// O cron usa o relógio real e a amostra é de 2026-11-14: sem relógio fixo, a
+// partir de 2026-11-17 o resumo passa a 'stale' e estes testes falham por
+// causa da data, não do código. O relógio é a fronteira; fixa-se aqui.
+const atSampleDay = (t) => t.mock.timers.enable({ apis: ['Date'], now: NOW });
+
+test('cron: sem resumo guardado, recolhe e grava com TTL de 3 dias', async (t) => {
+  atSampleDay(t);
   const env = { KV: fakeKV() };
   const calls = [];
   await withFetch(intelOnly(calls), () => run((ctx) => worker.scheduled(TICK, env, ctx)));
@@ -202,7 +208,8 @@ test('cron: sem resumo guardado, recolhe e grava com TTL de 3 dias', async () =>
   assert.deepEqual(env.KV.opts.get('intel:summary'), { expirationTtl: 3 * 86400 });
 });
 
-test('cron: resumo com menos de 6 h não é pedido de novo; às 6 h em ponto é', async () => {
+test('cron: resumo com menos de 6 h não é pedido de novo; às 6 h em ponto é', async (t) => {
+  atSampleDay(t);
   for (const [ageMs, expected] of [[6 * 3600_000 - 1000, 0], [6 * 3600_000, 1]]) {
     const env = { KV: fakeKV() };
     const fetched = new Date(Date.now() - ageMs).toISOString();
