@@ -34,7 +34,12 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  static:
+  # Job IDs are check names, and a ruleset's required check is matched by
+  # that name alone. `worker` here collided with ci.yml's `worker` on every
+  # lockfile PR: two checks named `worker` on the same commit, only one of
+  # them the CI gate. Prefixed so each check name is unique among the
+  # workflows that run on pull_request.
+  supply-chain-static:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -74,7 +79,7 @@ jobs:
           path: static/sbom-static.cdx.json
           retention-days: 90
 
-  worker:
+  supply-chain-worker:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

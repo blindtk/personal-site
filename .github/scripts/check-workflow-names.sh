@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Workflow naming convention — the same file, byte for byte, in every repo
-# of this account (blindtk, github-stars, homelab, honeypot-vps-infra,
-# personal-site). The convention itself is written down in
-# knowledge-base/notes/nomenclatura-de-workflows.md.
+# of this account that has workflows. The convention itself is written down
+# in knowledge-base/notes/nomenclatura-de-workflows.md.
 #
-#   file:  .github/workflows/<family>[-<object>].yml   (kebab-case, .yml)
-#   name:  exactly the file name without .yml
+#   file:      .github/workflows/<family>[-<object>].yml   (kebab-case, .yml)
+#   name:      exactly the file name without .yml
+#   run-name:  optional; if present, starts with the name, then " (" or ends
 #
 #   ci | security | release                  may stand alone, or take -<object>
 #   deploy | verify | audit | repair | ops | update   always take -<object>
@@ -41,6 +41,12 @@ for f in "$dir"/*; do
   name="$(sed -n 's/^name:[[:space:]]*//p' "$f" | head -n 1 | sed "s/^[\"']//; s/[\"'][[:space:]]*\$//; s/[[:space:]]*\$//")"
   if [ "$name" != "$stem" ]; then
     echo "::error file=$f::top-level name: must be '$stem' (got '${name:-<missing>}')"
+    fail=1
+  fi
+  # Top-level `run-name:`, if any: the name first, then the run's detail.
+  run_name="$(sed -n 's/^run-name:[[:space:]]*//p' "$f" | head -n 1 | sed "s/^[\"']//")"
+  if [ -n "$run_name" ] && [ "$run_name" != "$stem" ] && [[ "$run_name" != "$stem ("* ]]; then
+    echo "::error file=$f::run-name: must start with '$stem (' (got '$run_name')"
     fail=1
   fi
 done
