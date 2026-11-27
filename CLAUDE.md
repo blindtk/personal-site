@@ -85,6 +85,9 @@ npm run preview   # serve the build locally
 2. If you touched the tools, test the logic with known vectors.
 3. If you added a new page, create **both** versions (PT + EN) and the pair in
    `routes.ts`.
+4. Use the `verify` skill (`.claude/skills/verify/`): it picks the checks
+   from the diff, runs a browser smoke of the built pages, and ends with a
+   `Verified:` commit trailer.
 
 ## PR flow
 
