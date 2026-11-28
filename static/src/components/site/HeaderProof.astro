@@ -1,0 +1,191 @@
+---
+/**
+ * "curl -sI" ao vivo nas Provas: o browser faz um HEAD à própria página e
+ * mostra os cabeçalhos que vieram, cada um do contrato marcado ✓/✗ e ligado
+ * à sua linha na tabela (#hdr-<nome>, EvidencePage.astro).
+ *
+ * Sem JS o bloco mostra o que o contrato exige, etiquetado "esperado" — nunca
+ * finge valores recebidos. As linhas entram com um desfasamento curto (WAAPI,
+ * sem biblioteca); com movimento reduzido aparecem todas de uma vez. A lógica
+ * está em src/scripts/header-proof.js.
+ */
+import { SITE_URL, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+
+interface Props { lang: Lang; contract: Record<string, string[]> }
+const { lang, contract } = Astro.props;
+const ev = t(lang).evidence;
+// O HEAD é feito à própria página, por isso o comando mostra o URL dela.
+const pageUrl = new URL(Astro.url.pathname, SITE_URL).href;
+const strings = {
+  absent: ev.proofAbsent,
+  ok: ev.proofOk,
+  bad: ev.proofBad,
+  summary: ev.proofSummary,
+  error: ev.proofError,
+};
+---
+
+<figure class="hp" id="header-proof" data-strings={JSON.stringify(strings)} data-contract={JSON.stringify(contract)}>
+  <figcaption class="hp-cap">{ev.proofCaption}</figcaption>
+  <div class="hp-term mono" role="group" aria-label={ev.proofLabel}>
+    <p class="hp-cmd"><span class="hp-ps" aria-hidden="true">$ </span>curl -sI {pageUrl}</p>
+    <p class="hp-status" data-proof-status hidden></p>
+    <ol class="hp-lines" data-proof-lines>
+      {Object.entries(contract).map(([name, requires]) => (
+        <li class="hp-line">
+          <a class="hp-name" href={`#hdr-${name}`}>{name}</a>: <span class="hp-val">{requires.join(' … ')}</span>
+          <span class="hp-tag">{ev.proofExpected}</span>
+        </li>
+      ))}
+    </ol>
+    <p class="hp-sum" data-proof-summary aria-live="polite">{ev.proofExpectedNote}</p>
+  </div>
+</figure>
+
+<script>
+  import { headerLines } from '../../scripts/header-proof.js';
+  import { protocolLabel } from '../../scripts/request-path.js';
+
+  const root = document.getElementById('header-proof');
+  if (root) {
+    const S = JSON.parse(root.dataset.strings ?? '{}');
+    const contract = JSON.parse(root.dataset.contract ?? '{}');
+    const list = root.querySelector<HTMLOListElement>('[data-proof-lines]')!;
+    const status = root.querySelector<HTMLElement>('[data-proof-status]')!;
+    const summary = root.querySelector<HTMLElement>('[data-proof-summary]')!;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    function lineEl(line: { name: string; value: string | null; status: string | null; missing: string[] }) {
+      const li = document.createElement('li');
+      li.className = `hp-line${line.status ? ` is-${line.status}` : ''}`;
+      if (line.status) {
+        const mark = document.createElement('span');
+        mark.className = 'hp-mark';
+        mark.setAttribute('aria-hidden', 'true');
+        mark.textContent = line.status === 'ok' ? '✓ ' : '✗ ';
+        li.append(mark);
+      }
+      const name: HTMLElement = document.createElement(line.status ? 'a' : 'span');
+      name.className = 'hp-name';
+      if (line.status) (name as HTMLAnchorElement).href = `#hdr-${line.name}`;
+      name.textContent = line.name;
+      const val = document.createElement('span');
+      val.className = 'hp-val';
+      val.textContent = line.value ?? S.absent;
+      li.append(name, document.createTextNode(': '), val);
+      if (line.status) {
+        const sr = document.createElement('span');
+        sr.className = 'visually-hidden';
+        sr.textContent = line.status === 'ok' ? ` (${S.ok})` : ` (${S.bad} ${line.missing.join(', ')})`;
+        li.append(sr);
+      }
+      return li;
+    }
+
+    async function run() {
+      const url = new URL(location.pathname, location.href).href;
+      let res: Response;
+      try {
+        res = await fetch(url, { method: 'HEAD', cache: 'no-store', credentials: 'same-origin' });
+      } catch {
+        summary.textContent = S.error;
+        return;
+      }
+      const timing = performance.getEntriesByName(url).at(-1) as PerformanceResourceTiming | undefined;
+      const proto = protocolLabel(timing?.nextHopProtocol) ?? 'HTTP';
+      const { lines, present, total } = headerLines(res.headers.entries(), contract);
+      status.textContent = `${proto} ${res.status}`;
+      status.hidden = false;
+      const items = lines.map(lineEl);
+      list.replaceChildren(...items);
+      summary.textContent = S.summary.replace('{present}', String(present)).replace('{total}', String(total));
+      summary.classList.toggle('is-bad', present < total);
+      // Explicação de uso raro: cada linha entra 40 ms depois da anterior,
+      // com ease-out forte. Só opacidade e um deslocamento de 4 px.
+      if (!still.matches) {
+        [status, ...items].forEach((el, i) => el.animate(
+          [{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 220, delay: i * 40, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'backwards' },
+        ));
+      }
+    }
+
+    // Só quando o bloco se aproxima do ecrã: quem não chega lá não faz o HEAD.
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      run();
+    }, { rootMargin: '200px 0px' });
+    io.observe(root);
+  }
+</script>
+
+<style>
+  .hp {
+    margin: 0 0 1.2rem;
+  }
+  .hp-cap {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
+  .hp-term {
+    background: var(--bg-raise);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem 1rem;
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+  .hp-term p {
+    margin: 0;
+  }
+  .hp-ps {
+    color: var(--accent);
+  }
+  .hp-term .hp-status {
+    color: var(--text);
+    margin-top: 0.4rem;
+  }
+  .hp-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  /* As linhas recebidas são criadas por JS e não levam o atributo de âmbito
+     do Astro: os seletores dentro da lista são :global. */
+  .hp-lines :global(.hp-line) {
+    overflow-wrap: anywhere;
+    color: var(--muted);
+  }
+  .hp-lines :global(.hp-name) {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .hp-lines :global(a.hp-name:hover) {
+    text-decoration: underline;
+  }
+  .hp-lines :global(.is-ok .hp-mark),
+  .hp-lines :global(.is-ok a.hp-name) {
+    color: var(--accent);
+  }
+  .hp-lines :global(.is-bad .hp-mark),
+  .hp-lines :global(.is-bad a.hp-name),
+  .hp-lines :global(.is-absent .hp-mark),
+  .hp-lines :global(.is-absent a.hp-name) {
+    color: var(--danger);
+  }
+  .hp-tag {
+    margin-left: 0.5rem;
+    color: var(--accent-2);
+    font-size: 0.72rem;
+  }
+  .hp-term .hp-sum {
+    margin-top: 0.6rem;
+    color: var(--muted);
+  }
+  .hp-sum.is-bad {
+    color: var(--danger);
+  }
+</style>

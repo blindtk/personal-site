@@ -12,6 +12,11 @@ const ms = (v) => (Number.isFinite(v) && v >= 0 ? Math.round(v) : null);
 
 const PROTOCOLS = { h3: 'HTTP/3', h2: 'HTTP/2', 'http/1.1': 'HTTP/1.1', 'http/1.0': 'HTTP/1.0' };
 
+/** `nextHopProtocol` (ALPN: "h2", "h3", "http/1.1") → "HTTP/2" etc.; desconhecido → null. */
+export function protocolLabel(alpn) {
+  return typeof alpn === 'string' ? PROTOCOLS[alpn.toLowerCase()] ?? null : null;
+}
+
 /**
  * PerformanceNavigationTiming → fases do pedido, em ms inteiros.
  *
@@ -34,9 +39,8 @@ export function navPhases(entry) {
   if (dnsMs === null || connectMs === null || ttfbMs === null) return null;
   const secure = n('secureConnectionStart');
   const tlsMs = secure > 0 ? ms(n('connectEnd') - secure) : null;
-  const proto = typeof entry.nextHopProtocol === 'string' ? entry.nextHopProtocol.toLowerCase() : '';
   return {
-    protocol: PROTOCOLS[proto] ?? null,
+    protocol: protocolLabel(entry.nextHopProtocol),
     dnsMs,
     dnsCached: dnsMs === 0,
     connectMs,

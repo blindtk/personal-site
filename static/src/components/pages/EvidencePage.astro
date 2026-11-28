@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CtWatch from '../CtWatch.astro';
+import HeaderProof from '../site/HeaderProof.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { SITE, SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -114,6 +115,7 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-headers">{ev.headersTitle}</h2>
     </div>
+    <HeaderProof lang={lang} contract={expected.headers} />
     <div class="table-scroll">
       <table class="result-table ev-contract">
         <thead>
@@ -125,7 +127,7 @@ const scanners = [
         </thead>
         <tbody>
           {contract.map(([name, requires, why]) => (
-            <tr>
+            <tr id={`hdr-${name}`}>
               <th class="mono">{name}</th>
               <td>
                 <div class="ev-req">{requires.map((r) => <span class="badge">{r}</span>)}</div>
@@ -222,6 +224,14 @@ const scanners = [
       padding: 0.1rem 0;
     }
     .ev-contract .badge { font-size: 0.7rem; padding: 0.05rem 0.4rem; }
+  }
+  /* Alvo dos links do curl -sI ao vivo (HeaderProof): a linha não fica por
+     baixo da nav fixa e destaca-se ao chegar. */
+  .ev-contract tr {
+    scroll-margin-top: calc(var(--nav-h) + 1rem);
+  }
+  .ev-contract tr:target {
+    background: var(--accent-dim);
   }
   .result-table td a.hl {
     text-decoration: none;
