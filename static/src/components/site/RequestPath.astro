@@ -1,0 +1,454 @@
+---
+/**
+ * "O teu pedido, etapa a etapa" (Visão geral de Este site): o caminho do
+ * pedido que trouxe esta página, cada etapa com um valor medido nele.
+ *
+ * O conteúdo é a lista de etapas, em HTML, legível sem JS. O JS preenche os
+ * valores deste pedido (Navigation Timing, um HEAD à mesma página, o
+ * /api/mirror) e marca a etapa em que estás. O diagrama (só em ecrãs largos)
+ * é aria-hidden e repete o que a lista diz; a animação dele (GSAP,
+ * request-path-anim.ts) só se descarrega em desktop, sem reduced-motion e
+ * quando a secção se aproxima. A lógica pura está em
+ * src/scripts/request-path.js.
+ */
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { API_BASE, type Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { routes } from '../../i18n/routes';
+import { caaIssuers } from '../../scripts/request-path.js';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const p = t(lang).site.path;
+const st = p.steps;
+
+// Fontes de verdade já usadas pelos workflows de produção: o contrato de
+// cabeçalhos (verify-headers) e a política DNS (verify-dns).
+const readRepoJson = (path: string) =>
+  JSON.parse(readFileSync(fileURLToPath(new URL(`../../../../${path}`, import.meta.url)), 'utf8'));
+const contract = readRepoJson('.github/expected-headers.json').headers as Record<string, string[]>;
+const dns = readRepoJson('.github/expected-dns.json');
+const resolvers: number = Array.isArray(dns.dnssec?.resolvers) ? dns.dnssec.resolvers.length : 0;
+const issuers = caaIssuers(dns.caa?.expected);
+const fill = (s: string, vars: Record<string, string | number>) =>
+  s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+
+const jsStrings = {
+  unknown: p.unknown,
+  pending: p.pending,
+  ms: p.ms,
+  dnsCached: p.dnsCached,
+  reused: p.reused,
+  tlsPart: p.tlsPart,
+  prerendered: p.prerendered,
+  fromCache: p.fromCache,
+  notCloudflare: p.notCloudflare,
+  notReported: p.notReported,
+  headersCount: p.headersCount,
+  workerDown: p.workerDown,
+};
+
+// Ordem das etapas = ordem dos traços do diagrama (data-beam) e dos nós
+// (data-lit-at). Ver request-path-anim.ts.
+const steps = ['dns', 'edge', 'waf', 'pages', 'headers', 'worker'] as const;
+---
+
+<section
+  aria-labelledby="h-path"
+  class="rp"
+  id="request-path"
+  data-api={API_BASE}
+  data-strings={JSON.stringify(jsStrings)}
+  data-contract={JSON.stringify(contract)}
+>
+  <div class="section-title"><h2 id="h-path">{p.title}</h2></div>
+  <p class="arch-body">{p.intro}</p>
+  <noscript><p class="note">{p.noJs}</p></noscript>
+
+  <div class="rp-body">
+    <ol class="rp-steps">
+      <li class="rp-step" data-step="0">
+        <h3 class="rp-h"><span class="rp-n">1</span>{st.dns.title}</h3>
+        <p>{st.dns.body}</p>
+        <dl class="rp-facts">
+          <dt>{st.dns.dnssecLabel}</dt><dd>{fill(st.dns.dnssecValue, { n: resolvers })}</dd>
+          <dt>{st.dns.caaLabel}</dt><dd>{fill(st.dns.caaValue, { list: issuers.join(', ') })}</dd>
+          <dt class="rp-live">{st.dns.liveLabel}</dt><dd class="rp-live" data-live="dns">{p.unknown}</dd>
+        </dl>
+      </li>
+      <li class="rp-step" data-step="1">
+        <h3 class="rp-h"><span class="rp-n">2</span>{st.edge.title}</h3>
+        <p>{st.edge.body}</p>
+        <dl class="rp-facts">
+          <dt class="rp-live">{st.edge.coloLabel}</dt><dd class="rp-live" data-live="colo">{p.unknown}</dd>
+          <dt class="rp-live">{st.edge.protocolLabel}</dt><dd class="rp-live" data-live="protocol">{p.unknown}</dd>
+          <dt class="rp-live">{st.edge.liveLabel}</dt><dd class="rp-live" data-live="handshake">{p.unknown}</dd>
+        </dl>
+      </li>
+      <li class="rp-step" data-step="2">
+        <h3 class="rp-h"><span class="rp-n">3</span>{st.waf.title}</h3>
+        <p>{st.waf.body}</p>
+        <dl class="rp-facts">
+          <dt class="rp-live">{st.waf.liveLabel}</dt><dd>{st.waf.liveValue}</dd>
+        </dl>
+        <p class="rp-link mono"><a href={routes.cloudflare[lang]}>→ {st.waf.linkLabel}</a></p>
+      </li>
+      <li class="rp-step" data-step="3">
+        <h3 class="rp-h"><span class="rp-n">4</span>{st.pages.title}</h3>
+        <p>{st.pages.body}</p>
+        <dl class="rp-facts">
+          <dt class="rp-live">{st.pages.ttfbLabel}</dt><dd class="rp-live" data-live="ttfb">{p.unknown}</dd>
+          <dt class="rp-live">{st.pages.cacheLabel}</dt><dd class="rp-live" data-live="cache">{p.unknown}</dd>
+        </dl>
+      </li>
+      <li class="rp-step" data-step="4">
+        <h3 class="rp-h"><span class="rp-n">5</span>{st.headers.title}</h3>
+        <p>{st.headers.body}</p>
+        <dl class="rp-facts">
+          <dt class="rp-live">{st.headers.liveLabel}</dt><dd class="rp-live" data-live="headers">{p.unknown}</dd>
+          <dt class="rp-live rp-missing" hidden>{p.headersMissing}</dt><dd class="rp-live rp-missing mono" data-live="headersMissing" hidden></dd>
+        </dl>
+        <p class="rp-link mono"><a href={`${routes.evidence[lang]}#h-headers`}>→ {st.headers.linkLabel}</a></p>
+      </li>
+      <li class="rp-step" data-step="5">
+        <h3 class="rp-h"><span class="rp-n">6</span>{st.worker.title}</h3>
+        <p>{st.worker.body}</p>
+        <dl class="rp-facts">
+          <dt class="rp-live">{st.worker.rttLabel}</dt><dd class="rp-live" data-live="rtt">{p.unknown}</dd>
+          <dt class="rp-live">{st.worker.tlsLabel}</dt><dd class="rp-live" data-live="workerTls">{p.unknown}</dd>
+          <dt class="rp-live">{st.worker.coloLabel}</dt><dd class="rp-live" data-live="workerColo">{p.unknown}</dd>
+        </dl>
+      </li>
+    </ol>
+
+    <figure class="rp-figure" aria-hidden="true">
+      <svg class="rp-svg" viewBox="0 0 240 460" focusable="false">
+        <g class="rp-edges">
+          <path d="M120 28 V108" />
+          <path d="M120 108 V196" />
+          <path d="M120 196 V284" />
+          <path d="M120 284 C120 340 60 336 60 392" />
+          <circle cx="60" cy="392" r="22" />
+          <path d="M120 284 C120 340 180 336 180 392" />
+        </g>
+        <g class="rp-beams">
+          <path data-beam="0" d="M120 28 V108" />
+          <path data-beam="1" d="M120 108 V196" />
+          <path data-beam="2" d="M120 196 V284" />
+          <path data-beam="3" d="M120 284 C120 340 60 336 60 392" />
+          <circle data-beam="4" data-packet="none" cx="60" cy="392" r="22" />
+          <path data-beam="5" d="M120 284 C120 340 180 336 180 392" />
+        </g>
+        <circle class="rp-node lit" cx="120" cy="28" r="7" />
+        <circle class="rp-node" data-lit-at="0" cx="120" cy="108" r="7" />
+        <circle class="rp-node" data-lit-at="1" cx="120" cy="196" r="7" />
+        <circle class="rp-node" data-lit-at="2" cx="120" cy="284" r="7" />
+        <circle class="rp-node" data-lit-at="3" cx="60" cy="392" r="7" />
+        <circle class="rp-node" data-lit-at="5" cx="180" cy="392" r="7" />
+        <circle class="rp-packet" data-packet cx="120" cy="28" r="4" />
+        <text class="rp-label" x="136" y="32">{p.nodes.browser}</text>
+        <text class="rp-label" x="136" y="112">{p.nodes.dns}</text>
+        <text class="rp-label" x="136" y="200">{p.nodes.edge}<tspan class="rp-colo" data-live-svg="colo"></tspan></text>
+        <text class="rp-label" x="136" y="288">{p.nodes.waf}</text>
+        <text class="rp-label" x="60" y="436" text-anchor="middle">{p.nodes.pages}</text>
+        <text class="rp-label" x="180" y="436" text-anchor="middle">{p.nodes.worker}</text>
+      </svg>
+    </figure>
+  </div>
+</section>
+
+<script>
+  import { navPhases, coloFromRay, cacheState, checkHeaders, mirrorFacts } from '../../scripts/request-path.js';
+  import type { PathAnimation } from './request-path-anim';
+
+  const root = document.getElementById('request-path');
+  if (root) {
+    const S = JSON.parse(root.dataset.strings ?? '{}');
+    const contract = JSON.parse(root.dataset.contract ?? '{}');
+    const api = root.dataset.api ?? '';
+    const fill = (s: string, vars: Record<string, string | number>) =>
+      s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''));
+    const set = (key: string, text: string) => {
+      for (const el of root.querySelectorAll<HTMLElement>(`[data-live="${key}"], [data-live-svg="${key}"]`)) {
+        el.textContent = el.dataset.liveSvg ? ` · ${text}` : text;
+      }
+    };
+    const ms = (n: number) => `${n} ${S.ms}`;
+
+    // 1) O que o browser já sabe — sem pedidos.
+    const nav = navPhases(performance.getEntriesByType('navigation')[0]);
+    if (nav) {
+      const special = nav.prerendered ? S.prerendered : nav.fromCache ? S.fromCache : null;
+      set('dns', special ?? (nav.dnsCached ? S.dnsCached : ms(nav.dnsMs)));
+      set('handshake', special ?? (nav.reused
+        ? S.reused
+        : nav.tlsMs !== null ? `${ms(nav.connectMs)} (${S.tlsPart} ${ms(nav.tlsMs)})` : ms(nav.connectMs)));
+      set('protocol', nav.protocol ?? S.unknown);
+      set('ttfb', special ?? ms(nav.ttfbMs));
+    }
+
+    // 2) Pedidos à rede só para quem chega perto da secção.
+    async function measure() {
+      for (const k of ['colo', 'cache', 'headers', 'rtt', 'workerTls', 'workerColo']) set(k, S.pending);
+      try {
+        const res = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store', credentials: 'same-origin' });
+        const colo = coloFromRay(res.headers.get('cf-ray'));
+        set('colo', colo ?? S.notCloudflare);
+        if (!colo) for (const el of root!.querySelectorAll<HTMLElement>('[data-live-svg="colo"]')) el.textContent = '';
+        set('cache', cacheState(res.headers.get('cf-cache-status')) ?? S.notReported);
+        const r = checkHeaders((n: string) => res.headers.get(n), contract);
+        set('headers', fill(S.headersCount, { present: r.present, total: r.total }));
+        const bad = r.rows.filter((row) => !row.ok).map((row) => row.name);
+        for (const el of root!.querySelectorAll<HTMLElement>('.rp-missing')) el.hidden = bad.length === 0;
+        if (bad.length) set('headersMissing', bad.join(', '));
+      } catch {
+        for (const k of ['colo', 'cache', 'headers']) set(k, S.unknown);
+      }
+      try {
+        const t0 = performance.now();
+        const res = await fetch(`${api}/api/mirror`, { headers: { accept: 'application/json' }, cache: 'no-store' });
+        const rtt = Math.round(performance.now() - t0);
+        const json = res.ok && (res.headers.get('content-type') ?? '').includes('application/json');
+        const facts = json ? mirrorFacts(await res.json()) : null;
+        if (!facts) throw new Error('mirror');
+        set('rtt', ms(rtt));
+        set('workerTls', facts.tlsVersion ?? S.unknown);
+        set('workerColo', facts.colo ?? S.unknown);
+      } catch {
+        set('rtt', S.workerDown);
+        set('workerTls', S.unknown);
+        set('workerColo', S.unknown);
+      }
+    }
+
+    // 3) Etapa atual: a que atravessa a faixa do meio do ecrã. Só muda uma
+    // classe (a lista) e, em desktop com movimento, o diagrama animado.
+    const steps = [...root.querySelectorAll<HTMLElement>('.rp-step')];
+    const svg = root.querySelector<SVGSVGElement>('.rp-svg');
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const wide = window.matchMedia('(min-width: 1100px)');
+    let anim: PathAnimation | null = null;
+    let current = -1;
+
+    function setCurrent(k: number) {
+      current = k;
+      steps.forEach((s, i) => {
+        s.classList.toggle('is-current', i === k);
+        s.classList.toggle('is-past', i < k);
+      });
+      anim?.go(k);
+    }
+
+    const band = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) setCurrent(Number((e.target as HTMLElement).dataset.step));
+      }
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    steps.forEach((s) => band.observe(s));
+
+    let started = false;
+    const near = new IntersectionObserver(async ([e]) => {
+      if (!e.isIntersecting || started) return;
+      started = true;
+      near.disconnect();
+      measure();
+      if (still.matches || !wide.matches || !svg) return;
+      try {
+        const { mountPathAnimation } = await import('./request-path-anim');
+        // A preferência pode ter mudado enquanto o módulo descarregava.
+        if (still.matches) return;
+        anim = mountPathAnimation(svg);
+        if (current >= 0) anim.go(current);
+      } catch {
+        // Sem animação, o diagrama fica completo (estado do CSS).
+      }
+    }, { rootMargin: '300px 0px' });
+    near.observe(root);
+
+    // Movimento reduzido ligado a meio: o diagrama passa ao estado completo.
+    still.addEventListener('change', () => {
+      if (still.matches && svg) {
+        anim = null;
+        svg.classList.remove('is-animated');
+        for (const b of svg.querySelectorAll('[data-beam]')) {
+          b.removeAttribute('stroke-dasharray');
+          b.removeAttribute('stroke-dashoffset');
+        }
+      }
+    });
+  }
+</script>
+
+<style>
+  .rp-body {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  .rp-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  /* Linha de metro à esquerda, como o percurso da home: em ecrãs estreitos
+     é o único diagrama. */
+  .rp-step {
+    position: relative;
+    padding: 0 0 1.6rem 1.6rem;
+    border-left: 2px solid var(--border-strong);
+  }
+  .rp-step:last-child {
+    border-left-color: transparent;
+    padding-bottom: 0;
+  }
+  .rp-step::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 0.35rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--border-strong);
+    transition: background-color 0.2s ease-out, border-color 0.2s ease-out;
+  }
+  .rp-step.is-past {
+    border-left-color: color-mix(in srgb, var(--accent) 55%, var(--bg));
+  }
+  .rp-step.is-past::before,
+  .rp-step.is-current::before {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .rp-h {
+    margin: 0 0 0.3rem;
+    font-size: 1rem;
+  }
+  .rp-n {
+    color: var(--accent);
+    margin-right: 0.55rem;
+  }
+  .rp-step p {
+    margin: 0 0 0.6rem;
+    color: var(--muted);
+  }
+  .rp-facts {
+    display: grid;
+    grid-template-columns: minmax(8rem, max-content) minmax(0, 1fr);
+    gap: 0.2rem 1rem;
+    margin: 0;
+    font-size: 0.88rem;
+  }
+  .rp-facts dt {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+  .rp-facts dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .rp-facts dd.rp-live {
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+  .rp-facts dd.rp-missing {
+    color: var(--accent-2);
+  }
+  .rp-link {
+    margin: 0.5rem 0 0;
+    font-size: 0.82rem;
+  }
+  .rp-link a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .rp-link a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 520px) {
+    .rp-facts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .rp-facts dd {
+      margin-bottom: 0.35rem;
+    }
+  }
+
+  /* Diagrama: só onde há largura para estar ao lado do texto. */
+  .rp-figure {
+    display: none;
+    margin: 0;
+  }
+  @media (min-width: 1100px) {
+    .rp-body {
+      grid-template-columns: minmax(0, 1fr) 14rem;
+      align-items: start;
+    }
+    .rp-figure {
+      display: block;
+      position: sticky;
+      top: calc(var(--nav-h) + 1.5rem);
+    }
+  }
+  .rp-svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .rp-edges path,
+  .rp-edges circle {
+    fill: none;
+    stroke: var(--border-strong);
+    stroke-width: 2;
+  }
+  .rp-beams path,
+  .rp-beams circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  .rp-beams [data-beam='5'] {
+    stroke: var(--accent-2);
+  }
+  /* Sem animação montada (sem JS, reduced-motion, ecrã estreito, GSAP que
+     falhou) os nós estão todos acesos: o diagrama completo, não vazio. */
+  .rp-node {
+    fill: var(--accent);
+    stroke: var(--bg);
+    stroke-width: 2;
+  }
+  .rp-svg.is-animated .rp-node {
+    fill: var(--bg-raise-2);
+    stroke: var(--border-strong);
+    transition: fill 0.2s ease-out, stroke 0.2s ease-out;
+  }
+  .rp-svg.is-animated .rp-node.lit {
+    fill: var(--accent);
+    stroke: var(--bg);
+  }
+  .rp-packet {
+    fill: var(--accent-2);
+    opacity: 0;
+  }
+  .rp-packet.on {
+    opacity: 1;
+  }
+  .rp-label {
+    fill: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .rp-colo {
+    fill: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rp-step::before,
+    .rp-svg.is-animated .rp-node {
+      transition: none;
+    }
+  }
+</style>
