@@ -1,7 +1,9 @@
 # ADR 0025 — Motion without widening the CSP; GSAP as the first third-party client library
 
-**Status:** accepted (2026-11-28), first applied in the "Your request, step
-by step" section of `/este-site/` (`src/components/site/RequestPath.astro`).
+**Status:** accepted (2026-11-28). First applied in the "Your request, step
+by step" section of `/este-site/` (`src/components/site/RequestPath.astro`),
+then in the Evidence page's live `curl -sI`, the home hero's amber trace and
+the Homelab project's 3D scene.
 
 ## Context
 
@@ -62,8 +64,17 @@ repository.
 ## Consequences
 
 - The CSP stays at 370 characters and `verify-headers` is unchanged.
-- **3D, if it comes, is procedural** or uses uncompressed glTF
-  (`KHR_mesh_quantization`), with no decoders.
+- **3D is procedural** or uses uncompressed glTF (`KHR_mesh_quantization`),
+  with no decoders. The first use is the Homelab project's "Try the rule"
+  scene (`src/components/homelab/`). It uses `three`: boxes and lines, flat
+  colours from the CSS variables and no lights. It is loaded with `import()`
+  only when the visitor clicks "View in 3D" (~131 KB gz). The explanation
+  itself (pick two segments, read what the firewall does) is plain HTML and
+  JS and works without WebGL.
+- **`three` is 0.x, and every minor can break the API.** Renovate gets a
+  rule to give it (and `@types/three`) its own PR instead of the grouped
+  non-major one. `chunkSizeWarningLimit` sits just above its chunk, so any
+  other chunk that grows still warns.
 - **Every motion feature keeps a static final state.** Reduced motion, narrow
   screens, a failed `import()` or no JavaScript all get it. The text in the
   HTML is the content; the animation only marks where the reader is.

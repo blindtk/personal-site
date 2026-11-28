@@ -601,6 +601,26 @@ export const ui = {
       back: '← Voltar ao blog',
       published: 'Publicado em',
     },
+    // "Experimenta a regra" no projeto Homelab (components/homelab/):
+    // política ao nível dos segmentos (content/homelab-policy.json).
+    homelab: {
+      flowTitle: 'Experimenta a regra',
+      flowIntro:
+        'Escolhe de onde parte e para onde vai um pedido entre dois segmentos. A firewall só deixa passar o que tem uma regra explícita. Aqui está a política ao nível dos segmentos, tal como descrita acima; as regras concretas da rede não são publicadas.',
+      fromLabel: 'Origem',
+      toLabel: 'Destino',
+      allow: '{from} → {to}: passa na firewall. Regra explícita: {reason}.',
+      deny: '{from} → {to}: travado na firewall. Não há regra explícita para este caminho, e por omissão tudo é negado.',
+      same: 'Escolhe dois segmentos diferentes.',
+      noJs: 'Esta demonstração precisa de JavaScript. A regra está no texto acima: os segmentos só falam através da firewall, que nega tudo o que não tenha uma regra explícita.',
+      view3d: 'Ver em 3D',
+      loading3d: 'A carregar a cena 3D…',
+      no3d: 'Este browser não tem WebGL disponível. A explicação acima é a mesma.',
+      sceneLabel: 'Cena 3D: os quatro segmentos à volta da firewall, com o caminho do pedido escolhido',
+      rotateLeft: 'Rodar a vista para a esquerda',
+      rotateRight: 'Rodar a vista para a direita',
+      firewall: 'firewall',
+    },
     projects: {
       title: 'Projetos',
       intro: 'Projetos pessoais de segurança e infraestrutura. Cada um explica o que faz, como está montado e porquê.',
@@ -1691,6 +1711,26 @@ export const ui = {
       empty: 'No posts yet.',
       back: '← Back to blog',
       published: 'Published on',
+    },
+    // "Try the rule" on the Homelab project (components/homelab/):
+    // segment-level policy (content/homelab-policy.json).
+    homelab: {
+      flowTitle: 'Try the rule',
+      flowIntro:
+        'Pick where a request between two segments starts and where it goes. The firewall only lets through what has an explicit rule. This is the segment-level policy described above; the concrete network rules are not published.',
+      fromLabel: 'From',
+      toLabel: 'To',
+      allow: '{from} → {to}: passes the firewall. Explicit rule: {reason}.',
+      deny: '{from} → {to}: stopped at the firewall. There is no explicit rule for this path, and by default everything is denied.',
+      same: 'Pick two different segments.',
+      noJs: 'This demo needs JavaScript. The rule is in the text above: segments only talk through the firewall, which denies anything without an explicit rule.',
+      view3d: 'View in 3D',
+      loading3d: 'Loading the 3D scene…',
+      no3d: 'This browser has no WebGL available. The explanation above is the same.',
+      sceneLabel: '3D scene: the four segments around the firewall, with the path of the chosen request',
+      rotateLeft: 'Rotate the view left',
+      rotateRight: 'Rotate the view right',
+      firewall: 'firewall',
     },
     projects: {
       title: 'Projects',

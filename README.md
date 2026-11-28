@@ -37,6 +37,8 @@ That scale is deliberate; see
 | **Cloudflare panels** — zone threats, firewall by action/source/country/network, mitigation per day | `/este-site/cloudflare/` | `/api/cf-stats`, `/api/threat-intel` |
 | **Performance** — first-party Core Web Vitals, no third-party script | `/este-site/` (overview) | `/api/vitals` |
 | **Your request, step by step** — the path of the request that loaded the page (DNS, edge, firewall, Pages, headers, Worker), each step with a value measured on it | `/este-site/` (overview) | `/api/mirror` |
+| **Try the rule** — pick two homelab segments and see what the default-deny firewall does; optional 3D view (three.js, loaded on click) | `/projetos/homelab/` | No |
+| **Live `curl -sI`** — the page's own headers, fetched from your browser and checked against the header contract | `/este-site/provas/` | No |
 | **Honeypot summary** — aggregates from the external sensor's daily archive (published addresses, sessions, ATT&CK techniques, recognised tooling), collected by the Worker every 6 h; no IP address passes through this site | `/projetos/threat-intel/` | `/api/intel` |
 | **Certificate Transparency watch** — certificates issued for the domain, checked against the expected CAs | `/este-site/provas/` | `/api/ct` |
 | **Radar** — cybersecurity alerts (CNCS, CERT-EU, NCSC UK, CISA KEV) and news, aggregated from RSS by the Worker every 6 h | `/radar/` | `/api/radar` |

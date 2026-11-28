@@ -2,6 +2,7 @@
 import { render, type CollectionEntry } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import IntelSummary from '../IntelSummary.astro';
+import HomelabFlow from '../homelab/HomelabFlow.astro';
 import type { Lang } from '../../config';
 import { t } from '../../i18n/ui';
 import { routes } from '../../i18n/routes';
@@ -17,6 +18,8 @@ const dict = t(lang);
 const { Content } = await render(project);
 // O resumo do sensor só faz sentido no projeto que o descreve.
 const showIntel = project.id.slice(3) === 'threat-intel';
+// A demonstração da regra de segmentos só faz sentido no projeto Homelab.
+const showHomelabFlow = project.id.slice(3) === 'homelab';
 ---
 
 <BaseLayout
@@ -39,6 +42,7 @@ const showIntel = project.id.slice(3) === 'threat-intel';
   <article class="prose">
     <Content />
   </article>
+  {showHomelabFlow && <HomelabFlow lang={lang} />}
   {(project.data.repo || project.data.demo) && (
     <div class="project-links mono">
       {project.data.repo && <a href={project.data.repo} rel="noopener">[{dict.projects.repo}]</a>}

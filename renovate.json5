@@ -96,6 +96,14 @@
       matchUpdateTypes: ['major'],
       addLabels: ['major'],
     },
+    // three.js é 0.x: o Renovate classifica 0.187 → 0.188 como "minor" e
+    // metia-o no PR agrupado (group:allNonMajor), mas cada versão do three
+    // pode partir a API (a cena 3D do Homelab, src/components/homelab/).
+    // PR próprio, junto com os tipos, para ser revisto e testado à parte.
+    {
+      matchPackageNames: ['three', '@types/three'],
+      groupName: 'three',
+    },
     // TypeScript 7 é o novo compilador nativo (Go) e ainda não expõe a API
     // programática de que o @astrojs/check/@astrojs/language-server dependem
     // (erro "does not expose the programmatic API that `astro check` relies

@@ -49,9 +49,8 @@ const jsStrings = {
   workerDown: p.workerDown,
 };
 
-// Ordem das etapas = ordem dos traços do diagrama (data-beam) e dos nós
-// (data-lit-at). Ver request-path-anim.ts.
-const steps = ['dns', 'edge', 'waf', 'pages', 'headers', 'worker'] as const;
+// A ordem das etapas (data-step) é a dos traços do diagrama (data-beam) e
+// dos nós (data-lit-at). Ver request-path-anim.ts.
 ---
 
 <section
