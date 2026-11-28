@@ -850,6 +850,10 @@ a.card:hover {
 }
 .net-bg .pulse.p2 { animation-delay: -4s; opacity: 0.3; }
 .net-bg .pulse.p3 { animation-delay: -7s; opacity: 0.25; stroke: var(--accent-2); }
+/* Com dados da firewall (HomePage → tunePulse), o traço âmbar tem significado
+   e uma legenda: passa a ser legível. Uma semana sem eventos pára-o. */
+.net-bg .pulse.p3.live { opacity: 0.65; animation-delay: 0s; }
+.net-bg .pulse.p3.stopped { animation: none; opacity: 0; }
 @keyframes net-pulse {
   to { stroke-dashoffset: -420; }
 }
@@ -971,6 +975,11 @@ a.card:hover {
   border-radius: 50%;
   background: var(--accent);
   animation: pulse 2.4s ease-in-out infinite;
+}
+.proof-pulse {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 .proof-grid {
   display: grid;
@@ -2737,6 +2746,7 @@ main > section > p:not([class]), main > p:not([class]) {
 @media (prefers-reduced-motion: reduce) {
   /* topologia do hero: pulsos somem, nós "vivos" ficam acesos fixos */
   .net-bg .pulse { animation: none; opacity: 0; }
+  .net-bg .pulse.p3.live { opacity: 0; }
   .net-bg .node.live { animation: none; fill-opacity: 0.6; }
   .identity .role::after { animation: none; }
   .about-prose details:first-of-type::after { animation: none; }

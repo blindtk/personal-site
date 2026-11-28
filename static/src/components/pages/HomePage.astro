@@ -38,6 +38,11 @@ const builtAbs = new Date(BUILD_INFO.builtAt).toISOString().slice(0, 10);
 const proofStrings = {
   firewallLive: dict.home.proof.firewallLive,
   ctLive: dict.home.proof.ctLive,
+  pulseRealtime: dict.home.proof.pulseRealtime,
+  pulseRealtimeOne: dict.home.proof.pulseRealtimeOne,
+  pulseTimelapse: dict.home.proof.pulseTimelapse,
+  pulseStill: dict.home.proof.pulseStill,
+  pulseNone: dict.home.proof.pulseNone,
   ago: dict.site.agoPrefix,
   units: {
     second: dict.site.unitSecond, minute: dict.site.unitMinute, hour: dict.site.unitHour,
@@ -107,6 +112,7 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
         <span class="l">{dict.home.proof.deployLabel} <span class="mono">{BUILD_INFO.commit}</span></span>
       </a>
     </div>
+    <p class="proof-pulse" id="proof-pulse" hidden></p>
   </aside>
 
   <section aria-labelledby="h-journey">
@@ -217,7 +223,7 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
 
 <script>
   import { relativeTime } from '../../scripts/observability.js';
-  import { firewallStopped, unexpectedCerts } from '../../scripts/home-proof.js';
+  import { firewallStopped, unexpectedCerts, pulseCadence } from '../../scripts/home-proof.js';
 
   const root = document.getElementById('home-proof')!;
   const base = root.dataset.api ?? '';
@@ -249,23 +255,52 @@ const dateFmt = new Intl.DateTimeFormat(lang === 'pt' ? 'pt-PT' : 'en-GB', { dat
     requestAnimationFrame(tick);
   }
 
-  async function fill(path: string, pick: (doc: unknown) => number | null, id: string, label: string, alarm = false) {
+  async function fill(path: string, pick: (doc: unknown) => number | null, id: string, label: string, alarm = false): Promise<number | null> {
     try {
       const res = await fetch(`${base}${path}`, { headers: { accept: 'application/json' } });
-      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('application/json')) return;
+      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('application/json')) return null;
       const value = pick(await res.json());
-      if (value === null) return;
+      if (value === null) return null;
       const n = document.getElementById(id)!;
       n.removeAttribute('aria-hidden');
       if (alarm && value > 0) n.closest('.proof-cell')?.classList.add('alarm');
       document.getElementById(`${id}-l`)!.textContent = label;
       countTo(n, value);
+      return value;
     } catch {
       // Sem Worker: fica o convite de build, que já liga ao painel.
+      return null;
     }
   }
 
-  fill('/api/threat-intel', firewallStopped, 'proof-fw', S.firewallLive);
+  // O traço âmbar do hero (NetworkTopology) passa a seguir o ritmo real da
+  // firewall, com a escala dita em texto. Sem dados, fica decorativo e sem
+  // legenda — não se atribui significado a um movimento que não o tem.
+  function tunePulse(stopped: number | null) {
+    const c = pulseCadence(stopped);
+    const legend = document.getElementById('proof-pulse');
+    if (!c || !legend) return;
+    const pulse = document.querySelector<SVGPathElement>('.net-bg .pulse.p3');
+    const num = (v: number, digits = 0) => new Intl.NumberFormat(locale, { maximumFractionDigits: digits }).format(v);
+    let text: string;
+    if (c.periodSec === null) {
+      pulse?.classList.add('stopped');
+      text = S.pulseNone;
+    } else {
+      pulse?.classList.add('live');
+      pulse?.style.setProperty('animation-duration', `${c.periodSec}s`);
+      text = still ? S.pulseStill
+        : c.speedup > 1 ? S.pulseTimelapse
+        : c.eventsPerPulse === 1 ? S.pulseRealtimeOne : S.pulseRealtime;
+    }
+    legend.textContent = text
+      .replace('{rate}', num(c.perHour, c.perHour < 10 ? 1 : 0))
+      .replace('{n}', num(c.eventsPerPulse ?? 0))
+      .replace('{f}', num(c.speedup ?? 0));
+    legend.hidden = false;
+  }
+
+  fill('/api/threat-intel', firewallStopped, 'proof-fw', S.firewallLive).then(tunePulse);
   fill('/api/ct', unexpectedCerts, 'proof-ct', S.ctLive, true);
 </script>
 

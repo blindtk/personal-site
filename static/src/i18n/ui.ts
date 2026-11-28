@@ -515,6 +515,13 @@ export const ui = {
         ctLive: 'certificados de emissor inesperado · 90 dias',
         deployLabel: 'último deploy · commit',
         open: 'abrir',
+        // Legenda do traço âmbar do hero (pulseCadence em home-proof.js):
+        // diz o que o movimento codifica e em que escala.
+        pulseRealtime: 'O traço âmbar no diagrama de rede do topo da página segue a firewall em tempo real: cada passagem vale {n} pedidos travados ({rate} por hora, média de 7 dias).',
+        pulseRealtimeOne: 'O traço âmbar no diagrama de rede do topo da página segue a firewall em tempo real: cada passagem é um pedido travado ({rate} por hora, média de 7 dias).',
+        pulseTimelapse: 'O traço âmbar no diagrama de rede do topo da página segue a firewall em câmara rápida (×{f}): cada passagem é um pedido travado ({rate} por hora, média de 7 dias).',
+        pulseStill: 'Ritmo da firewall: {rate} pedidos travados por hora, média de 7 dias.',
+        pulseNone: 'Nenhum pedido travado pela firewall nos últimos 7 dias.',
       },
       // Só credenciais em vigor e verificáveis (ver content/certs.json): os
       // tracks Fortinet NSE 4-7 expiraram em 09/2026, por isso o chip nomeia
@@ -1599,6 +1606,13 @@ export const ui = {
         ctLive: 'certificates from an unexpected issuer · 90 days',
         deployLabel: 'last deploy · commit',
         open: 'open',
+        // Caption for the hero's amber trace (pulseCadence in home-proof.js):
+        // what the motion encodes and at what scale.
+        pulseRealtime: 'The amber trace in the network diagram at the top of the page follows the firewall in real time: each pass stands for {n} stopped requests ({rate} per hour, 7-day average).',
+        pulseRealtimeOne: 'The amber trace in the network diagram at the top of the page follows the firewall in real time: each pass is one stopped request ({rate} per hour, 7-day average).',
+        pulseTimelapse: 'The amber trace in the network diagram at the top of the page follows the firewall in time-lapse (×{f}): each pass is one stopped request ({rate} per hour, 7-day average).',
+        pulseStill: 'Firewall rate: {rate} stopped requests per hour, 7-day average.',
+        pulseNone: 'No requests stopped by the firewall in the last 7 days.',
       },
       // Only current, verifiable credentials (see content/certs.json): the
       // Fortinet NSE 4-7 tracks expired in 09/2026, so the chip names a
