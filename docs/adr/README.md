@@ -24,6 +24,7 @@ existed.
 | [0022](0022-retire-internal-honeypot.md) | Retire the site's internal honeypot (decoys, IP list, map, ticker); the external sensor is the honeypot (supersedes 0007 and 0020; ADR 0004's zero-IP firewall panel is unchanged) |
 | [0023](0023-mirror-echoes-client-ip.md) | The Mirror tool shows visitors their own public IP (echoed, never stored, hidden until clicked) |
 | [0025](0025-movimento-sem-alargar-a-csp.md) | Motion without widening the CSP; GSAP core (lazy, one section) as the first third-party library served to visitors |
+| [0026](0026-media-src-videos-offline.md) | Explainer videos rendered offline from `media-src/` (HyperFrames), served as static MP4 with PT/EN captions from `content/` |
 
 ## Repository & tooling
 

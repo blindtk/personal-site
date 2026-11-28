@@ -11,6 +11,12 @@ Personal site monorepo. Three areas with rigid responsibilities:
   `node --test` (run before any PR that touches this). New tools only with
   an explicit decision from the repo owner (see `dynamic/PLAN.md`).
 
+One exception, outside the three: `media-src/` holds the source of the
+rendered explainer videos (HyperFrames + GSAP). It is an offline tool, never
+built or run in CI and never imported by `static/`; only its output (MP4 +
+poster) lands in `static/public/video/`, and the captions are content
+(`content/video/{pt,en}/`). See `media-src/README.md` and ADR 0026.
+
 ## Commands
 
 ```bash

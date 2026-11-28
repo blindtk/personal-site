@@ -163,8 +163,13 @@ const strings = {
     color: var(--text);
     text-decoration: none;
   }
+  /* Links dentro de texto: sublinhado pontilhado, não só a cor (WCAG 1.4.1). */
+  .hp-lines :global(a.hp-name) {
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+  }
   .hp-lines :global(a.hp-name:hover) {
-    text-decoration: underline;
+    text-decoration-style: solid;
   }
   .hp-lines :global(.is-ok .hp-mark),
   .hp-lines :global(.is-ok a.hp-name) {

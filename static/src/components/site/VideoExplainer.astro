@@ -1,0 +1,131 @@
+---
+/**
+ * Vídeo explicativo pré-renderizado (código-fonte em media-src/), servido de
+ * public/video/ com legendas PT/EN (/video/<nome>.<lang>.vtt, de
+ * content/video/) e a transcrição em texto na página.
+ *
+ * - Nunca autoplay com som: os vídeos não têm faixa de áudio.
+ * - `loop`: um ciclo curto e mudo que só toca quando está no ecrã, com a aba
+ *   visível e sem prefers-reduced-motion; pausar à mão é respeitado. Sem
+ *   isso fica parado no poster, com controlos.
+ * - preload="none": quem não carrega em play (ou não chega lá) não descarrega
+ *   o vídeo. O poster é um frame que já resume o diagrama.
+ */
+import { readFileSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import type { Lang } from '../../config';
+import { t } from '../../i18n/ui';
+import { parseVtt, clock } from '../../scripts/vtt.js';
+
+interface Props { lang: Lang; name: string; label: string; caption: string; loop?: boolean }
+const { lang, name, label, caption, loop = false } = Astro.props;
+const v = t(lang).video;
+
+const file = (p: string) => fileURLToPath(new URL(`../../../${p}`, import.meta.url));
+const cues = parseVtt(readFileSync(file(`../content/video/${lang}/${name}.vtt`), 'utf8'));
+const kb = Math.round(statSync(file(`public/video/${name}.mp4`)).size / 1024);
+statSync(file(`public/video/${name}.webp`));
+const seconds = Math.round(Math.max(...cues.map((c) => c.end)));
+const weight = v.weight.replace('{kb}', String(kb)).replace('{s}', String(seconds));
+---
+
+<figure class="vx" data-loop={loop ? '1' : undefined}>
+  <video
+    class="vx-video"
+    controls
+    preload="none"
+    playsinline
+    muted={loop}
+    loop={loop}
+    poster={`/video/${name}.webp`}
+    width="1280"
+    height="720"
+    aria-label={label}
+  >
+    <source src={`/video/${name}.mp4`} type="video/mp4" />
+    <track kind="captions" srclang="pt" label={v.captionsPt} src={`/video/${name}.pt.vtt`} default={lang === 'pt'} />
+    <track kind="captions" srclang="en" label={v.captionsEn} src={`/video/${name}.en.vtt`} default={lang === 'en'} />
+    <p>{v.fallback}</p>
+  </video>
+  <figcaption class="vx-cap">{caption} <span class="mono vx-w">{weight}</span></figcaption>
+  <details class="vx-tr">
+    <summary class="mono">{v.transcript}</summary>
+    <ol>
+      {cues.map((c) => <li><span class="mono vx-t">{clock(c.start)}</span> {c.text}</li>)}
+    </ol>
+  </details>
+</figure>
+
+<script>
+  // Só para os vídeos em ciclo (data-loop): tocar quando visível, parar fora.
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+  for (const fig of document.querySelectorAll<HTMLElement>('.vx[data-loop]')) {
+    const video = fig.querySelector('video')!;
+    let visible = false;
+    let userPaused = false;
+    let ours = false;
+    const sync = () => {
+      const should = visible && !document.hidden && !still.matches && !userPaused;
+      if (should && video.paused) {
+        ours = true;
+        video.play().catch(() => {}).finally(() => { ours = false; });
+      } else if (!should && !video.paused) {
+        ours = true;
+        video.pause();
+        ours = false;
+      }
+    };
+    video.addEventListener('pause', () => { if (!ours && visible && !document.hidden) userPaused = true; });
+    video.addEventListener('play', () => { if (!ours) userPaused = false; });
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }, { threshold: 0.5 }).observe(video);
+    document.addEventListener('visibilitychange', sync);
+    still.addEventListener('change', sync);
+  }
+</script>
+
+<style>
+  .vx {
+    margin: 0.4rem 0 1.4rem;
+  }
+  .vx-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .vx-cap {
+    margin-top: 0.55rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  .vx-w {
+    display: inline-block;
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-left: 0.3rem;
+  }
+  .vx-tr {
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+  }
+  .vx-tr summary {
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 0.8rem;
+  }
+  .vx-tr ol {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .vx-t {
+    color: var(--muted);
+    margin-right: 0.4rem;
+    font-size: 0.78rem;
+  }
+</style>

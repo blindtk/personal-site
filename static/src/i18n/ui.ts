@@ -603,6 +603,19 @@ export const ui = {
     },
     // "Experimenta a regra" no projeto Homelab (components/homelab/):
     // política ao nível dos segmentos (content/homelab-policy.json).
+    // Vídeos explicativos (VideoExplainer.astro; fonte em media-src/).
+    video: {
+      transcript: 'Transcrição',
+      captionsPt: 'Português',
+      captionsEn: 'English',
+      fallback: 'O teu browser não reproduz este vídeo. A transcrição abaixo tem o mesmo conteúdo.',
+      weight: 'MP4 · {kb} KB · {s} s · sem som',
+      honeypotTitle: 'O pipeline num minuto',
+      honeypotLabel: 'Vídeo: do sensor ao feed público e ao resumo nesta página',
+      honeypotCaption: 'Do ataque ao feed público: o percurso de um evento no sensor, até ao resumo agregado neste site. Legendas em português e inglês.',
+      ciLabel: 'Vídeo em ciclo: do commit à produção',
+      ciCaption: 'Do commit à produção: os workflows de cada PR, o deploy e as verificações depois dele, com os nomes lidos de .github/workflows. Em ciclo enquanto está no ecrã.',
+    },
     homelab: {
       flowTitle: 'Experimenta a regra',
       flowIntro:
@@ -1714,6 +1727,19 @@ export const ui = {
     },
     // "Try the rule" on the Homelab project (components/homelab/):
     // segment-level policy (content/homelab-policy.json).
+    // Explainer videos (VideoExplainer.astro; source in media-src/).
+    video: {
+      transcript: 'Transcript',
+      captionsPt: 'Português',
+      captionsEn: 'English',
+      fallback: 'Your browser cannot play this video. The transcript below has the same content.',
+      weight: 'MP4 · {kb} KB · {s} s · no sound',
+      honeypotTitle: 'The pipeline in a minute',
+      honeypotLabel: 'Video: from the sensor to the public feed and the summary on this page',
+      honeypotCaption: 'From attack to public feed: the path of an event on the sensor, down to the aggregate summary on this site. Captions in Portuguese and English.',
+      ciLabel: 'Looping video: from commit to production',
+      ciCaption: 'From commit to production: the workflows on every PR, the deploy and the checks after it, with the names read from .github/workflows. Loops while on screen.',
+    },
     homelab: {
       flowTitle: 'Try the rule',
       flowIntro:

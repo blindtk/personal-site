@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CtWatch from '../CtWatch.astro';
 import HeaderProof from '../site/HeaderProof.astro';
+import VideoExplainer from '../site/VideoExplainer.astro';
 import SiteLayers from '../SiteLayers.astro';
 import { SITE, SITE_URL, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -152,6 +153,7 @@ const scanners = [
     <div class="section-title">
       <h2 id="h-workflows">{ev.workflowsTitle}</h2>
     </div>
+    <VideoExplainer lang={lang} name="ci-pipeline" label={dict.video.ciLabel} caption={dict.video.ciCaption} loop />
     <div class="table-scroll">
       <table class="result-table ev-pipeline">
         <thead>

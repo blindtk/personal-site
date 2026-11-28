@@ -1,0 +1,22 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:06.000
+Um sensor exposto à Internet, numa máquina que não tem nada a ver com este site.
+
+00:00:06.000 --> 00:00:12.000
+Os scanners encontram-no sozinhos: uma shell SSH emulada, um labirinto HTTP e tarpits que seguram a ligação.
+
+00:00:12.000 --> 00:00:20.000
+Cada interação vira um evento, guardado numa base de estado.
+
+00:00:20.000 --> 00:00:30.500
+A cada 15 minutos, os eventos saem como feed (JSON e texto), exportação MISP, bundle STIX 2.1 e relatório em HTML.
+
+00:00:30.500 --> 00:00:37.000
+O histórico fica em history.json, que o Worker deste site lê a cada 6 horas.
+
+00:00:37.000 --> 00:00:41.000
+Daqui sai o resumo agregado do projeto. Nenhum endereço IP passa por este site.
+
+00:00:41.000 --> 00:00:48.000
+O feed completo, os dossiês e os relatórios estão em intel.danielmala.co.
