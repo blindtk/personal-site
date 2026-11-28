@@ -1,0 +1,190 @@
+<!doctype html>
+<!--
+  Do ataque ao feed público: o pipeline do honeypot (projeto Threat Intel).
+  48 s, 1280×720, sem som. Cada etapa nasce da anterior: os pontos da
+  Internet entram no sensor, viram eventos, os eventos viram as saídas, uma
+  delas (history.json) segue para o Worker deste site e acaba no painel.
+  Os rótulos no ecrã são só nomes técnicos (ssh, feed.json, Worker), iguais nas duas línguas; a narrativa
+  está nas legendas (content/video/{pt,en}/honeypot-pipeline.vtt).
+  Afirmações conferidas com content/projects/*/threat-intel.md e o README.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link rel="stylesheet" href="assets/tokens.css" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 1280px; height: 720px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+      .scene { position: absolute; inset: 0; }
+      .abs { position: absolute; }
+      .muted { color: var(--muted); }
+      .box { border: 2px solid var(--border-strong); border-radius: 10px; background: var(--bg-raise); }
+      .title { font-size: 19px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent-2); }
+      .svc { left: 22px; width: 252px; height: 66px; display: flex; align-items: center; border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px 14px; background: var(--bg-raise-2); }
+      .svc b { display: block; font-size: 24px; color: var(--accent-2); font-weight: 700; }
+      .svc span { font-size: 14px; color: var(--muted); }
+      .ev { width: 12px; height: 12px; border-radius: 3px; background: var(--accent-2); }
+      .pill { height: 46px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 23px; background: var(--bg-raise); display: flex; align-items: center; font-size: 21px; }
+      .pill.hot { border-color: var(--accent); color: var(--accent); }
+      .tick { font-size: 20px; color: var(--accent-2); }
+      .bar { position: absolute; bottom: 14px; width: 30px; background: var(--accent); border-radius: 3px 3px 0 0; transform-origin: 50% 100%; }
+      svg path { fill: none; stroke: var(--border-strong); stroke-width: 2; }
+      svg path.green { stroke: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="48" data-width="1280" data-height="720">
+      <div id="scene" class="scene clip" data-start="0" data-duration="48" data-track-index="0">
+        <div id="hdr" class="abs title" style="left:40px;top:30px">honeypot · intel.danielmala.co</div>
+
+        <svg id="wires" class="abs" width="1280" height="720" viewBox="0 0 1280 720" style="left:0;top:0">
+          <path id="w1" pathLength="1" d="M552 360 C585 360 590 345 620 345" />
+          <path id="w2" pathLength="1" d="M792 345 C835 345 835 172 880 172" />
+          <path id="w3" pathLength="1" d="M792 345 C835 345 835 237 880 237" />
+          <path id="w4" pathLength="1" d="M792 345 C835 345 835 302 880 302" />
+          <path id="w5" pathLength="1" d="M792 345 C835 345 835 367 880 367" />
+          <path id="w6" pathLength="1" d="M792 345 C835 345 835 432 880 432" />
+          <path id="w7" pathLength="1" class="green" d="M705 392 C705 470 820 522 880 522" />
+          <path id="w8" pathLength="1" class="green" d="M1062 522 C1075 522 1078 515 1090 515" />
+          <path id="w9" pathLength="1" class="green" d="M1165 562 C1165 580 1165 588 1165 602" />
+        </svg>
+
+        <div id="net" class="abs title" style="left:40px;top:150px">internet</div>
+        <div id="dots">
+          <div class="abs dot" id="d0" style="left:52px;top:200px"></div>
+          <div class="abs dot" id="d1" style="left:140px;top:214px"></div>
+          <div class="abs dot" id="d2" style="left:96px;top:240px"></div>
+          <div class="abs dot" id="d3" style="left:180px;top:262px"></div>
+          <div class="abs dot" id="d4" style="left:60px;top:284px"></div>
+          <div class="abs dot" id="d5" style="left:122px;top:302px"></div>
+          <div class="abs dot" id="d6" style="left:170px;top:330px"></div>
+          <div class="abs dot" id="d7" style="left:44px;top:350px"></div>
+          <div class="abs dot" id="d8" style="left:104px;top:368px"></div>
+          <div class="abs dot" id="d9" style="left:150px;top:392px"></div>
+          <div class="abs dot" id="d10" style="left:70px;top:414px"></div>
+          <div class="abs dot" id="d11" style="left:186px;top:430px"></div>
+          <div class="abs dot" id="d12" style="left:118px;top:452px"></div>
+          <div class="abs dot" id="d13" style="left:50px;top:476px"></div>
+          <div class="abs dot" id="d14" style="left:160px;top:494px"></div>
+          <div class="abs dot" id="d15" style="left:90px;top:516px"></div>
+          <div class="abs dot" id="d16" style="left:134px;top:540px"></div>
+          <div class="abs dot" id="d17" style="left:62px;top:556px"></div>
+        </div>
+
+        <div id="sensor" class="abs box" style="left:250px;top:170px;width:300px;height:380px">
+          <div class="abs title" style="left:22px;top:18px">sensor · VPS</div>
+          <div id="svc-ssh" class="abs svc" style="top:62px"><b>ssh</b></div>
+          <div id="svc-http" class="abs svc" style="top:152px"><b>http</b></div>
+          <div id="svc-tarpit" class="abs svc" style="top:242px"><b>tarpit</b></div>
+        </div>
+
+        <div class="abs ev" id="e0" style="left:524px;top:258px"></div>
+        <div class="abs ev" id="e1" style="left:524px;top:348px"></div>
+        <div class="abs ev" id="e2" style="left:524px;top:438px"></div>
+        <div class="abs ev" id="e3" style="left:524px;top:258px"></div>
+        <div class="abs ev" id="e4" style="left:524px;top:348px"></div>
+        <div class="abs ev" id="e5" style="left:524px;top:438px"></div>
+
+        <div id="state" class="abs box" style="left:620px;top:300px;width:172px;height:92px;padding:16px 18px">
+          <div style="font-size:22px;font-weight:700">state</div>
+          <div class="muted" style="font-size:19px">events</div>
+        </div>
+        <div id="tick15" class="abs tick" style="left:626px;top:266px">⏱ 15 min</div>
+
+        <div id="o0" class="abs pill" style="left:880px;top:150px">feed.json</div>
+        <div id="o1" class="abs pill" style="left:880px;top:215px">feed.txt</div>
+        <div id="o2" class="abs pill" style="left:880px;top:280px">MISP</div>
+        <div id="o3" class="abs pill" style="left:880px;top:345px">STIX 2.1</div>
+        <div id="o4" class="abs pill" style="left:880px;top:410px">report.html</div>
+
+        <div id="history" class="abs pill hot" style="left:880px;top:500px">history.json</div>
+        <div id="worker" class="abs box" style="left:1090px;top:470px;width:150px;height:92px;padding:14px 16px;border-color:var(--accent)">
+          <div style="font-size:22px;font-weight:700;color:var(--accent)">Worker</div>
+          <div class="muted" style="font-size:19px">this site</div>
+        </div>
+        <div id="tick6" class="abs tick" style="left:1096px;top:438px">⏱ 6 h</div>
+
+        <div id="panel" class="abs box" style="left:760px;top:602px;width:480px;height:96px;border-color:var(--accent)">
+          <div class="abs title" style="left:16px;top:12px">threat intel</div>
+          <div class="bar" id="b0" style="left:200px;height:30px"></div>
+          <div class="bar" id="b1" style="left:236px;height:48px"></div>
+          <div class="bar" id="b2" style="left:272px;height:22px"></div>
+          <div class="bar" id="b3" style="left:308px;height:56px"></div>
+          <div class="bar" id="b4" style="left:344px;height:38px"></div>
+          <div class="bar" id="b5" style="left:380px;height:62px"></div>
+          <div class="bar" id="b6" style="left:416px;height:44px"></div>
+        </div>
+
+        <div id="end" class="abs" data-hold style="left:40px;top:640px;font-size:24px;color:var(--accent-2)">intel.danielmala.co</div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const ease = 'power3.out';
+      const all = '#hdr,#net,.dot,#sensor,.svc,.ev,#state,#tick15,.pill,#worker,#tick6,#panel,#end';
+      // Estado inicial fora da timeline: um set a 0 dentro dela não pinta o
+      // primeiro frame.
+      gsap.set(all, { opacity: 0 });
+      gsap.set('#wires path', { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+      gsap.set('.bar', { scaleY: 0 });
+
+      // 0–6 s: a Internet e o sensor
+      tl.to('#hdr', { opacity: 1, duration: 0.5, ease }, 0.2);
+      tl.to('#net', { opacity: 1, duration: 0.5, ease }, 0.6);
+      tl.to('.dot', { opacity: 1, duration: 0.3, stagger: 0.06, ease }, 0.8);
+      tl.fromTo('#sensor', { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.6, ease }, 2.4);
+
+      // 3–10 s: os scanners entram nos serviços (cada ponto vai para uma linha)
+      const rows = [258, 348, 438];
+      for (let i = 0; i < 18; i++) {
+        const el = `#d${i}`;
+        const y = rows[i % 3];
+        const top = [200, 214, 240, 262, 284, 302, 330, 350, 368, 392, 414, 430, 452, 476, 494, 516, 540, 556][i];
+        const left = [52, 140, 96, 180, 60, 122, 170, 44, 104, 150, 70, 186, 118, 50, 160, 90, 134, 62][i];
+        tl.to(el, { x: 290 - left, y: y - top, duration: 1.5, ease: 'power2.in' }, 3.2 + i * 0.32);
+        tl.to(el, { opacity: 0, duration: 0.2 }, 4.6 + i * 0.32);
+      }
+      tl.to('#svc-ssh', { opacity: 1, duration: 0.4, ease }, 6.0);
+      tl.to('#svc-http', { opacity: 1, duration: 0.4, ease }, 7.0);
+      tl.to('#svc-tarpit', { opacity: 1, duration: 0.4, ease }, 8.0);
+
+      // 12–20 s: cada interação vira um evento, guardado no estado
+      tl.to('#w1', { attr: { 'stroke-dashoffset': 0 }, duration: 0.8, ease }, 12);
+      tl.to('#state', { opacity: 1, duration: 0.5, ease }, 12.3);
+      for (let i = 0; i < 6; i++) {
+        const top = [258, 348, 438][i % 3];
+        tl.set(`#e${i}`, { opacity: 1 }, 13 + i * 0.9);
+        tl.to(`#e${i}`, { x: 150, y: 339 - top, duration: 1.1, ease: 'power2.inOut' }, 13 + i * 0.9);
+        tl.to(`#e${i}`, { opacity: 0, duration: 0.2 }, 14 + i * 0.9);
+      }
+
+      // 20–34 s: a cada 15 min, as saídas
+      tl.to('#tick15', { opacity: 1, duration: 0.5, ease }, 20);
+      for (let i = 0; i < 5; i++) {
+        tl.to(`#w${i + 2}`, { attr: { 'stroke-dashoffset': 0 }, duration: 0.7, ease }, 23 + i * 1.4);
+        tl.fromTo(`#o${i}`, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, 23.4 + i * 1.4);
+      }
+
+      // 30.5–37 s: history.json segue para o Worker deste site, a cada 6 h
+      tl.to('#w7', { attr: { 'stroke-dashoffset': 0 }, duration: 0.9, ease }, 30.8);
+      tl.fromTo('#history', { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease }, 31.4);
+      tl.to('#w8', { attr: { 'stroke-dashoffset': 0 }, duration: 0.5, ease }, 33.4);
+      tl.fromTo('#worker', { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.5, ease }, 33.7);
+      tl.to('#tick6', { opacity: 1, duration: 0.5, ease }, 35);
+
+      // 37–41 s: o resumo agregado no site
+      tl.to('#w9', { attr: { 'stroke-dashoffset': 0 }, duration: 0.5, ease }, 37.2);
+      tl.fromTo('#panel', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6, ease }, 37.6);
+      tl.to('.bar', { scaleY: 1, duration: 0.6, stagger: 0.12, ease }, 38.4);
+
+      // 41–48 s: onde está o resto (a imagem fica parada para ler a legenda)
+      tl.to('#end', { opacity: 1, duration: 0.6, ease }, 41.2);
+
+      window.__timelines['main'] = tl;
+    </script>
+  </body>
+</html>

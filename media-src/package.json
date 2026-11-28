@@ -1,0 +1,15 @@
+{
+  "name": "personal-site-media-src",
+  "private": true,
+  "type": "module",
+  "description": "Source of the site's rendered explainer videos (HyperFrames). Rendered offline, never in CI; only the output files go to static/public/video/. See README.md.",
+  "scripts": {
+    "prepare-films": "node scripts/prepare.mjs",
+    "check": "node scripts/prepare.mjs && node scripts/hf.mjs check",
+    "render": "node scripts/prepare.mjs && node scripts/render.mjs"
+  },
+  "devDependencies": {
+    "gsap": "3.15.1",
+    "hyperframes": "0.9.94"
+  }
+}

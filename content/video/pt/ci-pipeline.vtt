@@ -1,0 +1,16 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:02.000
+Cada mudança chega por pull request.
+
+00:00:02.000 --> 00:00:08.600
+Os workflows do PR correm em paralelo: testes e build, CodeQL, dependências, cadeia de fornecimento, segurança e etiquetas.
+
+00:00:08.600 --> 00:00:10.000
+Depois da revisão manual, o merge vai para main.
+
+00:00:10.000 --> 00:00:12.600
+A Cloudflare faz o deploy do site (Pages) e do Worker (Workers Builds).
+
+00:00:12.600 --> 00:00:16.200
+Depois de cada deploy, a produção é verificada: os cabeçalhos e as rotas do Worker.

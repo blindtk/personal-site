@@ -1,0 +1,20 @@
+{
+  "$comment": "Homelab segment policy, only as already published in content/projects/{pt,en}/homelab.md: segments talk only through the firewall, which denies everything without an explicit rule, and the bench is where the homelab is administered from. The concrete network rules are deliberately NOT published here — the 'Try the rule' block on the homelab page says so. Read by static/src/components/homelab/HomelabFlow.astro; validated by static/test/homelab-flow.test.mjs.",
+  "default": "deny",
+  "segments": [
+    { "id": "vault", "role": { "pt": "o que não se perde", "en": "what must not be lost" } },
+    { "id": "archive", "role": { "pt": "cópia do que importa", "en": "a copy of what matters" } },
+    { "id": "workshop", "role": { "pt": "para testar e partir", "en": "where I test and break" } },
+    { "id": "bench", "role": { "pt": "de onde giro tudo", "en": "where I run everything" } }
+  ],
+  "rules": [
+    {
+      "from": "bench",
+      "to": "*",
+      "reason": {
+        "pt": "o bench é de onde se administra o homelab",
+        "en": "the bench is where the homelab is administered from"
+      }
+    }
+  ]
+}

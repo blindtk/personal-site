@@ -67,7 +67,21 @@ export default defineConfig({
     // sem src, que script-src 'self' bloquearia. Com 0, tudo vira ficheiro
     // externo em /_astro/, coberto por 'self'. (Também externaliza pequenos
     // assets que seriam data: URIs — irrelevante aqui, o site não os tem.)
-    build: { assetsInlineLimit: 0 },
+    build: {
+      assetsInlineLimit: 0,
+      // Mantém os comentários de licença (/*! … @license … */) das
+      // bibliotecas de terceiros servidas ao visitante (hoje só o GSAP, no
+      // chunk lazy de /este-site/): o minificador apaga-os por omissão e a
+      // licença do GSAP, como a MIT, pede que o aviso de copyright siga com
+      // o código. Ver docs/adr/0025-movimento-sem-alargar-a-csp.md.
+      rolldownOptions: { output: { comments: { legal: true } } },
+      // O único chunk acima dos 500 kB por omissão é o three.js da cena 3D do
+      // Homelab (~534 kB min, ~131 kB gz), descarregado só quando o visitante
+      // carrega em "Ver em 3D". O limite fica logo acima dele, para que
+      // qualquer outro chunk que cresça (ou um three.js maior, num PR do
+      // Renovate) continue a dar aviso no build.
+      chunkSizeWarningLimit: 550,
+    },
   },
   i18n: {
     defaultLocale: 'pt',

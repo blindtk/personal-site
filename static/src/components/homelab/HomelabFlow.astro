@@ -1,0 +1,216 @@
+---
+/**
+ * "Experimenta a regra" (projeto Homelab, PT e EN): escolhe origem e destino
+ * de um pedido entre dois segmentos e vê o que a firewall faz, segundo a
+ * política publicada (content/homelab-policy.json).
+ *
+ * Camadas, da mais barata para a mais cara:
+ *   1. Sem JS: a explicação em texto (o artigo acima) e uma nota.
+ *   2. Com JS: dois grupos de rádio nativos e o resultado em texto
+ *      (aria-live) — a demonstração inteira, sem 3D.
+ *   3. Opt-in: "Ver em 3D" descarrega o three.js (import()) e mostra a cena
+ *      (homelab-scene.ts). Sem WebGL, fica a camada 2.
+ * A decisão é pura e testada: src/scripts/homelab-flow.js.
+ */
+import { t } from '../../i18n/ui';
+import type { Lang } from '../../config';
+import policy from '../../../../content/homelab-policy.json';
+import { policyIssues } from '../../scripts/homelab-flow.js';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const h = t(lang).homelab;
+
+const issues = policyIssues(policy);
+if (issues.length) throw new Error(`content/homelab-policy.json: ${issues.join('; ')}`);
+
+const segments = policy.segments.map((s) => ({ id: s.id, role: s.role[lang] }));
+const strings = {
+  allow: h.allow,
+  deny: h.deny,
+  same: h.same,
+  loading3d: h.loading3d,
+  no3d: h.no3d,
+  firewall: h.firewall,
+  view3d: h.view3d,
+};
+const reasons = Object.fromEntries(policy.rules.map((r, i) => [i, r.reason[lang]]));
+---
+
+<section aria-labelledby="h-flow" class="hf" id="homelab-flow"
+  data-policy={JSON.stringify(policy)} data-strings={JSON.stringify(strings)} data-reasons={JSON.stringify(reasons)}>
+  <div class="section-title"><h2 id="h-flow">{h.flowTitle}</h2></div>
+  <p class="arch-body">{h.flowIntro}</p>
+  <noscript><p class="note">{h.noJs}</p></noscript>
+
+  <div class="hf-ui" hidden>
+    <div class="hf-pickers">
+      {[['from', h.fromLabel, 'workshop'], ['to', h.toLabel, 'vault']].map(([name, legend, initial]) => (
+        <fieldset class="hf-pick">
+          <legend class="mono">{legend}</legend>
+          {segments.map((s) => (
+            <label class="hf-opt">
+              <input type="radio" name={`hf-${name}`} value={s.id} checked={s.id === initial} />
+              <span class="mono">{s.id}</span> <span class="hf-role">{s.role}</span>
+            </label>
+          ))}
+        </fieldset>
+      ))}
+    </div>
+    <p class="hf-result" aria-live="polite" data-hf-result></p>
+    <button type="button" class="btn ghost small hf-3d" data-hf-3d>{h.view3d}</button>
+    <div class="hf-stage" data-hf-stage hidden>
+      <canvas class="hf-canvas" role="img" aria-label={h.sceneLabel}></canvas>
+      <div class="hf-rot">
+        <button type="button" class="btn ghost small" data-rot="-1" aria-label={h.rotateLeft}>⟲</button>
+        <button type="button" class="btn ghost small" data-rot="1" aria-label={h.rotateRight}>⟳</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { decideFlow } from '../../scripts/homelab-flow.js';
+  import type { HomelabScene } from './homelab-scene';
+
+  const root = document.getElementById('homelab-flow');
+  if (root) {
+    const policy = JSON.parse(root.dataset.policy ?? '{}');
+    const S = JSON.parse(root.dataset.strings ?? '{}');
+    const reasons = JSON.parse(root.dataset.reasons ?? '{}');
+    const ui = root.querySelector<HTMLElement>('.hf-ui')!;
+    const result = root.querySelector<HTMLElement>('[data-hf-result]')!;
+    const btn3d = root.querySelector<HTMLButtonElement>('[data-hf-3d]')!;
+    const stage = root.querySelector<HTMLElement>('[data-hf-stage]')!;
+    const canvas = stage.querySelector('canvas')!;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let scene: HomelabScene | null = null;
+    ui.hidden = false;
+
+    const picked = (name: string) =>
+      root.querySelector<HTMLInputElement>(`input[name="hf-${name}"]:checked`)?.value ?? '';
+
+    function update() {
+      const from = picked('from');
+      const to = picked('to');
+      const d = decideFlow(policy, from, to);
+      const fill = (s: string) => s.replace('{from}', from).replace('{to}', to)
+        .replace('{reason}', d.rule ? reasons[policy.rules.indexOf(d.rule)] ?? '' : '');
+      result.textContent = d.verdict === 'allow' ? fill(S.allow) : d.verdict === 'deny' ? fill(S.deny) : S.same;
+      result.dataset.verdict = d.verdict;
+      scene?.show(from, to, d.verdict);
+    }
+    root.addEventListener('change', (e) => {
+      if ((e.target as HTMLElement).matches('input[type="radio"]')) update();
+    });
+    update();
+
+    if (!('WebGLRenderingContext' in window)) {
+      btn3d.hidden = true;
+    } else {
+      btn3d.addEventListener('click', async () => {
+        btn3d.disabled = true;
+        btn3d.textContent = S.loading3d;
+        try {
+          const { mountHomelabScene } = await import('./homelab-scene');
+          stage.hidden = false;
+          scene = mountHomelabScene(stage, canvas, {
+            segments: policy.segments.map((s: { id: string }) => s.id),
+            firewallLabel: S.firewall,
+            still: () => still.matches,
+          });
+          if (!scene) throw new Error('webgl');
+          btn3d.hidden = true;
+          update();
+        } catch {
+          stage.hidden = true;
+          btn3d.textContent = S.no3d;
+        }
+      });
+      for (const b of stage.querySelectorAll<HTMLButtonElement>('[data-rot]')) {
+        b.addEventListener('click', () => scene?.rotate(Number(b.dataset.rot) as 1 | -1));
+      }
+    }
+  }
+</script>
+
+<style>
+  .hf-pickers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+  }
+  .hf-pick {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.8rem 0.7rem;
+    margin: 0;
+  }
+  .hf-pick legend {
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 0 0.3rem;
+  }
+  .hf-opt {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    padding: 0.2rem 0;
+    cursor: pointer;
+  }
+  .hf-opt input {
+    accent-color: var(--accent);
+  }
+  .hf-role {
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .hf-result {
+    margin: 0.9rem 0;
+    padding: 0.6rem 0.8rem;
+    border-left: 3px solid var(--border-strong);
+    background: var(--bg-raise);
+    font-size: 0.92rem;
+  }
+  .hf-result[data-verdict='allow'] {
+    border-left-color: var(--accent);
+  }
+  .hf-result[data-verdict='deny'] {
+    border-left-color: var(--danger);
+  }
+  /* .btn define display, que se sobrepõe ao [hidden] do browser. */
+  .hf-3d[hidden] {
+    display: none;
+  }
+  .hf-stage {
+    position: relative;
+    margin-top: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .hf-canvas {
+    display: block;
+    width: 100%;
+  }
+  /* Rótulos criados pelo módulo da cena (fora do âmbito do Astro). */
+  .hf-stage :global(.hf-label) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .hf-rot {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    display: flex;
+    gap: 0.4rem;
+  }
+</style>

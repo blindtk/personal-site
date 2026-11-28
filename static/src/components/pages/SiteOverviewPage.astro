@@ -4,6 +4,7 @@ import Widget from '../site/Widget.astro';
 import StatusBadge from '../site/StatusBadge.astro';
 import SiteLayers from '../SiteLayers.astro';
 import PerformancePanel from '../site/PerformancePanel.astro';
+import RequestPath from '../site/RequestPath.astro';
 import { getEntry, render } from 'astro:content';
 import { API_BASE, INFRA, type Lang } from '../../config';
 import { t } from '../../i18n/ui';
@@ -98,6 +99,8 @@ const jsStrings = {
       ))}
     </dl>
   </section>
+
+  <RequestPath lang={lang} />
 
   {/* Postura de segurança: era a página Segurança, fundida aqui (2026-11).
      A tabela "cabeçalho → porquê" foi para as Provas, ao lado do valor que

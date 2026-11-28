@@ -1,0 +1,134 @@
+<!doctype html>
+<!--
+  Do commit à produção: o percurso de uma mudança neste repositório.
+  18 s em loop, 1280×720, sem som. Começa e acaba no mesmo ecrã vazio, para
+  o loop não ter costura.
+  As faixas (os workflows que correm em pull_request e os que verificam a
+  produção depois do deploy, por check_run) são geradas por
+  scripts/prepare.mjs a partir de .github/workflows — não editar entre os
+  marcadores. Legendas: content/video/{pt,en}/ci-pipeline.vtt.
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1280, height=720" />
+    <link rel="stylesheet" href="assets/tokens.css" />
+    <script src="assets/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1280px; height: 720px; overflow: hidden; background: var(--bg); }
+      #root { position: relative; width: 1280px; height: 720px; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+      .scene { position: absolute; inset: 0; }
+      .abs { position: absolute; }
+      .title { font-size: 19px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .box { border: 2px solid var(--border-strong); border-radius: 10px; background: var(--bg-raise); padding: 14px 16px; }
+      .box b { display: block; font-size: 22px; }
+      .box span { font-size: 19px; color: var(--muted); }
+      #commit { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-2); }
+      #lanes { left: 300px; top: 190px; width: 500px; display: flex; flex-direction: column; gap: 14px; }
+      .lane { display: grid; grid-template-columns: 330px 1fr 24px; align-items: center; gap: 10px; font-size: 20px; }
+      .lane-name { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+      .fill { display: block; height: 100%; width: 100%; background: var(--accent); transform-origin: 0 50%; }
+      .ok { color: var(--accent); font-weight: 700; }
+      .pill { height: 44px; padding: 0 16px; border: 1px solid var(--accent); border-radius: 22px; display: flex; align-items: center; gap: 8px; font-size: 20px; background: var(--bg-raise); }
+      #verifies { left: 960px; top: 470px; display: flex; flex-direction: column; gap: 12px; }
+      .dep { width: 200px; }
+      .dep .bar { display: block; margin-top: 10px; }
+      svg path { fill: none; stroke: var(--border-strong); stroke-width: 2; }
+      svg path.green { stroke: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="18" data-width="1280" data-height="720">
+      <div id="scene" class="scene clip" data-start="0" data-duration="18" data-track-index="0">
+        <div id="hdr" class="abs title" style="left:40px;top:30px">commit → production · github.com/blindtk/personal-site</div>
+
+        <svg id="wires" class="abs" width="1280" height="720" viewBox="0 0 1280 720" style="left:0;top:0">
+          <path id="w1" pathLength="1" d="M230 300 C260 300 265 300 292 300" />
+          <path id="w2" pathLength="1" class="green" d="M806 300 C815 300 820 300 830 300" />
+          <path id="w3" pathLength="1" class="green" d="M950 346 C950 392 840 400 840 438" />
+          <path id="w4" pathLength="1" class="green" d="M950 346 C950 392 1105 400 1105 438" />
+          <path id="w5" pathLength="1" class="green" d="M840 534 C840 552 840 562 840 580" />
+        </svg>
+
+        <div id="commit" class="abs" style="left:60px;top:289px"></div>
+        <div id="pr" class="abs box" style="left:110px;top:256px;width:120px;height:88px"><b>PR</b><span>review</span></div>
+
+        <div id="lanes" class="abs" data-lanes="6">
+          <!-- lanes:start -->
+        <div class="lane" id="lane-0"><span class="lane-name">ci</span><span class="bar"><span class="fill" id="fill-0"></span></span><span class="ok" id="ok-0">✓</span></div>
+        <div class="lane" id="lane-1"><span class="lane-name">security-codeql</span><span class="bar"><span class="fill" id="fill-1"></span></span><span class="ok" id="ok-1">✓</span></div>
+        <div class="lane" id="lane-2"><span class="lane-name">security-dependency-review</span><span class="bar"><span class="fill" id="fill-2"></span></span><span class="ok" id="ok-2">✓</span></div>
+        <div class="lane" id="lane-3"><span class="lane-name">security-supply-chain</span><span class="bar"><span class="fill" id="fill-3"></span></span><span class="ok" id="ok-3">✓</span></div>
+        <div class="lane" id="lane-4"><span class="lane-name">security</span><span class="bar"><span class="fill" id="fill-4"></span></span><span class="ok" id="ok-4">✓</span></div>
+        <div class="lane" id="lane-5"><span class="lane-name">update-pr-labels</span><span class="bar"><span class="fill" id="fill-5"></span></span><span class="ok" id="ok-5">✓</span></div>
+          <!-- lanes:end -->
+        </div>
+
+        <div id="main" class="abs box" style="left:830px;top:256px;width:240px;height:88px;border-color:var(--accent)"><b style="color:var(--accent)">main</b><span>merge</span></div>
+
+        <div id="dep-pages" class="abs box dep" style="left:740px;top:440px"><b>Pages</b><span class="bar"><span class="fill" id="fill-pages"></span></span></div>
+        <div id="dep-worker" class="abs box dep" style="left:980px;top:440px;width:250px"><b>Workers Builds</b><span class="bar"><span class="fill" id="fill-worker"></span></span></div>
+
+        <div id="verifies" class="abs" data-verifies="2" style="left:820px;top:582px">
+          <!-- verifies:start -->
+        <div class="pill verify" id="verify-0"><span class="ok">✓</span> verify-headers</div>
+        <div class="pill verify" id="verify-1"><span class="ok">✓</span> verify-worker</div>
+          <!-- verifies:end -->
+        </div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const ease = 'power3.out';
+      const lanes = Number(document.getElementById('lanes').dataset.lanes);
+      const verifies = Number(document.getElementById('verifies').dataset.verifies);
+      // Estado inicial fora da timeline: um set a 0 dentro dela não pinta o
+      // primeiro frame.
+      gsap.set('#hdr,#commit,#pr,.lane,.ok,#main,.dep,.verify', { opacity: 0 });
+      gsap.set('.fill', { scaleX: 0 });
+      gsap.set('#wires path', { attr: { 'stroke-dasharray': '1 1', 'stroke-dashoffset': 1 } });
+
+      // 0–2 s: o commit chega a um pull request
+      tl.to('#hdr', { opacity: 1, duration: 0.4, ease }, 0.1);
+      tl.to('#commit', { opacity: 1, duration: 0.3, ease }, 0.2);
+      tl.to('#pr', { opacity: 1, duration: 0.4, ease }, 0.6);
+      tl.to('#commit', { x: 70, duration: 0.6, ease: 'power2.in' }, 0.7);
+      tl.to('#commit', { opacity: 0, duration: 0.15 }, 1.25);
+      tl.to('#w1', { attr: { 'stroke-dashoffset': 0 }, duration: 0.5, ease }, 1.4);
+
+      // 2–8.5 s: os workflows do PR em paralelo, cada um ao seu ritmo
+      const lengths = [4.6, 3.4, 5.6, 2.6, 4.0, 1.6, 3.0, 5.0];
+      for (let i = 0; i < lanes; i++) {
+        tl.to(`#lane-${i}`, { opacity: 1, duration: 0.3, ease }, 1.8 + i * 0.06);
+        const d = lengths[i % lengths.length];
+        tl.to(`#fill-${i}`, { scaleX: 1, duration: d, ease: 'power1.inOut' }, 2.2);
+        tl.to(`#ok-${i}`, { opacity: 1, duration: 0.2 }, 2.2 + d);
+      }
+
+      // 8.5–10 s: aprovado à mão, merge para main
+      tl.to('#w2', { attr: { 'stroke-dashoffset': 0 }, duration: 0.4, ease }, 8.6);
+      tl.fromTo('#main', { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5, ease }, 8.8);
+
+      // 10–12.5 s: a Cloudflare faz os dois deploys
+      tl.to('#w3', { attr: { 'stroke-dashoffset': 0 }, duration: 0.4, ease }, 10);
+      tl.to('#w4', { attr: { 'stroke-dashoffset': 0 }, duration: 0.4, ease }, 10);
+      tl.to('.dep', { opacity: 1, duration: 0.4, ease }, 10.2);
+      tl.to('#fill-pages', { scaleX: 1, duration: 1.8, ease: 'power1.inOut' }, 10.5);
+      tl.to('#fill-worker', { scaleX: 1, duration: 2.1, ease: 'power1.inOut' }, 10.5);
+
+      // 12.5–15 s: a produção é verificada depois do deploy
+      tl.to('#w5', { attr: { 'stroke-dashoffset': 0 }, duration: 0.4, ease }, 12.5);
+      for (let i = 0; i < verifies; i++) {
+        tl.fromTo(`#verify-${i}`, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease }, 12.8 + i * 0.5);
+        tl.to(`#verify-${i} .ok`, { opacity: 1, duration: 0.2 }, 13.5 + i * 0.5);
+      }
+
+      // 15.5–17.5 s: tudo se apaga, para o loop voltar ao início sem costura
+      tl.to('#scene > *', { opacity: 0, duration: 0.8, ease: 'power2.in' }, 16.2);
+
+      window.__timelines['main'] = tl;
+    </script>
+  </body>
+</html>

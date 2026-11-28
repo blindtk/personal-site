@@ -12,10 +12,13 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
-    "astro": "^7.0.9"
+    "astro": "^7.0.9",
+    "gsap": "^3.15.1",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@types/three": "^0.187.0",
     "typescript": "^6.0.3"
   },
   "overrides": {
