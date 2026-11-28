@@ -112,7 +112,7 @@ jobs:
           docker run --rm \
             -u "$(id -u):$(id -g)" \
             -v "$PWD/tls-report:/data" \
-            drwetter/testssl.sh:3.2@sha256:64bab3c1fd8eee440f68d5e020dd633c1f2d375fe0ae593bdfec2725110a7e29 \
+            drwetter/testssl.sh:3.2@sha256:4d416222ad11e88e16c715e99ebb159a8f535e2f052dd722099e0a3955202e82 \
             "${args[@]}" \
             "$HOST"
 
